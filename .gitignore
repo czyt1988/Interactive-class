@@ -10,6 +10,7 @@ build/
 .coverage
 coverage.xml
 htmlcov/
+大纲/
 
 # 构建产物与运行时数据
 /dist/
