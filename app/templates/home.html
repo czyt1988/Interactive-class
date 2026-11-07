@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ site.title }} · 把 AI 讲清楚，一屏一屏地{% endblock %}
+{% block description %}AI Learning 是一个用网页动画讲 AI 的课程站。每屏只讲一个概念，可以暂停、回看、读讲义，也可以在任意静态服务器上独立播放。{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero__copy">
+    <p class="eyebrow">网页动画课程 · 一屏一个概念</p>
+    <h1>把 AI 讲清楚，<br /><span class="hero__accent">一屏一屏地。</span></h1>
+    <p class="lede">
+      不是一段被锁在播放器里的视频，而是一串可以在浏览器里停下来读的动画。
+      每屏只讲一件事，讲完就停，由你决定什么时候继续。
+    </p>
+    <div class="hero__actions">
+      <a class="button button--primary" href="/courses">浏览课程库</a>
+      <a class="button button--ghost" href="/about">课程是怎么做的</a>
+    </div>
+    <dl class="hero__facts">
+      <div><dt>节奏</dt><dd>6–10 屏</dd></div>
+      <div><dt>时长</dt><dd>2–5 分钟</dd></div>
+      <div><dt>依赖</dt><dd>无 CDN</dd></div>
+      <div><dt>离线</dt><dd>可独立部署</dd></div>
+    </dl>
+  </div>
+
+  <div class="hero__stage" aria-hidden="true">
+    <div class="screen-mock">
+      <div class="screen-mock__bar">
+        <span class="screen-mock__count">03 / 09</span>
+        <span class="screen-mock__title">机器第一次赢在“直觉”</span>
+        <span class="screen-mock__dot"></span>
+      </div>
+      <div class="screen-mock__board">
+        <span class="stone stone--b" style="left: 18%; top: 22%"></span>
+        <span class="stone stone--w" style="left: 44%; top: 30%"></span>
+        <span class="stone stone--b" style="left: 61%; top: 49%"></span>
+        <span class="stone stone--w" style="left: 33%; top: 61%"></span>
+        <span class="stone stone--b" style="left: 52%; top: 70%"></span>
+        <span class="screen-mock__note">2016.03 · 首尔 · 4:1</span>
+      </div>
+      <div class="screen-mock__controls">
+        <span>← 上一屏</span>
+        <span class="screen-mock__play">▶ 暂停</span>
+        <span>下一屏 →</span>
+      </div>
+    </div>
+    <p class="hero__caption">每屏都有画面、文字和讲义 —— 暂停也读得懂。</p>
+  </div>
+</section>
+
+<section class="collection" aria-labelledby="collection-title">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">课程库</p>
+      <h2 id="collection-title">正在放映</h2>
+    </div>
+    <a class="text-link" href="/courses">全部课程 <span aria-hidden="true">→</span></a>
+  </div>
+
+  {% if courses %}
+    <div class="course-grid course-grid--home">
+      {% for course in courses[:3] %}
+        {% set index = loop.index %}
+        {% include "partials/course_card.html" with context %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p class="empty-state__kicker">还没有构建课程</p>
+      <h3>课程源已经就位，产物还没生成。</h3>
+      <p>运行 <code>python scripts/build_courses.py --all</code>，课程就会出现在这里。</p>
+      <a class="button button--ghost" href="/about">看看制作流程</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="method" aria-labelledby="method-title">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">学习方式</p>
+      <h2 id="method-title">一屏，一次呼吸</h2>
+    </div>
+  </div>
+  <ol class="method__steps">
+    <li>
+      <span class="method__num">01</span>
+      <h3>先看见</h3>
+      <p>动画先把关系演示出来。不先给定义，先给一个能看懂的具体画面。</p>
+    </li>
+    <li>
+      <span class="method__num">02</span>
+      <h3>再读一遍</h3>
+      <p>每屏都有讲义。暂停、回看、用屏幕阅读器读，信息不会只存在于运动里。</p>
+    </li>
+    <li>
+      <span class="method__num">03</span>
+      <h3>自己决定下一步</h3>
+      <p>没有自动连播的时间压力。看完这一屏，再按下一屏。</p>
+    </li>
+  </ol>
+  <blockquote class="pullquote">
+    <p>动画要承担论证。删掉它，如果论证还完整，那它大概率只是装饰。</p>
+    <cite>设计原则 · 动画要承担论证</cite>
+  </blockquote>
+</section>
+{% endblock %}

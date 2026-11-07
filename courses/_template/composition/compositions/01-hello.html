@@ -1,0 +1,75 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #f4efe6;
+      color: #16140f;
+      font-family: "Noto Sans SC", sans-serif;
+    }
+
+    #s-hello-title {
+      position: absolute;
+      left: 192px;
+      top: 340px;
+      width: 1536px;
+      font-size: 140px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    #s-hello-rule {
+      position: absolute;
+      left: 192px;
+      top: 560px;
+      width: 1180px;
+      height: 2px;
+      background: #e4572e;
+      transform-origin: left center;
+    }
+
+    #s-hello-lead {
+      position: absolute;
+      left: 192px;
+      top: 610px;
+      width: 1180px;
+      font-size: 46px;
+      line-height: 1.6;
+      color: #514b40;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-hello" data-width="1920" data-height="1080">
+    <h1 id="s-hello-title" class="clip" data-start="0.2" data-duration="11.4">第一屏说什么</h1>
+    <div id="s-hello-rule" class="clip" data-start="0.8" data-duration="10.8"></div>
+    <p id="s-hello-lead" class="clip" data-start="1.2" data-duration="10.4">
+      一句话论题：这一屏只讲一件事。
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo(
+      "#s-hello-title",
+      { opacity: 0, y: 48 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.2,
+    );
+    tl.fromTo(
+      "#s-hello-rule",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.5, ease: "power2.out" },
+      0.9,
+    );
+    tl.fromTo(
+      "#s-hello-lead",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      1.4,
+    );
+
+    window.__timelines["s-hello"] = tl;
+  </script>
+</template>

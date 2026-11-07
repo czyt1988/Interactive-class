@@ -1,0 +1,32 @@
+{# One course card. Expects: course (CourseSummary), index (1-based).
+   The title is rendered once, either over the cover image or inside the
+   typographic poster used when a course has no cover yet. #}
+<article class="course-card" style="--card-accent: {{ course.accent or '#b8452b' }}">
+  <a class="course-card__link" href="{{ course.courseUrl }}">
+    <div class="course-card__top">
+      <span class="course-card__index">{{ "%02d"|format(index) }}</span>
+      <span class="course-card__level">{{ level_label(course.level) }}</span>
+    </div>
+
+    {% if course.coverUrl %}
+      <div class="course-card__poster course-card__poster--image">
+        <img src="{{ course.coverUrl }}" alt="" loading="lazy" width="1600" height="900" />
+        <h3 class="course-card__title course-card__title--overlay">{{ course.title }}</h3>
+      </div>
+    {% else %}
+      <div class="course-card__poster course-card__poster--type">
+        <h3 class="course-card__title">{{ course.title }}</h3>
+      </div>
+    {% endif %}
+
+    <div class="course-card__body">
+      {% if course.subtitle %}<p class="course-card__subtitle">{{ course.subtitle }}</p>{% endif %}
+      <p class="course-card__summary">{{ course.summary }}</p>
+      <p class="course-card__meta">
+        <span>{{ course.screenCount }} 屏</span>
+        <span>{{ format_duration(course.durationSeconds) }}</span>
+        {% if course.updatedAt %}<span>{{ course.updatedAt }}</span>{% endif %}
+      </p>
+    </div>
+  </a>
+</article>

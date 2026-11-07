@@ -1,0 +1,29 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #f4efe6;
+      color: #141414;
+    }
+    #s-split-title {
+      position: absolute;
+      left: 192px;
+      top: 300px;
+      font-size: 132px;
+    }
+  </style>
+  <div id="root" data-composition-id="s-split" data-width="1920" data-height="1080">
+    <h1 id="s-split-title" class="clip" data-start="0.2" data-duration="1.6">第二屏</h1>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(
+      "#s-split-title",
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      0.2,
+    );
+    window.__timelines["s-split"] = tl;
+  </script>
+</template>

@@ -1,0 +1,39 @@
+/* Course-scoped styles. Scene-specific rules live inside each scene file. */
+
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("fonts/NotoSansSC-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b0c;
+  overflow: hidden;
+}
+
+#root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0b0c;
+  font-family: "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.clip {
+  will-change: transform, opacity;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+}

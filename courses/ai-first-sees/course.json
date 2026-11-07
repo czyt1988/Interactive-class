@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "slug": "ai-first-sees",
+  "title": "AI 第一次看懂世界",
+  "subtitle": "从 AlphaGo 到 CNN：机器怎么学会「看」",
+  "summary": "AlphaGo 赢得不是算力，而是一层层学出来的特征。这一集把 2016 的棋盘和 2012 的 AlexNet 放在一起，讲清 AI 的「看」是怎么来的。",
+  "description": "上半场的第一集：先看三次能力跃迁，再看 AlphaGo 用 CNN 看棋形、用搜索推演、用自我对弈练习；最后回到 2012 年，理解 CNN 的工业拐点为什么比 AlphaGo 早四年。",
+  "level": "beginner",
+  "tags": ["AI 史", "CNN", "AlphaGo"],
+  "language": "zh-CN",
+  "status": "published",
+  "featured": true,
+  "order": 10,
+  "accent": "#2FB68A",
+  "outcomes": [
+    "分清 AlphaGo（产品事件）和 CNN（技术方法）",
+    "用自己的话解释「CNN 是一层层滤镜」",
+    "说清 2012 和 2016 分别是哪种拐点"
+  ],
+  "prerequisites": ["用过 ChatGPT 之类的对话产品", "不需要编程或数学基础"],
+  "takeaways": [
+    "三次跃迁是看、说、做，不是同一件事的三次升级",
+    "CNN 不写规则，它从数据里学特征",
+    "2012 是技术拐点，2016 是大众认知拐点"
+  ],
+  "audio": false,
+  "interactive": false,
+  "composition": {
+    "entry": "composition/index.html",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "screens": [
+    {
+      "id": "three-pictures",
+      "kicker": "01 / 开场",
+      "title": "三个画面，三次跃迁",
+      "summary": "棋盘、聊天框、会自己干活的电脑——它们不是同一件事。",
+      "transcript": "先看三个画面。2016 年，一台机器在围棋上赢了李世石。2022 年，一个聊天框让所有人第一次觉得，AI 什么都能聊。2026 年，AI 不再只是回答你，它开始自己打开文件、写代码、跑命令。问题来了：这三件事，是一件事吗？不是。它们是三次不同的跃迁：学会看，学会说，学会做。",
+      "keywords": ["2016", "2022", "2026", "跃迁"]
+    },
+    {
+      "id": "roadmap",
+      "kicker": "02 / 路线",
+      "title": "看、说、做、用",
+      "summary": "记住这四个字，就记住了整场。",
+      "transcript": "记住四个字就够了：看、说、做、用。上半场，我们讲 AI 怎么学会看和说；下半场，我们讲它怎么学会做，以及我们怎么用它。日期只是路标，能力跃迁才是主线。这一集只讲第一个字：看。",
+      "keywords": ["看", "说", "做", "用"]
+    },
+    {
+      "id": "board",
+      "kicker": "03 / 第一幕 · 看",
+      "title": "2016 年 3 月，首尔",
+      "summary": "DeepMind 的 AlphaGo 以 4 比 1 战胜李世石。",
+      "transcript": "2016 年 3 月，首尔。DeepMind 的 AlphaGo 以 4 比 1 战胜李世石。注意，是 DeepMind——谷歌在 2014 年收购了它，所以说「谷歌旗下」可以，但别把功劳全算给谷歌总部。这场比赛为什么震动？因为围棋长期被认为是「人类直觉的最后堡垒」。棋盘的变化比宇宙原子还多，机器不是靠穷举赢的。",
+      "keywords": ["AlphaGo", "DeepMind", "2016", "4:1"]
+    },
+    {
+      "id": "three-moves",
+      "kicker": "04 / 拆开看",
+      "title": "不是穷举，是看、想、练",
+      "summary": "CNN 看棋形，搜索推演几步，自我对弈练自己。",
+      "transcript": "它是靠「看」——看棋形；靠「想」——推演几步；靠「练」——自己跟自己下。看棋形的部分，用的就是卷积神经网络，CNN。但要说清楚：AlphaGo 不是「纯 CNN」。它用 CNN 策略网络和价值网络看棋形，用蒙特卡洛树搜索推演，用监督学习和强化学习训练自己。CNN 是其中「看」的那一部分，不是全部。",
+      "keywords": ["CNN", "MCTS", "自我对弈"]
+    },
+    {
+      "id": "filters",
+      "kicker": "05 / 一层一层",
+      "title": "CNN 是一层一层的滤镜",
+      "summary": "第一层看边缘，第二层看形状，最后拼成一只猫。",
+      "transcript": "你可以把它想成一层一层的滤镜：第一层看边缘，第二层看形状，第三层看眼睛、耳朵，最后拼成一只猫。每一层不需要人告诉它「这是猫的耳朵」，它只是把上一层的输出当成输入，找更复杂的图案。层数越多，能认出的东西越抽象。",
+      "keywords": ["卷积", "特征", "层级"]
+    },
+    {
+      "id": "no-rules",
+      "kicker": "06 / 换方法",
+      "title": "不写规则，学特征",
+      "summary": "以前我们写规则，真实世界的规则写不完。",
+      "transcript": "以前我们写规则：「有尖耳朵、有胡须、有尾巴」。但真实世界太复杂，规则写不完：侧脸怎么办？光线暗怎么办？被挡住一半怎么办？CNN 换了个办法：不写规则，给你看几百万张图，让它自己学特征。人只提供例子和答案，不提供判断规则。",
+      "keywords": ["规则", "数据", "特征学习"]
+    },
+    {
+      "id": "alexnet",
+      "kicker": "07 / 拐点",
+      "title": "工业拐点是 2012，不是 2016",
+      "summary": "AlexNet 把 ImageNet 错误率从 26.2% 降到 15.3%。",
+      "transcript": "这件事的拐点其实不是 2016，是 2012 年。AlexNet 在 ImageNet 比赛上把 Top-5 错误率从 26.2% 降到 15.3%，第二名差出一大截。从那以后，CNN 才真正开始被工业界大规模采用。所以顺序要讲对：先有 2012 的技术拐点，才有 2016 的大众认知拐点。",
+      "keywords": ["AlexNet", "2012", "ImageNet", "26.2%", "15.3%"]
+    },
+    {
+      "id": "everywhere",
+      "kicker": "08 / 扩散",
+      "title": "它先去了医院和工厂",
+      "summary": "AlphaGo 是让大众第一次「看见」它会看。",
+      "transcript": "2012 年之后，CNN 进了医疗影像、工业质检、人脸识别、OCR、手机相册。这些地方没有新闻头条，但它们才是这项技术真正落脚的位置。AlphaGo 做的是另一件事：它让大众第一次「看见」机器会看。技术和认知，是两条时间线。",
+      "keywords": ["医疗影像", "工业质检", "OCR"]
+    },
+    {
+      "id": "recap",
+      "kicker": "09 / 回顾",
+      "title": "看，是学出来的",
+      "summary": "这一章只讲了一件事：特征来自数据，不来自人写的规则。",
+      "transcript": "这一章只讲了一件事：AI 的「看」来自数据和特征，不来自人写下的规则。记住三个词：CNN 是方法，2012 是技术拐点，2016 是认知拐点。下一集，我们讲它怎么学会「说」——从文字接龙开始。",
+      "keywords": ["总结", "方法", "拐点"]
+    }
+  ],
+  "site": {
+    "homeUrl": "/courses",
+    "backLabel": "返回课程库"
+  },
+  "credits": {
+    "author": "AI Learning",
+    "updatedAt": "2026-11-07",
+    "sources": [
+      "Google：AlphaGo 官方博客",
+      "Nature 2016：Mastering the game of Go",
+      "China.org：AlphaGo 4:1 李世石",
+      "NeurIPS 2012：AlexNet"
+    ]
+  }
+}

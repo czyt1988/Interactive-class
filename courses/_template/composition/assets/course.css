@@ -1,0 +1,31 @@
+/* Course-scoped styles. Keep it small: scene styles live in each scene file. */
+
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("fonts/NotoSansSC-VF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b0c;
+}
+
+#root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.clip {
+  will-change: transform, opacity;
+}

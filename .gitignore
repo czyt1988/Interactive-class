@@ -1,0 +1,47 @@
+# Python 虚拟环境与缓存
+.venv*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# 构建产物与运行时数据
+/dist/
+/data/
+renders/
+*.db
+*.sqlite3
+
+# Windows 启动脚本的运行状态与临时文件
+/.run/
+/.tmp/
+*.log
+
+# 第三方运行时：由 scripts/sync_runtime.py 生成，见 runtime/VERSION.json
+/runtime/vendor/
+
+# Node / HyperFrames 创作工具
+node_modules/
+.hyperframes/
+*.mp4
+*.webm
+
+# 本地配置（.env.example 需要提交）
+.env
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 浏览器测试产物
+test-results/
+playwright-report/

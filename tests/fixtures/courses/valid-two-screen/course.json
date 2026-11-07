@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "slug": "valid-two-screen",
+  "title": "两屏测试课",
+  "subtitle": "一个用于契约测试的最小课程",
+  "summary": "这是一门只有两屏的最小课程，用来验证清单解析、时间合并和课程目录加载。它不包含外部素材，也不依赖任何网络资源。",
+  "description": "测试夹具：两屏、四秒，纯文字。",
+  "level": "beginner",
+  "tags": ["测试", "契约"],
+  "language": "zh-CN",
+  "status": "published",
+  "featured": false,
+  "order": 900,
+  "accent": "#2F6F5E",
+  "outcomes": ["验证两屏课程能被解析", "验证时间区间不重叠"],
+  "prerequisites": ["不需要预备知识"],
+  "takeaways": ["清单和 composition 的时间会合并", "错误会带字段和屏幕 id"],
+  "audio": false,
+  "interactive": false,
+  "composition": {
+    "entry": "composition/index.html",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "screens": [
+    {
+      "id": "hook",
+      "kicker": "01 / 开场",
+      "title": "第一屏",
+      "summary": "第一屏从第零秒开始，用来验证起始时间。",
+      "transcript": "这是第一屏的讲义，用来验证讲义字段能通过解析。",
+      "autoAdvance": false
+    },
+    {
+      "id": "split",
+      "kicker": "02 / 展开",
+      "title": "第二屏",
+      "summary": "第二屏从第二秒开始，用来验证结束时间。",
+      "transcript": "这是第二屏的讲义，用来验证两屏能被正确排序。",
+      "autoAdvance": false
+    }
+  ],
+  "site": {
+    "homeUrl": "/",
+    "backLabel": "返回课程库"
+  },
+  "credits": {
+    "author": "AI Learning",
+    "updatedAt": "2026-11-07",
+    "sources": []
+  }
+}

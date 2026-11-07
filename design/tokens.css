@@ -1,0 +1,31 @@
+/* AI Learning design tokens. Shared by the site and the course shell. */
+:root {
+  --paper: #f4efe6;
+  --paper-raised: #faf6ee;
+  --paper-deep: #ece3d3;
+  --ink: #16140f;
+  --ink-soft: #514b40;
+  --ink-faint: #857c6d;
+  --line: #d9cfbf;
+  --line-strong: #b9ad99;
+
+  --accent: #b8452b;
+  --accent-soft: #f0d9cf;
+  --accent-ink: #fff8f0;
+
+  --stage: #0c0e11;
+  --stage-raised: #15181d;
+  --stage-ink: #f6f1e6;
+  --stage-muted: #a9a294;
+  --stage-line: #2b2f36;
+
+  --font-sans: "Noto Sans SC", "Noto Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+
+  --maxw: 1240px;
+  --gutter: clamp(20px, 4vw, 56px);
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 0 rgba(22, 20, 15, 0.06), 0 18px 40px -32px rgba(22, 20, 15, 0.45);
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}

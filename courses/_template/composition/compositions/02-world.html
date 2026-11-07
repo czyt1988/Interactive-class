@@ -1,0 +1,77 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #14171c;
+      color: #f6f1e6;
+      font-family: "Noto Sans SC", sans-serif;
+    }
+
+    #s-world-title {
+      position: absolute;
+      left: 192px;
+      top: 300px;
+      width: 1536px;
+      font-size: 128px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    #s-world-lead {
+      position: absolute;
+      left: 192px;
+      top: 500px;
+      width: 1200px;
+      font-size: 46px;
+      line-height: 1.6;
+      color: #a9a294;
+    }
+
+    #s-world-note {
+      position: absolute;
+      left: 192px;
+      top: 800px;
+      font-family: ui-monospace, monospace;
+      font-size: 30px;
+      letter-spacing: 0.08em;
+      color: #e4572e;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-world" data-width="1920" data-height="1080">
+    <h1 id="s-world-title" class="clip" data-start="0.2" data-duration="13.4">第二屏讲什么</h1>
+    <p id="s-world-lead" class="clip" data-start="0.7" data-duration="12.9">
+      一句话论题：第二屏也只讲一件事。
+    </p>
+    <p id="s-world-note" class="clip" data-start="1.2" data-duration="12.4">
+      scene 用 fromTo，时间轴 paused: true
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo(
+      "#s-world-title",
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.2,
+    );
+    tl.fromTo(
+      "#s-world-lead",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      0.9,
+    );
+    tl.fromTo(
+      "#s-world-note",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.45, ease: "power2.out" },
+      1.6,
+    );
+
+    window.__timelines["s-world"] = tl;
+  </script>
+</template>

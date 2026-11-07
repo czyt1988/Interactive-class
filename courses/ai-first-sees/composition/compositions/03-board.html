@@ -1,0 +1,212 @@
+<template>
+  <style>
+    #root {
+      background: #f4efe6;
+      color: #16140f;
+    }
+
+    .bd-kicker {
+      position: absolute;
+      left: 192px;
+      top: 96px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      color: #a33a20;
+    }
+
+    .bd-title {
+      position: absolute;
+      left: 192px;
+      top: 156px;
+      width: 760px;
+      font-size: 108px;
+      line-height: 1.08;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+    }
+
+    .bd-score {
+      position: absolute;
+      left: 192px;
+      top: 470px;
+      display: flex;
+      align-items: baseline;
+      gap: 26px;
+      font-family: ui-monospace, monospace;
+      font-size: 96px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #2f6f5e;
+    }
+
+    .bd-score small {
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 34px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: #857c6d;
+    }
+
+    .bd-note {
+      position: absolute;
+      left: 192px;
+      top: 620px;
+      width: 660px;
+      font-size: 44px;
+      line-height: 1.55;
+      color: #514b40;
+    }
+
+    .bd-attrib {
+      position: absolute;
+      left: 192px;
+      top: 830px;
+      width: 660px;
+      font-size: 30px;
+      line-height: 1.6;
+      color: #857c6d;
+    }
+
+    .bd-board-wrap {
+      position: absolute;
+      left: 1030px;
+      top: 150px;
+      width: 740px;
+      height: 740px;
+    }
+
+    .bd-board {
+      position: absolute;
+      inset: 0;
+      background-color: #dfb878;
+      background-image:
+        linear-gradient(rgba(70, 46, 18, 0.45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(70, 46, 18, 0.45) 1px, transparent 1px);
+      background-size: 39px 39px;
+      background-position: 0 0;
+      border-radius: 6px;
+      box-shadow:
+        inset 0 0 0 1px rgba(70, 46, 18, 0.4),
+        0 26px 60px -40px rgba(22, 20, 15, 0.9);
+    }
+
+    .bd-star {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      margin: -5px 0 0 -5px;
+      border-radius: 50%;
+      background: rgba(70, 46, 18, 0.85);
+    }
+
+    .bd-stone {
+      position: absolute;
+      width: 33px;
+      height: 33px;
+      margin: -16.5px 0 0 -16.5px;
+      border-radius: 50%;
+    }
+
+    .bd-stone--b {
+      background: #0d0e10;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 5px 9px rgba(0, 0, 0, 0.42);
+    }
+
+    .bd-stone--w {
+      background: #fbf7ef;
+      box-shadow: 0 0 0 1px rgba(70, 46, 18, 0.5), 0 5px 9px rgba(0, 0, 0, 0.24);
+    }
+
+    .bd-caption {
+      position: absolute;
+      left: 1030px;
+      top: 928px;
+      width: 740px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+      color: #857c6d;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-board" data-width="1920" data-height="1080">
+    <p id="bd-kicker" class="clip bd-kicker" data-start="0.2" data-duration="17.7">
+      第一幕 · 看
+    </p>
+    <h1 id="bd-title" class="clip bd-title" data-start="0.3" data-duration="17.6">
+      2016 年 3 月，<br />首尔
+    </h1>
+
+    <div id="bd-score" class="clip bd-score" data-start="1.6" data-duration="16.3">
+      4 : 1<small>AlphaGo · 李世石</small>
+    </div>
+
+    <p id="bd-note" class="clip bd-note" data-start="3.0" data-duration="14.9">
+      围棋长期被认为是<br />「人类直觉的最后堡垒」。
+    </p>
+
+    <p id="bd-attrib" class="clip bd-attrib" data-start="12.6" data-duration="5.3">
+      DeepMind 出品；谷歌在 2014 年收购了它。
+    </p>
+
+    <div id="bd-board-wrap" class="clip bd-board-wrap" data-start="1.0" data-duration="16.9">
+      <div class="bd-board">
+        <span class="bd-star" style="left: 234px; top: 234px"></span>
+        <span class="bd-star" style="left: 156px; top: 156px"></span>
+        <span class="bd-star" style="left: 312px; top: 156px"></span>
+        <span class="bd-star" style="left: 156px; top: 312px"></span>
+        <span class="bd-star" style="left: 312px; top: 312px"></span>
+
+        <span id="bd-st-1" class="bd-stone bd-stone--b" style="left: 195px; top: 156px"></span>
+        <span id="bd-st-2" class="bd-stone bd-stone--w" style="left: 234px; top: 195px"></span>
+        <span id="bd-st-3" class="bd-stone bd-stone--b" style="left: 273px; top: 234px"></span>
+        <span id="bd-st-4" class="bd-stone bd-stone--w" style="left: 156px; top: 273px"></span>
+        <span id="bd-st-5" class="bd-stone bd-stone--b" style="left: 312px; top: 273px"></span>
+        <span id="bd-st-6" class="bd-stone bd-stone--w" style="left: 234px; top: 312px"></span>
+        <span id="bd-st-7" class="bd-stone bd-stone--b" style="left: 351px; top: 195px"></span>
+        <span id="bd-st-8" class="bd-stone bd-stone--w" style="left: 390px; top: 234px"></span>
+        <span id="bd-st-9" class="bd-stone bd-stone--b" style="left: 195px; top: 351px"></span>
+        <span id="bd-st-10" class="bd-stone bd-stone--w" style="left: 273px; top: 390px"></span>
+        <span id="bd-st-11" class="bd-stone bd-stone--b" style="left: 351px; top: 351px"></span>
+        <span id="bd-st-12" class="bd-stone bd-stone--w" style="left: 429px; top: 312px"></span>
+      </div>
+    </div>
+
+    <p id="bd-caption" class="clip bd-caption" data-start="13.4" data-duration="4.5">
+      19 × 19 · 变化比宇宙原子还多
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#bd-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+    tl.fromTo("#bd-title", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 0.3);
+    tl.fromTo("#bd-score", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.6);
+
+    tl.fromTo("#bd-board-wrap", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power2.out" }, 1.0);
+
+    const stones = Array.from({ length: 12 }, (_, i) => `#bd-st-${i + 1}`);
+    tl.fromTo(
+      stones,
+      { opacity: 0, scale: 1.7, y: -22 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out", stagger: 0.38 },
+      2.4,
+    );
+
+    tl.fromTo("#bd-note", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 3.0);
+
+    // 推近棋盘一角：棋子变成「棋形」。
+    tl.fromTo(
+      "#bd-board-wrap",
+      { scale: 1, x: 0, y: 0, transformOrigin: "30% 70%" },
+      { scale: 1.26, x: -36, y: -56, duration: 2.2, ease: "power2.inOut", immediateRender: false },
+      8.0,
+    );
+    tl.fromTo("#bd-attrib", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 12.6);
+    tl.fromTo("#bd-caption", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 13.4);
+
+    window.__timelines["s-board"] = tl;
+  </script>
+</template>

@@ -1,0 +1,26 @@
+# 仓库内文本统一 LF；Windows 批处理脚本保持 CRLF（同时保持 GBK 字节不变）
+* text=auto eol=lf
+
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制资源不做换行和文本处理
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.mp4 binary
+*.webm binary
+*.mp3 binary
+*.opus binary
+*.wav binary
+*.db binary
+*.sqlite3 binary
+*.pdf binary

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "slug": "_template",
+  "title": "课程模板",
+  "subtitle": "复制这个目录，改成你的课程",
+  "summary": "这是 AI Learning 的课程脚手架：两屏最小可构建课程，用来复制成新课程。复制后先改 slug、标题和文案，再逐屏替换 scene。",
+  "description": "模板课程，不参与构建。",
+  "level": "beginner",
+  "tags": ["模板"],
+  "language": "zh-CN",
+  "status": "draft",
+  "featured": false,
+  "order": 999,
+  "accent": "#E4572E",
+  "outcomes": [
+    "知道课程目录里哪些文件必须改",
+    "能构建并在浏览器里看到两屏"
+  ],
+  "prerequisites": ["读完 docs/course-contract.md"],
+  "takeaways": [
+    "一屏一个 scene，一个论题",
+    "时间由根 composition 决定，文案由 course.json 决定"
+  ],
+  "audio": false,
+  "interactive": false,
+  "composition": {
+    "entry": "composition/index.html",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "screens": [
+    {
+      "id": "hello",
+      "kicker": "01 / 开场",
+      "title": "第一屏说什么",
+      "summary": "一句话论题：这一屏只讲一件事。",
+      "transcript": "这一屏的讲义写在这里。讲义和屏幕文字要一致，不要互相矛盾。",
+      "autoAdvance": false
+    },
+    {
+      "id": "world",
+      "kicker": "02 / 展开",
+      "title": "第二屏讲什么",
+      "summary": "一句话论题：第二屏也只讲一件事。",
+      "transcript": "第二屏的讲义写在这里。",
+      "autoAdvance": false
+    }
+  ],
+  "site": {
+    "homeUrl": "/",
+    "backLabel": "返回课程库"
+  },
+  "credits": {
+    "author": "AI Learning",
+    "updatedAt": "2026-11-07",
+    "sources": []
+  }
+}

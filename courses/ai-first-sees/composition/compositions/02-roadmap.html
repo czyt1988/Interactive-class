@@ -1,0 +1,152 @@
+<template>
+  <style>
+    #root {
+      background: #f4efe6;
+      color: #16140f;
+    }
+
+    .rm-kicker {
+      position: absolute;
+      left: 192px;
+      top: 96px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      color: #a33a20;
+    }
+
+    .rm-title {
+      position: absolute;
+      left: 192px;
+      top: 150px;
+      width: 1400px;
+      font-size: 96px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .rm-word {
+      position: absolute;
+      top: 380px;
+      width: 240px;
+      text-align: center;
+      font-size: 240px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: #16140f;
+    }
+
+    .rm-word--1 { left: 330px; }
+    .rm-word--2 { left: 650px; }
+    .rm-word--3 { left: 970px; }
+    .rm-word--4 { left: 1290px; color: #2f6f5e; }
+
+    .rm-axis {
+      position: absolute;
+      left: 330px;
+      top: 660px;
+      width: 1200px;
+      height: 1px;
+      background: #b9ad99;
+      transform-origin: left center;
+    }
+
+    .rm-half {
+      position: absolute;
+      top: 690px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+      color: #857c6d;
+    }
+
+    .rm-half--1 { left: 330px; }
+    .rm-half--2 { left: 970px; }
+
+    .rm-close {
+      position: absolute;
+      left: 192px;
+      top: 810px;
+      width: 1536px;
+      font-size: 56px;
+      line-height: 1.5;
+      color: #514b40;
+    }
+
+    .rm-close b {
+      color: #2f6f5e;
+      font-weight: 700;
+    }
+
+    .rm-tag {
+      position: absolute;
+      left: 192px;
+      top: 936px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.1em;
+      color: #a33a20;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-roadmap" data-width="1920" data-height="1080">
+    <p id="rm-kicker" class="clip rm-kicker" data-start="0.2" data-duration="14.7">
+      第二幕之前 · 先看地图
+    </p>
+    <h1 id="rm-title" class="clip rm-title" data-start="0.3" data-duration="14.6">
+      四个字，记住整场
+    </h1>
+
+    <span id="rm-w1" class="clip rm-word rm-word--1" data-start="1.1" data-duration="13.8">看</span>
+    <span id="rm-w2" class="clip rm-word rm-word--2" data-start="1.9" data-duration="13">说</span>
+    <span id="rm-w3" class="clip rm-word rm-word--3" data-start="2.7" data-duration="12.2">做</span>
+    <span id="rm-w4" class="clip rm-word rm-word--4" data-start="4.1" data-duration="10.8">用</span>
+
+    <div id="rm-axis" class="clip rm-axis" data-start="6.4" data-duration="8.5"></div>
+    <span id="rm-half-1" class="clip rm-half rm-half--1" data-start="7.0" data-duration="7.9">
+      上半场 · 看和说
+    </span>
+    <span id="rm-half-2" class="clip rm-half rm-half--2" data-start="7.3" data-duration="7.6">
+      下半场 · 做和用
+    </span>
+
+    <p id="rm-close" class="clip rm-close" data-start="9.6" data-duration="5.3">
+      这一集，只讲第一个字：<b>看</b>。
+    </p>
+    <p id="rm-tag" class="clip rm-tag" data-start="10.4" data-duration="4.5">
+      日期是路标，能力跃迁才是主线
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#rm-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+    tl.fromTo("#rm-title", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.3);
+
+    tl.fromTo("#rm-w1", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 1.1);
+    tl.fromTo("#rm-w2", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 1.9);
+    tl.fromTo("#rm-w3", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 2.7);
+    tl.fromTo("#rm-w4", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 4.1);
+
+    // 第四个出现后，前三个缩小，形成 3 + 1 的层级。
+    tl.fromTo(
+      ["#rm-w1", "#rm-w2", "#rm-w3"],
+      { scale: 1, y: 0 },
+      { scale: 0.62, y: 42, transformOrigin: "50% 60%", duration: 0.7, ease: "power2.inOut" },
+      5.2,
+    );
+    tl.fromTo("#rm-w4", { scale: 1 }, { scale: 1.08, transformOrigin: "50% 60%", duration: 0.7, ease: "power2.inOut" }, 5.2);
+
+    tl.fromTo("#rm-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, 6.4);
+    tl.fromTo("#rm-half-1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 7.0);
+    tl.fromTo("#rm-half-2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 7.3);
+
+    tl.fromTo("#rm-close", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 9.6);
+    tl.fromTo("#rm-tag", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 10.4);
+
+    window.__timelines["s-roadmap"] = tl;
+  </script>
+</template>

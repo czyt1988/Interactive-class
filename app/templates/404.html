@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}页面不存在 · {{ site.title }}{% endblock %}
+{% block description %}这个地址没有对应的页面。{% endblock %}
+
+{% block content %}
+<section class="not-found">
+  <p class="eyebrow">404</p>
+  <h1>这一屏不存在。</h1>
+  <p class="lede">链接可能写错了，或者课程已经移动。回到首页，或者去课程库找找。</p>
+  <div class="hero__actions">
+    <a class="button button--primary" href="/">回到首页</a>
+    <a class="button button--ghost" href="/courses">浏览课程库</a>
+  </div>
+</section>
+{% endblock %}

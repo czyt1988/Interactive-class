@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/course.css" />
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="26"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="s-hello"
+        data-screen-id="hello"
+        data-composition-id="s-hello"
+        data-composition-src="compositions/01-hello.html"
+        data-start="0"
+        data-duration="12"
+        data-track-index="0"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-world"
+        data-screen-id="world"
+        data-composition-id="s-world"
+        data-composition-src="compositions/02-world.html"
+        data-start="12"
+        data-duration="14"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

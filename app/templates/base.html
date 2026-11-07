@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ site.title }}{% endblock %}</title>
+    <meta name="description" content="{% block description %}{{ site.description }}{% endblock %}" />
+    <link rel="canonical" href="{{ canonical }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="{{ site.title }}" />
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}" />
+    <meta property="og:url" content="{{ canonical }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/tokens.css" />
+    <link rel="stylesheet" href="/static/site.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="wordmark" href="/" aria-label="AI Learning 首页">
+          <span class="wordmark__mark" aria-hidden="true">AI</span>
+          <span class="wordmark__text">Learning</span>
+        </a>
+        <nav class="site-nav" aria-label="主导航">
+          <a href="/courses" {% if page == "library" %}aria-current="page"{% endif %}>课程库</a>
+          <a href="/about" {% if page == "about" %}aria-current="page"{% endif %}>关于</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p class="site-footer__note">
+          <strong>{{ site.title }}</strong> · 把 AI 讲清楚，一屏一屏地。
+        </p>
+        <p class="site-footer__meta">
+          网页动画课程 · 无 CDN · 可键盘操作 · 每屏都有讲义
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

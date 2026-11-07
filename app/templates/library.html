@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}课程库 · {{ site.title }}{% endblock %}
+{% block description %}全部已发布的 AI Learning 课程。按难度和主题筛选，每门课都可以独立打开。{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">课程库</p>
+  <h1>所有课程</h1>
+  <p class="lede">一门课是一个独立作品：有自己的封面、动画、讲义和 URL。从任意一门开始，都不需要先读别的。</p>
+</section>
+
+<section class="library" aria-labelledby="library-title">
+  <h2 id="library-title" class="visually-hidden">课程列表</h2>
+
+  <nav class="filters" aria-label="课程筛选">
+    <div class="filters__group">
+      <span class="filters__label">难度</span>
+      <a class="chip {% if not selected_level %}chip--active{% endif %}" href="/courses{% if selected_tag %}?tag={{ selected_tag }}{% endif %}">全部</a>
+      {% for value, label in levels %}
+        <a
+          class="chip {% if selected_level == value %}chip--active{% endif %}"
+          href="/courses?level={{ value }}{% if selected_tag %}&amp;tag={{ selected_tag }}{% endif %}"
+        >{{ label }}</a>
+      {% endfor %}
+    </div>
+    {% if tags %}
+      <div class="filters__group">
+        <span class="filters__label">主题</span>
+        <a class="chip {% if not selected_tag %}chip--active{% endif %}" href="/courses{% if selected_level %}?level={{ selected_level }}{% endif %}">全部</a>
+        {% for tag in tags %}
+          <a
+            class="chip {% if selected_tag == tag %}chip--active{% endif %}"
+            href="/courses?{% if selected_level %}level={{ selected_level }}&amp;{% endif %}tag={{ tag }}"
+          >{{ tag }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </nav>
+
+  {% if courses %}
+    <div class="course-grid">
+      {% for course in courses %}
+        {% set index = loop.index %}
+        {% include "partials/course_card.html" with context %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p class="empty-state__kicker">没有匹配的课程</p>
+      <h3>这个筛选条件下还没有课程。</h3>
+      <p>换一个难度或主题，或者回到全部课程。</p>
+      <a class="button button--ghost" href="/courses">清除筛选</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "hyperframes": "0.9.19",
+  "gsap": "3.15.0",
+  "player": "hyperframes-player.global.js",
+  "runtime": "hyperframe.runtime.iife.js",
+  "deckVersion": "1.0.0",
+  "fonts": {
+    "courses/_template/composition/assets/fonts/NotoSansSC-VF.woff2": "15ba42cf7c321f5127ee974ebc78fe408846b80fb85eda8909a3f94b75f32ba1",
+    "app/static/fonts/NotoSansSC-VF.woff2": "c8823ed8148260807c542aeec37e0461b0c3562c0e3785bca25c661d79743779",
+    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "49d72a2c4a5b2b552c22b2943a3a5003a1e432e47f7eee417627bd27c6e0ecb9"
+  },
+  "tokens": {
+    "runtime/tokens.css": "6ca942310535e91938a3783712845154eacf06cf0a6451946cea3d49db70bb75",
+    "app/static/tokens.css": "6ca942310535e91938a3783712845154eacf06cf0a6451946cea3d49db70bb75"
+  },
+  "files": {
+    "vendor": {
+      "hyperframes-player.global.js": "faa8cd344b306de1351e3bf4ab9a32b713464b68656b4a23ce8bd359a9dc222d",
+      "hyperframe.runtime.iife.js": "ee05fb04973a2db6157f4a048ec66ce118cb7b2ca6e9e279295726b985ddb79d"
+    },
+    "gsap": {
+      "courses/_template/composition/assets/vendor/gsap.min.js": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb",
+      "runtime/vendor/gsap.min.js": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb",
+      "courses/ai-first-sees/composition/assets/vendor/gsap.min.js": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+    },
+    "fonts": {}
+  }
+}

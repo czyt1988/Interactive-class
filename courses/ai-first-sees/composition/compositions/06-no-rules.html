@@ -1,0 +1,218 @@
+<template>
+  <style>
+    #root {
+      background: #14171c;
+      color: #f6f1e6;
+    }
+
+    .nr-kicker {
+      position: absolute;
+      left: 192px;
+      top: 96px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      color: #2fb68a;
+    }
+
+    .nr-title {
+      position: absolute;
+      left: 192px;
+      top: 150px;
+      width: 1400px;
+      font-size: 96px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .nr-card {
+      position: absolute;
+      left: 192px;
+      width: 560px;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      position: absolute;
+      border: 1px solid #2b2f36;
+      border-radius: 12px;
+      background: #191d23;
+      font-size: 38px;
+      color: #d8d1c3;
+    }
+
+    .nr-card--bad {
+      border-color: rgba(232, 91, 74, 0.45);
+      color: #f0a196;
+    }
+
+    .nr-strike {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 40px;
+      height: 3px;
+      background: #e85b4a;
+      transform-origin: left center;
+      border-radius: 2px;
+      z-index: 1;
+    }
+
+    .nr-card-text {
+      position: relative;
+      z-index: 2;
+    }
+
+    .nr-verdict {
+      position: absolute;
+      left: 192px;
+      top: 880px;
+      width: 620px;
+      font-size: 46px;
+      font-weight: 700;
+      color: #e85b4a;
+      letter-spacing: -0.02em;
+    }
+
+    .nr-grid {
+      position: absolute;
+      left: 880px;
+      top: 420px;
+      width: 848px;
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 14px;
+    }
+
+    .nr-dot {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(47, 182, 138, 0.16);
+      border: 1px solid rgba(47, 182, 138, 0.4);
+    }
+
+    .nr-dot--lit {
+      background: #2fb68a;
+      border-color: #2fb68a;
+    }
+
+    .nr-side-label {
+      position: absolute;
+      left: 880px;
+      top: 372px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.12em;
+      color: #a9a294;
+    }
+
+    .nr-claim {
+      position: absolute;
+      left: 880px;
+      top: 800px;
+      width: 848px;
+      font-size: 42px;
+      line-height: 1.5;
+      color: #d8d1c3;
+    }
+
+    .nr-claim b {
+      color: #2fb68a;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-no-rules" data-width="1920" data-height="1080">
+    <p id="nr-kicker" class="clip nr-kicker" data-start="0.2" data-duration="20.7">
+      换一种方法
+    </p>
+    <h1 id="nr-title" class="clip nr-title" data-start="0.3" data-duration="20.6">
+      不写规则，让它自己学
+    </h1>
+    <div id="nr-card-1" class="clip nr-card" data-start="1.2" data-duration="19.7" style="top: 360px">
+      <span class="nr-card-text">有尖耳朵</span>
+      <i id="nr-strike-1" class="clip nr-strike" data-start="7.4" data-duration="13.5"></i>
+    </div>
+    <div id="nr-card-2" class="clip nr-card" data-start="2.2" data-duration="18.7" style="top: 460px">
+      <span class="nr-card-text">有胡须</span>
+      <i id="nr-strike-2" class="clip nr-strike" data-start="8" data-duration="12.9"></i>
+    </div>
+    <div id="nr-card-3" class="clip nr-card" data-start="3.2" data-duration="17.7" style="top: 560px">
+      <span class="nr-card-text">有尾巴</span>
+      <i id="nr-strike-3" class="clip nr-strike" data-start="8.6" data-duration="12.3"></i>
+    </div>
+    <div id="nr-card-4" class="clip nr-card nr-card--bad" data-start="4.8" data-duration="16.1" style="top: 660px">
+      <span class="nr-card-text">侧脸怎么办？</span>
+      <i id="nr-strike-4" class="clip nr-strike" data-start="9.2" data-duration="11.7"></i>
+    </div>
+    <div id="nr-card-5" class="clip nr-card nr-card--bad" data-start="5.8" data-duration="15.1" style="top: 760px">
+      <span class="nr-card-text">光线暗、被挡住一半呢？</span>
+      <i id="nr-strike-5" class="clip nr-strike" data-start="9.8" data-duration="11.1"></i>
+    </div>
+
+    <p id="nr-verdict" class="clip nr-verdict" data-start="9.0" data-duration="11.9">
+      规则写不完。
+    </p>
+
+    <p id="nr-side-label" class="clip nr-side-label" data-start="10.4" data-duration="10.5">
+      换成「看例子」
+    </p>
+
+    <div id="nr-grid" class="clip nr-grid" data-start="10.8" data-duration="10.1">
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+      <span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span><span class="nr-dot"></span>
+    </div>
+
+    <p id="nr-claim" class="clip nr-claim" data-start="16.0" data-duration="4.9">
+      人只提供<b>例子和答案</b>，不提供判断规则；<br />特征由网络自己学出来。
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#nr-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+    tl.fromTo("#nr-title", { opacity: 0, y: 42 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 0.3);
+
+    tl.fromTo("#nr-card-1", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.42, ease: "power2.out" }, 1.2);
+    tl.fromTo("#nr-card-2", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.42, ease: "power2.out" }, 2.2);
+    tl.fromTo("#nr-card-3", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.42, ease: "power2.out" }, 3.2);
+    tl.fromTo("#nr-card-4", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.42, ease: "power2.out" }, 4.8);
+    tl.fromTo("#nr-card-5", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.42, ease: "power2.out" }, 5.8);
+
+    tl.fromTo("#nr-strike-1", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power2.inOut" }, 7.4);
+    tl.fromTo("#nr-strike-2", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power2.inOut" }, 8.0);
+    tl.fromTo("#nr-strike-3", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power2.inOut" }, 8.6);
+    tl.fromTo("#nr-strike-4", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power2.inOut" }, 9.2);
+    tl.fromTo("#nr-strike-5", { scaleX: 0 }, { scaleX: 1, duration: 0.34, ease: "power2.inOut" }, 9.8);
+
+    tl.fromTo("#nr-verdict", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 9.0);
+
+    tl.fromTo("#nr-side-label", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 10.4);
+    tl.fromTo("#nr-grid", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "none" }, 10.8);
+
+    const dots = gsap.utils.toArray("#nr-grid .nr-dot");
+    tl.fromTo(
+      dots,
+      { opacity: 0.25, scale: 0.55 },
+      { opacity: 1, scale: 1, duration: 0.34, ease: "power2.out", stagger: 0.02 },
+      11.0,
+    );
+
+    tl.fromTo("#nr-claim", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 16.0);
+
+    window.__timelines["s-no-rules"] = tl;
+  </script>
+</template>

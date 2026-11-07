@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}关于 · {{ site.title }}{% endblock %}
+{% block description %}AI Learning 的方法论、课程制作流程和第三方致谢。课程是独立静态包，站点只做封面和目录。{% endblock %}
+
+{% block content %}
+<section class="page-head page-head--narrow">
+  <p class="eyebrow">关于</p>
+  <h1>课程是一门手艺，<br />不是一篇文章。</h1>
+  <p class="lede">
+    AI Learning 想做的不是“把教材搬上网”，而是给每个概念找到一个非动不可的画面。
+    一屏只讲一件事，讲完就停；学习者自己控制节奏。
+  </p>
+</section>
+
+<section class="prose" aria-labelledby="principles-title">
+  <h2 id="principles-title">六条不能删的原则</h2>
+  <ol class="principles">
+    <li><strong>一屏只讲一件事。</strong>一屏里出现两个中心概念，就拆成两屏。屏幕不是容器，是节拍。</li>
+    <li><strong>动画要承担论证。</strong>动画用来展示关系、过程、因果和变化。删掉之后论证还完整，就不要让它动。</li>
+    <li><strong>先直觉，后术语。</strong>先给一个具体例子，再给它名字。不用定义解释定义。</li>
+    <li><strong>每一屏都能停下来读。</strong>关键信息不能只存在于运动里。暂停后要看得懂，讲义里要读得到。</li>
+    <li><strong>课程是独立作品。</strong>每门课有自己的封面、素材、播放器和 URL，不依赖网站存在。</li>
+    <li><strong>网站退后，课程向前。</strong>网站是封面和索引，进入课程之后，界面应该安静下来。</li>
+  </ol>
+</section>
+
+<section class="prose" aria-labelledby="process-title">
+  <h2 id="process-title">一门课怎么做出来</h2>
+  <ol class="process">
+    <li>
+      <span class="process__step">01</span>
+      <div><h3>先写脚本</h3><p>学习者是誰、学完能做什么、每屏一句话论题、看见什么、动画如何论证。没有脚本，不写 HTML。</p></div>
+    </li>
+    <li>
+      <span class="process__step">02</span>
+      <div><h3>再做动画</h3><p>一屏一个 scene，逐屏做、逐屏检查。每屏看 0%、50%、90% 三个时间点，确认最后停在稳定帧。</p></div>
+    </li>
+    <li>
+      <span class="process__step">03</span>
+      <div><h3>最后构建和验收</h3><p>构建成独立静态包，在站点和普通静态服务器上各走一遍；键盘、讲义、深链、减少动态效果都要过。</p></div>
+    </li>
+  </ol>
+</section>
+
+<section class="prose" aria-labelledby="stack-title">
+  <h2 id="stack-title">技术骨架</h2>
+  <p>
+    站点是 FastAPI + Jinja2，服务端渲染；课程是独立的静态包，用 HyperFrames 播放 GSAP 时间轴。
+    课程内容在文件里，用户与会话在 SQLite；课程包不依赖数据库也能完整播放。
+    运行时不引用 CDN，字体、播放器、动画库全部随课程分发。
+  </p>
+  <p>
+    课程页可以脱离网站单独部署。这意味着它不能被锁进某个平台，也不会因为网站改版而失效。
+  </p>
+</section>
+
+<section class="prose" aria-labelledby="credits-title">
+  <h2 id="credits-title">致谢</h2>
+  <ul class="credits">
+    <li><a href="https://hyperframes.heygen.com" rel="noopener noreferrer">HyperFrames</a>：HTML 动画与浏览器内播放器，Apache-2.0。</li>
+    <li><a href="https://gsap.com" rel="noopener noreferrer">GSAP</a>：动画时间轴。</li>
+    <li><a href="https://fonts.google.com/noto/specimen/Noto+Sans+SC" rel="noopener noreferrer">Noto Sans SC</a>：中文正文字体，SIL Open Font License。</li>
+    <li><a href="https://fastapi.tiangolo.com" rel="noopener noreferrer">FastAPI</a> 与 <a href="https://jinja.palletsprojects.com" rel="noopener noreferrer">Jinja2</a>：站点后端与模板。</li>
+  </ul>
+  <p class="prose__note">课程内容参考了公开的论文、官方博客和产品文档；事实口径与来源随课程记录。</p>
+</section>
+{% endblock %}

@@ -1,0 +1,285 @@
+{# Course page shell. Rendered at build time by scripts/build_courses.py.
+   Context: course, screens, site, theme, progress, build, manifest_json, asset_query. #}
+<!doctype html>
+<html lang="{{ course.language }}" data-course="{{ course.slug }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ course.title }} · {{ site.title }}</title>
+    <meta name="description" content="{{ course.summary }}" />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="{{ build.courseUrl }}" />
+    <link rel="icon" href="data:," />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="{{ site.title }}" />
+    <meta property="og:title" content="{{ course.title }}" />
+    <meta property="og:description" content="{{ course.summary }}" />
+    <meta property="og:url" content="{{ build.courseUrl }}" />
+    {% if theme.coverUrl %}
+      <meta property="og:image" content="{{ theme.coverUrl }}" />
+      <link rel="preload" as="image" href="{{ theme.coverUrl }}" />
+    {% endif %}
+
+    <style>
+      :root {
+        --deck-accent: {{ theme.accent }};
+      }
+      {% if theme.fontUrl %}
+      @font-face {
+        font-family: "Noto Sans SC";
+        src: url("{{ theme.fontUrl }}") format("woff2");
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      {% endif %}
+    </style>
+    <link rel="stylesheet" href="./runtime/tokens.css{{ asset_query }}" />
+    <link rel="stylesheet" href="./runtime/course-deck.css{{ asset_query }}" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LearningResource",
+        "name": {{ course.title | tojson }},
+        "description": {{ course.summary | tojson }},
+        "inLanguage": {{ course.language | tojson }},
+        "educationalLevel": {{ course.level | tojson }},
+        "timeRequired": "PT{{ course.composition.duration | round | int }}S",
+        "numberOfCredits": {{ course.stats.screenCount }},
+        "url": {{ build.courseUrl | tojson }},
+        "author": { "@type": "Organization", "name": {{ (course.credits.author or site.title) | tojson }} }
+      }
+    </script>
+  </head>
+  <body data-deck-state="cover" class="deck">
+    <a class="deck-skip" href="#cover">跳到课程封面</a>
+
+    <div class="deck-shell">
+      {# ---------------------------------------------------------------- cover #}
+      <section id="cover" class="cover" aria-labelledby="cover-title">
+        <div class="cover__inner">
+          <div class="cover__main">
+            <p class="cover__eyebrow">
+              <span class="cover__dot" aria-hidden="true"></span>
+              {{ course.credits.updatedAt or "" }}{% if course.credits.updatedAt %} · {% endif %}{{
+                course.level | replace("beginner", "入门") | replace("intermediate", "进阶") | replace("advanced", "高级")
+              }}
+            </p>
+            <h1 id="cover-title" class="cover__title">{{ course.title }}</h1>
+            {% if course.subtitle %}
+              <p class="cover__subtitle">{{ course.subtitle }}</p>
+            {% endif %}
+            <p class="cover__summary">{{ course.summary }}</p>
+
+            {% if course.outcomes %}
+              <div class="cover__block">
+                <h2 class="cover__label">学完能</h2>
+                <ul class="cover__outcomes">
+                  {% for outcome in course.outcomes %}<li>{{ outcome }}</li>{% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            {% if course.prerequisites %}
+              <div class="cover__block">
+                <h2 class="cover__label">先修</h2>
+                <p class="cover__prereq">{{ course.prerequisites | join(" · ") }}</p>
+              </div>
+            {% endif %}
+
+            <div class="cover__actions">
+              <button id="btn-start" class="btn btn--primary" type="button">开始学习</button>
+              <button id="btn-resume" class="btn btn--ghost" type="button" hidden></button>
+            </div>
+            <p id="deck-deep-hint" class="cover__hint" hidden></p>
+
+            <dl class="cover__meta">
+              <div><dt>屏数</dt><dd>{{ course.stats.screenCount }} 屏</dd></div>
+              <div><dt>时长</dt><dd>{{ mmss(course.stats.durationSeconds) }}</dd></div>
+              <div><dt>级别</dt><dd>{{ course.level }}</dd></div>
+              <div><dt>语言</dt><dd>{{ course.language }}</dd></div>
+            </dl>
+          </div>
+
+          <div class="cover__aside">
+            <h2 class="cover__label">这门课讲什么</h2>
+            <ol class="outline" aria-label="章节大纲">
+              {% for screen in screens %}
+                <li>
+                  <button
+                    type="button"
+                    class="outline__item"
+                    data-screen-id="{{ screen.id }}"
+                    data-index="{{ screen.index }}"
+                  >
+                    <span class="outline__num">{{ "%02d"|format(screen.index + 1) }}</span>
+                    <span class="outline__text">
+                      <span class="outline__title">{{ screen.title }}</span>
+                      <span class="outline__summary">{{ screen.summary }}</span>
+                    </span>
+                    <span class="outline__time">{{ mmss(screen.duration) }}</span>
+                  </button>
+                </li>
+              {% endfor %}
+            </ol>
+            {% if site.homeUrl %}
+              <a class="cover__back" href="{{ site.homeUrl }}">← {{ site.backLabel }}</a>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      {# ---------------------------------------------------------------- stage #}
+      <section id="stage-wrap" class="stage-wrap" aria-label="课程播放器" hidden>
+        <div id="stage" class="stage" data-poster="{{ theme.coverUrl or '' }}">
+          <hyperframes-player
+            id="hf-player"
+            runtime-src="./runtime/vendor/hyperframe.runtime.iife.js"
+            width="{{ course.composition.width }}"
+            height="{{ course.composition.height }}"
+            {% if theme.coverUrl %}poster="{{ theme.coverUrl }}"{% endif %}
+            muted
+            disable-click-to-play
+          ></hyperframes-player>
+
+          <div id="loading" class="stage__veil stage__veil--loading" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <p>正在准备第一帧…</p>
+          </div>
+          <div id="transition" class="stage__veil stage__veil--transition" hidden aria-hidden="true"></div>
+        </div>
+
+        <div class="deck-bar">
+          <div class="chapter">
+            <p id="chapter-counter" class="chapter__counter">01 / {{ "%02d"|format(course.stats.screenCount) }}</p>
+            <p id="chapter-kicker" class="chapter__kicker"></p>
+            <h2 id="chapter-title" class="chapter__title"></h2>
+            <p id="chapter-summary" class="chapter__summary"></p>
+          </div>
+
+          <div class="progress" aria-hidden="true">
+            <span id="course-progress-fill" class="progress__fill"></span>
+          </div>
+
+          <div class="controls" role="group" aria-label="播放控制">
+            <button id="btn-prev" class="control" type="button" aria-label="上一屏">
+              <span aria-hidden="true">←</span><span class="control__label">上一屏</span>
+            </button>
+
+            <button id="btn-play" class="control control--primary" type="button" aria-pressed="false" aria-label="播放这一屏">
+              <span class="control__icon" aria-hidden="true"></span>
+              <span class="control__label">播放</span>
+            </button>
+
+            <button id="btn-next" class="control" type="button" aria-label="下一屏">
+              <span class="control__label">下一屏</span><span aria-hidden="true">→</span>
+            </button>
+
+            <span class="control__sep" aria-hidden="true"></span>
+
+            <button id="btn-replay" class="control control--icon" type="button" aria-label="重播这一屏" title="重播这一屏（R 不可用，点击即可）">
+              <span aria-hidden="true">↺</span>
+            </button>
+            <button id="btn-transcript" class="control control--icon" type="button" aria-label="打开讲义（T）" title="讲义（T）">
+              <span aria-hidden="true">☰</span>
+            </button>
+            {% if course.audio %}
+              <button id="btn-sound" class="control control--icon" type="button" aria-pressed="false" aria-label="开关声音">
+                <span aria-hidden="true">♪</span>
+              </button>
+            {% endif %}
+            <button id="btn-fullscreen" class="control control--icon" type="button" aria-pressed="false" aria-label="全屏（F）" title="全屏（F）">
+              <span aria-hidden="true">⛶</span>
+            </button>
+
+            <div class="clock" aria-hidden="true">
+              <span id="clock-now">0:00</span>
+              <span class="clock__bar"><span id="clock-fill" class="clock__fill"></span></span>
+              <span id="clock-total">0:00</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="deck-hint">
+          键盘：← → 切屏 · 空格 播放/暂停 · T 讲义 · F 全屏 · Esc 关闭讲义
+        </p>
+      </section>
+
+      {# ------------------------------------------------------------- complete #}
+      <section id="complete" class="complete" aria-labelledby="complete-title" hidden tabindex="-1">
+        <p class="complete__eyebrow">课程结束</p>
+        <h2 id="complete-title" class="complete__title"></h2>
+        <p id="complete-lead" class="complete__lead"></p>
+        <section id="takeaways-section" class="complete__block">
+          <h3 class="complete__label">带走这几条</h3>
+          <ul id="takeaways" class="complete__list"></ul>
+        </section>
+        <div class="complete__actions">
+          <button id="complete-replay" class="btn btn--primary" type="button">从头再看一遍</button>
+          {% if site.homeUrl %}
+            <a class="btn btn--ghost" href="{{ site.homeUrl }}">{{ site.backLabel }}</a>
+          {% endif %}
+        </div>
+      </section>
+
+      {# ---------------------------------------------------------------- error #}
+      <section id="error" class="error" aria-labelledby="error-title" hidden tabindex="-1">
+        <p class="error__eyebrow">播放遇到问题</p>
+        <h2 id="error-title" class="error__title">动画没有加载出来</h2>
+        <p id="error-message" class="error__message"></p>
+        <p id="error-code" class="error__code"></p>
+        <p class="error__hint">
+          课程的文字内容仍然可读：可以打开讲义，或者回到封面查看章节大纲。
+        </p>
+        <div class="error__actions">
+          <button id="btn-retry" class="btn btn--primary" type="button">重试</button>
+          <button id="btn-error-back" class="btn btn--ghost" type="button">回到封面</button>
+        </div>
+        <p id="error-meta" class="error__meta"></p>
+      </section>
+    </div>
+
+    {# ------------------------------------------------------------- transcript #}
+    <aside id="transcript" class="drawer" aria-labelledby="transcript-title" hidden>
+      <div class="drawer__panel">
+        <header class="drawer__head">
+          <div>
+            <p class="drawer__eyebrow">讲义</p>
+            <h2 id="transcript-title" class="drawer__title"></h2>
+          </div>
+          <button id="transcript-close" class="drawer__close" type="button" aria-label="关闭讲义">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
+        <div id="transcript-body" class="drawer__body"></div>
+        <div id="transcript-keywords" class="drawer__keywords" hidden></div>
+        <footer class="drawer__foot">
+          <p>讲义和屏幕文字一致；修改内容时两边一起改。</p>
+        </footer>
+      </div>
+      <div class="drawer__scrim" aria-hidden="true"></div>
+    </aside>
+
+    <p id="deck-announcer" class="visually-hidden" aria-live="polite"></p>
+
+    <noscript>
+      <div class="noscript">
+        <p><strong>动画需要 JavaScript。</strong>你仍然可以阅读上面的课程大纲和每屏摘要。</p>
+        <p>如果这是学习环境里的限制，请改用支持脚本的浏览器打开。</p>
+      </div>
+    </noscript>
+
+    <script type="application/json" id="course-data">{{ manifest_json | safe }}</script>
+    {% if progress %}
+      <script>
+        window.__COURSE_PROGRESS__ = {
+          endpoint: {{ progress.endpoint | tojson }},
+          origin: {{ progress.origin | tojson }},
+        };
+      </script>
+    {% endif %}
+    <script src="./runtime/vendor/hyperframes-player.global.js{{ asset_query }}"></script>
+    <script type="module" src="./runtime/course-deck.js{{ asset_query }}"></script>
+  </body>
+</html>

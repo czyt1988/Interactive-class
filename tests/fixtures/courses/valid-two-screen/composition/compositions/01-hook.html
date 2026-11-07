@@ -1,0 +1,29 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #0b0b0c;
+      color: #f6f2e9;
+    }
+    #s-hook-title {
+      position: absolute;
+      left: 192px;
+      top: 300px;
+      font-size: 132px;
+    }
+  </style>
+  <div id="root" data-composition-id="s-hook" data-width="1920" data-height="1080">
+    <h1 id="s-hook-title" class="clip" data-start="0.2" data-duration="1.6">第一屏</h1>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(
+      "#s-hook-title",
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" },
+      0.2,
+    );
+    window.__timelines["s-hook"] = tl;
+  </script>
+</template>

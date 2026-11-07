@@ -1,0 +1,1225 @@
+# 架构设计：AI Learning
+
+> 版本 v0.1 · 2026-11
+> 本文基于 HyperFrames 0.9.19 的 composition、player 和 runtime 能力设计。升级 HyperFrames 前，先读第 9.8 节。
+
+## 一页结论
+
+- 站点是**封面和目录**：FastAPI + Jinja2 服务端渲染，链接到课程，不把课程嵌进 iframe。
+- 课程是**独立静态包**：自带播放器运行时、composition、字体和封面，可以单独部署。
+- 一门课一个 HyperFrames composition，一屏一个 scene；播放器用 `range-start` / `range-end` 播放当前屏。
+- 构建期合并 `course.json` 和 composition 时间；Web 进程只读 `dist/` 里的解析后清单。
+- 课程内容用文件，用户/会话/进度用 SQLite；课程包不依赖数据库也能播放。
+- 没有 SPA、没有 MP4 主链路、没有运行时 CDN。
+- 手机竖屏以讲义阅读为主，不承诺完整 16:9 动画体验。
+
+下面的章节解释这些决定、边界和代价。
+
+## 0. 文档说明
+
+这份文档记录的是**架构决策**，不是实现说明。代码还没有开始写；后续实现以本文和[课程契约](course-contract.md)为准。
+
+文中使用三个规范性词：
+
+- **必须**：不满足就不能上线。
+- **应该**：默认这样做，偏离时要在代码或文档里说明原因。
+- **可以**：可选能力，按课程或阶段决定。
+
+相关文档：
+
+- [课程契约](course-contract.md)：一门课具体长什么样，字段、目录、时间规则和验收清单。
+- [Agent 开发方案](agent-development-plan.md)：按阶段执行的任务和完成标准。
+
+---
+
+## 1. 目标与非目标
+
+### 1.1 目标
+
+| 编号 | 目标 | 可验证的信号 |
+| --- | --- | --- |
+| G1 | 一屏一个概念，学习者手动推进 | 每屏只有一个中心论题；下一屏由学习者触发 |
+| G2 | 每门课可以脱离网站独立运行 | 把构建产物放进任意静态服务器，所有屏都能播放 |
+| G3 | 新增课程不改站点代码 | 只新增 `courses/<slug>/`，构建后自动出现在课程库 |
+| G4 | 清晰、快、可访问 | 文字是真实文本；首帧在常见宽带下 2.5 秒内出现；键盘可操作；有讲义 |
+| G5 | 运维简单 | 生产环境只有一个 Python 进程和一个 SQLite 文件；不需要 Node、外部数据库或视频转码 |
+
+### 1.2 非目标
+
+- 不在 v1 做完整账号体系：登录、注册、找回密码、付费、证书和讨论区属于后续阶段。v1 先把 SQLite 数据层、匿名会话和进度 API 做好，让账号可以在此基础上长出来。
+- 不把课程内容放进数据库。课程清单和 composition 是文件，用 Git 版本化；数据库只存用户状态。
+- 不把 MP4 作为主要分发格式。
+- 不在 v1 做随堂测验、分支剧情和复杂交互。
+- 不在 v1 为手机竖屏单独制作一套 composition。
+- 不做多语言界面。中文优先，字段预留 `language`。
+- 不做课程内容管理系统。课程源文件在 Git 里，用代码评审的方式管理。
+
+### 1.3 成功标准
+
+平台完成时，下面六件事同时成立：
+
+1. 新增一门课只需要动 `courses/<slug>/`，站点代码零改动。
+2. 构建产物 `dist/courses/<slug>/` 用 `python -m http.server` 打开，封面、每一屏、上一屏/下一屏、讲义都正常。
+3. 课程页面在断网（除本地静态服务器外）时没有外部请求。
+4. 只用键盘可以完成“开始 → 下一屏 → 暂停 → 看讲义 → 结束”的全流程。
+5. CI 能拦住：清单不合法、时间范围越界、外部资源引用、播放器契约回归、数据库迁移失败。
+6. SQLite 能从空库迁移到 head，备份可恢复；没有数据库时课程仍然可以完整播放。
+
+---
+
+## 2. 设计约束
+
+1. **浏览器是最终运行环境。** 目标浏览器是最近两个版本的 Chrome、Edge、Safari、Firefox。不支持 IE。
+2. **动画画布固定为 1920×1080、30fps。** 课程 composition 按这个尺寸设计；播放器负责等比缩放。
+3. **遵守 HyperFrames composition 契约。** 时间轴必须是暂停的、可 seek 的；所有可见状态是时间的函数；运行时不发起网络请求、不使用真实时钟和未播种随机数。
+4. **后台使用 FastAPI。** 站点页面、目录 API 和静态文件服务都在 Python 侧完成。
+5. **课程产物必须是静态文件。** 不依赖 FastAPI、数据库或任何运行时 API。
+6. **中文优先。** 字体、断行、标点和排版按中文阅读习惯设计；代码标识符和 JSON 字段用英文。
+7. **课程内容是可信内容。** 课程由项目维护者/Agent 编写并经过构建校验，不是用户上传内容；因此可以接受比 UGC 平台更宽松的 CSP。
+8. **桌面和横屏优先。** 手机竖屏不以“完整动画体验”为目标，以“可读的讲义模式”为目标。
+9. **SQLite 是应用数据库。** 单文件、本地、WAL 模式；存用户、会话和进度。课程包不依赖它；数据库迁移用 Alembic。出现多实例写入或后台任务竞争时，再评估 Postgres。
+
+---
+
+## 3. 关键决策
+
+| ID | 决策 | 为什么 | 代价 | 什么时候重新考虑 |
+| --- | --- | --- | --- | --- |
+| D1 | 课程是独立静态包；站点只做封面、目录和引导；站点**链接**课程，不把课程嵌进 iframe | 课程可以单独部署、单独打开；站点改版不影响课程；两边的故障域分开 | 设计令牌需要在站点和课程之间同步；无法从站点直接读取课程内部状态 | 如果以后需要站内无缝切换、统一账号进度或课程内嵌预览 |
+| D2 | 一门课一个 HyperFrames 工程；一屏一个 scene；播放顺序和时间由根 composition 决定 | 共享字体和素材；只创建一个播放器实例；HyperFrames 原生支持 scene 时间轴；课程包结构简单 | 整个课程是一个长文档；单个 scene 的故障可能影响整门课；超长课程需要拆分 | 单门课超过 15 屏、素材超过 50MB，或需要每屏独立的画布尺寸 |
+| D3 | 使用官方 `<hyperframes-player>` 和官方 runtime，不自己实现渲染器；运行时文件随课程打包 | 官方播放器已经处理 iframe、runtime 注入、媒体同步、资源就绪、缩放和场景挂载；自己重写会持续追版本 | 依赖 player 的 `range-start`/`range-end` 和事件语义；这些接口不是稳定的公共 API | player 升级导致契约测试失败，或 range 行为不可用 |
+| D4 | 站点用 FastAPI + Jinja2 服务端渲染；课程外壳用原生 ES module，不上 SPA 框架，不上打包器 | 站点只有封面、目录和引导，不需要客户端状态；服务端渲染对 SEO、首屏和运维都更简单；课程外壳的复杂度集中在一个小控制器里 | 页面交互不如 SPA 丰富；以后做学习面板可能要加 islands 或独立子应用 | 出现账号、学习看板、站内搜索等需要大量客户端状态的页面 |
+| D5 | 课程内容用文件；用户、会话和进度用 SQLite；不把课程内容放进数据库 | 课程内容适合 Git 版本化和静态构建；用户状态是可变数据，需要事务和迁移；SQLite 单文件、零服务、足够支撑早期用户和登录 | 多一个迁移/备份责任；SQLite 是单写者，写入并发有限 | 多实例部署、后台任务竞争或写入量明显上升时，评估 Postgres；课程需要在线编辑时，再考虑 CMS |
+| D6 | 构建期解析 composition 时间并生成课程清单；运行期只读解析后的清单 | 错误在构建时暴露；浏览器不做 HTML 解析；站点和课程使用同一份解析结果 | 多一个构建步骤；课程创作后要重新构建才能看到站点更新 | 需要边写边看的实时预览（可以加 watch，但不改变架构） |
+| D7 | 产品只输出网页，不输出 MP4 | 文字清晰、体积小、可检索、可交互、可访问；改一句话不需要重新编码 | 受浏览器性能、自动播放策略、移动端缩放限制；不能像视频一样离线转发 | 需要做社交媒体短片或归档时，作为附属导出，不改变主形态 |
+| D8 | 课程运行时完全自包含，不引用 CDN | 独立部署、离线可用、版本可复现、不会被第三方 CDN 故障影响 | 每个课程包多几百 KB 运行时；升级要同步所有课程 | 永不为了核心运行时引入 CDN；以后视频/大图可以走媒体 CDN |
+| D9 | 桌面/横屏优先；手机竖屏提供讲义阅读模式，不承诺完整动画体验 | 1920×1080 的动画在 390px 宽的竖屏上会把正文缩到不可读；与其做假移动端，不如提供诚实的替代 | 移动端学习体验受限 | 有明确的移动端学习需求，且愿意为课程制作竖屏 composition |
+
+### 3.1 三个需要展开的决定
+
+**为什么站点不把课程嵌进 iframe。**
+嵌进去看起来更“平台化”，但会带来双滚动条、焦点管理、全屏、移动端高度、课程和站点样式互相污染、课程无法独立部署等问题。链接出去之后，课程是一个完整的页面，站点是一个目录；两边的边界清晰，课程也可以被单独分享。站点的课程卡片承担“封面和引导”的职责，进入课程后由课程自己负责体验。
+
+**为什么一门课只用一个 composition。**
+一屏一个独立 HTML 当然更隔离，但课程需要共享字体、配色、素材和播放器，而且学习者希望“下一屏”是瞬时的，不是重新加载一个页面。HyperFrames 的 scene 机制本来就是为这种时间轴上的分段设计的：每个 scene 有独立的时间轴，根 composition 负责把它们挂在时间线上。播放器只加载一次，切屏只是 seek 到新的 range。代价是单门课不能无限增长；第 6.7 节给了拆分阈值。
+
+**为什么用 SQLite，而不是把课程也塞进数据库。**
+课程内容是“发布物”：它应该可评审、可回滚、可独立部署，Git 和静态构建比数据库更合适。用户、会话、进度是“运行态数据”：它会变化、需要事务、需要和登录关联，放进数据库更合适。SQLite 是单文件、零服务、支持事务和 WAL，对这个规模足够；以后真要上多实例，SQLAlchemy 和 Alembic 也让迁移到 Postgres 不必重写业务层。课程包不依赖数据库，所以数据库坏了不会影响已有课程播放。
+
+---
+
+## 4. 系统上下文
+
+```text
+┌─────────────┐        ┌──────────────────────────────────────────────┐
+│ 课程作者     │        │ 构建流水线（Python，CI 或本地）                │
+│ / Agent     │───────▶│ 校验 course.json + composition               │
+└─────────────┘        │ 解析每屏时间 → 渲染课程页面 → 拷贝运行时       │
+                       └──────────────────┬───────────────────────────┘
+                                          │ 写入
+                                          ▼
+                       ┌──────────────────────────────────────────────┐
+                       │ dist/courses/<slug>/                         │
+                       │ index.html · course.json · composition/      │
+                       │ runtime/ · cover.webp · LICENSES/            │
+                       └──────────────────┬───────────────────────────┘
+                                          │ 静态文件
+                                          ▼
+┌─────────────┐        ┌──────────────────────────────┐        ┌─────────────┐
+│ 学习者       │───────▶│ FastAPI + Jinja2              │───────▶│ 浏览器       │
+│             │        │ / · /courses · /api/*         │        │             │
+└─────────────┘        │ 读 dist/ 生成目录             │        │ 课程页面     │
+                       │ 读写 SQLite                   │        │  ├─ 封面     │
+                       └──────────┬───────────────────┘        │  ├─ 播放器   │
+                                  │ SQLAlchemy                │  └─ 讲义     │
+                                  ▼                           └──────┬──────┘
+                       ┌──────────────────────────────┐               │ iframe
+                       │ SQLite (data/app.db)          │               ▼
+                       │ users · sessions · progress   │        ┌─────────────┐
+                       └──────────────────────────────┘        │ composition │
+                                                               │ + runtime   │
+                                                               └─────────────┘
+```
+
+浏览器和 FastAPI 之间还有一条可选的同源进度同步：课程页可以调用 `/api/progress/*`，也可以完全不调用。课程包在没有这条链路时仍能播放，进度退回 `localStorage`。分离部署（课程在 CDN、API 在站点）默认关闭同步，避免 CORS 和第三方 cookie 的复杂度。
+
+三条关键流向：
+
+1. **作者 → 课程源 → 构建产物。** 课程源在 `courses/<slug>/`，构建产物在 `dist/courses/<slug>/`。构建是唯一的打包入口。
+2. **学习者 → 站点 → 课程。** 站点页面由 FastAPI 服务端渲染；课程卡片直接链接到静态课程页。课程页不依赖站点 API；同源进度同步是可选增强。
+3. **课程页 → player → composition。** 浏览器加载课程页，player 创建 iframe，runtime 注入并驱动 composition。整个过程在课程包内部完成。
+4. **浏览器 ↔ FastAPI → SQLite（可选）。** 课程页在站点同源部署时可以上报/读取进度；FastAPI 用 SQLAlchemy 读写 SQLite。没有这条链路时，课程页使用本地进度。
+
+信任边界：课程内容是项目内可信内容；站点接收的学习进度输入有限且经过校验；课程包本身不接收用户输入、不依赖登录态。数据库属于站点，不属于课程包。
+
+---
+
+## 5. 运行时架构
+
+### 5.1 四层职责
+
+| 层 | 载体 | 负责 | 不负责 |
+| --- | --- | --- | --- |
+| 课程页面 | `index.html`（构建生成） | 封面、章节大纲、播放器容器、控制条、讲义、完成页、SEO | 动画本身、scene 时间轴 |
+| 课程外壳 | `runtime/course-deck.js` + CSS | 状态机、切屏、进度、键盘/触摸、全屏、深链、本地进度、可选同源进度同步 | 解析 composition、直接操作 scene |
+| 播放器 | `<hyperframes-player>` | iframe、runtime 注入、媒体同步、缩放、资源就绪、播放/暂停/seek | 课程导航、封面、讲义 |
+| composition | `composition/index.html` + scenes | 每一屏的视觉、文字、动画、节奏 | 导航、进度、站点信息 |
+
+这四层里，课程外壳是唯一需要写业务逻辑的地方；它的复杂度应该被控制在一个可测试的小控制器里。
+
+### 5.2 播放器契约
+
+课程页面里的播放器元素大致长这样（示例省略了 `src`，它由课程外壳在用户点击“开始”后设置）：
+
+```html
+<hyperframes-player
+  id="hf-player"
+  runtime-src="./runtime/vendor/hyperframe.runtime.iife.js"
+  width="1920"
+  height="1080"
+  poster="./cover.webp"
+  muted
+  disable-click-to-play
+></hyperframes-player>
+```
+
+用到的属性：
+
+| 属性 | 用途 |
+| --- | --- |
+| `src` | 指向课程根 composition；建议在用户点击“开始”后才设置，避免封面阶段就加载 |
+| `runtime-src` | 指向课程包内的 runtime；**必须**设置，否则 player 会从 CDN 加载 |
+| `width` / `height` | 首帧布局尺寸，避免加载时跳动 |
+| `poster` | 加载期间的封面；只有 `cover` 存在时设置，避免 404 |
+| `muted` | 初始静音；有音频的课程在用户点击开始后再取消静音 |
+| `range-start` / `range-end` | 当前屏在根时间轴上的绝对秒数 |
+| `disable-click-to-play` | 禁用 player 自己的点击播放，交给课程外壳处理，避免双重触发 |
+| `interactive` | 只有需要点击/输入的课程才设置；纯动画课程不设置 |
+
+用到的事件：
+
+| 事件 | 用途 |
+| --- | --- |
+| `ready` | 时间轴已就绪，拿到总时长 |
+| `durationchange` | 总时长变化 |
+| `painted` | 首帧已绘制，可以撤掉加载遮罩 |
+| `ended` | 当前 range 播放结束；课程外壳据此显示“下一屏”或自动推进 |
+| `timeupdate` | 更新屏内进度 |
+| `play` / `pause` | 同步控制条状态 |
+| `error` | 进入降级页面 |
+| `rangeclamped` | range 越界，记录并修正配置 |
+
+用到的属性和方法：`currentTime`、`duration`、`paused`、`ready`、`painted`、`play()`、`pause()`、`seek()`。
+
+**约束：** 课程外壳只能使用上面这些公开属性和事件，不能读取 player 的 shadow DOM，不能依赖内部类名或内部状态。
+
+### 5.3 一次“开始”和一次“下一屏”
+
+开始：
+
+1. 学习者点击封面上的“开始学习”。这是一个用户手势，用来解锁音频。
+2. 课程外壳隐藏封面，显示舞台和加载遮罩。
+3. 设置 `src`（`runtime-src` 和 `poster` 已经在页面里）。从这一刻开始才加载 composition。
+4. player 创建 iframe，注入 runtime。runtime 读取根 composition，挂载 scene，等待首帧资源。
+5. player 依次触发 `ready` 和 `painted`。外壳记录总时长，撤掉遮罩。
+6. 外壳设置当前屏的 `range-start` / `range-end`，调用 `play()`。
+7. runtime 从 range 起点开始播放；`timeupdate` 驱动进度条。
+8. 到达 range 终点时 runtime 暂停并触发 `ended`。外壳显示“下一屏”；如果该屏 `autoAdvance` 为真，则在短暂停留后自动推进。
+
+下一屏：
+
+1. 外壳调用 `pause()`，落下转场遮罩。
+2. 更新 `range-start` / `range-end`。
+3. 调用 `seek(start)`，再调用 `play()`。
+4. 等第一个进入新 range 的 `timeupdate`，或 180–240ms 的转场定时器（最长 600ms）后撤掉遮罩。不要依赖 `painted`：它通常只在首帧/资源就绪时触发一次。
+5. 更新章节标题、进度、URL hash、本地进度。
+
+上一屏同理，只是目标 range 不同。
+
+### 5.4 状态机
+
+```text
+cover ──start──▶ loading ──ready+painted──▶ ready ──play──▶ playing
+                    │                         ▲               │
+                    │ error                   │               ├─pause──▶ paused
+                    ▼                         │               │            │
+                  error ◀─────────────────────┘               │◀──play─────┘
+                                                              │
+                                                         range end
+                                                              ▼
+                                                           ended ──next──▶ loading
+                                                              │
+                                                          last screen
+                                                              ▼
+                                                           complete
+```
+
+| 状态 | UI | 允许的动作 |
+| --- | --- | --- |
+| `cover` | 封面、目标、大纲、开始按钮 | 开始；继续上次（本地或同源服务端进度） |
+| `loading` | 封面淡出、舞台遮罩、进度提示 | 取消/返回封面 |
+| `ready` | 舞台、控制条、第一帧 | 播放；上一屏/下一屏 |
+| `playing` | 舞台、暂停按钮、进度 | 暂停；上一屏/下一屏；全屏；讲义 |
+| `paused` | 舞台、播放按钮 | 播放；上一屏/下一屏；重播 |
+| `ended` | 舞台停在最后一帧、强调“下一屏” | 下一屏；重播；讲义 |
+| `complete` | 课程回顾、返回课程库 | 重看；返回 |
+| `error` | 错误说明、封面/大纲、重试 | 重试；返回封面 |
+
+状态迁移必须由显式方法完成（`start()`、`goTo()`、`next()`、`prev()`、`toggle()`、`finish()`），不要在事件回调里直接改 UI。
+
+### 5.5 播放器适配层
+
+`course-deck.js` 不直接散落 player 调用，而是通过一个薄适配层：
+
+```text
+createPlayerAdapter(el) -> {
+  load({ src, runtimeSrc, poster }),
+  setRange(start, end),
+  play(), pause(), seek(seconds),
+  get time(), get duration(), get ready(), get painted(),
+  on(event, handler), destroy()
+}
+```
+
+适配层负责三件事：
+
+1. 把 `range-start` / `range-end` 的读写和 `seek` 的顺序封装起来。两个属性分开设置时会产生中间态（新的 start 可能大于旧的 end），适配层要先设置 end 再设置 start，或先清空再一起设置，并监听 `rangeclamped` 判断是否被截断。
+2. 如果 player 的 range 行为在某个版本里不可靠，在这里降级为“seek 到起点 + 监听时间 + 到点暂停”，并合成一个 `ended` 事件。
+3. 把所有 player 事件转换成课程外壳能理解的稳定事件，隔离版本差异。
+
+这不是过度设计。player 的 range 接口不是文档里最稳定的公共 API，升级时必须靠这一层做兼容，而不是改遍整个外壳。
+
+### 5.6 加载、转场和失败
+
+- **加载遮罩**：封面到第一屏之间必须有；从第二屏开始，切屏用 180–240ms 的淡入淡出遮罩，避免看到 seek 过程中的中间帧。
+- **撤遮罩时机**：第一屏优先等 `painted`；后续切屏等第一个进入新 range 的 `timeupdate` 或 180–240ms 定时器，最长 600ms。`painted` 通常只触发一次，不要拿它当每次切屏的信号。
+- **失败降级**：player 报错或 10 秒内没有 `ready`，显示错误页，保留封面、课程大纲和讲义入口。不要留一个空白 iframe。
+- **重试**：销毁并重建 player 元素，重新设置 `src`。不要复用已经进入错误状态的 iframe。
+- **日志**：控制台输出课程 slug、屏 id、player 版本；不上报个人信息。
+
+### 5.7 音频策略
+
+- 没有音频的课程，player 始终 `muted`，不显示音量按钮。
+- 有音频的课程，`audio: true`。封面上的“开始学习”是用户手势，可以在此时取消静音；如果浏览器仍然拦截，回退为静音播放，并显示“开启声音”按钮。
+- 不从页面加载时自动播放带声音的动画。
+- 有语音的屏幕必须有讲义文本；讲义不是可选装饰，是无障碍替代。
+- 音频文件必须本地化，和课程一起分发。
+
+### 5.8 深链、历史和进度
+
+- 屏幕深链使用 hash：`/courses/<slug>/#s=<screen-id>`。hash 不参与服务端路由，静态部署也能用。
+- 手动切屏 `pushState`，自动推进 `replaceState`，保证浏览器后退键符合预期。
+- 加载时如果有合法 hash，直接进入该屏，但**不自动播放**：显示该屏第一帧和播放按钮，等用户手势。这样既支持分享，也不违反自动播放策略。
+- 本地进度存在 `localStorage`，键为 `ai-learning:progress:<slug>`，值为 `{ screenId, updatedAt }`。封面显示“继续上次”，如果记录无效则忽略。
+- 如果构建时注入了同源 `progressEndpoint` 和 `progressOrigin`，课程外壳还可以把进度同步到 SQLite：加载时 GET 一次，切屏/完成时 PUT（去抖、失败静默）。服务端进度比本地新时，才用它做“继续上次”；本地进度永远先写，服务端失败不影响播放。
+- 构建同时注入 `progressOrigin`。只有 `location.origin === progressOrigin` 时才发起同步；课程包被复制到别的域名/端口时自动跳过，不会产生 404 或跨域请求。
+- 服务端进度挂在匿名用户上；登录后可以升级成账号进度，实现跨设备。跨设备同步不是 v1 的承诺，但数据模型从第一天就按这个方向设计。
+- 分离部署（课程在 CDN、API 在站点）默认不注入 `progressEndpoint`，避免 CORS 和第三方 cookie；课程仍然有本地进度。
+
+### 5.9 减少动态效果
+
+`prefers-reduced-motion: reduce` 时：
+
+- 不自动播放动画；显示封面或当前屏的静态帧。
+- 提供“仍要播放动画”的显式按钮。
+- 页面级过渡（淡入、位移）关闭或缩短到 0。
+- 讲义默认展开，保证信息可达。
+
+### 5.10 全屏、键盘和触摸
+
+- 全屏作用于“舞台 + 控制条”的容器，不只作用于 player；否则全屏后没有控制条。
+- 键盘：`←` / `→` 上一屏/下一屏，`Space` 播放/暂停，`F` 全屏，`T` 讲义，`Esc` 退出全屏/讲义。焦点在输入框内时不拦截。
+- 触摸：舞台左右滑动切屏，阈值 48px；控制条区域不触发滑动。滑动过程中不切换，松手后判断。
+- 所有按钮有可见的 `:focus-visible` 样式；图标按钮有 `aria-label`。
+
+### 5.11 为什么不用官方 slideshow 组件
+
+HyperFrames 自带 `hyperframes-slideshow`，已经实现了 slide 导航、演讲者模式、备注和分支。它证明“根 composition + scene 时间”的路线是可行的，但它是为演示场景设计的：
+
+- 它有演讲者窗口、Present 按钮、观众模式等课程不需要的界面。
+- 它的清单格式和交互模型不是我们的课程模型。
+- 我们需要封面、目标、章节大纲、讲义、完成页、课程级进度和独立部署的样式。
+- 它的内部实现使用了 `Date.now()` 和定时器，不适合作为我们课程外壳的依赖。
+
+所以课程外壳自己写，只复用 `<hyperframes-player>`。这是一个有意识的取舍：导航逻辑很小，产品界面和课程模型必须自己掌控。
+
+---
+
+## 6. 课程包
+
+### 6.1 源与产物
+
+课程有两个源，构建时合并：
+
+| 源 | 回答的问题 | 权威性 |
+| --- | --- | --- |
+| `course.json` | 这门课叫什么、讲什么、每屏的标题和讲义是什么 | 编辑信息的唯一来源 |
+| `composition/index.html` | 每屏在时间轴上的顺序、起点和长度 | 播放时间和顺序的唯一来源 |
+
+构建产物是第三个东西：**解析后的课程清单**。它把两者合并，补上 `start`、`duration`、`index`、总时长和构建版本，供课程页和 API 读取。
+
+这样做的原因：如果让作者在 `course.json` 里手写时间，时间和 composition 一定会漂移；如果让浏览器运行时去解析 HTML，错误会推迟到用户打开页面才暴露。构建期合并是唯一能同时避免这两个问题的位置。
+
+### 6.2 源目录
+
+```text
+courses/<slug>/
+├─ course.json                 # 编辑信息
+├─ STORYBOARD.md               # 课程脚本，不进入产物
+├─ cover.webp                  # 可选，1600×900
+└─ composition/                # HyperFrames 工程根
+   ├─ index.html               # 根 composition，挂载所有 scene
+   ├─ hyperframes.json
+   ├─ package.json
+   ├─ compositions/
+   │  ├─ 01-hook.html
+   │  ├─ 02-tokens.html
+   │  └─ ...
+   └─ assets/
+      ├─ course.css
+      ├─ fonts/
+      ├─ images/
+      ├─ audio/
+      └─ vendor/
+         └─ gsap.min.js
+```
+
+`composition/` 本身就是一个合法的 HyperFrames 项目，可以在里面运行 `npx hyperframes preview`、`check`、`snapshot`；只想快速看播放效果时可以用 `npx hyperframes play`。课程任务的主要工作发生在这里。
+
+### 6.3 构建产物
+
+```text
+dist/courses/<slug>/
+├─ index.html                  # 构建生成的课程页（封面 + 播放器外壳 + 内联清单）
+├─ course.json                 # 解析后的清单
+├─ cover.webp                  # 可选
+├─ composition/
+│  ├─ index.html
+│  ├─ compositions/
+│  └─ assets/
+├─ runtime/
+│  ├─ course-deck.js
+│  ├─ course-deck.css
+│  ├─ tokens.css
+│  ├─ vendor/
+│  │  ├─ hyperframes-player.global.js
+│  │  ├─ hyperframe.runtime.iife.js
+│  │  └─ LICENSES/
+│  └─ VERSION.json
+└─ LICENSES/
+```
+
+不进入产物的东西：`node_modules/`、`.hyperframes/`、`renders/`、`*.mp4`、`STORYBOARD.md`、`package.json`、`hyperframes.json`、`shell.html.j2`、开发脚本、源地图、编辑器配置。产物只保留运行所需文件，避免把课程包变成垃圾桶。
+
+### 6.4 一屏一个 scene 的约定
+
+根 composition 里，每个屏幕是一个 scene host：
+
+```html
+<div
+  id="s-hook"
+  data-screen-id="hook"
+  data-composition-id="s-hook"
+  data-composition-src="compositions/01-hook.html"
+  data-start="0"
+  data-duration="12"
+  data-track-index="0"
+  data-track-kind="graphics"
+  data-width="1920"
+  data-height="1080"
+></div>
+```
+
+规则：
+
+- `data-screen-id` 是课程清单里的屏幕 id，必须唯一。
+- `id`、`data-composition-id` 和 scene 文件里的时间轴 key 必须一致，统一用 `s-<screen-id>`。
+- `data-start`、`data-duration` 必须是数字秒，不允许表达式。课程根是构建解析的对象，保持简单。
+- 屏幕按 `data-start` 升序排列，不能重叠。
+- 根 `data-duration` 必须覆盖最后一屏的结束时间。
+- scene host 的 `data-duration` 是这一屏的**教学节拍**，包含入场、讲解和结尾停留，不是“动画文件多长”。
+
+更完整的字段、写法和校验规则见[课程契约](course-contract.md)。
+
+### 6.5 独立性保证
+
+一个课程包要满足下面所有条件，才算“可以脱离网站单独打开”：
+
+1. 所有资源引用都是相对路径，没有前导 `/`。
+2. 没有外部**资源加载**：`script[src]`、`link[rel=stylesheet|preload|modulepreload]`、`img[src]`、`source[src]`、`video[src]`、`audio[src]`、`iframe[src]`、`poster`、CSS `url()`、`@import` 都指向课程包内部。普通 `<a href>`、`<link rel="canonical">` 和 meta 属性可以指外部，但不能自动加载；外链加 `rel="noopener noreferrer"`。
+3. player 和 runtime 来自 `./runtime/`，GSAP 来自 `./composition/assets/vendor/`，字体来自 `./composition/assets/fonts/`。
+4. 注意路径基准：课程页 HTML 里的 `./composition/...` 相对页面；`runtime/course-deck.css` 里的字体 `url()` 相对 CSS 文件，必须写 `../composition/assets/fonts/...`。不要把两种基准混用。
+5. 课程页不依赖 FastAPI、数据库或登录态；同源进度同步只能是可选增强，API 不可用时本地进度仍然工作。
+6. 返回课程库的链接来自 `course.json` 的 `site.homeUrl`；如果为 `null`，不显示返回链接。
+7. 用普通静态服务器（不是 FastAPI）打开时，所有功能正常。
+8. 不要求 `file://` 直接双击打开。player 需要同源 iframe 和 runtime 注入，`file://` 的 origin 是不透明的；独立打开指“独立 HTTP 静态部署”。
+
+第 7 条会变成 CI 里的一个固定测试，不是靠人工记得。
+
+### 6.6 版本与缓存
+
+- `runtime/VERSION.json` 记录 HyperFrames、player、runtime、GSAP 和课程外壳的版本/哈希。
+- 构建产物里的 `course.json` 带 `build.runtimeVersion` 和 `build.contentHash`。
+- 课程页 HTML 不缓存或短缓存；`runtime/vendor/*` 可以长缓存；composition 素材用中等缓存。具体头见 9.6。
+- 课程更新后要能立刻看到，不能因为缓存继续播放旧 scene。构建时给 runtime、CSS、JS 和 `course.json` 加内容哈希查询参数，HTML 本身用 no-cache/ETag。
+
+### 6.7 什么时候拆分课程
+
+单门课保持一个 composition，直到出现下面任一情况：
+
+- 超过 15 屏，或根文档超过 1.5MB（不含媒体）。
+- 单门课媒体超过 50MB，首屏加载明显变慢。
+- 需要每屏不同的画布尺寸或帧率。
+- 单个 scene 的故障会拖垮整门课，且无法通过代码隔离解决。
+
+拆分方式：把课程拆成多个“章节包”，每个包仍是一个独立的课程 URL，站点用后续契约里的 `series` 字段把它们组织成一条学习路径。不要在一个课程包里塞两个播放器。
+
+---
+
+## 7. 后端设计
+
+### 7.1 模块
+
+```text
+app/
+├─ main.py                 # create_app、lifespan、路由和 mount
+├─ config.py               # 路径、环境变量、站点信息、DATABASE_URL
+├─ db.py                   # SQLAlchemy engine/session、SQLite pragmas
+├─ models.py               # User / Session / CourseProgress / ScreenProgress
+├─ schemas.py              # 进度 API 的 Pydantic 请求/响应
+├─ auth/
+│  └─ sessions.py          # 匿名会话、cookie、未来的登录会话
+├─ repositories/
+│  └─ progress.py          # 进度的读写和 upsert
+├─ catalog/
+│  ├─ models.py            # 课程清单 Pydantic 模型
+│  ├─ composition.py       # 解析根 composition 的 screen host
+│  ├─ resolver.py          # 合并 course.json + composition，校验
+│  └─ loader.py            # 扫描 dist/、缓存、错误收集
+├─ api/
+│  ├─ courses.py           # 只读课程 JSON API
+│  └─ progress.py          # 学习进度 API
+├─ web/
+│  └─ routes.py            # 首页、课程库、关于、404
+├─ templates/
+└─ static/
+
+migrations/                # Alembic
+data/                      # SQLite 文件，gitignored
+```
+
+`catalog` 是一个深模块：对外只暴露 `load_catalog()`、`get_course(slug)` 和 `resolve_course(source)` 之类的接口；扫描、解析、合并、校验、缓存都藏在里面。Web 和 API 都依赖它，构建脚本也复用它，避免出现两套时间解析逻辑。
+
+数据库是另一个独立边界：`db` + `models` + `repositories` 负责用户状态；`catalog` 不读数据库，数据库也不存课程内容。这样课程目录可以继续从 `dist/` 重建，用户数据可以单独备份和迁移。
+
+### 7.2 目录加载流程
+
+Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也不在运行期解析 composition。构建是目录数据的唯一入口；用户状态则走 SQLite，两者不混在一起。目录加载不访问数据库。
+
+启动时（`lifespan`）：
+
+1. 扫描 `dist/courses/*/course.json`，跳过没有清单的目录。
+2. 解析 `course.json` 为 `ResolvedCourse`，校验字段、屏幕顺序、时间范围、统计和构建元数据。
+3. 如果 `VERIFY_COURSE_BUNDLES=1`（单机部署默认），检查同目录的 `index.html`、`composition/`、`runtime/` 是否存在；缺失的课程标记为 invalid。分离部署把课程资源放在 CDN、站点只保留清单时，把这个开关设为 0。
+4. 按 `order`、`featured`、发布时间排序，生成 `Catalog`。
+5. 缓存结果，并用清单文件 mtime / 目录签名失效。构建完成后下一次请求就能看到新课程，不需要重启进程；请求路径只做廉价的 `stat`，不重复解析 composition。
+
+源课程到解析清单的转换发生在构建期（见 9.1）。这样生产镜像只需要 `app/` 和 `dist/`，不需要课程源文件、Node 或 HyperFrames。
+
+错误策略：
+
+- 单门课不合法：默认记录错误、从站点目录排除，但进程继续启动。
+- `STRICT_CATALOG=1`：任何不合法课程都让启动失败。CI 和生产使用严格模式。
+- `/api/health` 返回课程总数、已发布数、无效数、错误列表。
+- 不在生产环境暴露完整的异常堆栈。
+
+### 7.3 解析规则
+
+以下规则由构建和 CI 执行；Web 进程不解析 composition。
+
+`composition.py` 只做一件事：从根 composition HTML 里读出 screen host。它必须：
+
+- 用 `html.parser`，不用正则表达式匹配标签结构。
+- 只读取带 `data-screen-id` 的元素。
+- 读取 `id`、`data-composition-id`、`data-composition-src`、`data-start`、`data-duration`。
+- 验证 `data-start` / `data-duration` 是有限的非负数；`duration > 0`。
+- 验证 host 按 `data-start` 严格升序，且区间不重叠。
+- 读取根 `data-duration`，验证它覆盖最后一屏。
+- 把 `data-composition-src` 交给 resolver；resolver 负责验证文件存在、scene 的 `data-composition-id` 和时间轴 key。
+
+解析和合并链路必须有单元测试，覆盖：正常、缺字段、重复 id、时间倒序、重叠、越界、scene 文件缺失、scene id 不匹配。
+
+### 7.4 模型
+
+| 模型 | 作用 |
+| --- | --- |
+| `CourseSource` | `course.json` 的源结构：编辑信息 + 屏幕元数据，不含时间；构建使用 |
+| `ScreenMeta` | 单屏的 id、标题、kicker、摘要、讲义、autoAdvance；构建使用 |
+| `CompositionInfo` | entry、width、height、fps；构建使用 |
+| `ScreenHost` | 从 composition 解析出来的 id、start、duration、source 文件；构建使用 |
+| `ResolvedScreen` | 合并后的屏幕：元数据 + index + start + duration；Web/API 使用 |
+| `ResolvedCourse` | 课程页/API 使用的完整模型 |
+| `CourseSummary` | 课程卡片使用的轻量模型 |
+| `Catalog` | 课程列表 + 错误 + 统计 |
+
+模型用 Pydantic v2。源模型 `extra="forbid"`，避免拼错字段被静默忽略。解析后的模型可以多字段，但不能少字段。
+
+### 7.5 路由
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/` | 首页：主张、精选课程、课程库入口 |
+| GET | `/courses` | 课程库：全部已发布课程，支持 `level` / `tag` 过滤 |
+| GET | `/courses/` | 重定向到 `/courses`，避免和静态目录冲突 |
+| GET | `/about` | 方法论、课程制作方式、致谢 |
+| GET | `/courses/<slug>/` | 静态课程页（由 `StaticFiles(html=True)` 提供） |
+| GET | `/api/courses` | 已发布课程摘要列表 |
+| GET | `/api/courses/<slug>` | 单门课的解析后清单 |
+| GET | `/healthz` | 进程健康检查 |
+| GET | `/api/health` | 目录健康：数量、错误、构建状态 |
+
+路由顺序很重要：`/courses` 和 `/courses/` 必须在 `mount("/courses", ...)` 之前注册，否则会被静态目录吞掉。`/courses/<slug>` 不带斜杠时，由 `StaticFiles` 重定向到带斜杠的目录。
+
+站点不提供单独的“课程详情页”。课程卡片直接进入课程页，课程页的封面就是详情。这样避免同一份信息在两个页面里维护。
+
+### 7.6 静态文件
+
+- `/static/*`：站点 CSS、JS、字体、图片。
+- `/courses/*`：`dist/courses/`，`html=True`。
+
+缓存策略：
+
+| 路径 | 缓存 |
+| --- | --- |
+| `/courses/<slug>/` 和 `index.html` | `no-cache` 或短缓存 + ETag |
+| `/courses/<slug>/course.json` | 短缓存 |
+| `/courses/<slug>/composition/assets/*` | 中等缓存（例如 1 天），构建时用查询参数破坏缓存 |
+| `/courses/<slug>/runtime/vendor/*` | 长缓存（1 年，immutable） |
+| `/static/*` | 中等缓存 |
+
+生产环境可以把这个 mount 换成 Nginx/CDN；FastAPI 的行为作为本地开发和单机部署的默认值。
+
+### 7.7 配置
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `ENV` | `dev` | `dev` / `prod` |
+| `SITE_TITLE` | `AI Learning` | 站点标题 |
+| `SITE_URL` | `http://127.0.0.1:8000` | 生成绝对 URL、OG、canonical |
+| `COURSES_SRC_DIR` | `<repo>/courses` | 课程源；构建脚本使用，Web 不读 |
+| `COURSES_DIST_DIR` | `<repo>/dist/courses` | 构建产物；Web/API 的数据源 |
+| `COURSE_BASE_URL` | `/courses` | 课程卡片链接前缀；分离部署时设为 CDN 绝对地址 |
+| `DATABASE_URL` | `sqlite:///./data/app.db` | SQLite 文件路径；测试用临时文件/内存库 |
+| `STRICT_CATALOG` | `dev` 为 0，`prod` 为 1 | 是否因解析清单/产物错误阻止启动 |
+| `INCLUDE_DRAFTS` | `dev` 为 1，`prod` 为 0 | 是否在站点显示构建进去的草稿 |
+| `VERIFY_COURSE_BUNDLES` | `1` | 是否检查本地课程包文件；分离部署设为 `0` |
+| `SESSION_COOKIE_SECURE` | `prod` 为 1，`dev` 为 0 | 会话 Cookie 是否只走 HTTPS |
+
+配置用 `pydantic-settings`，从环境变量和 `.env` 读取。不要在生产环境读取仓库相对路径以外的用户输入。
+
+### 7.8 安全
+
+- 课程内容是可信静态内容；站点只有一个受限的进度写接口，攻击面仍然很小。
+- 站点页面使用较严格的 CSP；课程页因为 player 注入和内联清单，需要允许 `'unsafe-inline'` 的脚本。这个差异要在部署配置里写清楚。
+- 进度 API 是唯一的写入口：校验 slug/screen id、限制请求体大小、检查 `Origin`；SQLAlchemy 参数化查询，不拼 SQL。
+- 会话 Cookie 必须 `HttpOnly`；生产加 `Secure`；`SameSite=Lax`；不把 token 写进日志。未来登录接口加 CSRF、速率限制和会话轮换。
+- 数据库文件不放在 Web 根目录下，用 volume 和最小权限；备份文件同样不要公开。
+- `StaticFiles` 负责路径规范化，不要让自定义路由拼接未校验的文件路径。
+- 不要把草稿构建进生产产物。`status` 过滤在构建期完成，而不是只靠前端隐藏。
+- 不把密钥、内网地址、绝对路径写进课程清单或构建产物。
+- 开启 `X-Content-Type-Options: nosniff`、`Referrer-Policy: strict-origin-when-cross-origin`，生产环境加 HSTS。
+
+### 7.9 SQLite 的定位
+
+课程目录是只读的、随代码发布的、数量很少的，继续放在 `dist/` 里，由 `catalog` 读取。数据库不存课程内容，也不做课程搜索的索引。
+
+数据库只存“运行态数据”：
+
+- 匿名学习者、未来的注册用户；
+- 登录会话；
+- 课程进度、屏幕完成状态；
+- 以后可能加收藏、学习记录、课程完成证书。
+
+为什么是 SQLite：
+
+- 单文件、零服务、零连接池，备份就是复制/`VACUUM INTO`；对这个规模的课程站足够。
+- 支持事务、外键、WAL，能撑住“登录 + 进度”这类低写入负载。
+- 本地开发不需要 Docker 或外部数据库。
+- SQLAlchemy + Alembic 让以后迁移到 Postgres 不必重写业务层。
+
+SQLite 的限制也要写清楚：
+
+- **单写者。** 写事务串行；不要做长事务，不要在请求里做大批量写。用 WAL、`busy_timeout` 和短事务。
+- **不适合多实例共享。** 一个应用实例、一个本地文件最稳；多实例部署时先迁移到 Postgres。
+- **迁移需要 batch 模式。** Alembic 配置 `render_as_batch=True`，因为 SQLite 的 `ALTER TABLE` 能力有限。
+- **备份不是复制一个正在写的文件。** 用 SQLite backup API 或 `VACUUM INTO`，并在迁移前做一次。
+
+### 7.10 数据层与账号演进
+
+技术栈：
+
+- SQLAlchemy 2.0，同步 `Session`（FastAPI 的同步依赖在线程池里跑，足够这个规模）。
+- Alembic 迁移，`render_as_batch=True`。
+- SQLite 文件路径来自 `DATABASE_URL`，默认 `sqlite:///./data/app.db`。
+- 连接初始化时设置 `journal_mode=WAL`、`foreign_keys=ON`、`busy_timeout=5000`、`synchronous=NORMAL`。
+
+#### 表
+
+| 表 | 关键字段 | 说明 |
+| --- | --- | --- |
+| `users` | `id`、`email`、`password_hash`、`display_name`、`is_anonymous`、`created_at`、`updated_at` | 匿名用户和未来注册用户共用一张表；匿名用户 `email/password_hash` 为空 |
+| `sessions` | `id`、`user_id`、`token_hash`、`created_at`、`expires_at`、`last_seen_at` | 匿名会话和登录会话共用；只存 token 哈希，不存明文 |
+| `course_progress` | `user_id`、`course_slug`、`last_screen_id`、`started_at`、`updated_at`、`completed_at` | 每用户每课程一行；`last_screen_id` 用于“继续上次” |
+| `screen_progress` | `user_id`、`course_slug`、`screen_id`、`completed_at`、`updated_at` | 复合主键；用于完成度、回顾、未来的学习看板 |
+
+约束：
+
+- `users.email` 唯一（大小写归一后）；SQLite 允许多个 `NULL`，匿名用户不受影响。
+- `sessions.token_hash` 唯一；token 是 32 字节随机值，Cookie 里放原文，数据库只存 SHA-256。
+- `course_slug`、`screen_id` 不是数据库外键：课程是文件，API 写入前用 catalog 校验 slug 和屏幕 id，避免数据库和课程包互相绑定。
+- 时间统一 UTC；API 输出 ISO 8601。
+- 外键开启 `ON DELETE CASCADE`：删用户时删会话和进度。
+
+#### 匿名会话
+
+- 第一次写进度时创建匿名 `users` 行 + `sessions` 行，并设置 HttpOnly Cookie（名称 `al_session`）：`Secure`（生产）、`SameSite=Lax`、`Path=/`、有效期 180 天。
+- 只读 `GET` 不创建用户，避免爬虫和空会话把表撑大。
+- Cookie 里只放随机 token；数据库存哈希。会话过期后按匿名用户重新开始。
+- 匿名进度可以升级成账号进度：注册时把 email/password 绑到同一个 `users` 行；登录到已有账号时，把匿名进度按 `updated_at` 合并进去，再清理匿名会话。合并逻辑必须幂等。
+
+#### 进度 API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/progress/{course_slug}` | 当前匿名/登录用户的进度；无会话返回空进度，不创建用户 |
+| PUT | `/api/progress/{course_slug}` | `{screenId, completed?}`；创建匿名会话（如需要）、upsert 进度 |
+| GET | `/api/progress` | 当前用户所有课程进度；未来学习看板使用 |
+
+规则：
+
+- 写入前校验 `course_slug` 和 `screen_id` 存在于当前 catalog；不存在的直接 404/422，不写脏数据。
+- `PUT` 只接受 JSON；同源请求；检查 `Origin`，默认不开放 CORS。
+- 课程完成：当某课程所有屏幕都有 `screen_progress` 时，写 `course_progress.completed_at`；屏幕总数从 catalog 取，不在数据库里复制。
+- 进度只存课程 slug、屏幕 id 和时间；不存讲义内容、搜索词或行为轨迹。匿名会话不接第三方分析。
+- 进度写入失败不能阻断课程播放；课程外壳捕获错误、保留本地进度。
+- 未来登录后的写接口需要 CSRF token、会话轮换和速率限制；v1 的进度接口风险较低，但也要限制请求体大小和字段长度。
+
+#### 未来登录
+
+数据库从第一天就按“可登录”设计，但 v1 不实现登录。以后加：
+
+- `POST /api/auth/register`、`/api/auth/login`、`/api/auth/logout`；
+- Argon2id 密码哈希；
+- 登录成功后轮换 session token；
+- CSRF、登录速率限制、邮箱验证、找回密码；
+- 匿名进度合并到账号。
+
+认证用 **服务端 session + HttpOnly Cookie**，不把 JWT 放 `localStorage`。这样课程页不需要处理 token，XSS 也拿不到长期凭证。
+
+#### 迁移与备份
+
+- 迁移只在部署/CI 执行：`alembic upgrade head`；不要在应用启动时自动迁移，避免多进程竞争。
+- 迁移前备份：`sqlite3 data/app.db ".backup 'data/backups/app-<timestamp>.db'"` 或 `VACUUM INTO`。
+- 恢复演练：把备份复制到临时目录，跑一次 `alembic current` 和关键查询。
+- `data/` 不进 Git；Docker 用 volume；文件权限只给运行用户。
+- `/healthz` 只检查进程；`/readyz` 检查数据库连接和 schema version；`/api/health` 返回目录、DB、迁移版本。
+
+---
+
+## 8. 前端设计
+
+### 8.1 为什么不是 SPA
+
+站点需要的是：一个封面、一个课程库、一个关于页、若干课程卡片。这些内容适合服务端渲染。用 React/Next 会带来：
+
+- 一套 Node 构建链和额外的部署产物；
+- 客户端路由与静态课程路由的冲突；
+- 首屏需要等 JS 才能看到内容；
+- 为一个目录页维护 API 客户端和状态管理。
+
+课程播放的交互复杂度在课程外壳里，不在站点。课程外壳用原生 ES module 写一个几百行的控制器，足够，也更容易被单独测试。以后如果要做学习看板，可以在站点下另开一个 `/dashboard` 或独立的 islands/子应用，不需要重构课程包。
+
+### 8.2 站点页面
+
+| 页面 | 内容 |
+| --- | --- |
+| 首页 | 一句话主张、精选课程、课程库入口、“怎么学”三步 |
+| 课程库 | 课程卡片网格、级别/标签过滤、空状态 |
+| 关于 | 方法论、课程制作流程、第三方致谢 |
+| 404 | 回到首页/课程库 |
+
+课程卡片显示：序号、标题、副标题、一句话承诺、级别、时长、屏数、强调色、封面。卡片是链接，不是弹窗；点击直接进入课程页。
+
+站点不自动播放任何课程动画。封面动效克制，课程动画才是主角。
+
+### 8.3 课程外壳
+
+课程页是构建生成的静态 HTML，包含：
+
+1. **封面**：课程标题、副标题、目标列表、章节大纲、时长/级别/屏数、开始按钮、继续上次。
+2. **舞台**：16:9，居中，最大高度受视口限制；后面是黑色背景。
+3. **控制条**：上一屏、播放/暂停、下一屏、重播本屏、讲义、声音（有音频时）、全屏。
+4. **章节信息**：当前屏的 kicker、标题、一句话摘要。
+5. **讲义抽屉**：当前屏的完整文本，键盘可访问，支持前后屏切换。
+6. **完成页**：要点回顾、重看、返回课程库。
+7. **错误页**：错误说明、重试、返回封面。
+
+封面和大纲是无 JS 也能读的静态 HTML；播放器部分才是 JS 增强。这样即使脚本加载失败，学习者至少能看到课程讲什么、每屏标题是什么。
+
+进度是可选增强，不是播放前置条件。构建时如果课程页和站点 API 同源，就注入 `progressEndpoint` 和 `progressOrigin`；课程外壳先写 `localStorage`，再异步 GET/PUT 服务端进度。只有 `location.origin === progressOrigin` 才同步；服务端失败、离线、独立部署、没有 Cookie，都退回本地进度。课程包本身永远不要求数据库存在。
+
+### 8.4 设计系统
+
+站点和课程共用一套基础令牌，但各有各的语气：
+
+- **站点**：暖纸色背景、墨色文字、编辑器式的排版；像一本课程目录。
+- **课程**：深色舞台、亮色文字、每门课一个强调色；像一间放映室。
+- **字体**：中文用自托管的 Noto Sans SC 子集；拉丁标签/数字可以用一套几何无衬线；代码/标签用等宽字体。
+- **字体子集**：用 `pyftsubset` 生成可变字重子集，字符集覆盖常用 3500 汉字、站点文案和课程文案；生僻字回退系统 `sans-serif`，不要让页面因缺字变成方框。
+- **网格**：12 列，最大宽度 1280–1440；课程舞台不受网格限制。
+- **圆角**：站点 12–16px；舞台 0 或很小，避免“卡片里嵌视频”的感觉。
+- **动效**：站点 150–250ms；课程转场 180–240ms；课程内容动效由 composition 自己决定。
+
+令牌放在 `design/tokens.css`，站点和课程构建时各自取一份，避免出现两套颜色。课程可以用 `accent` 覆盖强调色，但不应该重写字体和基础色。
+
+### 8.5 响应式与移动端
+
+- 站点：三列 → 两列 → 单列；导航折叠；卡片信息不依赖 hover。
+- 课程：横屏/桌面优先。舞台按 `min(视口宽度, 视口高度 × 16/9)` 缩放。
+- 手机竖屏：显示“请横屏观看”的建议，同时提供“阅读讲义”入口。用户可以强行继续看缩放后的动画，但产品不承诺可读性。
+- 触控目标至少 44×44px；滑动切屏不能和按钮点击冲突。
+- 不使用 `100vh` 做舞台高度；用 `100dvh` 或 JS 计算，避免移动浏览器地址栏导致内容被裁。
+
+### 8.6 无障碍
+
+- 课程页有明确的标题层级：`h1` 课程名，`h2` 当前屏标题，讲义用正文结构。
+- 切屏时通过 `aria-live="polite"` 播报“第 3 屏，共 8 屏，标题……”。
+- 控制条按钮有 `aria-label`、`aria-pressed`（播放/暂停、静音）。
+- 键盘可以完成全部操作；焦点顺序合理；讲义打开后焦点进入抽屉，关闭后回到触发按钮。
+- 颜色对比：正文至少 4.5:1，大号文字至少 3:1。
+- 动画不是唯一的信息载体：每屏有摘要和讲义；有音频就有文字稿。
+- `prefers-reduced-motion` 有明确行为（见 5.9）。
+- iframe 里的内容对屏幕阅读器不友好，所以课程页必须在 iframe 外提供等价文本。这是课程外壳不可省略的部分。
+
+### 8.7 性能预算
+
+| 项目 | 预算 |
+| --- | --- |
+| 课程封面首屏（HTML/CSS/字体/player JS，gzip） | ≤ 2.5MB |
+| 首屏动画所需素材 | ≤ 3MB |
+| 单门课总素材（不含视频） | ≤ 15MB |
+| 首帧时间（常见宽带，桌面） | ≤ 2.5s |
+| 首帧时间（中端笔记本，本地服务器） | ≤ 4s |
+| 动画帧率 | 目标 60fps，最低 30fps |
+| 课程页外部请求 | 0 |
+
+做法：
+
+- 封面阶段不设置 player 的 `src`，不加载 composition。
+- player 脚本体积可控，随课程页加载；封面阶段只加载封面、字体和外壳，不加载 iframe。
+- 字体子集化、预加载；composition 等字体就绪后再播。
+- 图片用 WebP/AVIF，音频用 AAC/Opus，视频只在必要屏幕使用，且本地化。
+- scene 里的图片/视频加 `loading="lazy"` 或按时间预加载；不要把所有媒体塞进首屏。
+- 构建期检查单文件大小和总大小，超预算让 CI 失败或警告。
+
+### 8.8 SEO 与分享
+
+- 站点页面服务端渲染，带 title、description、canonical、OG。
+- 课程页构建时注入 title、description、OG 图（封面）、`LearningResource` JSON-LD。
+- 课程页的封面包含课程目标、章节标题和摘要，这些是静态 HTML，可被索引。
+- 生成 `sitemap.xml` 和 `robots.txt`；课程页和站点页面都列入。
+- 分享链接使用课程 URL；深链 hash 不影响抓取。
+
+### 8.9 无 JS 降级
+
+- 站点：课程库、过滤、课程卡片全部可用。
+- 课程页：封面、目标、大纲、每屏摘要可见；显示 `<noscript>` 说明“动画需要 JavaScript；可以先阅读课程大纲”。
+- 不把关键信息只放在 JS 生成的 DOM 里。
+
+---
+
+## 9. 构建与发布
+
+### 9.1 流水线
+
+```text
+courses/<slug>/
+   │
+   ├─ 1. 解析 course.json（Pydantic）
+   ├─ 2. 解析 composition/index.html 的 screen host（html.parser）
+   ├─ 3. 合并、校验（resolver）
+   ├─ 4. 校验 scene 文件、资源、字体、GSAP、外部资源加载
+   ├─ 5. 渲染课程页（Jinja2 shell），按部署方式注入同源 `progressEndpoint` / `progressOrigin`
+   ├─ 6. 拷贝 composition（排除 node_modules/.hyperframes/renders/package.json/hyperframes.json）
+   ├─ 7. 拷贝 runtime、vendor、design tokens
+   ├─ 8. 写解析后的 course.json
+   ├─ 9. 写 LICENSES、VERSION
+   └─ 10. 输出 dist/courses/<slug>/
+```
+
+构建是幂等的：同样的输入产生同样的输出（时间戳字段除外）。构建失败必须给出具体文件、字段和修复建议。生产环境构建时先写临时目录，再原子替换 `dist/courses/<slug>/`，避免服务过程中看到半个课程包。
+
+### 9.2 运行时打包
+
+| 文件 | 来源 | 说明 |
+| --- | --- | --- |
+| `hyperframes-player.global.js` | `tools/node_modules/hyperframes/dist/` | 官方 web component |
+| `hyperframe.runtime.iife.js` | 同上 | 注入 composition 的 runtime |
+| `gsap.min.js` | `tools/node_modules/gsap/dist/` | 放在 `composition/assets/vendor/` |
+| `NotoSansSC-*.woff2` | `design/fonts/` | 子集化后放进 `composition/assets/fonts/` |
+| `course-deck.js` / `.css` | `runtime/` | 课程外壳 |
+| `tokens.css` | `design/` | 设计令牌 |
+
+原则：
+
+- 版本固定，不用 `latest`。
+- 每个文件记录 SHA-256，`VERSION.json` 可查；vendor URL 带版本/哈希查询参数，避免长缓存锁死旧 runtime。
+- 许可证文件随包分发：HyperFrames（Apache-2.0）、GSAP、字体（OFL）。
+- 课程包里不出现 `node_modules`、源地图、编辑器缓存。
+
+### 9.3 课程页生成
+
+课程页用 Jinja2 模板渲染，模板在 `runtime/shell.html.j2`。模板接收：
+
+- `course`：解析后的课程清单；
+- `site`：站点标题、首页 URL、课程库 URL；
+- `theme`：强调色、封面 URL；
+- `progress`：同源进度接口地址和 `progressOrigin`；为 `null` 或 origin 不匹配时，课程页只使用本地进度；
+- `build`：版本、内容哈希。
+
+生成的 HTML 包含：
+
+- meta/OG/JSON-LD；
+- 封面和大纲的静态 HTML；
+- 舞台、控制条、讲义抽屉、完成页；
+- 内联的解析后清单（`<script type="application/json" id="course-data">`）；
+- player 和课程外壳脚本的引用。
+
+内联清单要做 `</script>` 转义。课程页不在运行时 fetch `course.json`，减少一次请求和一个失败点；`course.json` 仍然保留，供 API、调试和外部工具读取。
+
+### 9.4 校验与外部资源扫描
+
+构建必须检查：
+
+- 清单字段、枚举、slug、文件存在性。
+- 每屏元数据和 composition host 一一对应。
+- 时间顺序、重叠、根时长。
+- 每个 scene 文件存在，`data-composition-id` 和时间轴 key 匹配。
+- 所有会发起资源请求的属性（`script[src]`、`link[rel=stylesheet|preload|modulepreload]`、`img[src]`、`source[src]`、`video[src]`、`audio[src]`、`iframe[src]`、`poster`、CSS `url()`、`@import`）不含外部协议；`<a href>`、`<link rel="canonical">` 和 meta 属性不作为资源加载检查。
+- GSAP、字体、runtime 文件存在且哈希匹配。
+- 单文件/总大小预算。
+- 没有 `Date.now()`、`setInterval`、未播种的 `Math.random()` 作为动画时钟（允许在非动画的工具代码里出现，构建脚本按文件范围检查）。
+- `composition/index.html` 的根 `data-duration` ≥ 最后一屏结束时间。
+
+外部资源扫描允许 `data:` URI、`#` 锚点、`mailto:`、普通 `<a>` 外链和 canonical/meta；对注释里的 URL 做白名单/忽略，避免误报。
+
+### 9.5 独立部署验收
+
+每个课程包构建后，CI 执行：
+
+1. 在 `dist/courses/<slug>/` 启动一个普通静态服务器（例如 `python -m http.server 8081`），不启动 FastAPI，也不启动数据库。
+2. 用 Playwright 打开 `http://127.0.0.1:8081/`。
+3. 点击开始，等待第一屏；点击下一屏，等待第二屏；打开讲义；检查控制台没有错误。
+4. 断言页面发出的请求没有跨域外部请求，也没有对 `/api/*` 的依赖。
+5. 断言页面标题、封面、课程大纲可见；本地进度可以“继续上次”。
+
+这个测试是“课程可以脱离网站”唯一的硬证明。任何课程包不通过，不能发布。
+
+HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程放到第三方服务，和“课程包可复制、可自托管”的目标冲突。本项目不把它作为分发路径；需要临时分享时可以用，但不进入构建和部署流程。
+
+### 9.6 缓存与 CDN
+
+| 内容 | 策略 |
+| --- | --- |
+| 课程页 HTML | `no-cache` + ETag；构建后用 `?v=<hash>` 加载脚本/样式 |
+| `course.json` | 短缓存（5 分钟） |
+| composition HTML/JS/CSS | 中等缓存（1 小时） |
+| 图片/字体/音频 | 长缓存，文件名带内容哈希或查询参数 |
+| runtime/vendor | 1 年 immutable |
+| 站点静态 | 1 天 |
+
+分离部署时：
+
+- 站点 `COURSE_BASE_URL=https://cdn.example.com/courses`。
+- 课程页的 `site.homeUrl` 设成站点绝对地址；如果课程要独立分发，设成 `null`。
+- CDN 需要允许课程页被直接访问，不需要 CORS；分离部署不注入进度接口，课程页不调用 API。
+- CDN 的 404 行为要可预测，不能把缺失资源回退成 HTML。
+
+### 9.7 CI 质量门
+
+必须通过：
+
+1. Python：`ruff check`、`ruff format --check`、`pytest`。
+2. 构建：全部已发布课程构建成功，产物文件齐全。
+3. HyperFrames：每门课的 `composition/` 通过 `npx hyperframes@0.9.19 check`。
+4. 播放器契约：range/ended 的 Playwright（Python）测试。
+5. 独立部署：静态服务器上的课程能播放。
+6. 站点 E2E：首页 → 课程库 → 课程 → 下一屏 → 返回。
+7. 无障碍：站点和课程页的 axe 检查，键盘路径测试。
+8. 外部资源扫描：0 个外部资源加载（引用链接除外）。
+9. 预算：首屏和总大小不超限。
+10. 数据库：迁移链可从空库升到 head；进度 API 的 upsert、匿名会话、slug/screen 校验有测试；备份/恢复步骤演练过。
+
+`check` 和快照需要 Node 22、Chrome；CI 里用固定版本，不使用 `latest`。
+
+### 9.8 升级 HyperFrames
+
+1. 在 `tools/package.json` 里改固定版本。
+2. 运行 `scripts/sync_runtime.py`，更新 player/runtime 和 `VERSION.json`。
+3. 先跑播放器契约测试：range 起点、range 终点、`ended`、`seek`、切换下一屏。
+4. 重建所有课程，跑 `check` 和至少两门课的逐屏快照。
+5. 人工看两门课：首帧、切屏、末帧、音频、移动端。
+6. 更新文档里的版本号和兼容性说明。
+
+如果契约测试失败，不要改课程外壳去适配；先在适配层做兼容，或者停留在旧版本。升级不是例行公事，是一次有回归风险的依赖变更。
+
+---
+
+## 10. 数据模型与 API
+
+### 10.1 模型关系
+
+```text
+CourseSource 1 ─── * ScreenMeta
+      │
+      │ resolve（与 composition 合并）
+      ▼
+ResolvedCourse 1 ─── * ResolvedScreen
+      │
+      └── CompositionInfo
+```
+
+`CourseSource` 是编辑视图；`ResolvedCourse` 是运行视图。站点卡片用 `CourseSummary`，课程页和 API 用 `ResolvedCourse`。
+
+### 10.2 API
+
+`GET /api/courses`：
+
+```json
+{
+  "courses": [
+    {
+      "slug": "what-is-a-token",
+      "title": "AI 眼中的文字",
+      "subtitle": "从 token 开始，理解大模型如何阅读",
+      "summary": "一句话被切成 token 之后，模型才真正开始工作。",
+      "level": "beginner",
+      "tags": ["LLM", "token"],
+      "accent": "#E4572E",
+      "coverUrl": "/courses/what-is-a-token/cover.webp",
+      "courseUrl": "/courses/what-is-a-token/",
+      "screenCount": 8,
+      "durationSeconds": 132,
+      "estimatedMinutes": 3,
+      "featured": true
+    }
+  ]
+}
+```
+
+`GET /api/courses/<slug>`：返回完整 `ResolvedCourse`，包含 `screens[].start`、`duration`、`transcript` 等字段。
+
+`GET /api/progress/{course_slug}`：返回当前匿名/登录用户的进度；无会话返回空进度，不创建用户。
+
+`PUT /api/progress/{course_slug}`：写入 `{screenId, completed?}`；同源请求；写入前校验课程和屏幕存在。
+
+`GET /api/health`：
+
+```json
+{
+  "status": "ok",
+  "published": 3,
+  "drafts": 1,
+  "unbuilt": 0,
+  "db": {"ok": true, "schemaVersion": "0003"},
+  "errors": []
+}
+```
+
+课程 API 是只读的；进度 API 是唯一的写入口，只写用户状态。没有账号注册/登录接口（v1）。所有写接口都要限制请求体大小、校验 slug/screen id、检查 `Origin`；未来登录接口再加 CSRF 和速率限制。
+
+### 10.3 数据库模型
+
+```text
+users 1 ─── * sessions
+  │
+  └─ 1 ─── * course_progress 1 ─── * screen_progress
+```
+
+- `users`：匿名用户和未来注册用户共用；`is_anonymous` 区分。
+- `sessions`：匿名/登录会话；只存 token 哈希。
+- `course_progress`：每用户每课程一行，记录 `last_screen_id`、完成时间。
+- `screen_progress`：每用户每课程每屏一行，记录完成时间。
+
+课程包仍然是静态的；进度通过站点 API 读写，不进入课程包。没有数据库时，课程页退回 `localStorage`，课程继续独立部署。详细字段、匿名会话、迁移和备份见 7.9–7.10。
+
+---
+
+## 11. 测试策略
+
+### 11.1 测试金字塔
+
+| 层 | 测什么 | 工具 |
+| --- | --- | --- |
+| 单元 | 清单校验、composition 解析、时间合并、slug/URL 规则、进度仓库 | pytest |
+| 契约 | player 的 range/ended/seek 行为、适配层降级 | Playwright（Python） |
+| 集成 | 构建产物文件、静态服务、课程/进度 API、SQLite 迁移 | pytest + TestClient |
+| 端到端 | 站点 → 课程 → 切屏 → 讲义 → 完成 → 进度 | Playwright（Python） |
+| 独立部署 | 普通静态服务器上的课程包（无 API/数据库） | Playwright（Python）+ `http.server` |
+| 视觉 | 每屏代表帧、首帧、末帧 | `hyperframes snapshot` + 人工/截图对比 |
+| 无障碍 | 键盘、焦点、axe、减少动态效果 | Playwright（Python）+ axe |
+| 性能 | 首屏、首帧、请求数、包大小 | Playwright（Python）/Lighthouse |
+
+### 11.2 必须存在的测试
+
+1. `test_resolver`：正常合并；缺屏幕元数据；多出屏幕元数据；重复 id；时间倒序；时间重叠；超出根时长；scene 文件缺失；scene id 不匹配。
+2. `test_build`：构建输出文件齐全；排除 `node_modules`；解析后的 `course.json` 时间正确；构建幂等；同源/分离部署的 `progressEndpoint` / `progressOrigin` 注入正确。
+3. `test_progress`：匿名会话创建；GET 不创建用户；PUT upsert；未知课程/屏幕拒绝；cookie 过期；重复写入幂等。
+4. `test_migrations`：空库升到 head；迁移后关键表/索引存在；备份文件可打开。
+5. `test_player_contract`：两屏 fixture；设置 range；播放到 `ended`；切换到第二屏；`seek` 后播放；错误路径。
+6. `test_standalone`：静态服务器上的课程包可以完成“开始 → 下一屏 → 讲义”，不需要 API/数据库。
+7. `test_site`：首页、课程库、过滤、404、课程链接。
+8. `test_a11y`：课程页无严重 axe 问题；键盘可以完成主流程。
+9. `test_no_external`：构建产物没有外部资源加载（允许引用链接）。
+10. `test_budget`：首屏和总大小不超预算。
+
+### 11.3 测试数据
+
+- `tests/fixtures/courses/valid-two-screen/`：最小合法课程，两屏，2 秒一屏，纯色/文字，不依赖外部素材。
+- `tests/fixtures/courses/invalid-*`：每个错误一个 fixture，断言错误码和错误字段。
+- 样板课本身也是回归测试对象，但不要把所有课程都塞进单元测试；课程级检查用构建流水线。
+
+### 11.4 人工验收
+
+自动化测不出“讲得好不好”。每门课发布前至少人工看三遍：
+
+1. **第一遍，当学习者。** 不看脚本，是否能跟上？哪一屏走神？
+2. **第二遍，当审稿人。** 每屏的中心论题是否只有一个？字幕/正文是否有错别字？术语第一次出现是否解释？
+3. **第三遍，当挑刺的人。** 暂停在任意一帧是否可读？最后一帧是否稳定？手机横屏是否能用？键盘是否顺手？
+
+---
+
+## 12. 部署
+
+### 12.1 单机拓扑
+
+```text
+浏览器
+  │
+  ▼
+Nginx / Caddy
+  ├─ /static/*  ──▶ FastAPI 或静态目录
+  ├─ /courses/* ──▶ FastAPI StaticFiles 或静态目录
+  └─ /*         ──▶ FastAPI (uvicorn)
+                         │
+                         ▼
+                   SQLite data/app.db
+```
+
+一个 Python 进程、一个 `dist/` 目录、一个 SQLite 文件。适合早期和小规模；SQLite 用 WAL，应用默认单 worker。需要多实例时先迁移到 Postgres。
+
+### 12.2 分离拓扑
+
+```text
+浏览器
+  ├─ 站点页面 + API + SQLite ──▶ FastAPI（站点主机）
+  └─ 课程包 / 静态资源       ──▶ CDN / 对象存储
+```
+
+课程包是纯静态的，可以独立部署、独立缓存、独立回滚。站点保留课程目录所需的解析清单（`dist/courses/*/course.json`，通常只有几 KB）、SQLite 和进度 API；课程资源和页面走 CDN。`COURSE_BASE_URL` 指向 CDN。分离部署默认不注入同源进度接口，课程页只使用本地进度；要开同步就得处理 CORS 和 Cookie 策略，v1 不做。
+
+### 12.3 容器
+
+- 基础镜像：`python:3.12-slim`。
+- 只安装运行时依赖：fastapi、uvicorn、jinja2、pydantic-settings、sqlalchemy、alembic。
+- 拷贝 `app/`、`dist/`、`alembic.ini`、`migrations/`。
+- `data/` 用 volume 挂载；`DATABASE_URL` 指向 volume 里的文件。不要把数据库文件放进镜像；volume 属主给运行用户。
+- 部署时执行 `alembic upgrade head`，再启动应用；不在应用启动时自动迁移。
+- 不安装 Node、Chrome、FFmpeg。构建在 CI 完成。
+- 健康检查：`GET /healthz`；就绪检查：`GET /readyz`（含 DB 和 schema version）。
+- 静态文件可以由 Nginx 直接服务，减少 Python 进程的 I/O。
+
+### 12.4 可观测性
+
+- 结构化日志：启动时记录课程数量、构建版本、错误数量、DB schema version；请求日志记录路径、状态码、耗时。
+- `/healthz` 只检查进程；`/readyz` 检查数据库连接和迁移版本；`/api/health` 检查目录、构建状态和 DB。
+- 不在日志里打印课程讲义全文、密码、会话 token 或完整进度。
+- 每天备份 SQLite（`VACUUM INTO` 或 backup API），保留 7–30 天；迁移前额外备份一次。
+- 回滚：镜像/`dist/` 回滚 + 数据库迁移只能向前兼容；破坏性迁移先备份，必要时用备份恢复。不要假设“回滚镜像就能回滚 schema”。
+
+---
+
+## 13. 风险与缓解
+
+| 风险 | 影响 | 缓解 |
+| --- | --- | --- |
+| player 的 range 接口在升级后变化 | 切屏失效，课程卡在第一屏 | 适配层 + 契约测试 + 固定版本；必要时降级为 seek + 时间监听 |
+| 一门课 composition 过大 | 首屏慢、内存高、scene 故障影响全课 | 预算、懒加载、15 屏/50MB 拆分阈值 |
+| 手机竖屏文字不可读 | 移动端学习体验差 | 横屏提示 + 讲义模式；不承诺竖屏动画 |
+| 中文字体太大 | 首屏慢 | 子集化、预加载、单字体多字重；预算检查 |
+| 自动播放被拦截 | 有音频的课程首屏无声 | 显式开始手势、静音回退、声音按钮 |
+| 构建解析 HTML 太脆弱 | 构建失败或时间错误 | 固定根结构、`html.parser`、单元测试、严格报错 |
+| SQLite 写入锁/多实例 | 写入失败或响应变慢 | WAL、短事务、`busy_timeout`、单 worker；多实例前迁移 Postgres |
+| SQLite 文件损坏/误删 | 用户进度丢失 | 每日备份、迁移前备份、恢复演练、volume 权限 |
+| 匿名会话被滥用 | 空用户/垃圾进度 | GET 不创建用户、请求体限制、Origin 检查、会话过期；未来加速率限制 |
+| 登录功能引入安全问题 | 账号泄露 | Argon2id、HttpOnly Cookie、CSRF、速率限制、会话轮换；上线前做安全评审 |
+| 课程内容“动画很炫但没讲清” | 产品失去意义 | 课程契约 + storyboard 评审 + 逐屏“一句话论题”检查 |
+| 范围蔓延成通用 LMS | 进度停滞 | 非目标清单；v1 只做课程和目录 |
+| 第三方许可证 | 发布风险 | 随包分发 LICENSE；发布前核对 GSAP/字体授权 |
+| Safari 的 iframe/媒体差异 | 部分用户播放异常 | 目标浏览器测试；player 已处理部分 Safari 特例；保留降级页 |
+
+---
+
+## 14. 开放问题
+
+下面这些问题不影响当前架构，但需要在实现前定下来。括号里是默认建议。
+
+| 问题 | 默认建议 |
+| --- | --- |
+| 项目正式名称和视觉识别 | 先用 “AI Learning”，视觉方向在 Phase 4 定 |
+| 第一门样板课的主题 | “什么是 token”，6–8 屏，2–3 分钟 |
+| 是否需要语音讲解 | v1 不做；先保证文字和动画；音频能力保留 |
+| 是否需要账号/登录 | v1 只做匿名会话和进度；“注册/登录/跨设备”作为下一阶段，SQLite schema 已按可登录设计 |
+| 数据库是否随 v1 发布 | 是；SQLite + Alembic，先支撑匿名进度，再长出账号 |
+| 移动端优先级 | 桌面/横屏优先；竖屏讲义模式 |
+| 部署目标 | 先单机 Docker；课程包可直接上 CDN |
+| 是否允许课程自定义外壳 | v1 不允许；用封面、强调色和文案做区分 |
+| 课程长度 | 6–10 屏，2–5 分钟；超过 15 屏考虑拆系列 |
+
+---
+
+## 附录 A：路由总表
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| `/` | 动态 | 首页 |
+| `/courses` | 动态 | 课程库 |
+| `/courses/` | 重定向 | → `/courses` |
+| `/about` | 动态 | 方法论 |
+| `/courses/<slug>/` | 静态 | 课程页 |
+| `/courses/<slug>/composition/...` | 静态 | composition 资源 |
+| `/courses/<slug>/runtime/...` | 静态 | 课程外壳运行时 |
+| `/api/courses` | JSON | 课程摘要 |
+| `/api/courses/<slug>` | JSON | 课程详情 |
+| `/api/progress/<course_slug>` | JSON | 当前用户进度（GET/PUT） |
+| `/api/progress` | JSON | 当前用户全部进度 |
+| `/healthz` | JSON | 进程健康 |
+| `/readyz` | JSON | DB 连接和 schema 版本 |
+| `/api/health` | JSON | 目录、DB、构建健康 |
+
+## 附录 B：术语
+
+| 术语 | 含义 |
+| --- | --- |
+| 课程（Course） | 一个独立的教学单元，有封面、若干屏、一个 URL |
+| 屏（Screen） | 一次讲解占据一个屏幕的节拍；对应 composition 里的一个 scene |
+| 课程包（Bundle） | 构建后可以独立部署的静态目录 |
+| composition | HyperFrames 工程；根 `index.html` 挂载所有 scene |
+| scene | 一个屏幕的动画文件，位于 `composition/compositions/` |
+| 课程外壳（Deck） | 课程页上负责封面、切屏、控制、讲义的 JS/CSS |
+| 播放器（Player） | `<hyperframes-player>` web component，负责 iframe 和 runtime |
+| runtime | 注入 composition、驱动 GSAP 时间轴的脚本 |
+| 解析后清单（Resolved manifest） | 合并了编辑信息和 composition 时间的 `course.json` |
+| 独立部署 | 课程包放在普通静态服务器上，不依赖 FastAPI、数据库或登录态 |
+| SQLite | 站点侧的单文件数据库，存用户、会话和进度 |
+| 匿名会话 | 没有登录、但有一个稳定 ID 来保存进度的会话；可升级成账号 |

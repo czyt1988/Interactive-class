@@ -1,0 +1,296 @@
+<template>
+  <style>
+    #root {
+      background: #f4efe6;
+      color: #16140f;
+    }
+
+    .fl-kicker {
+      position: absolute;
+      left: 192px;
+      top: 96px;
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      color: #a33a20;
+    }
+
+    .fl-title {
+      position: absolute;
+      left: 192px;
+      top: 150px;
+      width: 1536px;
+      font-size: 92px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .fl-stage {
+      position: absolute;
+      left: 192px;
+      top: 344px;
+      width: 640px;
+      height: 640px;
+      border: 1px solid #d9cfbf;
+      border-radius: 18px;
+      background: #faf6ee;
+      overflow: hidden;
+    }
+
+    /* 01 像素：机器拿到的是一格一格的数字 */
+    .fl-pixels {
+      position: absolute;
+      inset: 24px;
+      background-image:
+        linear-gradient(rgba(22, 20, 15, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 20, 15, 0.12) 1px, transparent 1px);
+      background-size: 43.7px 43.7px;
+      background-position: -1px -1px;
+    }
+
+    .fl-num {
+      position: absolute;
+      font-family: ui-monospace, monospace;
+      font-size: 15px;
+      color: rgba(22, 20, 15, 0.42);
+      letter-spacing: -0.04em;
+    }
+
+    .fl-svg {
+      position: absolute;
+      inset: 0;
+      width: 640px;
+      height: 640px;
+    }
+
+    .fl-edge {
+      fill: none;
+      stroke: #2f6f5e;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .fl-shape {
+      fill: #16140f;
+    }
+
+    .fl-eye {
+      fill: #f4efe6;
+    }
+
+    .fl-pupil {
+      fill: #2f6f5e;
+    }
+
+    .fl-nose {
+      fill: #a33a20;
+    }
+
+    .fl-whisker {
+      stroke: #f4efe6;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .fl-steps {
+      position: absolute;
+      left: 930px;
+      top: 344px;
+      width: 798px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .fl-step {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 16px;
+      align-items: start;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2d9c9;
+    }
+
+    .fl-step p {
+      margin: 0;
+    }
+
+    .fl-step-num {
+      font-family: ui-monospace, monospace;
+      font-size: 28px;
+      color: #857c6d;
+      padding-top: 4px;
+    }
+
+    .fl-step-name {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #16140f;
+      line-height: 1.2;
+    }
+
+    .fl-step-desc {
+      font-size: 28px;
+      line-height: 1.45;
+      color: #5f584d;
+      margin-top: 2px;
+    }
+
+    .fl-note {
+      position: absolute;
+      left: 930px;
+      top: 812px;
+      width: 798px;
+      font-size: 30px;
+      line-height: 1.6;
+      color: #514b40;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s-filters" data-width="1920" data-height="1080">
+    <p id="fl-kicker" class="clip fl-kicker" data-start="0.2" data-duration="26.7">
+      一层一层
+    </p>
+    <h1 id="fl-title" class="clip fl-title" data-start="0.3" data-duration="26.6">
+      CNN 是一层一层的滤镜
+    </h1>
+
+    <div id="fl-stage" class="clip fl-stage" data-start="1.0" data-duration="25.9">
+      <div id="fl-pixels" class="fl-pixels">
+        <span class="fl-num" data-layout-ignore style="left: 8px; top: 6px">0.2</span>
+        <span class="fl-num" data-layout-ignore style="left: 96px; top: 6px">0.8</span>
+        <span class="fl-num" data-layout-ignore style="left: 184px; top: 6px">0.5</span>
+        <span class="fl-num" data-layout-ignore style="left: 272px; top: 6px">0.1</span>
+        <span class="fl-num" data-layout-ignore style="left: 360px; top: 6px">0.9</span>
+        <span class="fl-num" data-layout-ignore style="left: 448px; top: 6px">0.3</span>
+        <span class="fl-num" data-layout-ignore style="left: 536px; top: 6px">0.7</span>
+        <span class="fl-num" data-layout-ignore style="left: 8px; top: 402px">0.6</span>
+        <span class="fl-num" data-layout-ignore style="left: 184px; top: 402px">0.1</span>
+        <span class="fl-num" data-layout-ignore style="left: 360px; top: 402px">0.8</span>
+        <span class="fl-num" data-layout-ignore style="left: 536px; top: 402px">0.4</span>
+      </div>
+
+      <svg id="fl-svg" class="fl-svg" viewBox="0 0 660 660" aria-hidden="true">
+        <g id="fl-edges">
+          <circle id="fl-edge-head" class="fl-edge" cx="330" cy="286" r="112" />
+          <path id="fl-edge-ear-l" class="fl-edge" d="M 226 226 L 244 92 L 316 200" />
+          <path id="fl-edge-ear-r" class="fl-edge" d="M 434 226 L 416 92 L 344 200" />
+          <ellipse id="fl-edge-body" class="fl-edge" cx="330" cy="506" rx="166" ry="132" />
+        </g>
+
+        <g id="fl-shapes">
+          <path
+            id="fl-shape-body"
+            class="fl-shape"
+            d="M 330 374 C 240 374 164 434 164 506 C 164 578 240 638 330 638 C 420 638 496 578 496 506 C 496 434 420 374 330 374 Z"
+          />
+          <circle id="fl-shape-head" class="fl-shape" cx="330" cy="286" r="112" />
+          <path id="fl-shape-ear-l" class="fl-shape" d="M 226 226 L 244 92 L 316 200 Z" />
+          <path id="fl-shape-ear-r" class="fl-shape" d="M 434 226 L 416 92 L 344 200 Z" />
+        </g>
+
+        <g id="fl-details">
+          <ellipse id="fl-eye-l" class="fl-eye" cx="292" cy="274" rx="22" ry="26" />
+          <ellipse id="fl-eye-r" class="fl-eye" cx="368" cy="274" rx="22" ry="26" />
+          <ellipse id="fl-pupil-l" class="fl-pupil" cx="292" cy="278" rx="9" ry="14" />
+          <ellipse id="fl-pupil-r" class="fl-pupil" cx="368" cy="278" rx="9" ry="14" />
+          <path id="fl-nose" class="fl-nose" d="M 320 316 L 340 316 L 330 330 Z" />
+          <path
+            id="fl-whiskers"
+            class="fl-whisker"
+            d="M 246 306 L 186 292 M 246 322 L 182 322 M 246 338 L 188 352 M 414 306 L 474 292 M 414 322 L 478 322 M 414 338 L 472 352"
+          />
+        </g>
+      </svg>
+    </div>
+
+    <div class="fl-steps">
+      <div id="fl-step-1" class="fl-step">
+        <span class="fl-step-num">01</span>
+        <div>
+          <p class="fl-step-name">像素</p>
+          <p class="fl-step-desc">机器最初拿到的，只是一个数字网格。</p>
+        </div>
+      </div>
+      <div id="fl-step-2" class="fl-step">
+        <span class="fl-step-num">02</span>
+        <div>
+          <p class="fl-step-name">边缘</p>
+          <p class="fl-step-desc">第一层找线条：哪里亮度突然变了。</p>
+        </div>
+      </div>
+      <div id="fl-step-3" class="fl-step">
+        <span class="fl-step-num">03</span>
+        <div>
+          <p class="fl-step-name">形状</p>
+          <p class="fl-step-desc">第二层把边缘拼起来：耳朵、脸、身体。</p>
+        </div>
+      </div>
+      <div id="fl-step-4" class="fl-step">
+        <span class="fl-step-num">04</span>
+        <div>
+          <p class="fl-step-name">猫</p>
+          <p class="fl-step-desc">后面几层认出眼睛、鼻子、胡须，拼成「猫」。</p>
+        </div>
+      </div>
+    </div>
+
+    <p id="fl-note" class="clip fl-note" data-start="22.0" data-duration="4.9">
+      没有哪一层被告诉「这是耳朵」——每层只是把上一层的结果当输入。
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#fl-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
+    tl.fromTo("#fl-title", { opacity: 0, y: 42 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 0.3);
+    tl.fromTo("#fl-stage", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" }, 1.0);
+
+    tl.fromTo("#fl-pixels", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, 1.6);
+    tl.fromTo("#fl-step-1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 5.4);
+
+    // 边缘：一层只找线条。
+    tl.fromTo("#fl-pixels", { opacity: 1 }, { opacity: 0.13, duration: 0.6, ease: "power1.out", immediateRender: false }, 6.4);
+    tl.fromTo(
+      ["#fl-edge-head", "#fl-edge-ear-l", "#fl-edge-ear-r", "#fl-edge-body"],
+      { opacity: 0 },
+      { opacity: 1, duration: 0.7, ease: "power2.out", stagger: 0.2 },
+      6.6,
+    );
+    tl.fromTo("#fl-step-2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 6.8);
+
+    // 形状：把边缘围起来的面填上。
+    tl.fromTo("#fl-pixels", { opacity: 0.13 }, { opacity: 0, duration: 0.5, ease: "none", immediateRender: false }, 10.8);
+    tl.fromTo(
+      ["#fl-shape-body", "#fl-shape-ear-l", "#fl-shape-ear-r", "#fl-shape-head"],
+      { opacity: 0, scale: 0.94, transformOrigin: "50% 55%" },
+      { opacity: 1, scale: 1, duration: 0.55, ease: "power2.out", stagger: 0.1 },
+      10.9,
+    );
+    tl.fromTo("#fl-step-3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 11.0);
+
+    // 细节：眼睛、鼻子、胡须。
+    tl.fromTo(
+      ["#fl-eye-l", "#fl-eye-r"],
+      { opacity: 0, scale: 0.4 },
+      { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.4)", stagger: 0.12 },
+      15.2,
+    );
+    tl.fromTo(
+      ["#fl-pupil-l", "#fl-pupil-r"],
+      { opacity: 0 },
+      { opacity: 1, duration: 0.3, ease: "power2.out", stagger: 0.1 },
+      15.6,
+    );
+    tl.fromTo("#fl-nose", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 16.2);
+    tl.fromTo("#fl-whiskers", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, 16.6);
+    tl.fromTo("#fl-step-4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 15.4);
+
+    tl.fromTo("#fl-note", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 22.0);
+
+    window.__timelines["s-filters"] = tl;
+  </script>
+</template>
