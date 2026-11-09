@@ -19,6 +19,16 @@ renders/
 *.db
 *.sqlite3
 
+# 视频与渲染产物：课程本身是 HTML 静态包，视频只是本地导出结果，不进版本库
+*.mp4
+*.webm
+*.mov
+*.mkv
+*.avi
+*.m4v
+*.flv
+*.wmv
+
 # Windows 启动脚本的运行状态与临时文件
 /.run/
 /.tmp/
@@ -30,8 +40,6 @@ renders/
 # Node / HyperFrames 创作工具
 node_modules/
 .hyperframes/
-*.mp4
-*.webm
 
 # 本地配置（.env.example 需要提交）
 .env
@@ -43,6 +51,16 @@ node_modules/
 Thumbs.db
 Desktop.ini
 
+# 课程创作缓存：旁白 TTS 源文件、快照与渲染产物都不进版本库
+courses/*/narration/cache/
+courses/*/composition/.snaps-*/
+courses/*/composition/.review-*/
+courses/*/composition/.thumbnails/
+courses/*/renders/
+
 # 浏览器测试产物
 test-results/
 playwright-report/
+
+# 本地视频导出工具（ffmpeg / ffprobe，由开发机自行安装）
+tools/ffmpeg/
