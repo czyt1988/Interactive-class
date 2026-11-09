@@ -1,0 +1,2047 @@
+<template>
+  <style>
+    /* S17 ·「只认笔记本的专家」：黑屋改成暖纸小屋，整页只有纸色，深色只做墨色剪影。 */
+    .s17-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ---------------------------------------------- 拍1：三个「还在」的小窗口 */
+    .s17-remember-head {
+      position: absolute;
+      left: 0;
+      top: 8px;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+    }
+
+    .s17-win {
+      position: absolute;
+      top: 74px;
+      width: 500px;
+      height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    #s-stateless-notebook-win-0 { left: 18px; }
+    #s-stateless-notebook-win-1 { left: 582px; }
+    #s-stateless-notebook-win-2 { left: 1146px; }
+
+    .s17-win-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 46px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+      font-family: var(--font-mono);
+      font-size: 25px;
+      color: var(--ink-soft);
+    }
+
+    .s17-win-bar i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--line-strong);
+      flex: none;
+    }
+
+    .s17-win-bar span {
+      margin-left: 10px;
+      letter-spacing: 0.06em;
+    }
+
+    .s17-win-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 22px 20px 0;
+    }
+
+    .s17-bubble {
+      max-width: 400px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 27px;
+      line-height: 1.32;
+    }
+
+    .s17-bubble--me {
+      background: var(--panel-2);
+      color: var(--ink-soft);
+    }
+
+    .s17-bubble--ai {
+      align-self: flex-end;
+      background: #fffdf8;
+      color: var(--ink);
+    }
+
+    .s17-win-state {
+      position: absolute;
+      left: 22px;
+      bottom: 74px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s17-win-foot {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .s17-win-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-size: 27px;
+      color: var(--ink);
+    }
+
+    .s17-win-badge::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s17-win-tag {
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s17-stateless {
+      position: absolute;
+      left: 300px;
+      top: 452px;
+      width: 1064px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      padding: 0 34px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--panel) 82%, transparent);
+    }
+
+    .s17-stateless-label {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s17-stateless-tag {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s17-stateless-x {
+      font-family: var(--font-mono);
+      font-size: 29px;
+      letter-spacing: 0.08em;
+      color: var(--stamp);
+    }
+
+    .s17-question {
+      position: absolute;
+      left: 330px;
+      top: 226px;
+      width: 1004px;
+      padding: 36px 40px;
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 26px 60px -44px rgba(22, 20, 15, 0.6);
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      text-align: center;
+    }
+
+    .s17-question em {
+      font-style: normal;
+      color: var(--accent-text);
+    }
+
+    /* ------------------------------------------------- 拍2：纸雕小屋 */
+    .s17-corridor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 470px;
+      height: 592px;
+      background: #ece3d3;
+    }
+
+    .s17-corridor::before,
+    .s17-corridor::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(81, 75, 64, 0.12);
+    }
+
+    .s17-corridor::before { top: 258px; }
+    .s17-corridor::after { top: 424px; }
+
+    .s17-outdoor {
+      position: absolute;
+      left: 10px;
+      top: 186px;
+      width: 132px;
+      height: 406px;
+      border: 3px solid var(--line-strong);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: #ece3d3;
+    }
+
+    .s17-outdoor::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      bottom: 0;
+      width: 16px;
+      background: var(--panel-2);
+      border: 2px solid var(--line-strong);
+    }
+
+    .s17-divider {
+      position: absolute;
+      left: 470px;
+      top: 0;
+      width: 60px;
+      height: 592px;
+      background: var(--panel-2);
+      border-left: 2px solid var(--line-strong);
+      border-right: 2px solid var(--line-strong);
+      z-index: 3;
+    }
+
+    .s17-roomwall {
+      position: absolute;
+      left: 530px;
+      top: 0;
+      width: 1134px;
+      height: 592px;
+      background: var(--panel);
+      border-top: 3px solid var(--line-strong);
+    }
+
+    .s17-roomwall::before,
+    .s17-roomwall::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(81, 75, 64, 0.1);
+    }
+
+    .s17-roomwall::before { top: 198px; }
+    .s17-roomwall::after { top: 372px; }
+
+    .s17-floor {
+      position: absolute;
+      left: 0;
+      top: 592px;
+      width: 1664px;
+      height: 72px;
+      background: #ece3d3;
+      border-top: 3px solid var(--line-strong);
+    }
+
+    .s17-floor::before,
+    .s17-floor::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(81, 75, 64, 0.14);
+    }
+
+    .s17-floor::before { top: 22px; }
+    .s17-floor::after { top: 48px; }
+
+    .s17-glow {
+      left: 792px;
+      top: -60px;
+      width: 600px;
+      height: 600px;
+    }
+
+    .s17-lamp {
+      position: absolute;
+      left: 1000px;
+      top: 0;
+      z-index: 6;
+    }
+
+    .s17-hatchwrap {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+    }
+
+    .s17-hatch {
+      position: absolute;
+      left: 418px;
+      top: 300px;
+      width: 164px;
+      height: 130px;
+      border: 9px solid #b98a3c;
+      border-radius: 6px;
+      background: #f8f2e7;
+      box-shadow: inset 0 0 0 2px #e3d5b8, 0 18px 30px -26px rgba(22, 20, 15, 0.55);
+    }
+
+    .s17-hatch::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(135deg, rgba(185, 138, 60, 0.2) 0 2px, transparent 2px 14px);
+    }
+
+    .s17-hatch::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -6px;
+      bottom: -6px;
+      width: 3px;
+      margin-left: -1px;
+      background: rgba(138, 100, 40, 0.5);
+    }
+
+    .s17-hatch-ledge {
+      position: absolute;
+      left: 386px;
+      top: 424px;
+      width: 228px;
+      height: 14px;
+      background: #e8cf9b;
+      border: 2px solid #8a6428;
+      border-radius: 4px;
+    }
+
+    .s17-hatch-label {
+      position: absolute;
+      left: 598px;
+      top: 400px;
+      width: 240px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.14em;
+      color: #3a352d;
+    }
+
+    .s17-outdoor-label {
+      position: absolute;
+      left: 14px;
+      top: 614px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+      z-index: 8;
+    }
+
+    .s17-desk {
+      position: absolute;
+      left: 700px;
+      top: 496px;
+      width: 862px;
+      height: 24px;
+      background: var(--panel-2);
+      border: 2px solid var(--ink-soft);
+      border-radius: 4px;
+      z-index: 5;
+    }
+
+    .s17-desk::before,
+    .s17-desk::after {
+      content: "";
+      position: absolute;
+      top: 22px;
+      width: 16px;
+      height: 72px;
+      background: var(--panel-2);
+      border: 2px solid var(--line-strong);
+      border-top: none;
+    }
+
+    .s17-desk::before { left: 24px; }
+    .s17-desk::after { right: 24px; }
+
+    .s17-expertwrap {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+    }
+
+    .s17-expert-head {
+      position: absolute;
+      left: 1008px;
+      top: 290px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .s17-expert-body {
+      position: absolute;
+      left: 934px;
+      top: 378px;
+      width: 240px;
+      height: 152px;
+      border-radius: 48% 48% 10% 10%;
+      background: var(--ink);
+    }
+
+    .s17-expert-arm {
+      position: absolute;
+      left: 1152px;
+      top: 428px;
+      width: 136px;
+      height: 24px;
+      border-radius: 12px;
+      background: var(--ink);
+      transform: rotate(26deg);
+      transform-origin: 0 50%;
+      z-index: 6;
+    }
+
+    .s17-expert-hand {
+      position: absolute;
+      left: 1256px;
+      top: 470px;
+      width: 44px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      z-index: 6;
+    }
+
+    .s17-passbook {
+      position: absolute;
+      left: 974px;
+      top: 388px;
+      width: 160px;
+      height: 108px;
+      background: #c9a06a;
+      border: 2px solid #8a6428;
+      border-radius: 4px 8px 8px 4px;
+      box-shadow: 0 16px 26px -22px rgba(22, 20, 15, 0.6);
+      z-index: 7;
+    }
+
+    .s17-passbook::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #8a6428;
+    }
+
+    .s17-passbook::after {
+      content: "";
+      position: absolute;
+      left: 30px;
+      right: 22px;
+      top: 26px;
+      height: 10px;
+      border-top: 2px solid rgba(58, 40, 14, 0.4);
+      border-bottom: 2px solid rgba(58, 40, 14, 0.4);
+    }
+
+    .s17-person {
+      position: absolute;
+      z-index: 4;
+    }
+
+    .s17-p-head {
+      position: absolute;
+      left: 28%;
+      top: 2%;
+      width: 44%;
+      padding-top: 44%;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .s17-p-body {
+      position: absolute;
+      left: 10%;
+      bottom: 0;
+      width: 80%;
+      height: 76%;
+      border-radius: 42% 42% 6% 6%;
+      background: var(--ink);
+    }
+
+    .s17-p-arm {
+      position: absolute;
+      left: 40%;
+      top: 48%;
+      width: 30%;
+      height: 7%;
+      border-radius: 4px;
+      background: var(--ink);
+      transform: rotate(14deg);
+      transform-origin: 0 50%;
+    }
+
+    .s17-p-book {
+      position: absolute;
+      right: 7%;
+      top: 46%;
+      width: 34%;
+      height: 21%;
+      background: #c9a06a;
+      border: 2px solid #6b4a22;
+      border-radius: 3px;
+      transform: rotate(-7deg);
+    }
+
+    .s17-p-flag {
+      position: absolute;
+      right: 2%;
+      top: 40%;
+      width: 44%;
+      height: 31%;
+      border: 3px solid var(--lamp);
+      border-radius: 8px;
+      transform: rotate(-7deg);
+    }
+
+    .s17-sessiontag {
+      position: absolute;
+      left: 150px;
+      top: 292px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      font-size: 30px;
+      color: var(--ink);
+      z-index: 8;
+    }
+
+    .s17-sessiontag b {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent-text);
+    }
+
+    /* -------------------------------------------- 拍3：摊开的笔记本内部 */
+    .s17-bookinner {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s17-book-cover {
+      position: absolute;
+      left: 132px;
+      top: 84px;
+      width: 1400px;
+      height: 552px;
+      background: #c9a06a;
+      border: 3px solid #8a6428;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .s17-page {
+      position: absolute;
+      top: 96px;
+      width: 440px;
+      height: 528px;
+      padding: 20px 24px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+    }
+
+    #s-stateless-notebook-pg1 {
+      left: 152px;
+      border-radius: 10px 3px 3px 10px;
+    }
+
+    #s-stateless-notebook-pg2 { left: 592px; }
+
+    #s-stateless-notebook-pg3 {
+      left: 1032px;
+      border-radius: 3px 10px 10px 3px;
+    }
+
+    .s17-page-peek {
+      position: absolute;
+      left: 1472px;
+      top: 104px;
+      width: 54px;
+      height: 512px;
+      border: 1px solid var(--line);
+      border-radius: 0 8px 8px 0;
+      background-color: #f4ecdd;
+      background-image: repeating-linear-gradient(90deg, transparent 0 3px, rgba(81, 75, 64, 0.12) 3px 4px);
+    }
+
+    .s17-pid {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+    }
+
+    .s17-ptitle {
+      margin-top: 8px;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s17-sop {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 118px;
+      padding: 16px 20px;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      background: #fffdf8;
+    }
+
+    .s17-sop-row {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .s17-sop-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .s17-sop-k {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s17-sop-v {
+      display: block;
+      margin-top: 4px;
+      font-size: 26px;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+
+    .s17-underline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -5px;
+      height: 7px;
+      border-radius: 4px;
+      background: var(--lamp);
+      opacity: 0.85;
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s17-stamp {
+      position: absolute;
+      right: 26px;
+      bottom: 28px;
+      padding: 8px 22px;
+      border: 3px double #3a5f9e;
+      border-radius: 8px;
+      color: #3a5f9e;
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+    }
+
+    .s17-chat {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 118px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .s17-msg {
+      position: relative;
+      width: fit-content;
+      max-width: 338px;
+      margin: 0;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 26px;
+      line-height: 1.32;
+    }
+
+    .s17-msg--me {
+      background: var(--panel-2);
+      color: var(--ink-soft);
+    }
+
+    .s17-msg--ai {
+      align-self: flex-end;
+      background: #fffdf8;
+      color: var(--ink);
+    }
+
+    .s17-sticky {
+      position: absolute;
+      left: 26px;
+      bottom: 26px;
+      width: 330px;
+      padding: 14px 18px;
+      border: 1px solid #d3b56d;
+      border-radius: 4px;
+      background: #f6e7ae;
+      box-shadow: 0 12px 22px -20px rgba(22, 20, 15, 0.6);
+      transform: rotate(2deg);
+    }
+
+    .s17-sticky-k {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: #7a6224;
+    }
+
+    .s17-sticky-v {
+      margin-top: 6px;
+      font-size: 25px;
+      line-height: 1.35;
+      color: #4a3d17;
+    }
+
+    .s17-lastq {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 118px;
+      padding: 16px 18px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+    }
+
+    .s17-lastq-v {
+      position: relative;
+      font-size: 26px;
+      line-height: 1.42;
+      color: var(--ink);
+    }
+
+    .s17-answer {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 300px;
+      min-height: 176px;
+      padding: 14px 16px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 10px;
+    }
+
+    .s17-answer-k {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s17-ansline {
+      position: relative;
+      margin-top: 16px;
+      padding-left: 20px;
+      font-size: 25px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    .s17-ansline::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s17-nextbook {
+      position: absolute;
+      left: 500px;
+      top: 150px;
+      width: 664px;
+      height: 384px;
+      z-index: 3;
+    }
+
+    .s17-next-cover {
+      position: absolute;
+      left: 40px;
+      top: 12px;
+      width: 250px;
+      height: 316px;
+      border: 3px solid #8a6428;
+      border-radius: 6px 14px 14px 6px;
+      background: #c9a06a;
+      transform: rotate(-5deg);
+    }
+
+    .s17-next-cover::before {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #8a6428;
+    }
+
+    .s17-next-label {
+      position: absolute;
+      left: 40px;
+      right: 26px;
+      top: 96px;
+      font-size: 28px;
+      line-height: 1.4;
+      color: #3a2a10;
+    }
+
+    .s17-next-tab {
+      position: absolute;
+      left: 310px;
+      top: 76px;
+      width: 300px;
+      padding: 18px 20px;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      font-size: 28px;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+
+    .s17-next-cap {
+      position: absolute;
+      left: 310px;
+      top: 190px;
+      width: 300px;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent-text);
+    }
+
+    /* ------------------------------------------------ 拍4：三个现象小图 */
+    .s17-ex {
+      position: absolute;
+      top: 128px;
+      width: 500px;
+      height: 404px;
+      padding: 26px 28px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    #s-stateless-notebook-ex-0 { left: 22px; }
+    #s-stateless-notebook-ex-1 { left: 582px; }
+    #s-stateless-notebook-ex-2 { left: 1142px; }
+
+    .s17-ex-title {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s17-ex-art {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      height: 196px;
+      margin-top: 16px;
+    }
+
+    .s17-ex-cap {
+      margin-top: 18px;
+      font-size: 28px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s17-head {
+      position: relative;
+      width: 96px;
+      height: 118px;
+    }
+
+    .s17-head::before {
+      content: "";
+      position: absolute;
+      left: 22px;
+      top: 0;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .s17-head::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      bottom: 0;
+      width: 88px;
+      height: 60px;
+      border-radius: 44% 44% 0 0;
+      background: var(--ink);
+    }
+
+    .s17-head-cap {
+      position: absolute;
+      left: 50%;
+      bottom: -30px;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s17-arrow {
+      font-family: var(--font-mono);
+      font-size: 34px;
+      color: var(--ink-faint);
+    }
+
+    .s17-nb {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 62px;
+      height: 82px;
+      border: 2px solid #8a6428;
+      border-radius: 4px 7px 7px 4px;
+      background: #c9a06a;
+    }
+
+    .s17-nbwrap {
+      position: relative;
+      display: inline-block;
+      width: 62px;
+      height: 120px;
+      vertical-align: middle;
+    }
+
+    .s17-nb::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #8a6428;
+    }
+
+    .s17-nb::after {
+      content: "";
+      position: absolute;
+      left: 17px;
+      right: 7px;
+      top: 18px;
+      bottom: 18px;
+      border-radius: 2px;
+      background-image: repeating-linear-gradient(to bottom, #fffdf8 0 5px, #d9cfbf 5px 6px);
+    }
+
+    .s17-nb-tag {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s17-link {
+      width: 96px;
+      border-top: 3px dashed var(--line-strong);
+    }
+
+    .s17-break {
+      font-family: var(--font-mono);
+      font-size: 34px;
+      color: var(--stamp);
+    }
+
+    .s17-net {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 84px;
+      height: 76px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 12px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s17-costs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .s17-cost-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s17-cost-bar {
+      height: 20px;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      flex: none;
+    }
+
+    .s17-cost-v {
+      color: var(--ink-soft);
+    }
+
+    .s17-cost-total {
+      margin-top: 10px;
+      font-size: 27px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    /* ------------------------------------- 拍5：上下文窗口的「厚度尺」 */
+    .s17-detail {
+      position: absolute;
+      left: 300px;
+      top: 26px;
+      width: 1064px;
+      height: 588px;
+      border: 2px solid var(--line-strong);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 30px 70px -50px rgba(22, 20, 15, 0.6);
+      z-index: 35;
+    }
+
+    .s17-detail-title {
+      position: absolute;
+      left: 44px;
+      top: 32px;
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s17-detail-sub {
+      position: absolute;
+      left: 44px;
+      top: 86px;
+      font-size: 30px;
+      color: var(--accent-text);
+    }
+
+    .s17-stack {
+      position: absolute;
+      left: 66px;
+      top: 220px;
+      width: 340px;
+      height: 260px;
+      border: 3px solid #8a6428;
+      border-radius: 5px;
+      background-color: #fffdf8;
+      background-image: repeating-linear-gradient(to bottom, #fffdf8 0 6px, rgba(138, 100, 40, 0.4) 6px 7px);
+      box-shadow: var(--shadow);
+    }
+
+    .s17-stack::before,
+    .s17-stack::after {
+      content: "";
+      position: absolute;
+      left: -4px;
+      right: -4px;
+      height: 12px;
+      background: #c9a06a;
+      border: 2px solid #8a6428;
+      border-radius: 4px;
+    }
+
+    .s17-stack::before { top: -11px; }
+    .s17-stack::after { bottom: -11px; }
+
+    .s17-stack-cap {
+      position: absolute;
+      left: 22px;
+      top: 262px;
+      width: 26px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+      writing-mode: vertical-rl;
+    }
+
+    .s17-capacity {
+      position: absolute;
+      left: 26px;
+      right: 40px;
+      top: 62px;
+      height: 4px;
+      background: var(--stamp);
+      transform: rotate(-1deg);
+    }
+
+    .s17-capacity::after {
+      content: "上限";
+      position: absolute;
+      right: -66px;
+      top: -12px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--stamp);
+    }
+
+    .s17-fold {
+      position: absolute;
+      top: 12px;
+      width: 84px;
+      height: 70px;
+      border: 2px solid var(--line-strong);
+      border-radius: 3px;
+      background: #fffdf8;
+      transform: rotate(-13deg);
+      box-shadow: 0 8px 16px -14px rgba(22, 20, 15, 0.6);
+    }
+
+    #s-stateless-notebook-fold-0 { left: 14px; }
+    #s-stateless-notebook-fold-1 { left: 100px; transform: rotate(9deg); }
+    #s-stateless-notebook-fold-2 { left: 186px; transform: rotate(-7deg); }
+    #s-stateless-notebook-fold-3 { left: 272px; transform: rotate(12deg); }
+
+    .s17-fold-tag {
+      position: absolute;
+      left: 66px;
+      top: 496px;
+      width: 430px;
+      font-size: 28px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s17-slot {
+      position: absolute;
+      left: 660px;
+      top: 262px;
+      width: 230px;
+      height: 210px;
+      border: 10px solid #b98a3c;
+      border-radius: 6px;
+      background: #f8f2e7;
+      box-shadow: inset 0 0 0 2px #e3d5b8, var(--shadow);
+    }
+
+    .s17-slot::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(135deg, rgba(185, 138, 60, 0.2) 0 2px, transparent 2px 14px);
+    }
+
+    .s17-slot::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      bottom: -8px;
+      width: 3px;
+      margin-left: -1px;
+      background: rgba(138, 100, 40, 0.5);
+    }
+
+    .s17-slot-label {
+      position: absolute;
+      left: 660px;
+      top: 486px;
+      width: 230px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s17-ruler {
+      position: absolute;
+      left: 620px;
+      top: 168px;
+      width: 330px;
+      height: 90px;
+      border: 2px solid var(--ink-soft);
+      border-radius: 6px;
+      background: #fffdf8;
+    }
+
+    .s17-ruler::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 20px;
+      background-image: repeating-linear-gradient(90deg, var(--ink-soft) 0 2px, transparent 2px 16px);
+      opacity: 0.55;
+    }
+
+    .s17-ruler-marker {
+      position: absolute;
+      left: 240px;
+      top: -12px;
+      width: 4px;
+      height: 80px;
+      border-radius: 2px;
+      background: var(--stamp);
+    }
+
+    .s17-ruler-label {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      top: 58px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    /* -------------------------------------------- 拍6：真实界面证据卡 */
+    .s17-evidence {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+    }
+
+    .s17-media {
+      position: absolute;
+      left: 30px;
+      top: 54px;
+      width: 472px;
+    }
+
+    .s17-callout {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      font-size: 28px;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .s17-callout-no {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--accent-text);
+    }
+
+    .s17-callout--1 { left: 542px; top: 112px; }
+    .s17-callout--2 { left: 570px; top: 208px; }
+    .s17-callout--3 { left: 606px; top: 304px; }
+
+    .s17-leader {
+      position: absolute;
+      height: 0;
+      border-top: 2px dashed var(--line-strong);
+      transform-origin: 0 0;
+    }
+
+    .s17-leader--1 { left: 300px; top: 150px; width: 232px; transform: rotate(-5deg); }
+    .s17-leader--2 { left: 330px; top: 252px; width: 230px; transform: rotate(-5deg); }
+    .s17-leader--3 { left: 372px; top: 350px; width: 228px; transform: rotate(-5deg); }
+
+    .s17-final {
+      position: absolute;
+      left: 700px;
+      top: 108px;
+      padding: 14px 24px 14px 26px;
+      border-left: 6px solid var(--accent);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s17-final .mono {
+      color: var(--accent-text);
+    }
+
+    .s17-final-rule {
+      position: absolute;
+      left: 26px;
+      right: 22px;
+      bottom: 10px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s17-expertfront {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+    }
+
+    .s17-person--0 { left: 336px; top: 349px; width: 128px; height: 243px; z-index: 8; }
+    .s17-person--1 { left: 246px; top: 375px; width: 114px; height: 217px; z-index: 7; }
+    .s17-person--2 { left: 164px; top: 398px; width: 102px; height: 194px; z-index: 6; }
+    .s17-person--3 { left: 96px; top: 417px; width: 92px; height: 175px; z-index: 5; }
+    .s17-person--4 { left: 30px; top: 436px; width: 82px; height: 156px; z-index: 4; }
+
+    .s17-folds {
+      position: absolute;
+      left: 66px;
+      top: 132px;
+      width: 400px;
+      height: 388px;
+    }
+
+    .s17-compress {
+      position: absolute;
+      left: 66px;
+      top: 544px;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--stamp);
+    }
+
+    .s17-leader--1 { left: 111px; top: 150px; width: 421px; transform: rotate(-2deg); }
+    .s17-leader--2 { left: 174px; top: 218px; width: 386px; transform: rotate(2deg); }
+    .s17-leader--3 { left: 401px; top: 247px; width: 211px; transform: rotate(22deg); }
+
+    /* 快照会直接 seek 到中段，晚出现的元素必须在 CSS 里先隐藏，不能只靠 fromTo 的 from 状态。 */
+    .s17-remember-head,
+    .s17-win,
+    .s17-stateless,
+    .s17-question,
+    .s17-room,
+    .s17-glow,
+    .s17-lamp,
+    .s17-hatchwrap,
+    .s17-person,
+    .s17-expertwrap,
+    .s17-expertfront,
+    .s17-passbook,
+    .s17-sessiontag,
+    .s17-bookinner,
+    .s17-sop,
+    .s17-stamp,
+    .s17-msg,
+    .s17-sticky,
+    .s17-answer-k,
+    .s17-ansline,
+    .s17-nextbook,
+    .s17-next-tab,
+    .s17-ex,
+    .s17-cost-total,
+    .s17-detail,
+    .s17-ruler,
+    .s17-folds,
+    .s17-fold-tag,
+    .s17-compress,
+    .s17-evidence,
+    .s17-media,
+    .s17-leader,
+    .s17-callout,
+    .s17-final,
+    .s17-p-flag {
+      opacity: 0;
+    }
+
+    /* 房间里的小陈设：墙上书架、桌角摞着的旧本子 */
+    .s17-shelf {
+      position: absolute;
+      left: 1180px;
+      top: 206px;
+      width: 440px;
+      height: 5px;
+      background: var(--ink-soft);
+      z-index: 3;
+    }
+
+    .s17-shelf::before,
+    .s17-shelf::after {
+      content: "";
+      position: absolute;
+      top: 5px;
+      width: 4px;
+      height: 20px;
+      background: var(--ink-soft);
+    }
+
+    .s17-shelf::before { left: 40px; }
+    .s17-shelf::after { right: 40px; }
+
+    .s17-shelf-book {
+      position: absolute;
+      bottom: 5px;
+      border: 2px solid #8a6428;
+      border-radius: 3px 3px 0 0;
+      background: #c9a06a;
+    }
+
+    .s17-deskstack {
+      position: absolute;
+      left: 1386px;
+      top: 424px;
+      width: 150px;
+      height: 72px;
+      z-index: 7;
+    }
+
+    .s17-deskstack i {
+      position: absolute;
+      left: 0;
+      width: 146px;
+      height: 16px;
+      border: 2px solid #8a6428;
+      border-radius: 3px;
+      background: #c9a06a;
+    }
+
+    .s17-head--sm {
+      width: 64px;
+      height: 80px;
+    }
+
+    .s17-head--sm::before {
+      left: 15px;
+      top: 0;
+      width: 34px;
+      height: 34px;
+    }
+
+    .s17-head--sm::after {
+      left: 3px;
+      bottom: 0;
+      width: 58px;
+      height: 40px;
+    }
+
+    .s17-ex-in {
+      position: relative;
+      display: block;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-stateless-notebook"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S17</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-stateless-notebook-title" class="scene-title">只认笔记本的专家</h1>
+        <p class="scene-no">17 / 22</p>
+      </header>
+
+      <section id="s-stateless-notebook-stage" class="stage">
+        <!-- 拍1：换模型 / 断网 / 第二天，三个「它还记得」的小窗口 -->
+        <div id="s-stateless-notebook-remember" class="s17-layer">
+          <p id="s-stateless-notebook-head" class="s17-remember-head">同一个对话：换了模型 / 断了网 / 过了一夜</p>
+
+          <div id="s-stateless-notebook-win-0" class="s17-win">
+            <div class="s17-win-bar"><i></i><i></i><i></i><span>换成另一个模型</span></div>
+            <div class="s17-win-body">
+              <p class="s17-bubble s17-bubble--me">帮我把这份周报改短一点。</p>
+              <p class="s17-bubble s17-bubble--ai">好了，三条结论都保留了。</p>
+            </div>
+            <div class="s17-win-foot">
+              <span class="s17-win-badge">记录还在</span>
+              <span class="s17-win-tag">model-B</span>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-win-1" class="s17-win">
+            <div class="s17-win-bar"><i></i><i></i><i></i><span>断网，重新连接</span></div>
+            <div class="s17-win-body">
+              <p class="s17-bubble s17-bubble--me">刚才说到哪了？</p>
+              <p class="s17-bubble s17-bubble--ai">说到第二版大纲，继续。</p>
+            </div>
+            <p class="s17-win-state">连接已断开 · 重新连接后恢复</p>
+            <div class="s17-win-foot">
+              <span class="s17-win-badge">记录还在</span>
+              <span class="s17-win-tag">reconnect</span>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-win-2" class="s17-win">
+            <div class="s17-win-bar"><i></i><i></i><i></i><span>第二天，打开</span></div>
+            <div class="s17-win-body">
+              <p class="s17-bubble s17-bubble--me">昨天那个方案，接着做。</p>
+              <p class="s17-bubble s17-bubble--ai">好，从昨天停下的地方继续。</p>
+            </div>
+            <div class="s17-win-foot">
+              <span class="s17-win-badge">它还记得</span>
+              <span class="s17-win-tag">day-2</span>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-stateless" class="s17-stateless">
+            <span class="s17-stateless-label">模型 API</span>
+            <span class="s17-stateless-tag">默认无状态：每次请求都是新的</span>
+            <span class="s17-stateless-x">不记得你</span>
+          </div>
+
+          <p id="s-stateless-notebook-question" class="s17-question">那这些记忆，<em>到底存在哪？</em></p>
+        </div>
+
+        <!-- 拍2：纸面小屋。暖灯、桌子、黄铜传递窗、墨色专家剪影、门外长队 -->
+        <div id="s-stateless-notebook-room" class="s17-layer">
+          <div class="s17-corridor"></div>
+          <div class="s17-roomwall"></div>
+          <div class="s17-floor"></div>
+          <div class="s17-outdoor"></div>
+          <p class="s17-outdoor-label">门外 · 队伍还很长</p>
+          <div id="s-stateless-notebook-glow" class="lamp-glow s17-glow"></div>
+          <div class="s17-divider"></div>
+
+          <div id="s-stateless-notebook-lamp" class="s17-lamp">
+            <svg width="180" height="130" viewBox="0 0 180 130" aria-hidden="true">
+              <line x1="90" y1="0" x2="90" y2="34" stroke="#514b40" stroke-width="3" />
+              <path d="M 48 34 L 132 34 L 168 104 L 12 104 Z" fill="#f0e8da" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+              <circle cx="90" cy="110" r="11" fill="#e8b23a" stroke="#8a6428" stroke-width="2" />
+            </svg>
+          </div>
+
+          <div id="s-stateless-notebook-hatchwrap" class="s17-hatchwrap">
+            <div class="s17-hatch"></div>
+            <div class="s17-hatch-ledge"></div>
+            <p class="s17-hatch-label">传递窗</p>
+          </div>
+
+          <div id="s-stateless-notebook-queue" class="s17-layer">
+            <div id="s-stateless-notebook-person-0" class="s17-person s17-person--0">
+              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
+              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-0" class="s17-p-flag"></span>
+            </div>
+            <div id="s-stateless-notebook-person-1" class="s17-person s17-person--1">
+              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
+              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-1" class="s17-p-flag"></span>
+            </div>
+            <div id="s-stateless-notebook-person-2" class="s17-person s17-person--2">
+              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
+              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-2" class="s17-p-flag"></span>
+            </div>
+            <div id="s-stateless-notebook-person-3" class="s17-person s17-person--3">
+              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
+              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-3" class="s17-p-flag"></span>
+            </div>
+            <div id="s-stateless-notebook-person-4" class="s17-person s17-person--4">
+              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
+              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-4" class="s17-p-flag"></span>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-expert" class="s17-expertwrap">
+            <span class="s17-expert-head"></span>
+            <span class="s17-expert-body"></span>
+          </div>
+          <div id="s-stateless-notebook-expertfront" class="s17-expertfront">
+            <span class="s17-expert-arm"></span>
+            <span class="s17-expert-hand"></span>
+          </div>
+
+          <div class="s17-desk"></div>
+
+          <div id="s-stateless-notebook-passbook" class="s17-passbook"></div>
+
+          <div class="s17-shelf">
+            <span class="s17-shelf-book" style="left: 66px; width: 26px; height: 54px"></span>
+            <span class="s17-shelf-book" style="left: 98px; width: 22px; height: 64px; background: #d9b986"></span>
+            <span class="s17-shelf-book" style="left: 126px; width: 30px; height: 48px; background: #f0e8da"></span>
+            <span class="s17-shelf-book" style="left: 162px; width: 24px; height: 58px"></span>
+            <span class="s17-shelf-book" style="left: 192px; width: 34px; height: 44px; background: #e8cf9b"></span>
+            <span class="s17-shelf-book" style="left: 236px; width: 26px; height: 60px; background: #d9b986"></span>
+            <span class="s17-shelf-book" style="left: 268px; width: 22px; height: 50px; background: #f0e8da"></span>
+          </div>
+
+          <div class="s17-deskstack">
+            <i style="top: 0; left: 2px; width: 140px"></i>
+            <i style="top: 18px; left: 0; width: 146px; background: #d9b986"></i>
+            <i style="top: 36px; left: 4px; width: 138px"></i>
+            <i style="top: 54px; left: 1px; width: 144px; background: #d9b986"></i>
+          </div>
+
+          <div id="s-stateless-notebook-sessiontag" class="s17-sessiontag">一本笔记本 <b>=</b> 一次会话</div>
+        </div>
+
+        <!-- 拍3：镜头推进笔记本内部：系统提示 / 对话 / 工具便签 / 最后一页 -->
+        <div id="s-stateless-notebook-book" class="s17-layer">
+          <div id="s-stateless-notebook-bookinner" class="s17-bookinner">
+            <div class="s17-book-cover"></div>
+
+            <div id="s-stateless-notebook-pg1" class="s17-page">
+              <p class="s17-pid">第 1 页 · Harness 写</p>
+              <h2 class="s17-ptitle">系统提示词</h2>
+              <div id="s-stateless-notebook-sop" class="s17-sop">
+                <p class="s17-sop-row">
+                  <span class="s17-sop-k">你是谁</span>
+                  <span class="s17-sop-v">替你干活的 Coding Agent</span>
+                  <span id="s-stateless-notebook-u0" class="s17-underline"></span>
+                </p>
+                <p class="s17-sop-row">
+                  <span class="s17-sop-k">能做什么</span>
+                  <span class="s17-sop-v">读文件、跑命令、改代码</span>
+                  <span id="s-stateless-notebook-u1" class="s17-underline"></span>
+                </p>
+                <p class="s17-sop-row">
+                  <span class="s17-sop-k">不能做什么</span>
+                  <span class="s17-sop-v">替你确认高风险操作</span>
+                  <span id="s-stateless-notebook-u2" class="s17-underline"></span>
+                </p>
+              </div>
+              <span id="s-stateless-notebook-stamp" class="s17-stamp">系统</span>
+            </div>
+
+            <div id="s-stateless-notebook-pg2" class="s17-page">
+              <p class="s17-pid">第 2 页 · 对话</p>
+              <h2 class="s17-ptitle">你们聊过的每一句</h2>
+              <div class="s17-chat">
+                <p class="s17-msg s17-msg--me">你：这个报错怎么修？<span id="s-stateless-notebook-u3" class="s17-underline"></span></p>
+                <p class="s17-msg s17-msg--ai">专家：我先看错误日志。<span id="s-stateless-notebook-u4" class="s17-underline"></span></p>
+                <p class="s17-msg s17-msg--me">你：好，改小一点。<span id="s-stateless-notebook-u5" class="s17-underline"></span></p>
+              </div>
+              <div id="s-stateless-notebook-sticky" class="s17-sticky">
+                <p class="s17-sticky-k">工具结果</p>
+                <p class="s17-sticky-v">log.txt 已读完<br />定位到 3 条线索</p>
+              </div>
+            </div>
+
+            <div id="s-stateless-notebook-pg3" class="s17-page">
+              <p class="s17-pid">第 3 页 · 最后一页</p>
+              <h2 class="s17-ptitle">这次的问题</h2>
+              <div class="s17-lastq">
+                <p class="s17-lastq-v">把登录页的错误提示改清楚，<br />别动样式文件。<span id="s-stateless-notebook-u6" class="s17-underline"></span></p>
+              </div>
+              <div id="s-stateless-notebook-answer" class="s17-answer">
+                <p class="s17-answer-k">下一页 · 答案</p>
+                <p class="s17-ansline">先改 LoginForm 的提示文案</p>
+                <p class="s17-ansline">样式文件不动</p>
+                <p class="s17-ansline">补一条回归测试</p>
+              </div>
+            </div>
+
+            <div class="s17-page-peek"></div>
+          </div>
+
+          <div id="s-stateless-notebook-next" class="s17-nextbook">
+            <div class="s17-next-cover"><span class="s17-next-label">下一次会话<br />新的本子</span></div>
+            <div class="s17-next-tab">第 1 页<br />系统提示词</div>
+            <p class="s17-next-cap">又从第一页读起</p>
+          </div>
+        </div>
+
+        <!-- 拍4：三个现象，一本笔记本就能解释 -->
+        <div id="s-stateless-notebook-explain" class="s17-layer">
+          <div id="s-stateless-notebook-ex-0" class="s17-ex">
+            <div class="s17-ex-in">
+              <p class="s17-ex-title">换模型</p>
+              <div class="s17-ex-art">
+                <span class="s17-head"><span class="s17-head-cap">专家 A</span></span>
+                <span class="s17-arrow">→</span>
+                <span class="s17-nbwrap"><span class="s17-nb"></span><span class="s17-nb-tag">同一本</span></span>
+                <span class="s17-arrow">→</span>
+                <span class="s17-head"><span class="s17-head-cap">专家 B</span></span>
+              </div>
+              <p class="s17-ex-cap">换模型，就是把同一本笔记本递给另一个专家，记忆跟着本子走。</p>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-ex-1" class="s17-ex">
+            <div class="s17-ex-in">
+              <p class="s17-ex-title">断网</p>
+              <div class="s17-ex-art">
+                <span class="s17-head s17-head--sm"><span class="s17-head-cap">你</span></span>
+                <span class="s17-nbwrap"><span class="s17-nb"></span><span class="s17-nb-tag">本子</span></span>
+                <span class="s17-link"></span>
+                <span class="s17-break">✕</span>
+                <span class="s17-net">网络</span>
+              </div>
+              <p class="s17-ex-cap">笔记本一直在你手里，重新连上再递进去就行。</p>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-ex-2" class="s17-ex">
+            <div class="s17-ex-in">
+              <p class="s17-ex-title">长对话越来越贵</p>
+              <div class="s17-ex-art">
+                <div class="s17-costs">
+                  <div class="s17-cost-row"><span>第 5 轮</span><i class="s17-cost-bar" style="width: 30px"></i><span class="s17-cost-v">累计 7.5k</span></div>
+                  <div class="s17-cost-row"><span>第 10 轮</span><i class="s17-cost-bar" style="width: 74px"></i><span class="s17-cost-v">累计 27.5k</span></div>
+                  <div class="s17-cost-row"><span>第 15 轮</span><i class="s17-cost-bar" style="width: 132px"></i><span class="s17-cost-v">累计 60k</span></div>
+                  <div class="s17-cost-row"><span>第 20 轮</span><i class="s17-cost-bar" style="width: 192px"></i><span class="s17-cost-v">累计 105k</span></div>
+                  <p id="s-stateless-notebook-costtotal" class="s17-cost-total">每问一次，整本从头读一遍</p>
+                </div>
+              </div>
+              <p class="s17-ex-cap">对话越长，每次请求带的页越多。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 拍5：窗口上方的厚度尺，超出的页被折起、压缩 -->
+        <div id="s-stateless-notebook-detail" class="s17-detail">
+          <p class="s17-detail-title">窗口一次能塞进去的厚度有限</p>
+          <p class="s17-detail-sub">这就是上下文窗口</p>
+
+          <p class="s17-stack-cap">一本会话的厚度</p>
+          <div id="s-stateless-notebook-stack" class="s17-stack">
+            <span id="s-stateless-notebook-capacity" class="s17-capacity"></span>
+          </div>
+          <div id="s-stateless-notebook-folds" class="s17-folds">
+            <span id="s-stateless-notebook-fold-0" class="s17-fold"></span>
+            <span id="s-stateless-notebook-fold-1" class="s17-fold"></span>
+            <span id="s-stateless-notebook-fold-2" class="s17-fold"></span>
+            <span id="s-stateless-notebook-fold-3" class="s17-fold"></span>
+          </div>
+
+          <p id="s-stateless-notebook-foldtag" class="s17-fold-tag">超出的页，专家读不到。</p>
+          <p id="s-stateless-notebook-compress" class="s17-compress">→ 压缩成摘要，丢掉</p>
+
+          <div id="s-stateless-notebook-ruler" class="s17-ruler">
+            <span class="s17-ruler-marker"></span>
+            <span class="s17-ruler-label"><span>0</span><span>50%</span><span>100%</span></span>
+          </div>
+          <div class="s17-slot"></div>
+          <p class="s17-slot-label">传递窗 · 上下文窗口</p>
+        </div>
+
+        <!-- 拍6：真实截图证据：上下文是 Harness 拼出来的 -->
+        <div id="s-stateless-notebook-evidence" class="s17-evidence">
+          <div id="s-stateless-notebook-media" class="media s17-media">
+            <img
+              src="assets/media/shot/dsh-desktop.webp"
+              alt="DSH 桌面端轨迹界面：左栏是系统提示、历史消息与工具调用，右栏是工具返回结果"
+              width="454"
+              height="284"
+            />
+            <p class="media__label"><span>真实界面 · DSH 桌面端</span><span>轨迹</span></p>
+          </div>
+          <span id="s-stateless-notebook-lead-0" class="s17-leader s17-leader--1"></span>
+          <span id="s-stateless-notebook-lead-1" class="s17-leader s17-leader--2"></span>
+          <span id="s-stateless-notebook-lead-2" class="s17-leader s17-leader--3"></span>
+          <div id="s-stateless-notebook-call-0" class="s17-callout s17-callout--1"><span class="s17-callout-no">1</span>系统提示</div>
+          <div id="s-stateless-notebook-call-1" class="s17-callout s17-callout--2"><span class="s17-callout-no">2</span>历史消息</div>
+          <div id="s-stateless-notebook-call-2" class="s17-callout s17-callout--3"><span class="s17-callout-no">3</span>工具结果</div>
+          <p id="s-stateless-notebook-final" class="s17-final">记忆在 <span class="mono">Harness</span>，不在模型。<i id="s-stateless-notebook-finalrule" class="s17-final-rule"></i></p>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-stateless-notebook-cap-0" class="cap-line clip" data-start="0.7" data-duration="6.506">先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；</p>
+        <p id="s-stateless-notebook-cap-1" class="cap-line clip" data-start="7.246" data-duration="6.055">网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。</p>
+        <p id="s-stateless-notebook-cap-2" class="cap-line clip" data-start="13.301" data-duration="3.67">可大模型的 API，默认是「不记得你」的。</p>
+        <p id="s-stateless-notebook-cap-3" class="cap-line clip" data-start="17.011" data-duration="3.343">那这些记忆，到底存在哪？</p>
+        <p id="s-stateless-notebook-cap-4" class="cap-line clip" data-start="20.394" data-duration="4.063">你可以把大模型想成一个黑屋里的专家。</p>
+        <p id="s-stateless-notebook-cap-5" class="cap-line clip" data-start="24.497" data-duration="5.489">屋子很小，只有一张桌子、一盏灯、一个窗口。</p>
+        <p id="s-stateless-notebook-cap-6" class="cap-line clip" data-start="30.026" data-duration="4.886">专家非常聪明，但他不认人，只认笔记本。</p>
+        <p id="s-stateless-notebook-cap-7" class="cap-line clip" data-start="34.952" data-duration="4.769">门外排着成千上万的人，每人手里一本笔记本。</p>
+        <p id="s-stateless-notebook-cap-8" class="cap-line clip" data-start="39.761" data-duration="3.475">每一本笔记本，就是一次会话。</p>
+        <p id="s-stateless-notebook-cap-9" class="cap-line clip" data-start="43.276" data-duration="7.239">第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。</p>
+        <p id="s-stateless-notebook-cap-10" class="cap-line clip" data-start="50.555" data-duration="5.666">后面是你们聊过的每一句话，中间还夹着工具返回的结果。</p>
+        <p id="s-stateless-notebook-cap-11" class="cap-line clip" data-start="56.261" data-duration="6.172">专家每次拿到本子，都从第一页开始读，一直读到最后一页，</p>
+        <p id="s-stateless-notebook-cap-12" class="cap-line clip" data-start="62.473" data-duration="4.101">然后在下一页写下答案，合上，递出去。</p>
+        <p id="s-stateless-notebook-cap-13" class="cap-line clip" data-start="66.614" data-duration="3.74">下一个本子进来，他又是从头开始。</p>
+        <p id="s-stateless-notebook-cap-14" class="cap-line clip" data-start="70.394" data-duration="2.842">现在你就能解释那三件事了。</p>
+        <p id="s-stateless-notebook-cap-15" class="cap-line clip" data-start="73.276" data-duration="4.813">换模型，就是把同一本笔记本，递给另一个专家；</p>
+        <p id="s-stateless-notebook-cap-16" class="cap-line clip" data-start="78.129" data-duration="5.033">断网，就是笔记本一直在你手里，重新递进去就行；</p>
+        <p id="s-stateless-notebook-cap-17" class="cap-line clip" data-start="83.202" data-duration="2.607">那为什么长对话越来越贵？</p>
+        <p id="s-stateless-notebook-cap-18" class="cap-line clip" data-start="85.849" data-duration="4.402">因为每问一次，专家都要把整本从头读一遍。</p>
+        <p id="s-stateless-notebook-cap-19" class="cap-line clip" data-start="90.291" data-duration="6.577">而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。</p>
+        <p id="s-stateless-notebook-cap-20" class="cap-line clip" data-start="96.908" data-duration="5.078">本子太厚，前面的内容就得压缩、丢掉。</p>
+        <p id="s-stateless-notebook-cap-21" class="cap-line clip" data-start="102.026" data-duration="7.004">所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S17</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-stateless-notebook-progress"></i></span>
+        <span class="cap-clock">01:51</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S17","id":"stateless-notebook","index":0,"start":0,"duration":110.73,"audioStart":0.6000000000000227,"audioDuration":108.528,"cues":[{"i":0,"t":0.7,"d":6.506,"text":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":1,"t":7.246,"d":6.055,"text":"网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":2,"t":13.301,"d":3.67,"text":"可大模型的 API，默认是「不记得你」的。","sent":"可大模型的 API，默认是「不记得你」的。"},{"i":3,"t":17.011,"d":3.343,"text":"那这些记忆，到底存在哪？","sent":"那这些记忆，到底存在哪？"},{"i":4,"t":20.394,"d":4.063,"text":"你可以把大模型想成一个黑屋里的专家。","sent":"你可以把大模型想成一个黑屋里的专家。"},{"i":5,"t":24.497,"d":5.489,"text":"屋子很小，只有一张桌子、一盏灯、一个窗口。","sent":"屋子很小，只有一张桌子、一盏灯、一个窗口。"},{"i":6,"t":30.026,"d":4.886,"text":"专家非常聪明，但他不认人，只认笔记本。","sent":"专家非常聪明，但他不认人，只认笔记本。"},{"i":7,"t":34.952,"d":4.769,"text":"门外排着成千上万的人，每人手里一本笔记本。","sent":"门外排着成千上万的人，每人手里一本笔记本。"},{"i":8,"t":39.761,"d":3.475,"text":"每一本笔记本，就是一次会话。","sent":"每一本笔记本，就是一次会话。"},{"i":9,"t":43.276,"d":7.239,"text":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。","sent":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。"},{"i":10,"t":50.555,"d":5.666,"text":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。","sent":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。"},{"i":11,"t":56.261,"d":6.172,"text":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":12,"t":62.473,"d":4.101,"text":"然后在下一页写下答案，合上，递出去。","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":13,"t":66.614,"d":3.74,"text":"下一个本子进来，他又是从头开始。","sent":"下一个本子进来，他又是从头开始。"},{"i":14,"t":70.394,"d":2.842,"text":"现在你就能解释那三件事了。","sent":"现在你就能解释那三件事了。"},{"i":15,"t":73.276,"d":4.813,"text":"换模型，就是把同一本笔记本，递给另一个专家；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":16,"t":78.129,"d":5.033,"text":"断网，就是笔记本一直在你手里，重新递进去就行；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":17,"t":83.202,"d":2.607,"text":"那为什么长对话越来越贵？","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":18,"t":85.849,"d":4.402,"text":"因为每问一次，专家都要把整本从头读一遍。","sent":"因为每问一次，专家都要把整本从头读一遍。"},{"i":19,"t":90.291,"d":6.577,"text":"而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。","sent":"而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。"},{"i":20,"t":96.908,"d":5.078,"text":"本子太厚，前面的内容就得压缩、丢掉。","sent":"本子太厚，前面的内容就得压缩、丢掉。"},{"i":21,"t":102.026,"d":7.004,"text":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。","sent":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-stateless-notebook-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // S17 · 每一拍都钉在对应句子的 N.cues[i].t 上；一次只推一个视觉焦点。
+    const C = N.cues;
+
+    // 拍1：三个「它还认得我」的小窗口（0-20s）
+    tl.fromTo("#s-stateless-notebook-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[0].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-win-0", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[0].t + 0.4);
+    tl.fromTo("#s-stateless-notebook-win-1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[1].t + 0.15);
+    tl.fromTo("#s-stateless-notebook-win-2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[1].t + 0.55);
+    tl.fromTo(
+      [".s17-win-badge"],
+      { scale: 0.94 },
+      { scale: 1, duration: 0.4, ease: "power2.out", stagger: 0.12 },
+      C[1].t + 1.1
+    );
+
+    // 旁白说「API 默认不记得你」：模型的无状态被标出来，三个窗口退成背景
+    tl.fromTo("#s-stateless-notebook-stateless", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[2].t + 0.25);
+    tl.fromTo(
+      ["#s-stateless-notebook-win-0", "#s-stateless-notebook-win-1", "#s-stateless-notebook-win-2"],
+      { opacity: 1 },
+      { opacity: 0.4, duration: 0.5, ease: "power1.out", immediateRender: false },
+      C[2].t + 0.25
+    );
+
+    // 「那这些记忆，到底存在哪？」：三个窗口先退场，问题卡再进来，避免同位置文字同时可见
+    tl.fromTo(
+      ["#s-stateless-notebook-win-0", "#s-stateless-notebook-win-1", "#s-stateless-notebook-win-2"],
+      { opacity: 0.4 },
+      { opacity: 0, duration: 0.35, ease: "power1.out", immediateRender: false },
+      C[3].t + 0.05
+    );
+    tl.fromTo("#s-stateless-notebook-question", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[3].t + 0.5);
+    tl.fromTo("#s-stateless-notebook-stateless", { opacity: 1 }, { opacity: 0.35, duration: 0.5, immediateRender: false }, C[3].t + 0.2);
+
+    // 拍2：切到纸面小屋（20-40s）
+    tl.fromTo("#s-stateless-notebook-remember", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power1.inOut", immediateRender: false }, C[4].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, C[4].t + 0.15);
+
+    // 「只有一张桌子、一盏灯、一个窗口」：灯亮起来，传递窗装上
+    tl.fromTo("#s-stateless-notebook-lamp", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[5].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-glow", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, C[5].t + 0.3);
+    tl.fromTo("#s-stateless-notebook-hatchwrap", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, C[5].t + 1.9);
+
+    // 「他不认人，只认笔记本」：专家剪影出现，一本笔记从传递窗递到桌上
+    tl.fromTo(
+      ["#s-stateless-notebook-expert", "#s-stateless-notebook-expertfront"],
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.7, ease: "power2.out", stagger: 0.06 },
+      C[6].t + 0.15
+    );
+    tl.fromTo(
+      "#s-stateless-notebook-passbook",
+      { opacity: 0, x: -474, y: -16, rotation: -9 },
+      { opacity: 1, x: 0, y: 0, rotation: -2, duration: 1.15, ease: "power2.inOut" },
+      C[6].t + 0.9
+    );
+
+    // 「门外排着成千上万的人」：队伍从门外排进来
+    const queueIn = [
+      "#s-stateless-notebook-person-0",
+      "#s-stateless-notebook-person-1",
+      "#s-stateless-notebook-person-2",
+      "#s-stateless-notebook-person-3",
+      "#s-stateless-notebook-person-4",
+    ];
+    tl.fromTo(queueIn, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.55, ease: "power2.out", stagger: 0.24 }, C[7].t + 0.2);
+
+    // 「每一本笔记本，就是一次会话」：每人手里的本子依次亮一下
+    queueIn.forEach((sel, i) => {
+      const flag = sel.replace("person", "flag");
+      tl.fromTo(flag, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.32, ease: "power2.out" }, C[8].t + 0.15 + i * 0.42);
+      tl.fromTo(flag, { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, C[8].t + 0.47 + i * 0.42);
+    });
+    tl.fromTo("#s-stateless-notebook-sessiontag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[8].t + 1.9);
+
+    // 拍3：推进笔记本内部（43-70s）
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 1 }, { opacity: 0.18, duration: 0.7, ease: "power2.inOut", immediateRender: false }, C[9].t + 0.15);
+    // 房间的几处小标签先退场，避免被推进来的笔记本盖住（文字遮挡）
+    ["#s-stateless-notebook-sessiontag", ".s17-outdoor-label", ".s17-hatch-label"].forEach((sel) => {
+      tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.out", immediateRender: false }, C[9].t + 0.2);
+    });
+    tl.fromTo("#s-stateless-notebook-bookinner", { opacity: 0, scale: 0.93 }, { opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }, C[9].t + 0.3);
+    tl.fromTo("#s-stateless-notebook-sop", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[9].t + 0.9);
+    // 第一页盖一个「系统」印章
+    tl.fromTo(
+      "#s-stateless-notebook-stamp",
+      { opacity: 0, scale: 1.7, rotation: -18 },
+      { opacity: 1, scale: 1, rotation: -8, duration: 0.45, ease: "back.out(2)" },
+      C[9].t + 2.6
+    );
+
+    // 「后面是你们聊过的每一句话，中间还夹着工具返回的结果」
+    tl.fromTo(".s17-chat .s17-msg", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.35 }, C[10].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-sticky", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[10].t + 2.2);
+
+    // 「从第一页开始读，一直读到最后一页」：7 条下划线按顺序扫过
+    const reads = [
+      "#s-stateless-notebook-u0",
+      "#s-stateless-notebook-u1",
+      "#s-stateless-notebook-u2",
+      "#s-stateless-notebook-u3",
+      "#s-stateless-notebook-u4",
+      "#s-stateless-notebook-u5",
+      "#s-stateless-notebook-u6",
+    ];
+    reads.forEach((sel, i) => {
+      tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power2.out" }, C[11].t + 0.15 + i * 0.72);
+    });
+
+    // 「在下一页写下答案，合上，递出去」
+    tl.fromTo("#s-stateless-notebook-answer .s17-answer-k", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, C[12].t + 0.1);
+    tl.fromTo(".s17-ansline", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.24 }, C[12].t + 0.3);
+    tl.fromTo(
+      "#s-stateless-notebook-bookinner",
+      { opacity: 1, x: 0 },
+      { opacity: 0, x: 180, duration: 0.85, ease: "power2.in", immediateRender: false },
+      C[12].t + 2.1
+    );
+
+    // 「下一个本子进来，他又是从头开始」
+    tl.fromTo("#s-stateless-notebook-next", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }, C[13].t + 0.2);
+    tl.fromTo(".s17-next-tab", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[13].t + 1.5);
+
+    // 拍4：三个现象依次解释（70-90s）
+    tl.fromTo("#s-stateless-notebook-book", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power1.out", immediateRender: false }, C[14].t + 0.15);
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 0.18 }, { opacity: 0.14, duration: 0.5, immediateRender: false }, C[14].t + 0.2);
+    tl.fromTo(".s17-ex", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out", stagger: 0.18 }, C[14].t + 0.25);
+
+    // 换模型
+    tl.fromTo(
+      ["#s-stateless-notebook-ex-1 .s17-ex-in", "#s-stateless-notebook-ex-2 .s17-ex-in"],
+      { opacity: 1 },
+      { opacity: 0.32, duration: 0.4, ease: "power1.out", immediateRender: false },
+      C[15].t + 0.2
+    );
+    // 断网
+    tl.fromTo("#s-stateless-notebook-ex-0 .s17-ex-in", { opacity: 1 }, { opacity: 0.32, duration: 0.4, immediateRender: false }, C[16].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-ex-1 .s17-ex-in", { opacity: 0.32 }, { opacity: 1, duration: 0.4, immediateRender: false }, C[16].t + 0.2);
+    // 「那为什么长对话越来越贵？」
+    tl.fromTo("#s-stateless-notebook-ex-2 .s17-ex-in", { opacity: 0.32 }, { opacity: 1, duration: 0.45, immediateRender: false }, C[17].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-ex-1 .s17-ex-in", { opacity: 1 }, { opacity: 0.32, duration: 0.4, immediateRender: false }, C[17].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-costtotal", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[18].t + 0.2);
+
+    // 拍5：窗口上的厚度尺，超出的页被折起、压缩（90-100s）
+    tl.fromTo("#s-stateless-notebook-explain", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.out", immediateRender: false }, C[19].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 0.14 }, { opacity: 0.2, duration: 0.5, immediateRender: false }, C[19].t + 0.15);
+    tl.fromTo("#s-stateless-notebook-detail", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, C[19].t + 0.25);
+    tl.fromTo("#s-stateless-notebook-ruler", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[19].t + 0.9);
+    tl.fromTo("#s-stateless-notebook-folds", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[19].t + 1.5);
+    tl.fromTo("#s-stateless-notebook-foldtag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[19].t + 2.2);
+    // 「本子太厚，前面的内容就得压缩、丢掉」
+    tl.fromTo("#s-stateless-notebook-compress", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[20].t + 0.3);
+    tl.fromTo(
+      "#s-stateless-notebook-folds",
+      { y: 0, scaleY: 1, opacity: 1 },
+      { y: 96, scaleY: 0.24, opacity: 0.4, duration: 0.9, ease: "power2.inOut", immediateRender: false },
+      C[20].t + 0.5
+    );
+
+    // 拍6：真实截图证据 + 回到纸面小屋定格（102s-）
+    tl.fromTo("#s-stateless-notebook-detail", { opacity: 1, y: 0 }, { opacity: 0, y: 14, duration: 0.45, ease: "power1.out", immediateRender: false }, C[21].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 0.2 }, { opacity: 1, duration: 0.6, ease: "power2.out", immediateRender: false }, C[21].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-queue", { opacity: 1 }, { opacity: 0.15, duration: 0.5, immediateRender: false }, C[21].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-evidence", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, C[21].t + 0.35);
+    tl.fromTo("#s-stateless-notebook-media", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[21].t + 0.45);
+    tl.fromTo(".s17-leader", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.15 }, C[21].t + 1.1);
+    tl.fromTo(".s17-callout", { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.16 }, C[21].t + 1.2);
+    tl.fromTo("#s-stateless-notebook-final", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[21].t + 1.8);
+    tl.fromTo("#s-stateless-notebook-finalrule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, C[21].t + 4.0);
+    // 桌上的本子轻轻合上：最后几秒只留这一下，然后定格
+    tl.fromTo("#s-stateless-notebook-passbook", { rotation: -2 }, { rotation: 0, duration: 0.9, ease: "power2.inOut", immediateRender: false }, C[21].t + 2.6);
+    // MOTION:END
+
+    window.__timelines["s-stateless-notebook"] = tl;
+  </script>
+</template>

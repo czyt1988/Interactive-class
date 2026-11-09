@@ -1,0 +1,702 @@
+<template>
+  <style>
+    /* S20 ·「给 AI 一个项目记忆」：三栏递进：重复解释 / 根目录手册 / 项目级 vs 全局级。 */
+    .s20-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s20-col {
+      position: absolute;
+      top: 0;
+      height: 624px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s20-col--left {
+      left: 0;
+      width: 460px;
+    }
+
+    .s20-col--mid {
+      left: 488px;
+      width: 522px;
+    }
+
+    .s20-col--right {
+      left: 1038px;
+      width: 626px;
+    }
+
+    .s20-in {
+      position: absolute;
+      inset: 0;
+    }
+
+    #s20-in-1,
+    #s20-in-2 {
+      opacity: 0.4;
+    }
+
+    .s20-col-head {
+      position: absolute;
+      left: 24px;
+      top: 20px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    /* 左栏：新会话里一遍遍重新解释 */
+    .s20-chat {
+      position: absolute;
+      left: 24px;
+      top: 64px;
+      width: 412px;
+      height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fffdf8;
+      overflow: hidden;
+    }
+
+    .s20-chat-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-soft);
+    }
+
+    .s20-chat-bar i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--line-strong);
+      flex: none;
+    }
+
+    .s20-chat-bar span {
+      margin-left: 8px;
+    }
+
+    .s20-chat-body {
+      padding: 14px 18px;
+    }
+
+    .s20-type {
+      margin-bottom: 12px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: var(--panel-2);
+      font-size: 23px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s20-papers {
+      position: absolute;
+      left: 24px;
+      top: 384px;
+      width: 412px;
+      height: 170px;
+    }
+
+    .s20-paper {
+      position: absolute;
+      width: 190px;
+      height: 118px;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+      background-color: #fffdf8;
+      background-image: repeating-linear-gradient(to bottom, transparent 0 13px, #e4dbcb 13px 14px);
+      box-shadow: 0 10px 18px -16px rgba(22, 20, 15, 0.6);
+    }
+
+    .s20-paper--0 { left: 40px; top: 34px; transform: rotate(-7deg); }
+    .s20-paper--1 { left: 54px; top: 28px; transform: rotate(4deg); }
+    .s20-paper--2 { left: 66px; top: 22px; transform: rotate(-3deg); }
+    .s20-paper--3 { left: 78px; top: 16px; transform: rotate(6deg); }
+    .s20-paper--4 { left: 90px; top: 10px; transform: rotate(-2deg); }
+
+    .s20-paper-no {
+      position: absolute;
+      right: 24px;
+      top: 396px;
+      padding: 6px 16px;
+      border: 1px solid var(--stamp);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--stamp);
+    }
+
+    .s20-paper-cap {
+      position: absolute;
+      left: 24px;
+      top: 566px;
+      width: 412px;
+      font-size: 25px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    /* 中栏：工作区根目录 + 手册 + 门 + AI */
+    .s20-tree {
+      position: absolute;
+      left: 24px;
+      top: 58px;
+      width: 320px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      line-height: 1.6;
+      color: var(--ink-soft);
+    }
+
+    .s20-tree b {
+      color: var(--ink);
+    }
+
+    .s20-tree .s20-tree-hi {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s20-door {
+      position: absolute;
+      left: 24px;
+      top: 206px;
+      width: 220px;
+      height: 166px;
+      border: 3px solid var(--ink-soft);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: #ece3d3;
+      overflow: hidden;
+    }
+
+    .s20-door::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #b98a3c;
+    }
+
+    .s20-door-leaf {
+      position: absolute;
+      left: 24px;
+      top: 14px;
+      bottom: 0;
+      width: 18px;
+      background: #faf6ee;
+      border: 2px solid var(--ink-soft);
+      transform: rotate(-8deg);
+      transform-origin: bottom left;
+    }
+
+    .s20-ai {
+      position: absolute;
+      left: 52px;
+      top: 216px;
+      width: 86px;
+      height: 156px;
+    }
+
+    .s20-ai-head {
+      position: absolute;
+      left: 22px;
+      top: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .s20-ai-body {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 86px;
+      height: 116px;
+      border-radius: 42% 42% 6% 6%;
+      background: var(--ink);
+    }
+
+    .s20-manual {
+      position: absolute;
+      left: 250px;
+      top: 172px;
+      width: 200px;
+      height: 232px;
+      padding: 16px 16px;
+      border: 2px solid var(--ink);
+      border-radius: 6px 10px 10px 6px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .s20-manual::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--line-strong);
+    }
+
+    .s20-manual-title {
+      position: absolute;
+      left: 22px;
+      top: 14px;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    .s20-manual-sub {
+      position: absolute;
+      left: 22px;
+      top: 48px;
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s20-manual-line {
+      position: absolute;
+      left: 22px;
+      font-size: 21px;
+      color: var(--ink-soft);
+    }
+
+    .s20-readtag {
+      position: absolute;
+      left: 250px;
+      top: 130px;
+      padding: 8px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      font-size: 26px;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .s20-tools {
+      position: absolute;
+      left: 24px;
+      top: 392px;
+      width: 250px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .s20-tool {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s20-claude {
+      position: absolute;
+      left: 24px;
+      top: 484px;
+      padding: 7px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .s20-memorytag {
+      position: absolute;
+      left: 24px;
+      top: 534px;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    .s20-evidence {
+      position: absolute;
+      left: 300px;
+      top: 410px;
+      width: 190px;
+    }
+
+    .s20-evidence .media__label {
+      display: block;
+      font-size: 19px;
+      white-space: nowrap;
+    }
+
+    /* 右栏：项目级 vs 全局级 */
+    .s20-split {
+      position: absolute;
+      left: 24px;
+      top: 66px;
+      width: 578px;
+      height: 440px;
+    }
+
+    .s20-side {
+      position: absolute;
+      top: 0;
+      width: 270px;
+    }
+
+    .s20-side--project { left: 0; }
+    .s20-side--global { left: 308px; }
+
+    .s20-side-head {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s20-side-path {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      line-height: 1.5;
+      color: var(--accent-text);
+      word-break: break-all;
+    }
+
+    .s20-row {
+      position: relative;
+      margin-top: 16px;
+      padding-left: 20px;
+      font-size: 25px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s20-row::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s20-split-rule {
+      position: absolute;
+      left: 288px;
+      top: 0;
+      height: 430px;
+      border-left: 2px dashed var(--line-strong);
+    }
+
+    .s20-bottom {
+      position: absolute;
+      left: 24px;
+      top: 528px;
+      width: 578px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s20-bottom-rule {
+      position: absolute;
+      left: 24px;
+      top: 574px;
+      width: 430px;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    /* 快照会直接 seek 到中段：晚出现的元素在 CSS 里先隐藏。 */
+    .s20-col,
+    .s20-type,
+    .s20-paper,
+    .s20-paper-no,
+    .s20-paper-cap,
+    .s20-manual,
+    .s20-readtag,
+    .s20-tool,
+    .s20-claude,
+    .s20-memorytag,
+    .s20-evidence,
+    .s20-manual-line,
+    .s20-ai,
+    .s20-row,
+    .s20-side-path,
+    .s20-bottom,
+    .s20-bottom-rule {
+      opacity: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-agents-md"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S20</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-agents-md-title" class="scene-title">给 AI 一个项目记忆</h1>
+        <p class="scene-no">20 / 22</p>
+      </header>
+
+      <section id="s-agents-md-stage" class="stage">
+        <!-- 左：新会话里一遍遍重新解释；中：根目录的 AGENTS.md 手册；右：项目级 vs 全局级 -->
+        <div id="s20-col-0" class="s20-col s20-col--left">
+          <div id="s20-in-0" class="s20-in">
+            <p class="s20-col-head">每次开一个新会话</p>
+            <div class="s20-chat">
+              <div class="s20-chat-bar"><i></i><i></i><i></i><span>新会话</span></div>
+              <div class="s20-chat-body">
+                <p id="s20-type-0" class="s20-type">这个项目是 AI Learning 课程……</p>
+                <p id="s20-type-1" class="s20-type">目标是讲清楚 Agent 怎么干活</p>
+                <p id="s20-type-2" class="s20-type">不要动 大纲/ 目录，也别改样式</p>
+              </div>
+            </div>
+            <div class="s20-papers">
+              <span id="s20-paper-0" class="s20-paper s20-paper--0"></span>
+              <span id="s20-paper-1" class="s20-paper s20-paper--1"></span>
+              <span id="s20-paper-2" class="s20-paper s20-paper--2"></span>
+              <span id="s20-paper-3" class="s20-paper s20-paper--3"></span>
+              <span id="s20-paper-4" class="s20-paper s20-paper--4"></span>
+            </div>
+            <span id="s20-paper-no" class="s20-paper-no">第 10 遍</span>
+            <p id="s20-paper-cap" class="s20-paper-cap">同样的背景，每次都要重新打一遍。</p>
+          </div>
+        </div>
+
+        <div id="s20-col-1" class="s20-col s20-col--mid">
+          <div id="s20-in-1" class="s20-in">
+            <p class="s20-col-head">工作区根目录</p>
+            <div class="s20-tree">
+              <div>my-project/</div>
+              <div>├─ src/</div>
+              <div>├─ docs/</div>
+              <div>└─ <span id="s20-tree-hi" class="s20-tree-hi"><b>AGENTS.md</b></span></div>
+            </div>
+
+            <div class="s20-door"><span class="s20-door-leaf"></span></div>
+            <div id="s20-ai" class="s20-ai"><span class="s20-ai-head"></span><span class="s20-ai-body"></span></div>
+
+            <div id="s20-manual" class="s20-manual">
+              <p class="s20-manual-title">AGENTS.md</p>
+              <p class="s20-manual-sub">AI 开工先读</p>
+              <p class="s20-manual-line" style="top: 88px">项目背景 / 目标</p>
+              <p class="s20-manual-line" style="top: 116px">目录结构</p>
+              <p class="s20-manual-line" style="top: 144px">常用命令</p>
+              <p class="s20-manual-line" style="top: 172px">禁止做什么</p>
+              <p class="s20-manual-line" style="top: 200px">约定俗成</p>
+            </div>
+            <p id="s20-readtag" class="s20-readtag">AI 开工先读它</p>
+
+            <div class="s20-tools">
+              <span id="s20-tool-0" class="s20-tool">Codex</span>
+              <span id="s20-tool-1" class="s20-tool">Cursor</span>
+              <span id="s20-tool-2" class="s20-tool">OpenCode</span>
+            </div>
+            <span id="s20-claude" class="s20-claude">CLAUDE.md 也同理</span>
+            <p id="s20-memorytag" class="s20-memorytag">≈ AI 的项目记忆</p>
+
+            <div id="s20-evidence" class="media s20-evidence">
+              <img
+                src="assets/media/shot/agents-md-site.webp"
+                alt="agents.md 官网截图：AGENTS.md 已被 60k+ 开源项目使用，一个文件适配多种 Agent"
+                width="174"
+                height="120"
+              />
+              <p class="media__label"><span>agents.md</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="s20-col-2" class="s20-col s20-col--right">
+          <div id="s20-in-2" class="s20-in">
+            <p class="s20-col-head">记忆分两层</p>
+            <div class="s20-split">
+              <div class="s20-side s20-side--project">
+                <p class="s20-side-head">项目级 · 跟仓库走</p>
+                <p id="s20-path-p" class="s20-side-path">./AGENTS.md</p>
+                <p id="s20-row-p0" class="s20-row">项目背景、目标</p>
+                <p id="s20-row-p1" class="s20-row">目录结构</p>
+                <p id="s20-row-p2" class="s20-row">常用命令</p>
+                <p id="s20-row-p3" class="s20-row">禁止事项</p>
+                <p id="s20-row-p4" class="s20-row">团队约定俗成</p>
+              </div>
+              <div class="s20-side s20-side--global">
+                <p class="s20-side-head">全局级 · 跟你走</p>
+                <p id="s20-path-g0" class="s20-side-path">~/.claude/CLAUDE.md</p>
+                <p id="s20-path-g1" class="s20-side-path">~/.codex/AGENTS.md</p>
+                <p id="s20-path-g2" class="s20-side-path">memory.md</p>
+                <p id="s20-row-g0" class="s20-row">永远用中文回答</p>
+                <p id="s20-row-g1" class="s20-row">不要自动 commit</p>
+              </div>
+              <span id="s20-split-rule" class="s20-split-rule"></span>
+            </div>
+            <p id="s20-bottom" class="s20-bottom">项目的事写项目里，个人的习惯写全局里。</p>
+            <span id="s20-bottom-rule" class="s20-bottom-rule"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-agents-md-cap-0" class="cap-line clip" data-start="0.7" data-duration="3.583">还有一件很烦的事：每开一个新会话，</p>
+        <p id="s-agents-md-cap-1" class="cap-line clip" data-start="4.323" data-duration="5.927">你都要重新解释一遍——这个项目是干什么的、最终要做什么、哪</p>
+        <p id="s-agents-md-cap-2" class="cap-line clip" data-start="10.29" data-duration="1.452">些目录不能动。</p>
+        <p id="s-agents-md-cap-3" class="cap-line clip" data-start="11.742" data-duration="4.406">说一遍两遍还行，说十遍就受不了了。</p>
+        <p id="s-agents-md-cap-4" class="cap-line clip" data-start="16.188" data-duration="5.827">办法其实很简单：在工作区根目录放一个 agents.md。</p>
+        <p id="s-agents-md-cap-5" class="cap-line clip" data-start="22.055" data-duration="3">它已经是一个约定俗成的文件，</p>
+        <p id="s-agents-md-cap-6" class="cap-line clip" data-start="25.095" data-duration="4.303">Codex、Cursor、OpenCode 这些工具都认它；</p>
+        <p id="s-agents-md-cap-7" class="cap-line clip" data-start="29.437" data-duration="4.52">Claude Code 的 CLAUDE.md，也是同一个道理。</p>
+        <p id="s-agents-md-cap-8" class="cap-line clip" data-start="33.997" data-duration="7.849">你把项目背景、目标、目录结构、常用命令，还有「禁止做什么」写进去；</p>
+        <p id="s-agents-md-cap-9" class="cap-line clip" data-start="41.886" data-duration="3.188">AI 每次开工之前，会先读它。</p>
+        <p id="s-agents-md-cap-10" class="cap-line clip" data-start="45.114" data-duration="3.284">这相当于给 AI 一个项目记忆。</p>
+        <p id="s-agents-md-cap-11" class="cap-line clip" data-start="48.438" data-duration="3.543">还有一些 Agent 支持全局记忆：</p>
+        <p id="s-agents-md-cap-12" class="cap-line clip" data-start="52.021" data-duration="5.026">比如 Claude Code 的 ~/.claude/CLAUDE.md，</p>
+        <p id="s-agents-md-cap-13" class="cap-line clip" data-start="57.087" data-duration="7.002">Codex 的 ~/.codex/AGENTS.md，或者有些工具里的 memory.md。</p>
+        <p id="s-agents-md-cap-14" class="cap-line clip" data-start="64.129" data-duration="5.433">像「永远用中文回答」「不要自动 commit」这种跨项目都成立</p>
+        <p id="s-agents-md-cap-15" class="cap-line clip" data-start="69.602" data-duration="2.149">的偏好，就写在全局里。</p>
+        <p id="s-agents-md-cap-16" class="cap-line clip" data-start="71.791" data-duration="4.607">项目的事写项目里，个人的习惯写全局里。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S20</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-agents-md-progress"></i></span>
+        <span class="cap-clock">01:18</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S20","id":"agents-md","index":0,"start":0,"duration":78.12,"audioStart":0.599999999999909,"audioDuration":75.912,"cues":[{"i":0,"t":0.7,"d":3.583,"text":"还有一件很烦的事：每开一个新会话，","sent":"还有一件很烦的事：每开一个新会话，你都要重新解释一遍——这个项目是干什么的、最终要做什么、哪些目录不能动。"},{"i":1,"t":4.323,"d":5.927,"text":"你都要重新解释一遍——这个项目是干什么的、最终要做什么、哪","sent":"还有一件很烦的事：每开一个新会话，你都要重新解释一遍——这个项目是干什么的、最终要做什么、哪些目录不能动。"},{"i":2,"t":10.29,"d":1.452,"text":"些目录不能动。","sent":"还有一件很烦的事：每开一个新会话，你都要重新解释一遍——这个项目是干什么的、最终要做什么、哪些目录不能动。"},{"i":3,"t":11.742,"d":4.406,"text":"说一遍两遍还行，说十遍就受不了了。","sent":"说一遍两遍还行，说十遍就受不了了。"},{"i":4,"t":16.188,"d":5.827,"text":"办法其实很简单：在工作区根目录放一个 agents.md。","sent":"办法其实很简单：在工作区根目录放一个 agents.md。"},{"i":5,"t":22.055,"d":3.0,"text":"它已经是一个约定俗成的文件，","sent":"它已经是一个约定俗成的文件，Codex、Cursor、OpenCode 这些工具都认它；Claude Code 的 CLAUDE.md，也是同一个道理。"},{"i":6,"t":25.095,"d":4.303,"text":"Codex、Cursor、OpenCode 这些工具都认它；","sent":"它已经是一个约定俗成的文件，Codex、Cursor、OpenCode 这些工具都认它；Claude Code 的 CLAUDE.md，也是同一个道理。"},{"i":7,"t":29.437,"d":4.52,"text":"Claude Code 的 CLAUDE.md，也是同一个道理。","sent":"它已经是一个约定俗成的文件，Codex、Cursor、OpenCode 这些工具都认它；Claude Code 的 CLAUDE.md，也是同一个道理。"},{"i":8,"t":33.997,"d":7.849,"text":"你把项目背景、目标、目录结构、常用命令，还有「禁止做什么」写进去；","sent":"你把项目背景、目标、目录结构、常用命令，还有「禁止做什么」写进去；AI 每次开工之前，会先读它。"},{"i":9,"t":41.886,"d":3.188,"text":"AI 每次开工之前，会先读它。","sent":"你把项目背景、目标、目录结构、常用命令，还有「禁止做什么」写进去；AI 每次开工之前，会先读它。"},{"i":10,"t":45.114,"d":3.284,"text":"这相当于给 AI 一个项目记忆。","sent":"这相当于给 AI 一个项目记忆。"},{"i":11,"t":48.438,"d":3.543,"text":"还有一些 Agent 支持全局记忆：","sent":"还有一些 Agent 支持全局记忆：比如 Claude Code 的 ~/.claude/CLAUDE.md，Codex 的 ~/.codex/AGENTS.md，或者有些工具里的 memory.md。"},{"i":12,"t":52.021,"d":5.026,"text":"比如 Claude Code 的 ~/.claude/CLAUDE.md，","sent":"还有一些 Agent 支持全局记忆：比如 Claude Code 的 ~/.claude/CLAUDE.md，Codex 的 ~/.codex/AGENTS.md，或者有些工具里的 memory.md。"},{"i":13,"t":57.087,"d":7.002,"text":"Codex 的 ~/.codex/AGENTS.md，或者有些工具里的 memory.md。","sent":"还有一些 Agent 支持全局记忆：比如 Claude Code 的 ~/.claude/CLAUDE.md，Codex 的 ~/.codex/AGENTS.md，或者有些工具里的 memory.md。"},{"i":14,"t":64.129,"d":5.433,"text":"像「永远用中文回答」「不要自动 commit」这种跨项目都成立","sent":"像「永远用中文回答」「不要自动 commit」这种跨项目都成立的偏好，就写在全局里。"},{"i":15,"t":69.602,"d":2.149,"text":"的偏好，就写在全局里。","sent":"像「永远用中文回答」「不要自动 commit」这种跨项目都成立的偏好，就写在全局里。"},{"i":16,"t":71.791,"d":4.607,"text":"项目的事写项目里，个人的习惯写全局里。","sent":"项目的事写项目里，个人的习惯写全局里。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-agents-md-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // S20 · 每一拍钉在 N.cues[i].t 上；一次只把一栏推到焦点。
+    const C = N.cues;
+
+    // 三栏进场
+    tl.fromTo(".s20-col", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.12 }, C[0].t + 0.15);
+
+    // 「每开一个新会话，你都要重新解释一遍」
+    tl.fromTo("#s20-type-0", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[0].t + 0.35);
+    tl.fromTo("#s20-type-1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[1].t + 0.2);
+    tl.fromTo("#s20-type-2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[2].t + 0.2);
+    // 「说一遍两遍还行，说十遍就受不了了」：纸越堆越高
+    tl.fromTo(".s20-paper", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power2.out", stagger: 0.22 }, C[3].t + 0.2);
+    tl.fromTo("#s20-paper-no", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, C[3].t + 1.6);
+    tl.fromTo("#s20-paper-cap", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[3].t + 1.9);
+
+    // 「在工作区根目录放一个 agents.md」：焦点移到中栏，手册立在门口
+    tl.fromTo("#s20-in-0", { opacity: 1 }, { opacity: 0.4, duration: 0.5, ease: "power1.out", immediateRender: false }, C[4].t + 0.15);
+    tl.fromTo("#s20-in-1", { opacity: 0.4 }, { opacity: 1, duration: 0.5, ease: "power2.out", immediateRender: false }, C[4].t + 0.15);
+    tl.fromTo("#s20-manual", { opacity: 0, y: 12, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: "power3.out" }, C[4].t + 0.3);
+
+    // 「它已经是一个约定俗成的文件」：截图小证据
+    tl.fromTo("#s20-evidence", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[5].t + 0.2);
+    // 「Codex、Cursor、OpenCode 这些工具都认它」
+    tl.fromTo(".s20-tool", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out", stagger: 0.2 }, C[6].t + 0.2);
+    // 「Claude Code 的 CLAUDE.md，也是同一个道理」
+    tl.fromTo("#s20-claude", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[7].t + 0.2);
+
+    // 「把项目背景、目标、目录结构、常用命令，还有禁止做什么写进去」
+    tl.fromTo("#s20-manual .s20-manual-line", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out", stagger: 0.16 }, C[8].t + 0.2);
+    tl.fromTo("#s20-path-p", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[8].t + 0.1);
+    tl.fromTo(
+      ["#s20-row-p0", "#s20-row-p1", "#s20-row-p2", "#s20-row-p3", "#s20-row-p4"],
+      { opacity: 0, x: -8 },
+      { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.12 },
+      C[8].t + 0.5
+    );
+
+    // 「AI 每次开工之前，会先读它」：AI 推门进来，拿起手册
+    tl.fromTo("#s20-ai", { opacity: 0, x: 34, y: 16 }, { opacity: 1, x: 0, y: 0, duration: 0.7, ease: "power3.out" }, C[9].t + 0.15);
+    tl.fromTo("#s20-readtag", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[9].t + 0.7);
+    tl.fromTo("#s20-manual", { scale: 1 }, { scale: 1.03, duration: 0.4, ease: "power2.out", immediateRender: false }, C[9].t + 0.9);
+    tl.fromTo("#s20-manual", { scale: 1.03 }, { scale: 1, duration: 0.4, ease: "power2.inOut", immediateRender: false }, C[9].t + 1.3);
+    // 左边那摞重复解释的纸被手册吸走
+    tl.fromTo("#s20-in-0", { opacity: 0.4 }, { opacity: 0.3, duration: 0.5, immediateRender: false }, C[9].t + 0.4);
+    tl.fromTo(".s20-paper", { opacity: 1, scale: 1, y: 0 }, { opacity: 0.14, scale: 0.7, y: -10, duration: 0.6, ease: "power2.in", stagger: 0.06, immediateRender: false }, C[9].t + 0.6);
+    tl.fromTo("#s20-paper-no", { opacity: 1 }, { opacity: 0.3, duration: 0.4, immediateRender: false }, C[9].t + 0.6);
+
+    // 「这相当于给 AI 一个项目记忆」
+    tl.fromTo("#s20-memorytag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[10].t + 0.2);
+
+    // 「还有一些 Agent 支持全局记忆」：焦点移右栏
+    tl.fromTo("#s20-in-1", { opacity: 1 }, { opacity: 0.42, duration: 0.5, ease: "power1.out", immediateRender: false }, C[11].t + 0.15);
+    tl.fromTo("#s20-in-2", { opacity: 0.4 }, { opacity: 1, duration: 0.55, ease: "power2.out", immediateRender: false }, C[11].t + 0.15);
+    tl.fromTo("#s20-split-rule", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[11].t + 0.4);
+
+    // 「比如 Claude Code 的 ~/.claude/CLAUDE.md」
+    tl.fromTo("#s20-path-g0", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[12].t + 0.2);
+    // 「Codex 的 ~/.codex/AGENTS.md，或者 memory.md」
+    tl.fromTo("#s20-path-g1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[13].t + 0.2);
+    tl.fromTo("#s20-path-g2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[13].t + 0.9);
+    // 「像永远用中文回答、不要自动 commit 这种偏好，就写在全局里」
+    tl.fromTo("#s20-row-g0", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, C[14].t + 0.2);
+    tl.fromTo("#s20-row-g1", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, C[14].t + 0.8);
+
+    // 「项目的事写项目里，个人的习惯写全局里」
+    tl.fromTo("#s20-bottom", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[16].t + 0.2);
+    tl.fromTo("#s20-bottom-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, C[16].t + 0.55);
+    // 页尾留一点小动作：两栏的对照线轻轻呼吸一下
+    tl.fromTo("#s20-split-rule", { opacity: 1 }, { opacity: 0.45, duration: 0.6, ease: "power2.inOut", immediateRender: false }, C[16].t + 2.2);
+    tl.fromTo("#s20-split-rule", { opacity: 0.45 }, { opacity: 1, duration: 0.6, ease: "power2.inOut", immediateRender: false }, C[16].t + 2.9);
+    // MOTION:END
+
+    window.__timelines["s-agents-md"] = tl;
+  </script>
+</template>

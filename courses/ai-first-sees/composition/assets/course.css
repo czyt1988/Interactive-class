@@ -1,9 +1,35 @@
-/* Course-scoped styles. Scene-specific rules live inside each scene file. */
+/* AI Learning long-form course composition.
+ *
+ * 1920 x 1080 canvas. Every scene is one page: a header, a visual stage and a
+ * narration band at the bottom. The band is part of the video frame, so an
+ * exported MP4 carries the narration as burned-in captions.
+ *
+ * The course is light-only. There is one ground: warm paper (#f4efe6). Acts
+ * differ by accent colour, never by a dark background fill. The "black room"
+ * metaphor in S17/S19 is drawn as a warm paper-cut room with ink silhouettes,
+ * because the author explicitly ruled out dark pages.
+ */
 
 @font-face {
   font-family: "Noto Sans SC";
   src: url("fonts/NotoSansSC-VF.woff2") format("woff2");
   font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -17,23 +43,731 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #0b0b0c;
   overflow: hidden;
-}
-
-#root {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #0b0b0c;
+  background: #f4efe6;
+  color: #16140f;
   font-family: "Noto Sans SC", sans-serif;
+  --font-sans: "Noto Sans SC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
 }
 
-.clip {
-  will-change: transform, opacity;
+p,
+h1,
+h2,
+h3,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
 }
 
+.scene-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans SC", sans-serif;
+  --font-sans: "Noto Sans SC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ themes */
+
+[data-theme="paper"] {
+  --bg: #f4efe6;
+  --bg-deep: #ece3d3;
+  --panel: #faf6ee;
+  --panel-2: #f0e8da;
+  --ink: #16140f;
+  --ink-soft: #514b40;
+  --ink-faint: #6b6355;
+  --line: #d9cfbf;
+  --line-strong: #b9ad99;
+  --cap-bg: #ece3d3;
+  --cap-ink: #16140f;
+  --lamp: #e8b23a;
+  --stamp: #b8452b;
+  --shadow: 0 22px 48px -36px rgba(22, 20, 15, 0.55);
+  --accent-text: color-mix(in srgb, var(--accent) 50%, var(--ink));
+}
+
+[data-act="watch"] {
+  --accent: #2fb68a;
+  --accent-soft: rgba(47, 182, 138, 0.16);
+  --accent-ink: #0d3a2d;
+}
+
+[data-act="speak"] {
+  --accent: #e8b23a;
+  --accent-soft: rgba(232, 178, 58, 0.2);
+  --accent-ink: #4a340c;
+}
+
+[data-act="make"] {
+  --accent: #4c7dff;
+  --accent-soft: rgba(76, 125, 255, 0.16);
+  --accent-ink: #101d42;
+}
+
+[data-act="crowd"] {
+  --accent: #7b6cff;
+  --accent-soft: rgba(123, 108, 255, 0.16);
+  --accent-ink: #1c1745;
+}
+
+[data-act="use"] {
+  --accent: #e85b4a;
+  --accent-soft: rgba(232, 91, 74, 0.16);
+  --accent-ink: #46110c;
+}
+
+[data-act="prologue"],
+[data-act="epilogue"] {
+  --accent: #2fb68a;
+  --accent-soft: rgba(47, 182, 138, 0.14);
+  --accent-ink: #0d3a2d;
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.scene-in {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.scene-head {
+  position: absolute;
+  left: 128px;
+  top: 58px;
+  right: 128px;
+  bottom: auto;
+}
+
+.scene-kicker {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.scene-code {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.scene-act {
+  color: var(--ink-faint);
+  letter-spacing: 0.08em;
+}
+
+.scene-title {
+  margin-top: 18px;
+  max-width: 1500px;
+  font-size: 88px;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.scene-no {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.stage {
+  position: absolute;
+  left: 128px;
+  right: 128px;
+  top: 236px;
+  bottom: 180px;
+}
+
+/* ---------------------------------------------------------------- captions */
+
+.cap-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 180px;
+  background: var(--cap-bg);
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+
+/* The deck's caption button toggles this attribute on <html>; the burned-in
+ * captions stay in the MP4 render, the web player just stops showing them. */
+html[data-captions="off"] .cap-band {
+  display: none;
+}
+
+.cap-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--cap-ink) 10%, transparent);
+  overflow: hidden;
+}
+
+.cap-progress > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.cap-lines {
+  position: absolute;
+  left: 128px;
+  right: 128px;
+  top: 24px;
+  height: 96px;
+}
+
+.cap-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  font-size: 38px;
+  line-height: 1.26;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: var(--cap-ink);
+  text-wrap: pretty;
+}
+
+.cap-foot {
+  position: absolute;
+  left: 128px;
+  right: 128px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.cap-code {
+  color: var(--ink-soft);
+}
+
+.cap-spacer {
+  flex: 1;
+}
+
+.cap-clock {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------- type */
+
 .mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.dim {
+  color: var(--ink-soft);
+}
+
+.faint {
+  color: var(--ink-faint);
+}
+
+.accent {
+  color: var(--accent-text);
+}
+
+.ink {
+  color: var(--ink);
+}
+
+.big {
+  font-size: 64px;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.huge {
+  font-size: 112px;
+  line-height: 0.98;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.small {
+  font-size: 28px;
+  line-height: 1.5;
+}
+
+.body {
+  font-size: 36px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* -------------------------------------------------------------- primitives */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.row-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 26px 28px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+
+.chip--solid {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rule {
+  height: 1px;
+  background: var(--line);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  font-weight: 700;
+  font-size: 30px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.bar {
+  height: 14px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+
+.bar > i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 7px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.track {
+  position: relative;
+  height: 2px;
+  background: var(--line);
+}
+
+.track > i {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  height: 6px;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.arrow {
+  font-family: var(--font-mono);
+  color: var(--accent-text);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.strike {
+  position: relative;
+  color: var(--ink-faint);
+}
+
+.strike::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: 52%;
+  height: 3px;
+  background: var(--stamp);
+  transform: rotate(-2deg);
+}
+
+.muted {
+  opacity: 0.45;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------------ pieces */
+
+/* A quiet grid used by diagrams that need coordinates. */
+.board {
+  position: relative;
+  background-color: #dfb878;
+  background-image:
+    linear-gradient(rgba(70, 46, 18, 0.42) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 46, 18, 0.42) 1px, transparent 1px);
+  background-size: 34px 34px;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 1px rgba(70, 46, 18, 0.4),
+    var(--shadow);
+}
+
+.stone {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+}
+
+.stone--b {
+  background: #0d0e10;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 4px 8px rgba(0, 0, 0, 0.42);
+}
+
+.stone--w {
+  background: #fbf7ef;
+  box-shadow: 0 0 0 1px rgba(70, 46, 18, 0.5), 0 4px 8px rgba(0, 0, 0, 0.24);
+}
+
+/* Code and terminal mocks are light "paper terminal" panels: a dark rectangle
+ * in the middle of the paper page reads as a broken frame. */
+.code {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  color: #2a261f;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 1.55;
+  padding: 22px 26px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.code-line {
+  display: block;
+  white-space: pre;
+}
+
+.code-line--muted {
+  color: #8a8274;
+}
+
+.code-line--red {
+  color: #b23a2a;
+}
+
+.code-line--green {
+  color: #1f7a52;
+}
+
+.code-line--blue {
+  color: #2f5bd0;
+}
+
+.term {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #f8f2e7;
+  color: #332e25;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1.6;
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+}
+
+.term-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.term-bar i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #c9bfae;
+}
+
+.avatar-dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  flex: none;
+}
+
+/* A warm lamp halo. Light mode: amber glow on paper, never a dark room. */
+.lamp-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(232, 178, 58, 0.3) 0%,
+    rgba(232, 178, 58, 0.1) 42%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Real product evidence: a small framed card, not a background. */
+.media {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  background: #fffdf8;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.media > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.media__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 4px 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* A photo is evidence too: a paper mat under a real photograph. */
+.photo {
+  display: block;
+  padding: 12px;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.photo > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.photo__label {
+  padding: 10px 2px 0;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+/* Product logo: recognition, not decoration. */
+.logo {
+  display: block;
+  object-fit: contain;
+}
+
+.logo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffdf8;
+  box-shadow: var(--shadow);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.logo-chip img {
+  display: block;
+  width: auto;
+  height: 40px;
+}
+
+.logo-chip--sm img {
+  height: 30px;
+}
+
+/* Rubber stamp for "approved / rejected / archive" moments. */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border: 3px double var(--stamp);
+  border-radius: 8px;
+  color: var(--stamp);
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+/* Paper-cut silhouette for the S17/S19 room: ink figure on paper, no dark fill. */
+.silhouette {
+  background: var(--ink);
+  border-radius: 50% 50% 42% 42%;
+}
+
+/* A dashed link between two things in a diagram. */
+.dash {
+  position: absolute;
+  border-top: 3px dashed var(--line-strong);
+}
+
+/* Small mono annotation that sits under a diagram. */
+.note {
+  font-size: 28px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }

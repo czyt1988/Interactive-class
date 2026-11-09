@@ -1,0 +1,722 @@
+<template>
+  <style>
+    /* S18 ·「长会话不是免费的记忆」：本子越厚、累计 token 越贵，最后收成一句「一任务，一会话」。 */
+    .s18-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s18-diagrams {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .s18-book {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s18-book-label {
+      position: absolute;
+      left: 70px;
+      top: 112px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      color: #3a352d;
+    }
+
+    .s18-book-bottom {
+      position: absolute;
+      left: 70px;
+      top: 300px;
+      width: 300px;
+      height: 18px;
+      border: 2px solid #8a6428;
+      border-radius: 4px;
+      background: #c9a06a;
+    }
+
+    .s18-book-top {
+      position: absolute;
+      left: 70px;
+      top: 282px;
+      width: 300px;
+      height: 18px;
+      border: 2px solid #8a6428;
+      border-radius: 4px 4px 2px 2px;
+      background: #c9a06a;
+      z-index: 3;
+    }
+
+    .s18-sheet {
+      position: absolute;
+      left: 76px;
+      width: 288px;
+      height: 14px;
+      border-bottom: 1px solid #cbb27a;
+      background: #fffdf8;
+      z-index: 2;
+    }
+
+    .s18-reread {
+      position: absolute;
+      left: 392px;
+      top: 168px;
+      width: 214px;
+      padding: 10px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel);
+      font-size: 24px;
+      line-height: 1.4;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .s18-reread b {
+      font-family: var(--font-mono);
+      color: var(--accent-text);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .s18-readwrap {
+      position: absolute;
+      left: 74px;
+      top: 156px;
+      width: 292px;
+      height: 150px;
+      overflow: hidden;
+      z-index: 4;
+    }
+
+    .s18-readbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 34px;
+      border-top: 3px solid var(--lamp);
+      background: rgba(232, 178, 58, 0.22);
+      opacity: 0;
+    }
+
+    .s18-gauge-label {
+      position: absolute;
+      left: 70px;
+      top: 336px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s18-gauge-num {
+      position: absolute;
+      left: 264px;
+      top: 318px;
+      font-size: 46px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .s18-gauge-num small {
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: var(--ink-faint);
+    }
+
+    .s18-gauge {
+      position: absolute;
+      left: 70px;
+      top: 386px;
+      width: 460px;
+      height: 12px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
+
+    .s18-gauge-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s18-gauge-ticks {
+      position: absolute;
+      left: 70px;
+      top: 404px;
+      width: 460px;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    /* 累计 token 柱状图：柱高按 n(n+1)/2 增长，天然呈现上翘曲线 */
+    .s18-chart {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s18-chart-label {
+      position: absolute;
+      left: 620px;
+      top: 12px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s18-axis-y {
+      position: absolute;
+      left: 656px;
+      top: 52px;
+      width: 2px;
+      height: 264px;
+      background: var(--line-strong);
+    }
+
+    .s18-axis-x {
+      position: absolute;
+      left: 656px;
+      top: 314px;
+      width: 976px;
+      height: 2px;
+      background: var(--line-strong);
+    }
+
+    .s18-bars {
+      position: absolute;
+      left: 656px;
+      top: 52px;
+      width: 976px;
+      height: 262px;
+    }
+
+    .s18-bar {
+      position: absolute;
+      bottom: 0;
+      width: 28px;
+      border: 1px solid var(--accent);
+      border-radius: 3px 3px 0 0;
+      background: color-mix(in srgb, var(--accent) 24%, #fffdf8);
+      transform-origin: center bottom;
+      opacity: 0;
+    }
+
+    .s18-tick {
+      position: absolute;
+      top: 322px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    .s18-sweep {
+      position: absolute;
+      left: 670px;
+      top: 52px;
+      width: 28px;
+      height: 262px;
+      border-left: 3px solid var(--lamp);
+      background: rgba(232, 178, 58, 0.28);
+      opacity: 0;
+    }
+
+    .s18-smallq {
+      position: absolute;
+      left: 620px;
+      top: 348px;
+      padding: 12px 20px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      font-size: 28px;
+      color: var(--ink-soft);
+    }
+
+    .s18-burn {
+      position: absolute;
+      left: 1300px;
+      top: 352px;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--accent-text);
+    }
+
+    .s18-newbook {
+      position: absolute;
+      left: 120px;
+      top: 66px;
+      width: 260px;
+      height: 158px;
+      border: 3px solid #8a6428;
+      border-radius: 5px 10px 10px 5px;
+      background: #c9a06a;
+      box-shadow: var(--shadow);
+      z-index: 2;
+    }
+
+    .s18-newbook::before {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #8a6428;
+    }
+
+    .s18-newbook-label {
+      position: absolute;
+      left: 40px;
+      top: 44px;
+      font-size: 30px;
+      color: #3a2a10;
+    }
+
+    .s18-newbook-tab {
+      position: absolute;
+      left: 40px;
+      top: 92px;
+      padding: 6px 14px;
+      border: 1px solid #8a6428;
+      border-radius: 4px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .s18-phrase {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 116px;
+      z-index: 3;
+      text-align: center;
+      font-size: 76px;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+    }
+
+    .s18-phrase-rule {
+      display: block;
+      width: 380px;
+      height: 7px;
+      margin: 16px auto 0;
+      border-radius: 4px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: center center;
+    }
+
+    .s18-cards {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+    }
+
+    .s18-card {
+      position: absolute;
+      top: 452px;
+      width: 300px;
+      height: 190px;
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s18-card-no {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--accent-text);
+    }
+
+    .s18-card-rule {
+      margin-top: 10px;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
+    .s18-card-sub {
+      margin-top: 10px;
+      font-size: 25px;
+      line-height: 1.38;
+      color: var(--ink-soft);
+    }
+
+    .s18-tease {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+    }
+
+    .s18-tease-card {
+      position: absolute;
+      left: 560px;
+      top: 244px;
+      width: 780px;
+      height: 300px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s18-stuffedwrap {
+      position: absolute;
+      left: 30px;
+      top: 6px;
+      width: 230px;
+      height: 262px;
+    }
+
+    .s18-stuffed {
+      position: absolute;
+      left: 0;
+      top: 46px;
+      width: 210px;
+      height: 210px;
+      border: 3px solid #8a6428;
+      border-radius: 5px 10px 10px 5px;
+      background: #c9a06a;
+    }
+
+    .s18-stuffed::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #8a6428;
+    }
+
+    .s18-stuffed-pages {
+      position: absolute;
+      left: 40px;
+      top: 12px;
+      width: 150px;
+      height: 46px;
+      border: 2px solid var(--line-strong);
+      border-radius: 3px;
+      background: #fffdf8;
+      transform: rotate(-6deg);
+      box-shadow: 0 8px 14px -12px rgba(22, 20, 15, 0.6);
+    }
+
+    .s18-stuffed-pages--b {
+      left: 64px;
+      top: 24px;
+      transform: rotate(7deg);
+    }
+
+    .s18-tease-q {
+      position: absolute;
+      left: 260px;
+      top: 52px;
+      width: 480px;
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.45;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s18-tease-arrow {
+      position: absolute;
+      left: 260px;
+      top: 238px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 30px;
+      color: var(--accent-text);
+      transform-origin: left center;
+    }
+
+    .s18-tease-arrow b {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+
+    /* 快照会直接 seek 到中段：晚出现的元素在 CSS 里先隐藏。 */
+    .s18-book,
+    .s18-sheet,
+    .s18-chart,
+    .s18-reread,
+    .s18-gauge-label,
+    .s18-gauge,
+    .s18-gauge-ticks,
+    .s18-gauge-num,
+    .s18-smallq,
+    .s18-burn,
+    .s18-newbook,
+    .s18-newbook-tab,
+    .s18-phrase,
+    .s18-card,
+    .s18-tease {
+      opacity: 0;
+    }  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-long-session"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S18</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-long-session-title" class="scene-title">长会话不是免费的记忆</h1>
+        <p class="scene-no">18 / 22</p>
+      </header>
+
+      <section id="s-long-session-stage" class="stage">
+        <!-- 上半：一本越来越厚的本子 + 累计 token 柱状图；下半：五条「什么时候该新开」 -->
+        <div id="s18-diagrams" class="s18-layer s18-diagrams">
+          <div id="s18-book" class="s18-book">
+            <p class="s18-book-label">一本会话 · 聊到第 20 轮</p>
+            <div class="s18-book-bottom"></div>
+            <div class="s18-sheet" style="top: 286px"></div>
+            <div class="s18-sheet" style="top: 272px"></div>
+            <div class="s18-sheet" style="top: 258px"></div>
+            <div class="s18-sheet" style="top: 244px"></div>
+            <div class="s18-sheet" style="top: 230px"></div>
+            <div class="s18-sheet" style="top: 216px"></div>
+            <div class="s18-sheet" style="top: 202px"></div>
+            <div class="s18-sheet" style="top: 188px"></div>
+            <div class="s18-sheet" style="top: 174px"></div>
+            <div class="s18-sheet" style="top: 160px"></div>
+            <div id="s18-book-top" class="s18-book-top"></div>
+            <div class="s18-readwrap"><div id="s18-readbar" class="s18-readbar"></div></div>
+          </div>
+
+          <p id="s18-gauge-label" class="s18-gauge-label">累计 token</p>
+          <p id="s18-gauge-num" class="s18-gauge-num">≈ 10.5 万 <small>token</small></p>
+          <div id="s18-gauge" class="s18-gauge"><i id="s18-gauge-fill" class="s18-gauge-fill"></i></div>
+          <div class="s18-gauge-ticks"><span>0</span><span>3 万</span><span>6 万</span><span>10.5 万</span></div>
+
+          <div id="s18-chart" class="s18-chart">
+            <p class="s18-chart-label">每次请求带的上下文 · 累计 token</p>
+            <div class="s18-axis-y"></div>
+            <div class="s18-axis-x"></div>
+            <div class="s18-bars">
+              <i class="s18-bar" style="left: 12px; height: 13px"></i>
+              <i class="s18-bar" style="left: 60px; height: 16px"></i>
+              <i class="s18-bar" style="left: 108px; height: 19px"></i>
+              <i class="s18-bar" style="left: 156px; height: 24px"></i>
+              <i class="s18-bar" style="left: 204px; height: 30px"></i>
+              <i class="s18-bar" style="left: 252px; height: 37px"></i>
+              <i class="s18-bar" style="left: 300px; height: 45px"></i>
+              <i class="s18-bar" style="left: 348px; height: 55px"></i>
+              <i class="s18-bar" style="left: 396px; height: 66px"></i>
+              <i class="s18-bar" style="left: 444px; height: 78px"></i>
+              <i class="s18-bar" style="left: 492px; height: 91px"></i>
+              <i class="s18-bar" style="left: 540px; height: 105px"></i>
+              <i class="s18-bar" style="left: 588px; height: 120px"></i>
+              <i class="s18-bar" style="left: 636px; height: 137px"></i>
+              <i class="s18-bar" style="left: 684px; height: 155px"></i>
+              <i class="s18-bar" style="left: 732px; height: 174px"></i>
+              <i class="s18-bar" style="left: 780px; height: 194px"></i>
+              <i class="s18-bar" style="left: 828px; height: 216px"></i>
+              <i class="s18-bar" style="left: 876px; height: 238px"></i>
+              <i class="s18-bar" style="left: 924px; height: 262px"></i>
+            </div>
+            <span class="s18-tick" style="left: 663px">1</span>
+            <span class="s18-tick" style="left: 855px">5</span>
+            <span class="s18-tick" style="left: 1095px">10</span>
+            <span class="s18-tick" style="left: 1335px">15</span>
+            <span class="s18-tick" style="left: 1575px">20</span>
+            <div id="s18-sweep" class="s18-sweep"></div>
+          </div>
+
+          <p id="s18-reread" class="s18-reread">每答一次，都要<b>从头读一遍</b></p>
+          <p id="s18-smallq" class="s18-smallq">一个小问题，也挂在原来那 20 轮的长会话里</p>
+          <p id="s18-burn" class="s18-burn">→ token 烧得很快</p>
+        </div>
+
+        <div id="s18-newbook" class="s18-newbook">
+          <span class="s18-newbook-label">新会话</span>
+          <span class="s18-newbook-tab">第 1 页 · 这次的任务</span>
+        </div>
+
+        <p id="s18-phrase" class="s18-phrase">一任务，一会话<span id="s18-phrase-rule" class="s18-phrase-rule"></span></p>
+
+        <div id="s18-cards" class="s18-layer">
+          <div id="s18-card-0" class="s18-card" style="left: 42px">
+            <p class="s18-card-no">01</p>
+            <p class="s18-card-rule">新任务</p>
+            <p class="s18-card-sub">换一件事做，就开一个新会话。</p>
+          </div>
+          <div id="s18-card-1" class="s18-card" style="left: 362px">
+            <p class="s18-card-no">02</p>
+            <p class="s18-card-rule">旧上下文无关了</p>
+            <p class="s18-card-sub">原来的上下文和新问题无关，新开。</p>
+          </div>
+          <div id="s18-card-2" class="s18-card" style="left: 682px">
+            <p class="s18-card-no">03</p>
+            <p class="s18-card-rule">会话太长</p>
+            <p class="s18-card-sub">窗口快满了，先总结再新开。</p>
+          </div>
+          <div id="s18-card-3" class="s18-card" style="left: 1002px">
+            <p class="s18-card-no">04</p>
+            <p class="s18-card-rule">换模型、换供应商</p>
+            <p class="s18-card-sub">想干净一点，就新开。</p>
+          </div>
+          <div id="s18-card-4" class="s18-card" style="left: 1322px">
+            <p class="s18-card-no">05</p>
+            <p class="s18-card-rule">结论舍不得丢</p>
+            <p class="s18-card-sub">先写一份 handoff，再新开。</p>
+          </div>
+        </div>
+
+        <div id="s18-tease" class="s18-tease">
+          <div class="s18-tease-card">
+            <div class="s18-stuffedwrap">
+              <div class="s18-stuffed"></div>
+              <span class="s18-stuffed-pages"></span>
+              <span class="s18-stuffed-pages s18-stuffed-pages--b"></span>
+            </div>
+            <p id="s18-tease-q" class="s18-tease-q">任务天生就长，中途没法换本子。<br />本子写满了怎么办？</p>
+            <p id="s18-tease-arrow" class="s18-tease-arrow"><b>→</b> 下一屏：上下文压缩</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-long-session-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.71">但代价也在这里：你聊到第 20 轮，第 20 次请求带的，</p>
+        <p id="s-long-session-cap-1" class="cap-line clip" data-start="6.45" data-duration="5.939">是前 19 轮的全部内容——每答一次，专家都要从头读一遍。</p>
+        <p id="s-long-session-cap-2" class="cap-line clip" data-start="12.389" data-duration="6.332">所以长会话不是「免费的记忆」，而是「每一轮都重新买一遍」。</p>
+        <p id="s-long-session-cap-3" class="cap-line clip" data-start="18.761" data-duration="5.591">这就是为什么，很多人问一个小问题，还挂在原来的长会话里，</p>
+        <p id="s-long-session-cap-4" class="cap-line clip" data-start="24.392" data-duration="1.77">token 会烧得很快。</p>
+        <p id="s-long-session-cap-5" class="cap-line clip" data-start="26.202" data-duration="5.284">所以，第一个使用习惯：一任务，一会话。</p>
+        <p id="s-long-session-cap-6" class="cap-line clip" data-start="31.526" data-duration="5.662">新任务，新会话；旧上下文和新问题无关，新会话；</p>
+        <p id="s-long-session-cap-7" class="cap-line clip" data-start="37.228" data-duration="5.662">会话太长、或者上下文窗口快满了，先总结再新开；</p>
+        <p id="s-long-session-cap-8" class="cap-line clip" data-start="42.93" data-duration="4.422">换模型、换供应商，想干净一点就新开；</p>
+        <p id="s-long-session-cap-9" class="cap-line clip" data-start="47.392" data-duration="6.282">舍不得丢的结论，让 Agent 先写一份 handoff，再新开。</p>
+        <p id="s-long-session-cap-10" class="cap-line clip" data-start="53.714" data-duration="3.784">一句话：一任务，一会话。</p>
+        <p id="s-long-session-cap-11" class="cap-line clip" data-start="57.538" data-duration="7.239">可有些任务天生就长，中途没法换本子，那本子写满了怎么办？</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S18</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-long-session-progress"></i></span>
+        <span class="cap-clock">01:06</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S18","id":"long-session","index":0,"start":0,"duration":66.5,"audioStart":0.6000000000000227,"audioDuration":64.296,"cues":[{"i":0,"t":0.7,"d":5.71,"text":"但代价也在这里：你聊到第 20 轮，第 20 次请求带的，","sent":"但代价也在这里：你聊到第 20 轮，第 20 次请求带的，是前 19 轮的全部内容——每答一次，专家都要从头读一遍。"},{"i":1,"t":6.45,"d":5.939,"text":"是前 19 轮的全部内容——每答一次，专家都要从头读一遍。","sent":"但代价也在这里：你聊到第 20 轮，第 20 次请求带的，是前 19 轮的全部内容——每答一次，专家都要从头读一遍。"},{"i":2,"t":12.389,"d":6.332,"text":"所以长会话不是「免费的记忆」，而是「每一轮都重新买一遍」。","sent":"所以长会话不是「免费的记忆」，而是「每一轮都重新买一遍」。"},{"i":3,"t":18.761,"d":5.591,"text":"这就是为什么，很多人问一个小问题，还挂在原来的长会话里，","sent":"这就是为什么，很多人问一个小问题，还挂在原来的长会话里，token 会烧得很快。"},{"i":4,"t":24.392,"d":1.77,"text":"token 会烧得很快。","sent":"这就是为什么，很多人问一个小问题，还挂在原来的长会话里，token 会烧得很快。"},{"i":5,"t":26.202,"d":5.284,"text":"所以，第一个使用习惯：一任务，一会话。","sent":"所以，第一个使用习惯：一任务，一会话。"},{"i":6,"t":31.526,"d":5.662,"text":"新任务，新会话；旧上下文和新问题无关，新会话；","sent":"新任务，新会话；旧上下文和新问题无关，新会话；会话太长、或者上下文窗口快满了，先总结再新开；换模型、换供应商，想干净一点就新开；舍不得丢的结论，让 Agent 先写一份 handoff，再新开。"},{"i":7,"t":37.228,"d":5.662,"text":"会话太长、或者上下文窗口快满了，先总结再新开；","sent":"新任务，新会话；旧上下文和新问题无关，新会话；会话太长、或者上下文窗口快满了，先总结再新开；换模型、换供应商，想干净一点就新开；舍不得丢的结论，让 Agent 先写一份 handoff，再新开。"},{"i":8,"t":42.93,"d":4.422,"text":"换模型、换供应商，想干净一点就新开；","sent":"新任务，新会话；旧上下文和新问题无关，新会话；会话太长、或者上下文窗口快满了，先总结再新开；换模型、换供应商，想干净一点就新开；舍不得丢的结论，让 Agent 先写一份 handoff，再新开。"},{"i":9,"t":47.392,"d":6.282,"text":"舍不得丢的结论，让 Agent 先写一份 handoff，再新开。","sent":"新任务，新会话；旧上下文和新问题无关，新会话；会话太长、或者上下文窗口快满了，先总结再新开；换模型、换供应商，想干净一点就新开；舍不得丢的结论，让 Agent 先写一份 handoff，再新开。"},{"i":10,"t":53.714,"d":3.784,"text":"一句话：一任务，一会话。","sent":"一句话：一任务，一会话。"},{"i":11,"t":57.538,"d":7.239,"text":"可有些任务天生就长，中途没法换本子，那本子写满了怎么办？","sent":"可有些任务天生就长，中途没法换本子，那本子写满了怎么办？"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-long-session-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // S18 · 每一拍钉在 N.cues[i].t 上。
+    const C = N.cues;
+
+    // 「聊到第 20 轮」：本子逐页变厚，累计 token 的柱一根根立起来
+    tl.fromTo("#s18-chart", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, C[0].t + 0.15);
+    tl.fromTo("#s18-book", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, C[0].t + 0.2);
+    tl.fromTo("#s18-book .s18-sheet", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 1.0 }, C[0].t + 0.8);
+    tl.fromTo("#s18-book-top", { y: 0 }, { y: -140, duration: 10.2, ease: "power1.inOut" }, C[0].t + 0.8);
+    tl.fromTo(
+      ".s18-bar",
+      { opacity: 0, scaleY: 0 },
+      { opacity: 1, scaleY: 1, duration: 0.4, ease: "power2.out", stagger: 0.5 },
+      C[0].t + 0.4
+    );
+    tl.fromTo("#s18-gauge-label", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[0].t + 1.0);
+    tl.fromTo("#s18-gauge", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[0].t + 1.05);
+    tl.fromTo(".s18-gauge-ticks", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[0].t + 1.1);
+    tl.fromTo("#s18-gauge-fill", { scaleX: 0 }, { scaleX: 1, duration: 23.5, ease: "power1.in" }, C[0].t + 1.2);
+
+    // 「每答一次，专家都要从头读一遍」：本子上反复扫过一条读痕
+    tl.fromTo("#s18-reread", { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[1].t + 0.1);
+    [0.4, 2.2, 4.0].forEach((offset) => {
+      tl.fromTo("#s18-readbar", { opacity: 0.9, y: 0 }, { y: 116, duration: 1.3, ease: "power1.inOut", immediateRender: false }, C[1].t + offset);
+      tl.fromTo("#s18-readbar", { opacity: 0.9 }, { opacity: 0, duration: 0.4, immediateRender: false }, C[1].t + offset + 1.15);
+    });
+
+    // 「每一轮都重新买一遍」：光带从第 1 根柱扫到最后，再扫一遍
+    [0.2, 2.6].forEach((offset) => {
+      tl.fromTo("#s18-sweep", { opacity: 0.9, x: 0 }, { x: 900, duration: 2.0, ease: "power1.inOut", immediateRender: false }, C[2].t + offset);
+      tl.fromTo("#s18-sweep", { opacity: 0.9 }, { opacity: 0, duration: 0.4, immediateRender: false }, C[2].t + offset + 1.85);
+    });
+
+    // 「问一个小问题，token 也烧得很快」
+    tl.fromTo("#s18-smallq", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[3].t + 0.2);
+    tl.fromTo("#s18-burn", { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[4].t + 0.1);
+    tl.fromTo("#s18-gauge-num", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[4].t + 0.35);
+
+    // 「第一个使用习惯：一任务，一会话」：旧本子推到一边，桌上滑进一本干净的新本子
+    tl.fromTo(".s18-book-label", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.out" }, C[5].t + 0.1);
+    tl.fromTo("#s18-diagrams", { opacity: 1 }, { opacity: 0.22, duration: 0.6, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.1);
+    tl.fromTo("#s18-newbook", { opacity: 0, x: 220 }, { opacity: 1, x: 0, duration: 0.85, ease: "power3.out" }, C[5].t + 0.3);
+    tl.fromTo("#s18-phrase", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, C[5].t + 0.2);
+
+    // 五条「什么时候该新开」
+    tl.fromTo("#s18-card-0", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[6].t + 0.2);
+    tl.fromTo("#s18-card-1", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[6].t + 2.0);
+    tl.fromTo("#s18-card-2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[7].t + 0.2);
+    tl.fromTo("#s18-card-3", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[8].t + 0.2);
+    tl.fromTo("#s18-card-4", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[9].t + 0.2);
+    tl.fromTo(".s18-newbook-tab", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C[9].t + 2.2);
+
+    // 「一句话：一任务，一会话」：卡片收掉，句子立出来
+    tl.fromTo(".s18-card", { opacity: 1 }, { opacity: 0.16, duration: 0.5, stagger: 0.06, immediateRender: false }, C[10].t + 0.2);
+    tl.fromTo("#s18-phrase", { scale: 1 }, { scale: 1.07, duration: 0.5, ease: "power2.out", immediateRender: false }, C[10].t + 0.25);
+    tl.fromTo("#s18-phrase", { scale: 1.07 }, { scale: 1, duration: 0.55, ease: "power2.inOut", immediateRender: false }, C[10].t + 0.85);
+    tl.fromTo("#s18-phrase-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, C[10].t + 0.5);
+
+    // 「可有些任务天生就长…本子写满了怎么办？」：先让上方的图表、卡片彻底退场，再上问题卡
+    tl.fromTo(".s18-card", { opacity: 0.16 }, { opacity: 0, duration: 0.2, stagger: 0.02, immediateRender: false }, C[11].t + 0.02);
+    tl.fromTo("#s18-newbook", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, C[11].t + 0.02);
+    tl.fromTo("#s18-diagrams", { opacity: 0.22 }, { opacity: 0, duration: 0.25, immediateRender: false }, C[11].t + 0.02);
+    tl.fromTo("#s18-tease", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, C[11].t + 0.3);
+    // 页尾留一点小动作，不然后 5 秒完全静止
+    tl.fromTo("#s18-tease-arrow", { scale: 1 }, { scale: 1.08, duration: 0.6, ease: "power2.out", immediateRender: false }, C[11].t + 2.4);
+    tl.fromTo("#s18-tease-arrow", { scale: 1.08 }, { scale: 1, duration: 0.6, ease: "power2.inOut", immediateRender: false }, C[11].t + 3.1);
+    // MOTION:END
+
+    window.__timelines["s-long-session"] = tl;
+  </script>
+</template>

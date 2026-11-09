@@ -7,6 +7,14 @@
   <p class="eyebrow">课程库</p>
   <h1>所有课程</h1>
   <p class="lede">一门课是一个独立作品：有自己的封面、动画、讲义和 URL。从任意一门开始，都不需要先读别的。</p>
+  {% if courses %}
+    <dl class="page-head__stats">
+      <div><dt>课程</dt><dd>{{ courses|length }} 门</dd></div>
+      <div><dt>屏数</dt><dd>{{ courses|sum(attribute='screenCount') }} 屏</dd></div>
+      <div><dt>总时长</dt><dd>{{ format_duration(courses|sum(attribute='durationSeconds')) }}</dd></div>
+      <div><dt>更新</dt><dd>{{ courses[0].updatedAt or '持续更新' }}</dd></div>
+    </dl>
+  {% endif %}
 </section>
 
 <section class="library" aria-labelledby="library-title">

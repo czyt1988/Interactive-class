@@ -5,6 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
     <title>{{ course.title }} · {{ site.title }}</title>
     <meta name="description" content="{{ course.summary }}" />
     <meta name="robots" content="index,follow" />
@@ -61,7 +62,6 @@
         <div class="cover__inner">
           <div class="cover__main">
             <p class="cover__eyebrow">
-              <span class="cover__dot" aria-hidden="true"></span>
               {{ course.credits.updatedAt or "" }}{% if course.credits.updatedAt %} · {% endif %}{{
                 course.level | replace("beginner", "入门") | replace("intermediate", "进阶") | replace("advanced", "高级")
               }}
@@ -163,6 +163,11 @@
           </div>
 
           <div class="controls" role="group" aria-label="播放控制">
+            {% if site.homeUrl %}
+              <a id="btn-exit" class="control control--exit" href="{{ site.homeUrl }}" aria-label="结束观看，返回课程库"><span aria-hidden="true">←</span><span class="control__label">{{ site.backLabel }}</span></a>
+              <span class="control__sep" aria-hidden="true"></span>
+            {% endif %}
+
             <button id="btn-prev" class="control" type="button" aria-label="上一屏">
               <span aria-hidden="true">←</span><span class="control__label">上一屏</span>
             </button>
@@ -185,7 +190,10 @@
               <span aria-hidden="true">☰</span>
             </button>
             {% if course.audio %}
-              <button id="btn-sound" class="control control--icon" type="button" aria-pressed="false" aria-label="开关声音">
+              <button id="btn-captions" class="control control--icon control--cc" type="button" aria-pressed="true" aria-label="隐藏字幕（C）" title="字幕（C）">
+                <span aria-hidden="true">CC</span>
+              </button>
+              <button id="btn-sound" class="control control--icon control--sound" type="button" aria-pressed="true" aria-label="关闭配音（M）" title="配音（M）">
                 <span aria-hidden="true">♪</span>
               </button>
             {% endif %}
@@ -202,7 +210,7 @@
         </div>
 
         <p class="deck-hint">
-          键盘：← → 切屏 · 空格 播放/暂停 · T 讲义 · F 全屏 · Esc 关闭讲义
+          键盘：← → 切屏 · 空格 播放/暂停 · C 字幕 · M 配音 · T 讲义 · F 全屏 · Esc 关闭讲义
         </p>
       </section>
 
@@ -235,6 +243,9 @@
         <div class="error__actions">
           <button id="btn-retry" class="btn btn--primary" type="button">重试</button>
           <button id="btn-error-back" class="btn btn--ghost" type="button">回到封面</button>
+          {% if site.homeUrl %}
+            <a class="btn btn--ghost" href="{{ site.homeUrl }}">{{ site.backLabel }}</a>
+          {% endif %}
         </div>
         <p id="error-meta" class="error__meta"></p>
       </section>

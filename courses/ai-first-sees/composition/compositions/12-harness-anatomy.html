@@ -1,0 +1,683 @@
+<template>
+  <style>
+    /* S12 · harness-anatomy
+       纸面工位：墨线办公桌、设备、SOP 手册、跨部门连线、行动循环，外围是档案柜与权限牌。
+       动效只驱动 transform / opacity，强调色是第三幕的电光蓝。 */
+
+    .s-harness-tag {
+      position: absolute;
+      z-index: 6;
+      display: inline-flex;
+      align-items: center;
+      height: 40px;
+      padding: 0 17px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 28px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .s-harness-tag--tool { left: 232px; top: 210px; }
+    .s-harness-tag--skill { left: 956px; top: 112px; }
+    .s-harness-tag--mcp { left: 1220px; top: 2px; }
+    .s-harness-tag--loop { left: 0; top: 0; }
+    .s-harness-tag--ctx { left: 30px; top: 620px; }
+    .s-harness-tag--perm { left: 1460px; top: 4px; }
+    .s-harness-tag--sitter { left: 766px; top: 282px; }
+
+    /* ---- 工位本体 ---- */
+    .s-harness-desk {
+      position: absolute;
+      z-index: 2;
+      left: 200px;
+      top: 400px;
+      width: 990px;
+      height: 222px;
+      opacity: 0;
+    }
+
+    .s-harness-desk-top {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 26px;
+      border: 2px solid #514b40;
+      border-radius: 7px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+    }
+
+    .s-harness-desk-panel {
+      position: absolute;
+      left: 58px;
+      top: 46px;
+      width: 874px;
+      height: 42px;
+      border: 1.5px dashed #b9ad99;
+      border-radius: 8px;
+      background: rgba(250, 246, 238, 0.55);
+    }
+
+    .s-harness-leg {
+      position: absolute;
+      top: 26px;
+      width: 17px;
+      height: 194px;
+      border: 2px solid #514b40;
+      border-radius: 4px;
+      background: #faf6ee;
+    }
+
+    .s-harness-leg--l { left: 36px; }
+    .s-harness-leg--r { left: 937px; }
+
+    .s-harness-count {
+      position: absolute;
+      left: 372px;
+      top: 45px;
+      display: flex;
+      align-items: center;
+      height: 42px;
+      padding: 0 22px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+      border-radius: 999px;
+      background: #faf6ee;
+      color: var(--ink);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0;
+    }
+
+    /* ---- 工具：电脑 / 打印机 / 键盘 / 纸笔 ---- */
+    .s-harness-mon { position: absolute; z-index: 3; left: 240px; top: 256px; width: 220px; height: 144px; opacity: 0; }
+
+    .s-harness-mon-screen {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 220px;
+      height: 116px;
+      border: 2px solid #514b40;
+      border-radius: 9px;
+      background: #fffdf8;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .s-harness-codebar { position: absolute; left: 16px; height: 6px; border-radius: 3px; background: #d9cfbf; }
+    .s-harness-codebar:nth-child(1) { top: 20px; width: 118px; background: #514b40; opacity: 0.55; }
+    .s-harness-codebar:nth-child(2) { top: 38px; width: 152px; }
+    .s-harness-codebar:nth-child(3) { top: 56px; width: 88px; }
+    .s-harness-codebar:nth-child(4) { top: 74px; width: 136px; }
+    .s-harness-codebar:nth-child(5) { top: 92px; width: 68px; }
+
+    .s-harness-screen-line { position: absolute; left: -10%; top: 0; width: 120%; height: 2px; background: var(--accent); opacity: 0.45; }
+
+    .s-harness-mon-stand { position: absolute; left: 80px; top: 116px; width: 60px; height: 18px; border-left: 2px solid #514b40; border-right: 2px solid #514b40; background: #faf6ee; }
+    .s-harness-mon-base { position: absolute; left: 52px; top: 134px; width: 116px; height: 10px; border: 2px solid #514b40; border-radius: 5px; background: #faf6ee; }
+
+    .s-harness-printer { position: absolute; z-index: 3; left: 492px; top: 308px; width: 142px; height: 92px; opacity: 0; }
+    .s-harness-printer-paper { position: absolute; left: 38px; top: 0; width: 66px; height: 30px; border: 1.5px solid #b9ad99; border-radius: 2px; background: #fffdf8; opacity: 0; }
+    .s-harness-printer-body { position: absolute; left: 0; top: 26px; width: 142px; height: 66px; border: 2px solid #514b40; border-radius: 8px; background: #faf6ee; box-shadow: var(--shadow); }
+    .s-harness-printer-slot { position: absolute; left: 18px; top: 38px; width: 106px; height: 4px; border-radius: 2px; background: #514b40; opacity: 0.45; }
+
+    .s-harness-kbd {
+      position: absolute;
+      z-index: 3;
+      left: 660px;
+      top: 358px;
+      width: 162px;
+      height: 42px;
+      border: 2px solid #514b40;
+      border-radius: 7px;
+      background-color: #faf6ee;
+      background-image:
+        repeating-linear-gradient(90deg, transparent 0 15px, rgba(217, 207, 191, 0.9) 15px 16px),
+        repeating-linear-gradient(0deg, transparent 0 10px, rgba(217, 207, 191, 0.9) 10px 11px);
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s-harness-kbd-key { position: absolute; left: 12px; top: 11px; width: 16px; height: 11px; border-radius: 2px; }
+
+    .s-harness-paper { position: absolute; z-index: 3; left: 850px; top: 324px; width: 100px; height: 76px; border: 1.5px solid #b9ad99; border-radius: 3px; background: #fffdf8; box-shadow: var(--shadow); opacity: 0; }
+    .s-harness-paper-line { position: absolute; left: 12px; height: 3px; border-radius: 2px; background: #d9cfbf; transform-origin: left center; }
+    .s-harness-paper-line--1 { top: 18px; width: 74px; }
+    .s-harness-paper-line--2 { top: 34px; width: 56px; }
+    .s-harness-paper-line--3 { top: 50px; width: 66px; }
+    .s-harness-pen { position: absolute; z-index: 4; left: 916px; top: 332px; width: 7px; height: 58px; border-radius: 4px; background: #514b40; transform: rotate(20deg); opacity: 0; }
+
+    /* ---- Skill：岗位 SOP 手册 ---- */
+    .s-harness-sop {
+      position: absolute;
+      z-index: 3;
+      left: 968px;
+      top: 162px;
+      width: 212px;
+      height: 238px;
+      border: 2px solid #514b40;
+      border-radius: 8px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s-harness-sop-spine {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      border-right: 1.5px solid #b9ad99;
+      border-radius: 8px 0 0 8px;
+      background: repeating-linear-gradient(0deg, #ece3d3 0 10px, #d9cfbf 10px 12px);
+    }
+
+    .s-harness-sop-title { position: absolute; left: 30px; top: 16px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+    .s-harness-sop-sub { position: absolute; left: 30px; top: 56px; font-family: var(--font-mono); font-size: 22px; color: var(--ink-faint); }
+    .s-harness-sop-rule { position: absolute; left: 30px; right: 14px; top: 94px; height: 1.5px; background: #d9cfbf; }
+    .s-harness-sop-item { position: absolute; left: 30px; font-size: 24px; color: var(--ink-soft); opacity: 0; }
+    .s-harness-sop-item b { margin-right: 8px; font-family: var(--font-mono); font-size: 20px; color: var(--accent-text); }
+    .s-harness-sop-item--1 { top: 110px; }
+    .s-harness-sop-item--2 { top: 152px; }
+    .s-harness-sop-item--3 { top: 194px; }
+    .s-harness-sop-check {
+      position: absolute;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: 1.5px solid #514b40;
+      border-radius: 50%;
+      color: var(--accent-text);
+      font-size: 18px;
+      opacity: 0;
+    }
+    .s-harness-sop-check--1 { top: 112px; }
+    .s-harness-sop-check--2 { top: 154px; }
+    .s-harness-sop-check--3 { top: 196px; }
+
+    /* ---- 上下文：档案柜 + 工作日志 ---- */
+    .s-harness-cabinet { position: absolute; z-index: 2; left: 40px; top: 380px; width: 150px; height: 240px; border: 2px solid #514b40; border-radius: 6px; background: #faf6ee; box-shadow: var(--shadow); opacity: 0; }
+    .s-harness-drawer { position: absolute; left: 13px; width: 120px; height: 46px; border: 1.5px solid #b9ad99; border-radius: 4px; background: #fffdf8; }
+    .s-harness-drawer::after { content: ""; position: absolute; left: 42px; top: 20px; width: 36px; height: 3px; border-radius: 2px; background: #b9ad99; }
+    .s-harness-drawer--1 { top: 18px; }
+    .s-harness-drawer--2 { top: 76px; }
+    .s-harness-drawer--3 { top: 134px; }
+    .s-harness-drawer--4 { top: 192px; }
+
+    .s-harness-log { position: absolute; z-index: 4; left: 62px; top: 300px; width: 106px; height: 62px; border: 1.5px solid #b9ad99; border-radius: 3px; background: #fffdf8; box-shadow: var(--shadow); opacity: 0; }
+    .s-harness-log b { position: absolute; left: 10px; top: 8px; font-size: 20px; color: var(--ink-soft); }
+    .s-harness-log i { position: absolute; left: 10px; height: 3px; border-radius: 2px; background: #d9cfbf; }
+    .s-harness-log i:nth-child(2) { top: 34px; width: 80px; }
+    .s-harness-log i:nth-child(3) { top: 46px; width: 62px; }
+
+    /* ---- MCP：跨部门系统连线 ---- */
+    .s-harness-bus { position: absolute; z-index: 2; inset: 0; }
+    .s-harness-bus-trunk { position: absolute; left: 1204px; top: 88px; width: 3px; height: 314px; background: var(--accent); opacity: 0; }
+    .s-harness-bus-stub { position: absolute; width: 26px; height: 3px; background: var(--accent); opacity: 0; }
+    .s-harness-bus-stub--1 { left: 1207px; top: 88px; }
+    .s-harness-bus-stub--2 { left: 1207px; top: 188px; }
+    .s-harness-bus-stub--3 { left: 1207px; top: 288px; }
+    .s-harness-bus-link { position: absolute; left: 1188px; top: 399px; width: 19px; height: 3px; background: var(--accent); opacity: 0; }
+    .s-harness-bus-dot { position: absolute; left: 1201px; top: 84px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); opacity: 0; }
+
+    .s-harness-sys {
+      position: absolute;
+      z-index: 3;
+      left: 1230px;
+      width: 172px;
+      height: 76px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: 2px solid #514b40;
+      border-radius: 10px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+    .s-harness-sys--1 { top: 50px; }
+    .s-harness-sys--2 { top: 150px; }
+    .s-harness-sys--3 { top: 250px; }
+    .s-harness-sys b { font-size: 30px; font-weight: 700; line-height: 1; }
+    .s-harness-sys span { font-family: var(--font-mono); font-size: 20px; color: var(--ink-faint); }
+
+    /* ---- 权限：岗位权限牌 ---- */
+    .s-harness-perm { position: absolute; z-index: 3; left: 1440px; top: 54px; width: 180px; height: 300px; opacity: 0; }
+    .s-harness-perm-lanyard { position: absolute; left: 89px; top: 0; width: 2px; height: 26px; background: #514b40; }
+    .s-harness-perm-card { position: absolute; left: 0; top: 26px; width: 180px; height: 274px; border: 2px solid #514b40; border-radius: 10px; background: #faf6ee; box-shadow: var(--shadow); }
+    .s-harness-perm-title { position: absolute; left: 18px; top: 20px; font-size: 30px; font-weight: 700; }
+    .s-harness-perm-sub { position: absolute; left: 18px; top: 60px; font-size: 22px; color: var(--ink-faint); }
+    .s-harness-perm-rule { position: absolute; left: 18px; right: 16px; top: 96px; height: 1.5px; background: #d9cfbf; }
+    .s-harness-perm-row { position: absolute; left: 18px; font-size: 24px; color: var(--ink-soft); }
+    .s-harness-perm-row--1 { top: 118px; }
+    .s-harness-perm-row--2 { top: 156px; }
+    .s-harness-perm-stamp { position: absolute; left: 22px; top: 208px; padding: 4px 12px; border: 2px double var(--stamp); border-radius: 6px; color: var(--stamp); font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; }
+
+    /* ---- 行动循环：四步闭环 ---- */
+    .s-harness-loop { position: absolute; z-index: 4; left: 60px; top: 0; width: 880px; height: 168px; }
+    .s-harness-step {
+      position: absolute;
+      top: 44px;
+      width: 170px;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border: 2px solid #514b40;
+      border-radius: 14px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+    .s-harness-step--1 { left: 0; }
+    .s-harness-step--2 { left: 230px; }
+    .s-harness-step--3 { left: 460px; }
+    .s-harness-step--4 { left: 690px; }
+    .s-harness-step span { font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.1em; color: var(--ink-faint); }
+    .s-harness-step b { font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
+    .s-harness-arrow { position: absolute; top: 64px; width: 60px; text-align: center; font-family: var(--font-mono); font-size: 32px; color: var(--accent-text); opacity: 0; }
+    .s-harness-arrow--1 { left: 170px; }
+    .s-harness-arrow--2 { left: 400px; }
+    .s-harness-arrow--3 { left: 630px; }
+    .s-harness-loop-conn { position: absolute; width: 3px; background: var(--accent); opacity: 0; }
+    .s-harness-loop-conn--l { left: 83px; top: 124px; height: 18px; }
+    .s-harness-loop-conn--r { left: 773px; top: 114px; height: 28px; }
+    .s-harness-return { position: absolute; left: 85px; top: 140px; width: 690px; height: 0; border-top: 3px dashed var(--accent); transform-origin: left center; opacity: 0; }
+    .s-harness-return-dot { position: absolute; left: 778px; top: 135px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); opacity: 0; }
+    .s-harness-return-head { position: absolute; left: 79px; top: 114px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--accent); opacity: 0; }
+
+    /* ---- 坐在工位里的人 ---- */
+    .s-harness-sitter { position: absolute; z-index: 1; left: 636px; top: 248px; width: 140px; height: 240px; opacity: 0; }
+    .s-harness-sitter-head { position: absolute; left: 26px; top: 0; width: 88px; height: 88px; border-radius: 50%; background: #514b40; }
+    .s-harness-sitter-body { position: absolute; left: 8px; top: 80px; width: 124px; height: 160px; border-radius: 62px 62px 6px 6px; background: #514b40; }
+
+    /* ---- 不同智力的员工 ---- */
+    .s-harness-staff { position: absolute; z-index: 3; top: 468px; width: 116px; height: 136px; border: 2px solid #514b40; border-radius: 10px; background: #faf6ee; box-shadow: var(--shadow); opacity: 0; }
+    .s-harness-staff--1 { left: 1230px; }
+    .s-harness-staff--2 { left: 1354px; }
+    .s-harness-staff--3 { left: 1478px; }
+    .s-harness-staff-head { position: absolute; left: 50%; margin-left: -16px; top: 14px; width: 32px; height: 32px; border-radius: 50%; background: #514b40; }
+    .s-harness-staff-body { position: absolute; left: 50%; margin-left: -28px; top: 44px; width: 56px; height: 26px; border-radius: 28px 28px 5px 5px; background: #514b40; }
+    .s-harness-staff--1 .s-harness-staff-head,
+    .s-harness-staff--1 .s-harness-staff-body { background: var(--accent); }
+    .s-harness-staff--3 .s-harness-staff-head,
+    .s-harness-staff--3 .s-harness-staff-body { background: var(--line-strong); }
+    .s-harness-staff-track { position: absolute; left: 16px; right: 16px; top: 82px; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+    .s-harness-staff-bar { display: block; height: 100%; width: 100%; border-radius: 4px; background: var(--accent); }
+    .s-harness-staff--2 .s-harness-staff-bar { background: #514b40; }
+    .s-harness-staff--3 .s-harness-staff-bar { background: var(--line-strong); }
+    .s-harness-staff-name { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 28px; font-weight: 600; }
+
+    /* ---- 外围小注 ---- */
+    .s-harness-note { position: absolute; z-index: 6; left: 1180px; top: 614px; width: 410px; font-size: 28px; color: var(--ink-soft); opacity: 0; }
+    .s-harness-conclusion { position: absolute; z-index: 6; left: 200px; top: 616px; width: 990px; text-align: center; font-family: var(--font-mono); font-size: 30px; color: var(--ink-soft); opacity: 0; }
+    .s-harness-conclusion span { display: inline-block; opacity: 0; }
+    .s-harness-conclusion #s-harness-conc-a { color: var(--accent-text); font-weight: 700; }
+
+    .s-harness-vendor { position: absolute; z-index: 3; top: 360px; width: 120px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 1.5px solid var(--line-strong); border-radius: 8px; background: #fffdf8; box-shadow: var(--shadow); opacity: 0; }
+    .s-harness-vendor--1 { left: 1230px; }
+    .s-harness-vendor--2 { left: 1360px; }
+    .s-harness-vendor--3 { left: 1490px; }
+    .s-harness-vendor b { font-size: 26px; font-weight: 600; }
+    .s-harness-vendor i { display: block; width: 76px; height: 5px; border-radius: 3px; background: var(--line-strong); }
+    .s-harness-vendor-note { position: absolute; z-index: 6; left: 1230px; top: 426px; width: 380px; text-align: center; font-family: var(--font-mono); font-size: 26px; color: var(--ink-soft); opacity: 0; }
+
+    .s-harness-emph { position: absolute; z-index: 5; border: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 16px; opacity: 0; }
+    .s-harness-emph--loop { left: 46px; top: -6px; width: 892px; height: 172px; }
+    .s-harness-emph--skill { left: 940px; top: 104px; width: 248px; height: 310px; }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-harness-anatomy"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S12</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-harness-anatomy-title" class="scene-title">一个完整能力的办公工位</h1>
+        <p class="scene-no">12 / 22</p>
+      </header>
+
+      <section id="s-harness-anatomy-stage" class="stage">
+        <!-- 01 行动循环：接需求 - 处理 - 交付 - 反馈 -->
+        <div class="s-harness-loop" id="s-harness-loop">
+          <div class="s-harness-tag s-harness-tag--loop" id="s-harness-tag-loop">行动循环 · 闭环</div>
+          <div class="s-harness-step s-harness-step--1" id="s-harness-step1"><span>01</span><b>接需求</b></div>
+          <div class="s-harness-step s-harness-step--2" id="s-harness-step2"><span>02</span><b>处理</b></div>
+          <div class="s-harness-step s-harness-step--3" id="s-harness-step3"><span>03</span><b>交付</b></div>
+          <div class="s-harness-step s-harness-step--4" id="s-harness-step4"><span>04</span><b>反馈</b></div>
+          <div class="s-harness-arrow s-harness-arrow--1" id="s-harness-arrow1">→</div>
+          <div class="s-harness-arrow s-harness-arrow--2" id="s-harness-arrow2">→</div>
+          <div class="s-harness-arrow s-harness-arrow--3" id="s-harness-arrow3">→</div>
+          <div class="s-harness-loop-conn s-harness-loop-conn--l" id="s-harness-loop-conn-l"></div>
+          <div class="s-harness-loop-conn s-harness-loop-conn--r" id="s-harness-loop-conn-r"></div>
+          <div class="s-harness-return" id="s-harness-return"></div>
+          <div class="s-harness-return-dot" id="s-harness-return-dot"></div>
+          <div class="s-harness-return-head" id="s-harness-return-head"></div>
+        </div>
+
+        <!-- 02 桌面：先是一张空工位，再一件件摆上东西 -->
+        <div class="s-harness-desk" id="s-harness-desk">
+          <div class="s-harness-desk-top"></div>
+          <div class="s-harness-desk-panel"></div>
+          <div class="s-harness-leg s-harness-leg--l"></div>
+          <div class="s-harness-leg s-harness-leg--r"></div>
+          <div class="s-harness-count" id="s-harness-count">4 件 + 2 层</div>
+        </div>
+
+        <!-- 上下文：档案柜里放着工作日志 -->
+        <div class="s-harness-cabinet" id="s-harness-cabinet">
+          <span class="s-harness-drawer s-harness-drawer--1"></span>
+          <span class="s-harness-drawer s-harness-drawer--2"></span>
+          <span class="s-harness-drawer s-harness-drawer--3"></span>
+          <span class="s-harness-drawer s-harness-drawer--4"></span>
+        </div>
+        <div class="s-harness-log" id="s-harness-log"><b>工作日志</b><i></i><i></i></div>
+        <div class="s-harness-tag s-harness-tag--ctx" id="s-harness-tag-ctx">上下文 · 记忆</div>
+
+        <!-- 坐在工位里的人 -->
+        <div class="s-harness-sitter" id="s-harness-sitter">
+          <div class="s-harness-sitter-head"></div>
+          <div class="s-harness-sitter-body"></div>
+        </div>
+        <div class="s-harness-tag s-harness-tag--sitter" id="s-harness-tag-sitter">员工 = 模型</div>
+
+        <!-- 03 工具：电脑、打印机、键盘、纸笔 -->
+        <div class="s-harness-mon" id="s-harness-mon">
+          <div class="s-harness-mon-screen">
+            <span class="s-harness-codebar"></span>
+            <span class="s-harness-codebar"></span>
+            <span class="s-harness-codebar"></span>
+            <span class="s-harness-codebar"></span>
+            <span class="s-harness-codebar"></span>
+            <i class="s-harness-screen-line" id="s-harness-screen-line"></i>
+          </div>
+          <div class="s-harness-mon-stand"></div>
+          <div class="s-harness-mon-base"></div>
+        </div>
+        <div class="s-harness-printer" id="s-harness-printer">
+          <div class="s-harness-printer-paper" id="s-harness-printer-paper"></div>
+          <div class="s-harness-printer-body"></div>
+          <div class="s-harness-printer-slot"></div>
+        </div>
+        <div class="s-harness-kbd" id="s-harness-kbd">
+          <span class="s-harness-kbd-key" id="s-harness-kbd-key"></span>
+        </div>
+        <div class="s-harness-paper" id="s-harness-paper">
+          <span class="s-harness-paper-line s-harness-paper-line--1" id="s-harness-paper-l1"></span>
+          <span class="s-harness-paper-line s-harness-paper-line--2" id="s-harness-paper-l2"></span>
+          <span class="s-harness-paper-line s-harness-paper-line--3" id="s-harness-paper-l3"></span>
+        </div>
+        <div class="s-harness-pen" id="s-harness-pen"></div>
+        <div class="s-harness-tag s-harness-tag--tool" id="s-harness-tag-tool">工具 · 设备</div>
+
+        <!-- 04 Skill：岗位 SOP 手册 -->
+        <div class="s-harness-sop" id="s-harness-sop">
+          <span class="s-harness-sop-spine"></span>
+          <p class="s-harness-sop-title">岗位 SOP</p>
+          <p class="s-harness-sop-sub">这类活怎么做</p>
+          <span class="s-harness-sop-rule"></span>
+          <p class="s-harness-sop-item s-harness-sop-item--1" id="s-harness-sop-l1"><b>01</b>标准流程</p>
+          <p class="s-harness-sop-item s-harness-sop-item--2" id="s-harness-sop-l2"><b>02</b>注意事项</p>
+          <p class="s-harness-sop-item s-harness-sop-item--3" id="s-harness-sop-l3"><b>03</b>操作脚本</p>
+          <span class="s-harness-sop-check s-harness-sop-check--1" id="s-harness-sop-c1">✓</span>
+          <span class="s-harness-sop-check s-harness-sop-check--2" id="s-harness-sop-c2">✓</span>
+          <span class="s-harness-sop-check s-harness-sop-check--3" id="s-harness-sop-c3">✓</span>
+        </div>
+        <div class="s-harness-tag s-harness-tag--skill" id="s-harness-tag-skill">Skill · SOP</div>
+
+        <!-- 05 MCP：财务、人事、业务三个系统接进工位 -->
+        <div class="s-harness-bus" id="s-harness-bus">
+          <span class="s-harness-bus-trunk" id="s-harness-bus-trunk"></span>
+          <span class="s-harness-bus-stub s-harness-bus-stub--1" id="s-harness-bus-stub1"></span>
+          <span class="s-harness-bus-stub s-harness-bus-stub--2" id="s-harness-bus-stub2"></span>
+          <span class="s-harness-bus-stub s-harness-bus-stub--3" id="s-harness-bus-stub3"></span>
+          <span class="s-harness-bus-link" id="s-harness-bus-link"></span>
+          <i class="s-harness-bus-dot" id="s-harness-bus-dot1"></i>
+          <i class="s-harness-bus-dot" id="s-harness-bus-dot2"></i>
+          <i class="s-harness-bus-dot" id="s-harness-bus-dot3"></i>
+        </div>
+        <div class="s-harness-sys s-harness-sys--1" id="s-harness-sys1"><b>财务系统</b><span>记账 / 报销</span></div>
+        <div class="s-harness-sys s-harness-sys--2" id="s-harness-sys2"><b>人事系统</b><span>考勤 / 审批</span></div>
+        <div class="s-harness-sys s-harness-sys--3" id="s-harness-sys3"><b>业务系统</b><span>订单 / 客户</span></div>
+        <div class="s-harness-tag s-harness-tag--mcp" id="s-harness-tag-mcp">MCP · 接口</div>
+
+        <!-- 06 权限：岗位权限牌 -->
+        <div class="s-harness-perm" id="s-harness-perm">
+          <span class="s-harness-perm-lanyard"></span>
+          <div class="s-harness-perm-card">
+            <p class="s-harness-perm-title">岗位权限</p>
+            <p class="s-harness-perm-sub">决定能碰什么</p>
+            <span class="s-harness-perm-rule"></span>
+            <p class="s-harness-perm-row s-harness-perm-row--1">审批等级</p>
+            <p class="s-harness-perm-row s-harness-perm-row--2">可碰范围</p>
+            <span class="s-harness-perm-stamp">审批</span>
+          </div>
+        </div>
+        <div class="s-harness-tag s-harness-tag--perm" id="s-harness-tag-perm">权限</div>
+
+        <!-- 07 不同智力的员工都能入座 -->
+        <div class="s-harness-staff s-harness-staff--1" id="s-harness-staff1">
+          <span class="s-harness-staff-head"></span>
+          <span class="s-harness-staff-body"></span>
+          <span class="s-harness-staff-track"><i class="s-harness-staff-bar" id="s-harness-staff1-bar"></i></span>
+          <b class="s-harness-staff-name">能力强</b>
+        </div>
+        <div class="s-harness-staff s-harness-staff--2" id="s-harness-staff2">
+          <span class="s-harness-staff-head"></span>
+          <span class="s-harness-staff-body"></span>
+          <span class="s-harness-staff-track"><i class="s-harness-staff-bar" id="s-harness-staff2-bar"></i></span>
+          <b class="s-harness-staff-name">一般</b>
+        </div>
+        <div class="s-harness-staff s-harness-staff--3" id="s-harness-staff3">
+          <span class="s-harness-staff-head"></span>
+          <span class="s-harness-staff-body"></span>
+          <span class="s-harness-staff-track"><i class="s-harness-staff-bar" id="s-harness-staff3-bar"></i></span>
+          <b class="s-harness-staff-name">较弱</b>
+        </div>
+        <p class="s-harness-note" id="s-harness-note">模型是员工，工位是 Harness</p>
+
+        <!-- 08 厂家能力差不多，差在流程和准则 -->
+        <div class="s-harness-vendor s-harness-vendor--1" id="s-harness-vendor1"><b>厂家 A</b><i></i></div>
+        <div class="s-harness-vendor s-harness-vendor--2" id="s-harness-vendor2"><b>厂家 B</b><i></i></div>
+        <div class="s-harness-vendor s-harness-vendor--3" id="s-harness-vendor3"><b>厂家 C</b><i></i></div>
+        <p class="s-harness-vendor-note" id="s-harness-vendor-note">工位能力差不多</p>
+
+        <p class="s-harness-conclusion" id="s-harness-conclusion"><span id="s-harness-conc-a">工程问题</span><span id="s-harness-conc-b">：决定强弱的是工作流程与工作准则</span></p>
+        <span class="s-harness-emph s-harness-emph--loop" id="s-harness-emph-loop"></span>
+        <span class="s-harness-emph s-harness-emph--skill" id="s-harness-emph-skill"></span>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-harness-anatomy-cap-0" class="cap-line clip" data-start="0.7" data-duration="3.336">把 Harness 看成一个员工的工位。</p>
+        <p id="s-harness-anatomy-cap-1" class="cap-line clip" data-start="4.036" data-duration="7.409">工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；</p>
+        <p id="s-harness-anatomy-cap-2" class="cap-line clip" data-start="11.485" data-duration="6.456">Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；</p>
+        <p id="s-harness-anatomy-cap-3" class="cap-line clip" data-start="17.981" data-duration="7.298">MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；</p>
+        <p id="s-harness-anatomy-cap-4" class="cap-line clip" data-start="25.319" data-duration="6.817">行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，</p>
+        <p id="s-harness-anatomy-cap-5" class="cap-line clip" data-start="32.176" data-duration="2.366">是他持续运转的节奏。</p>
+        <p id="s-harness-anatomy-cap-6" class="cap-line clip" data-start="34.582" data-duration="4.432">上下文是工作日志和档案，决定他「记得什么」；</p>
+        <p id="s-harness-anatomy-cap-7" class="cap-line clip" data-start="39.054" data-duration="4.635">权限是岗位权责和审批等级，决定他「能碰什么」。</p>
+        <p id="s-harness-anatomy-cap-8" class="cap-line clip" data-start="43.729" data-duration="5.004">四件加两层，就是 Harness 的完整组成。</p>
+        <p id="s-harness-anatomy-cap-9" class="cap-line clip" data-start="48.773" data-duration="4.326">而真正办公的人，就是 Harness 对接的大脑；</p>
+        <p id="s-harness-anatomy-cap-10" class="cap-line clip" data-start="53.139" data-duration="6.988">这个工位可以有不同智力的员工入座：聪明的员工相当于能力更强的模型，</p>
+        <p id="s-harness-anatomy-cap-11" class="cap-line clip" data-start="60.167" data-duration="4.007">不聪明的员工相当于能力相对较弱的模型。</p>
+        <p id="s-harness-anatomy-cap-12" class="cap-line clip" data-start="64.214" data-duration="4.127">他们都可以在这个工位里干活，干活的好坏，</p>
+        <p id="s-harness-anatomy-cap-13" class="cap-line clip" data-start="68.381" data-duration="4.543">取决于员工的聪明程度，也就是模型的能力强弱。</p>
+        <p id="s-harness-anatomy-cap-14" class="cap-line clip" data-start="72.964" data-duration="3.668">其实 harness 是一个工程学问题，</p>
+        <p id="s-harness-anatomy-cap-15" class="cap-line clip" data-start="76.672" data-duration="4.266">目前各大厂家提供的工位能力都差不多，</p>
+        <p id="s-harness-anatomy-cap-16" class="cap-line clip" data-start="80.978" data-duration="5.343">而决定 harness 强弱的是这个工作流程及工作准则</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S12</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-harness-anatomy-progress"></i></span>
+        <span class="cap-clock">01:28</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S12","id":"harness-anatomy","index":0,"start":0,"duration":88.03,"audioStart":0.599999999999909,"audioDuration":85.824,"cues":[{"i":0,"t":0.7,"d":3.336,"text":"把 Harness 看成一个员工的工位。","sent":"把 Harness 看成一个员工的工位。"},{"i":1,"t":4.036,"d":7.409,"text":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；","sent":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，是他持续运转的节奏。"},{"i":2,"t":11.485,"d":6.456,"text":"Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；","sent":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，是他持续运转的节奏。"},{"i":3,"t":17.981,"d":7.298,"text":"MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；","sent":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，是他持续运转的节奏。"},{"i":4,"t":25.319,"d":6.817,"text":"行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，","sent":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，是他持续运转的节奏。"},{"i":5,"t":32.176,"d":2.366,"text":"是他持续运转的节奏。","sent":"工具，是纸、笔、电脑、打印机、键盘这些设备，是员工干活的工具；Skill，是岗位 SOP 和作业手册，告诉他每件事的标准流程；MCP，是跨部门的系统接口，让他能和财务、业务所有体系打通协作；行动循环，就是「接需求 - 处理 - 交付 - 反馈」的工作闭环，是他持续运转的节奏。"},{"i":6,"t":34.582,"d":4.432,"text":"上下文是工作日志和档案，决定他「记得什么」；","sent":"上下文是工作日志和档案，决定他「记得什么」；权限是岗位权责和审批等级，决定他「能碰什么」。"},{"i":7,"t":39.054,"d":4.635,"text":"权限是岗位权责和审批等级，决定他「能碰什么」。","sent":"上下文是工作日志和档案，决定他「记得什么」；权限是岗位权责和审批等级，决定他「能碰什么」。"},{"i":8,"t":43.729,"d":5.004,"text":"四件加两层，就是 Harness 的完整组成。","sent":"四件加两层，就是 Harness 的完整组成。"},{"i":9,"t":48.773,"d":4.326,"text":"而真正办公的人，就是 Harness 对接的大脑；","sent":"而真正办公的人，就是 Harness 对接的大脑；这个工位可以有不同智力的员工入座：聪明的员工相当于能力更强的模型，不聪明的员工相当于能力相对较弱的模型。"},{"i":10,"t":53.139,"d":6.988,"text":"这个工位可以有不同智力的员工入座：聪明的员工相当于能力更强的模型，","sent":"而真正办公的人，就是 Harness 对接的大脑；这个工位可以有不同智力的员工入座：聪明的员工相当于能力更强的模型，不聪明的员工相当于能力相对较弱的模型。"},{"i":11,"t":60.167,"d":4.007,"text":"不聪明的员工相当于能力相对较弱的模型。","sent":"而真正办公的人，就是 Harness 对接的大脑；这个工位可以有不同智力的员工入座：聪明的员工相当于能力更强的模型，不聪明的员工相当于能力相对较弱的模型。"},{"i":12,"t":64.214,"d":4.127,"text":"他们都可以在这个工位里干活，干活的好坏，","sent":"他们都可以在这个工位里干活，干活的好坏，取决于员工的聪明程度，也就是模型的能力强弱。"},{"i":13,"t":68.381,"d":4.543,"text":"取决于员工的聪明程度，也就是模型的能力强弱。","sent":"他们都可以在这个工位里干活，干活的好坏，取决于员工的聪明程度，也就是模型的能力强弱。"},{"i":14,"t":72.964,"d":3.668,"text":"其实 harness 是一个工程学问题，","sent":"其实 harness 是一个工程学问题，目前各大厂家提供的工位能力都差不多，而决定 harness 强弱的是这个工作流程及工作准则"},{"i":15,"t":76.672,"d":4.266,"text":"目前各大厂家提供的工位能力都差不多，","sent":"其实 harness 是一个工程学问题，目前各大厂家提供的工位能力都差不多，而决定 harness 强弱的是这个工作流程及工作准则"},{"i":16,"t":80.978,"d":5.343,"text":"而决定 harness 强弱的是这个工作流程及工作准则","sent":"其实 harness 是一个工程学问题，目前各大厂家提供的工位能力都差不多，而决定 harness 强弱的是这个工作流程及工作准则"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-harness-anatomy-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 每个动效钉在 N.cues[i].t 上；一次只推一个焦点，最后一句旁白前落到终态。
+    const T = N.cues.map((c) => c.t);
+    const ease = "power3.out";
+    const q = "power2.out";
+
+    // 快照/拖动进度条会直接 seek，靠 fromTo 的初始帧不可靠：先把缩放型元素显式压到 0。
+    gsap.set(["#s-harness-paper-l1", "#s-harness-paper-l2", "#s-harness-paper-l3", "#s-harness-return", "#s-harness-staff1-bar", "#s-harness-staff2-bar", "#s-harness-staff3-bar"], { scaleX: 0 });
+
+    // 次级运动：屏幕代码行一直缓慢下移，句与句之间不会完全静止。
+    tl.fromTo("#s-harness-screen-line", { y: 0 }, { y: 98, duration: 46, ease: "none" }, 3.6);
+
+    // cue0 · 空工位
+    tl.fromTo("#s-harness-desk", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease }, T[0]);
+
+    // cue1 · 工具：电脑、打印机、键盘、纸笔逐件摆上桌
+    tl.fromTo("#s-harness-tag-tool", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[1]);
+    tl.fromTo("#s-harness-mon", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[1] + 0.05);
+    tl.fromTo("#s-harness-printer", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[1] + 0.5);
+    tl.fromTo("#s-harness-kbd", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[1] + 0.95);
+    tl.fromTo("#s-harness-paper", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[1] + 1.35);
+    tl.fromTo("#s-harness-pen", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[1] + 1.55);
+    // 工具在干活：打印机吐纸、键盘敲一下、纸上落字
+    tl.fromTo("#s-harness-printer-paper", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[1] + 2.5);
+    tl.fromTo("#s-harness-kbd-key", { backgroundColor: "rgba(76, 125, 255, 0)" }, { backgroundColor: "rgba(76, 125, 255, 0.6)", duration: 0.18, ease: "power1.in" }, T[1] + 3.1);
+    tl.fromTo("#s-harness-kbd-key", { backgroundColor: "rgba(76, 125, 255, 0.6)" }, { backgroundColor: "rgba(76, 125, 255, 0)", duration: 0.4, ease: "power1.out", immediateRender: false }, T[1] + 3.28);
+    tl.fromTo("#s-harness-paper-l1", { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: q }, T[1] + 3.8);
+    tl.fromTo("#s-harness-paper-l2", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: q }, T[1] + 4.1);
+    tl.fromTo("#s-harness-paper-l3", { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: q }, T[1] + 4.4);
+
+    // cue2 · Skill：岗位 SOP 手册
+    tl.fromTo("#s-harness-tag-skill", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[2]);
+    tl.fromTo("#s-harness-sop", { opacity: 0, y: 30, rotate: -2 }, { opacity: 1, y: 0, rotate: 0, duration: 0.7, ease }, T[2] + 0.05);
+    tl.fromTo("#s-harness-sop-l1", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[2] + 0.6);
+    tl.fromTo("#s-harness-sop-l2", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[2] + 0.85);
+    tl.fromTo("#s-harness-sop-l3", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[2] + 1.1);
+    tl.fromTo("#s-harness-sop-c1", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[2] + 2.7);
+    tl.fromTo("#s-harness-sop-c2", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[2] + 3.2);
+    tl.fromTo("#s-harness-sop-c3", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[2] + 3.7);
+
+    // cue3 · MCP：跨部门系统接线，数据往工位里流
+    tl.fromTo("#s-harness-tag-mcp", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[3]);
+    tl.fromTo("#s-harness-bus-trunk", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[3] + 0.05);
+    tl.fromTo("#s-harness-bus-link", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[3] + 0.05);
+    ["#s-harness-sys1", "#s-harness-sys2", "#s-harness-sys3"].forEach((sel, i) => {
+      tl.fromTo(sel, { opacity: 0, x: 22 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[3] + 0.3 + i * 0.45);
+      tl.fromTo("#s-harness-bus-stub" + (i + 1), { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[3] + 0.45 + i * 0.45);
+    });
+    [2.6, 3.7, 4.8].forEach((offset, i) => {
+      tl.fromTo("#s-harness-bus-dot" + (i + 1), { opacity: 0.9, y: 0 }, { opacity: 0, y: 300, duration: 1.2, ease: "none", immediateRender: false }, T[3] + offset);
+    });
+
+    // cue4 · 行动循环：四步闭环
+    tl.fromTo("#s-harness-tag-loop", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[4]);
+    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-harness-step" + n, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[4] + 0.1 + i * 0.24));
+    [1, 2, 3].forEach((n, i) => tl.fromTo("#s-harness-arrow" + n, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[4] + 1.05 + i * 0.16));
+    // cue5 · 闭环回流
+    tl.fromTo("#s-harness-loop-conn-l", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.1);
+    tl.fromTo("#s-harness-loop-conn-r", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.1);
+    tl.fromTo("#s-harness-return", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.8, ease: "power2.inOut" }, T[5] + 0.15);
+    tl.fromTo("#s-harness-return-head", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[5] + 0.85);
+    tl.fromTo("#s-harness-return-dot", { opacity: 0.9, x: 0 }, { opacity: 0, x: -684, duration: 0.85, ease: "power1.inOut", repeat: 1, repeatDelay: 0.1, immediateRender: false }, T[5] + 0.5);
+
+    // cue6 · 上下文：档案柜
+    tl.fromTo("#s-harness-tag-ctx", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[6]);
+    tl.fromTo("#s-harness-cabinet", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.65, ease }, T[6] + 0.05);
+    tl.fromTo("#s-harness-log", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[6] + 1.7);
+    // cue8 · 日志归档，滑进档案柜
+    tl.fromTo("#s-harness-log", { opacity: 1, y: 0 }, { opacity: 0, y: 66, duration: 0.6, ease: "power2.in", immediateRender: false }, T[8] + 0.5);
+
+    // cue7 · 权限：岗位权限牌
+    tl.fromTo("#s-harness-tag-perm", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[7]);
+    tl.fromTo("#s-harness-perm", { opacity: 0, y: -26 }, { opacity: 1, y: 0, duration: 0.65, ease }, T[7] + 0.05);
+
+    // cue8 · 四件加两层，逐个点亮标签
+    tl.fromTo("#s-harness-count", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, T[8] + 0.1);
+    ["#s-harness-tag-tool", "#s-harness-tag-skill", "#s-harness-tag-mcp", "#s-harness-tag-loop", "#s-harness-tag-ctx", "#s-harness-tag-perm"].forEach((sel, i) => {
+      const at = T[8] + 0.8 + i * 0.3;
+      tl.fromTo(sel, { scale: 1 }, { scale: 1.08, duration: 0.16, ease: "power1.out", immediateRender: false }, at);
+      tl.fromTo(sel, { scale: 1.08 }, { scale: 1, duration: 0.24, ease: "power1.in", immediateRender: false }, at + 0.16);
+    });
+
+    // cue9 · 真正办公的人是模型
+    tl.fromTo("#s-harness-sitter", { opacity: 0, y: 16, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease }, T[9] + 0.05);
+    tl.fromTo("#s-harness-tag-sitter", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[9] + 0.5);
+
+    // cue10 · 不同智力的员工都能入座
+    [1, 2, 3].forEach((n, i) => tl.fromTo("#s-harness-staff" + n, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[10] + 0.15 + i * 0.5));
+    tl.fromTo("#s-harness-staff1-bar", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.out" }, T[10] + 1.6);
+    tl.fromTo("#s-harness-staff2-bar", { scaleX: 0 }, { scaleX: 0.62, duration: 0.7, ease: "power2.out" }, T[10] + 2.1);
+    tl.fromTo("#s-harness-staff3-bar", { scaleX: 0 }, { scaleX: 0.3, duration: 0.7, ease: "power2.out" }, T[10] + 2.6);
+    tl.fromTo("#s-harness-note", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[10] + 1.8);
+
+    // cue11 · 不聪明的员工也能坐进来
+    tl.fromTo("#s-harness-staff3", { y: 0 }, { y: -8, duration: 0.3, ease: "power1.out", immediateRender: false }, T[11] + 0.1);
+    tl.fromTo("#s-harness-staff3", { y: -8 }, { y: 0, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[11] + 0.4);
+
+    // cue12 · 都可以在这个工位里干活
+    tl.fromTo("#s-harness-sitter", { scale: 1 }, { scale: 1.03, duration: 0.35, ease: "power1.out", immediateRender: false }, T[12] + 0.1);
+    tl.fromTo("#s-harness-sitter", { scale: 1.03 }, { scale: 1, duration: 0.5, ease: "power1.inOut", immediateRender: false }, T[12] + 0.45);
+
+    // cue13 · 干活的好坏取决于模型能力
+    [1, 2, 3].forEach((n, i) => {
+      tl.fromTo("#s-harness-staff" + n, { scale: 1 }, { scale: 1.05, duration: 0.2, ease: "power1.out", immediateRender: false }, T[13] + 0.1 + i * 0.22);
+      tl.fromTo("#s-harness-staff" + n, { scale: 1.05 }, { scale: 1, duration: 0.3, ease: "power1.inOut", immediateRender: false }, T[13] + 0.3 + i * 0.22);
+    });
+
+    // cue14 · 其实 harness 是工程问题
+    tl.fromTo("#s-harness-conclusion", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[14] + 0.1);
+    tl.fromTo("#s-harness-conc-a", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[14] + 0.1);
+
+    // cue15 · 各家工位能力差不多
+    [1, 2, 3].forEach((n, i) => tl.fromTo("#s-harness-vendor" + n, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[15] + 0.1 + i * 0.3));
+    tl.fromTo("#s-harness-vendor-note", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[15] + 1.0);
+
+    // cue16 · 落到终态：流程与准则才是强弱所在
+    tl.fromTo("#s-harness-conc-b", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[16] + 0.1);
+    tl.fromTo("#s-harness-emph-loop", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: q }, T[16] + 0.3);
+    tl.fromTo("#s-harness-emph-skill", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: q }, T[16] + 0.3);
+    const dimmed = ["#s-harness-mon", "#s-harness-printer", "#s-harness-kbd", "#s-harness-paper", "#s-harness-pen", "#s-harness-tag-tool", "#s-harness-bus-trunk", "#s-harness-bus-stub1", "#s-harness-bus-stub2", "#s-harness-bus-stub3", "#s-harness-bus-link", "#s-harness-sys1", "#s-harness-sys2", "#s-harness-sys3", "#s-harness-tag-mcp", "#s-harness-cabinet", "#s-harness-tag-ctx", "#s-harness-perm", "#s-harness-tag-perm"];
+    tl.fromTo(dimmed, { opacity: 1 }, { opacity: 0.34, duration: 0.8, ease: "power2.inOut", stagger: 0.012, immediateRender: false }, T[16] + 0.2);
+    tl.fromTo(["#s-harness-vendor1", "#s-harness-vendor2", "#s-harness-vendor3", "#s-harness-vendor-note"], { opacity: 1 }, { opacity: 0.55, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[16] + 0.5);
+    // MOTION:END
+
+    window.__timelines["s-harness-anatomy"] = tl;
+  </script>
+</template>

@@ -1,0 +1,1084 @@
+<template>
+  <style>
+    /* S06 规模定律与涌现：五拍纸面图表。每拍独占舞台，一次只推一个焦点。 */
+    .s06-beat {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s06-mono {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+
+    .s06-kicker {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+    }
+
+    .s06-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 82%, transparent);
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s06-chip--accent {
+      border-color: transparent;
+      background: var(--accent-soft);
+    }
+
+    /* 晚出现的元素在 CSS 里先藏住：快照 seek 时 GSAP fromTo 的初始态未必被渲染。 */
+    .s06-b1-memo,
+    .s06-b1-text p,
+    .s06-b1-tag,
+    .s06-b1-q,
+    .s06-b1-mark,
+    .s06-b1-note,
+    .s06-b2,
+    .s06-b2-task,
+    .s06-b2-val,
+    .s06-b2-chips,
+    .s06-b2-note,
+    .s06-b2-law,
+    .s06-b2-law-sub,
+    .s06-b2-quote,
+    .s06-b3,
+    .s06-b3-name,
+    .s06-b3-ylab,
+    .s06-b3-xlab,
+    .s06-b3-dot,
+    .s06-b3-hi,
+    .s06-b3-aside-item,
+    .s06-b5,
+    .s06-b5-title,
+    .s06-b5-legend,
+    .s06-b5-node,
+    .s06-b5-row,
+    .s06-b5-track-fill,
+    #s06-b2-cv1,
+    #s06-b2-cv2,
+    #s06-b2-cv3,
+    #s06-b2-cv4,
+    #s06-b3-ten,
+    #s06-b3-flat,
+    #s06-b3-cliff,
+    #s06-b3-two {
+      opacity: 0;
+    }
+
+    /* ---------------------------------------------------------- 第一拍 GPT-2 */
+    .s06-b1-memo {
+      position: absolute;
+      left: 0;
+      top: 40px;
+      width: 940px;
+      padding: 28px 40px 24px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s06-b1-tape {
+      position: absolute;
+      left: 64px;
+      top: -15px;
+      width: 148px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+      background: color-mix(in srgb, var(--accent) 24%, var(--bg));
+      transform: rotate(-2.4deg);
+    }
+
+    .s06-b1-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.05em;
+      color: var(--ink-faint);
+    }
+
+    .s06-b1-head b {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    .s06-b1-text {
+      padding-top: 22px;
+      font-size: 38px;
+      line-height: 1.62;
+      color: var(--ink-soft);
+    }
+
+    .s06-b1-text p + p {
+      margin-top: 0;
+    }
+
+    .s06-b1-foot {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding-top: 20px;
+    }
+
+    .s06-b1-tag {
+      position: relative;
+      display: inline-flex;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s06-b1-underline {
+      position: absolute;
+      opacity: 0;
+      left: 4px;
+      right: 4px;
+      bottom: -9px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+      transform-origin: left center;
+    }
+
+    .s06-b1-ask {
+      position: absolute;
+      left: 1010px;
+      top: 18px;
+      width: 640px;
+    }
+
+    .s06-b1-q {
+      font-size: 68px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s06-b1-mark {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 292px;
+      line-height: 0.84;
+      font-weight: 700;
+      letter-spacing: -0.06em;
+      color: var(--accent-text);
+    }
+
+    .s06-b1-note {
+      margin-top: 26px;
+      font-size: 34px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    /* -------------------------------------------------- 第二拍 三根柱子 + 曲线 */
+    .s06-b2-task {
+      position: absolute;
+      left: 0;
+      top: 4px;
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s06-b2-task span {
+      font-family: var(--font-mono);
+      letter-spacing: 0;
+      color: var(--accent-text);
+    }
+
+    .s06-b2-plot {
+      position: absolute;
+      left: 40px;
+      top: 96px;
+      width: 940px;
+      height: 430px;
+    }
+
+    .s06-b2-svg {
+      position: absolute;
+      inset: 0;
+      width: 940px;
+      height: 430px;
+      overflow: visible;
+    }
+
+    .s06-b2-axis {
+      stroke: var(--ink);
+      stroke-width: 2;
+    }
+
+    .s06-b2-curve {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 4.5;
+      stroke-linecap: round;
+    }
+
+    .s06-b2-bar {
+      position: absolute;
+      bottom: 0;
+      width: 160px;
+      border: 2px solid var(--ink);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      background: color-mix(in srgb, var(--accent) 34%, var(--panel));
+      transform-origin: center bottom;
+    }
+
+    .s06-b2-bar--3 {
+      background: color-mix(in srgb, var(--accent) 62%, var(--panel));
+    }
+
+    .s06-b2-val {
+      position: absolute;
+      width: 160px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s06-b2-under {
+      position: absolute;
+      width: 160px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 25px;
+      line-height: 1.35;
+      color: var(--ink-faint);
+    }
+
+    .s06-b2-side {
+      position: absolute;
+      left: 1050px;
+      top: 26px;
+      width: 574px;
+    }
+
+    .s06-b2-chips {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .s06-b2-plus {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+
+    .s06-b2-note {
+      margin-top: 40px;
+      font-size: 32px;
+      line-height: 1.55;
+      color: var(--ink-soft);
+    }
+
+    .s06-b2-law {
+      margin-top: 46px;
+      font-family: var(--font-mono);
+      font-size: 58px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s06-b2-law-sub {
+      margin-top: 2px;
+      font-size: 32px;
+      letter-spacing: 0.06em;
+      color: var(--accent-text);
+    }
+
+    .s06-b2-quote {
+      margin-top: 44px;
+      display: inline-block;
+      padding: 10px 22px;
+      border-left: 6px solid var(--accent);
+      background: var(--accent-soft);
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    /* -------------------------------------------------- 第三拍 多位数加法悬崖 */
+    .s06-zoom {
+      position: absolute;
+      inset: 0;
+      transform-origin: 46% 42%;
+    }
+
+    .s06-b3-title {
+      position: absolute;
+      left: 96px;
+      top: 0;
+    }
+
+    .s06-b3-name {
+      margin-top: 6px;
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s06-b3-name em {
+      font-style: normal;
+      font-family: var(--font-mono);
+      color: var(--accent-text);
+    }
+
+    .s06-b3-plot {
+      position: absolute;
+      left: 96px;
+      top: 100px;
+      width: 1000px;
+      height: 430px;
+    }
+
+    .s06-b3-svg {
+      position: absolute;
+      inset: 0;
+      width: 1000px;
+      height: 430px;
+      overflow: visible;
+    }
+
+    .s06-b3-axis {
+      stroke: var(--ink);
+      stroke-width: 2;
+    }
+
+    .s06-b3-grid {
+      stroke: var(--line-strong);
+      stroke-width: 1.5;
+      stroke-dasharray: 9 11;
+    }
+
+    .s06-b3-grid--soft {
+      stroke: var(--line);
+      stroke-width: 1.5;
+    }
+
+    .s06-b3-flat {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 2.5;
+      stroke-linejoin: round;
+    }
+
+    .s06-b3-cliff {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+
+    .s06-b3-two {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2.5;
+      stroke-dasharray: 7 9;
+    }
+
+    .s06-b3-ten-label {
+      position: absolute;
+      left: 0;
+      top: 357px;
+      width: 84px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      color: var(--ink-faint);
+    }
+
+    .s06-b3-ylab {
+      position: absolute;
+      left: -92px;
+      width: 84px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+
+    .s06-b3-xlab {
+      position: absolute;
+      width: 130px;
+      margin-left: -65px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s06-b3-dot {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      margin: -9px 0 0 -9px;
+      border-radius: 50%;
+      background: var(--ink);
+    }
+
+    .s06-b3-dot--big {
+      width: 26px;
+      height: 26px;
+      margin: -13px 0 0 -13px;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--ink) inset;
+    }
+
+    .s06-b3-ring {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+    }
+
+    .s06-b3-band {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 875px;
+      height: 430px;
+      background: var(--accent-soft);
+      opacity: 0;
+    }
+
+    .s06-b3-hi {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 30px;
+      padding: 4px 14px;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s06-b3-note {
+      position: absolute;
+      left: 96px;
+      top: 604px;
+      font-size: 25px;
+      color: var(--ink-faint);
+    }
+
+    .s06-b3-aside {
+      position: absolute;
+      left: 1150px;
+      top: 6px;
+      width: 514px;
+    }
+
+    .s06-b3-aside-item {
+      position: absolute;
+      left: 0;
+      width: 514px;
+    }
+
+    .s06-b3-aside-title {
+      font-family: var(--font-mono);
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s06-b3-aside-cn {
+      margin-top: 8px;
+      font-size: 32px;
+      color: var(--accent-text);
+    }
+
+    .s06-b3-aside-note {
+      margin-top: 10px;
+      font-size: 30px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    .s06-b3-aside-big {
+      font-size: 50px;
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s06-b3-aside-big u {
+      text-decoration: none;
+      color: var(--accent-text);
+    }
+
+    /* ------------------------------------------------ 第五拍 底部细时间轴 */
+    .s06-b5-kicker {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .s06-b5-title {
+      margin-top: 0;
+      position: absolute;
+      left: 0;
+      top: 32px;
+      width: 1200px;
+      font-size: 54px;
+      line-height: 1.16;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s06-b5-legend {
+      position: absolute;
+      left: 1310px;
+      top: 8px;
+      width: 300px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 30px;
+      font-size: 26px;
+      color: var(--ink-soft);
+    }
+
+    .s06-b5-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .s06-b5-key i {
+      display: block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+    }
+
+    .s06-b5-key .s06-b5-key-in {
+      border-color: transparent;
+      background: var(--accent);
+    }
+
+    .s06-b5-track {
+      position: absolute;
+      left: 30px;
+      top: 359px;
+      width: 1584px;
+      height: 2px;
+      background: var(--line);
+    }
+
+    .s06-b5-track i {
+      position: absolute;
+      left: 0;
+      top: -2px;
+      display: block;
+      width: 1584px;
+      height: 6px;
+      background: var(--accent);
+      transform-origin: left center;
+    }
+
+    .s06-b5-node {
+      position: absolute;
+      top: 292px;
+      width: 240px;
+      margin-left: -120px;
+      text-align: center;
+    }
+
+    .s06-b5-node--wide {
+      width: 300px;
+      margin-left: -150px;
+    }
+
+    .s06-b5-year {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink-faint);
+      line-height: 1.3;
+    }
+
+    .s06-b5-dot {
+      display: block;
+      width: 20px;
+      height: 20px;
+      margin: 16px auto 0;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+      background: var(--panel);
+    }
+
+    .s06-b5-node--cn .s06-b5-dot {
+      border-color: transparent;
+      background: var(--accent);
+    }
+
+    .s06-b5-node--cn .s06-b5-year {
+      color: var(--accent-text);
+    }
+
+    .s06-b5-name {
+      margin-top: 22px;
+      font-size: 34px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s06-b5-org {
+      margin-top: 2px;
+      font-size: 24px;
+      color: var(--ink-faint);
+    }
+
+    .s06-b5-rows {
+      margin-top: 22px;
+    }
+
+    .s06-b5-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 30px;
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s06-b5-row + .s06-b5-row {
+      margin-top: 10px;
+    }
+
+    .s06-b5-logo {
+      display: block;
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-scaling-emergence"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="speak"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S06</span>
+          <span class="scene-act">第二幕 · 说</span>
+        </p>
+        <h1 id="s-scaling-emergence-title" class="scene-title">规模定律与涌现</h1>
+        <p class="scene-no">06 / 22</p>
+      </header>
+
+      <section id="s-scaling-emergence-stage" class="stage">
+        <!-- 第一拍：GPT-2 写得像人话，但它能干活吗？ -->
+        <div id="s06-b1" class="s06-beat">
+          <div id="s06-b1-memo" class="s06-b1-memo">
+            <div class="s06-b1-tape"></div>
+            <div class="s06-b1-head">
+              <span><b>GPT-2</b></span>
+              <span>2019 · 1.5B 参数</span>
+            </div>
+            <div id="s06-b1-text" class="s06-b1-text">
+              <p id="s06-b1-l1">周六早上，我沿着河边走了很久。</p>
+              <p id="s06-b1-l2">风把树影吹得晃来晃去，忽然想起小时候外婆家的院子，</p>
+              <p id="s06-b1-l3">院子里的葡萄藤爬满了整面墙。</p>
+            </div>
+            <div class="s06-b1-foot">
+              <span id="s06-b1-tag" class="s06-b1-tag">像人写的<span id="s06-b1-underline" class="s06-b1-underline"></span></span>
+              <span class="s06-kicker">GPT-2 生成 · 示意</span>
+            </div>
+          </div>
+          <div class="s06-b1-ask">
+            <p id="s06-b1-q" class="s06-b1-q">它能干活吗？</p>
+            <p id="s06-b1-mark" class="s06-b1-mark">?</p>
+            <p id="s06-b1-note" class="s06-b1-note">满足不了日常的工作。</p>
+          </div>
+        </div>
+
+        <!-- 第二拍：三根柱子依次长高，background 一条平滑的 scaling law 曲线。 -->
+        <div id="s06-b2" class="s06-beat">
+          <p id="s06-b2-task" class="s06-b2-task">任务没变：猜下一个词 <span>→</span> 规模变了</p>
+          <div class="s06-b2-plot">
+            <svg class="s06-b2-svg" viewBox="0 0 940 430" aria-hidden="true">
+              <defs>
+                <clipPath id="s06-b2-c1"><rect x="0" y="0" width="280" height="430" /></clipPath>
+                <clipPath id="s06-b2-c2"><rect x="250" y="0" width="270" height="430" /></clipPath>
+                <clipPath id="s06-b2-c3"><rect x="500" y="0" width="300" height="430" /></clipPath>
+                <clipPath id="s06-b2-c4"><rect x="780" y="0" width="160" height="430" /></clipPath>
+                <path
+                  id="s06-b2-curve-d"
+                  class="s06-b2-curve"
+                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
+                />
+              </defs>
+              <line class="s06-b2-axis" x1="0" y1="430" x2="940" y2="430" />
+              <line class="s06-b2-axis" x1="1" y1="6" x2="1" y2="430" />
+              <g id="s06-b2-cv1" clip-path="url(#s06-b2-c1)"><use href="#s06-b2-curve-d" /></g>
+              <g id="s06-b2-cv2" clip-path="url(#s06-b2-c2)"><use href="#s06-b2-curve-d" /></g>
+              <g id="s06-b2-cv3" clip-path="url(#s06-b2-c3)"><use href="#s06-b2-curve-d" /></g>
+              <g id="s06-b2-cv4" clip-path="url(#s06-b2-c4)"><use href="#s06-b2-curve-d" /></g>
+            </svg>
+            <div id="s06-b2-bar1" class="s06-b2-bar" style="left: 120px; height: 60px"></div>
+            <div id="s06-b2-bar2" class="s06-b2-bar" style="left: 400px; height: 170px"></div>
+            <div id="s06-b2-bar3" class="s06-b2-bar s06-b2-bar--3" style="left: 680px; height: 360px"></div>
+            <p id="s06-b2-v1" class="s06-b2-val" style="left: 120px; top: 318px">117M</p>
+            <p id="s06-b2-v2" class="s06-b2-val" style="left: 400px; top: 208px">1.5B</p>
+            <p id="s06-b2-v3" class="s06-b2-val" style="left: 680px; top: 18px">175B</p>
+            <p class="s06-b2-under" style="left: 120px; top: 448px">2018<br />GPT-1</p>
+            <p class="s06-b2-under" style="left: 400px; top: 448px">2019<br />GPT-2</p>
+            <p class="s06-b2-under" style="left: 680px; top: 448px">2020<br />GPT-3</p>
+          </div>
+          <div class="s06-b2-side">
+            <p id="s06-b2-chips" class="s06-b2-chips">
+              <span class="s06-chip s06-chip--accent">参数</span>
+              <span class="s06-b2-plus">×</span>
+              <span class="s06-chip s06-chip--accent">数据</span>
+              <span class="s06-b2-plus">×</span>
+              <span class="s06-chip s06-chip--accent">算力</span>
+            </p>
+            <p id="s06-b2-note" class="s06-b2-note">模型越大，能力沿着一条相当稳定的曲线往上走。</p>
+            <p id="s06-b2-law" class="s06-b2-law">scaling law</p>
+            <p id="s06-b2-law-sub" class="s06-b2-law-sub">规模定律</p>
+            <p id="s06-b2-quote" class="s06-b2-quote">大力出奇迹</p>
+          </div>
+        </div>
+
+        <!-- 第三拍：多位数加法的悬崖，前七个点贴地，175B 突然跳起。 -->
+        <div id="s06-b3" class="s06-beat">
+          <div id="s06-b3-zoom" class="s06-zoom">
+            <div class="s06-b3-title">
+              <p class="s06-kicker">GPT-3 论文 · 多位数加法</p>
+              <p id="s06-b3-name" class="s06-b3-name">三位数加法 · <em>准确率</em></p>
+            </div>
+            <div class="s06-b3-plot">
+              <div id="s06-b3-band" class="s06-b3-band"></div>
+              <svg class="s06-b3-svg" viewBox="0 0 1000 430" aria-hidden="true">
+                <line class="s06-b3-axis" x1="0" y1="430" x2="1000" y2="430" />
+                <line class="s06-b3-axis" x1="1" y1="0" x2="1" y2="430" />
+                <line class="s06-b3-grid--soft" id="s06-b3-mid" x1="0" y1="215" x2="1000" y2="215" />
+                <line class="s06-b3-grid" id="s06-b3-ten" x1="0" y1="387" x2="1000" y2="387" />
+                <path
+                  id="s06-b3-flat"
+                  class="s06-b3-flat"
+                  d="M 60 421.4 L 186 417.1 L 311 412.8 L 437 408.5 L 563 404.2 L 689 399.9 L 814 391.3"
+                />
+                <path id="s06-b3-cliff" class="s06-b3-cliff" d="M 814 391.3 L 940 86" />
+                <path id="s06-b3-two" class="s06-b3-two" d="M 814 215 L 940 13" />
+              </svg>
+              <p class="s06-b3-ylab" style="top: -17px">100%</p>
+              <p class="s06-b3-ylab" style="top: 198px">50%</p>
+              <p class="s06-b3-ylab" style="top: 370px">10%</p>
+              <p class="s06-b3-ylab" style="top: 413px">0</p>
+              <p class="s06-b3-xlab" style="left: 60px; top: 442px">1.25亿</p>
+              <p class="s06-b3-xlab" style="left: 186px; top: 442px">3.5亿</p>
+              <p class="s06-b3-xlab" style="left: 311px; top: 442px">7.6亿</p>
+              <p class="s06-b3-xlab" style="left: 437px; top: 442px">13亿</p>
+              <p class="s06-b3-xlab" style="left: 563px; top: 442px">27亿</p>
+              <p class="s06-b3-xlab" style="left: 689px; top: 442px">67亿</p>
+              <p class="s06-b3-xlab" style="left: 814px; top: 442px">130亿</p>
+              <p class="s06-b3-xlab" style="left: 940px; top: 442px">1750亿</p>
+              <div id="s06-b3-d0" class="s06-b3-dot" style="left: 60px; top: 421px"></div>
+              <div id="s06-b3-d1" class="s06-b3-dot" style="left: 186px; top: 417px"></div>
+              <div id="s06-b3-d2" class="s06-b3-dot" style="left: 311px; top: 413px"></div>
+              <div id="s06-b3-d3" class="s06-b3-dot" style="left: 437px; top: 409px"></div>
+              <div id="s06-b3-d4" class="s06-b3-dot" style="left: 563px; top: 404px"></div>
+              <div id="s06-b3-d5" class="s06-b3-dot" style="left: 689px; top: 400px"></div>
+              <div id="s06-b3-d6" class="s06-b3-dot" style="left: 814px; top: 391px"></div>
+              <div id="s06-b3-d7" class="s06-b3-dot s06-b3-dot--big" style="left: 940px; top: 86px"></div>
+              <div id="s06-b3-ring" class="s06-b3-ring" style="left: 940px; top: 86px"></div>
+              <p id="s06-b3-two-label" class="s06-b3-hi" style="left: 560px; top: 236px">两位数加法</p>
+              <p id="s06-b3-gate" class="s06-b3-hi" style="left: 800px; top: 108px">门槛</p>
+              <p id="s06-b3-80" class="s06-b3-hi" style="left: 700px; top: 30px">175B · ≈ 80%</p>
+            </div>
+            <p class="s06-b3-note">据 GPT-3 论文 Figure 3.10 重绘，点位为近似值。</p>
+            <div class="s06-b3-aside">
+              <div id="s06-b3-a1" class="s06-b3-aside-item" style="top: 0">
+                <p class="s06-b3-aside-title">Emergent Abilities</p>
+                <p class="s06-b3-aside-cn">涌现能力 · 2022</p>
+                <p class="s06-b3-aside-note">有些能力，在小模型上根本看不到。</p>
+              </div>
+              <div id="s06-b3-a2" class="s06-b3-aside-item" style="top: 230px">
+                <p class="s06-b3-aside-big">小模型<u>看不到</u></p>
+                <p class="s06-b3-aside-note">130 亿及以下，三位数加法不到 10%。</p>
+              </div>
+              <div id="s06-b3-a3" class="s06-b3-aside-item" style="top: 390px">
+                <p class="s06-b3-aside-big">大到一定程度，<u>突然出现</u></p>
+              </div>
+              <div id="s06-b3-a4" class="s06-b3-aside-item" style="top: 560px">
+                <p class="s06-b3-aside-big">量变引起<u>质变</u></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第五拍：底部细时间轴，国内节点用另一种标注。 -->
+        <div id="s06-b5" class="s06-beat">
+          <p id="s06-b5-kicker" class="s06-b5-kicker s06-kicker">2017 → 2025</p>
+          <p id="s06-b5-title" class="s06-b5-title">不是 OpenAI 一家的独角戏</p>
+          <p id="s06-b5-legend" class="s06-b5-legend">
+            <span class="s06-b5-key"><i></i>海外</span>
+            <span class="s06-b5-key"><i class="s06-b5-key-in"></i>国内</span>
+          </p>
+          <div class="s06-b5-track"><i id="s06-b5-track-fill"></i></div>
+          <div id="s06-b5-n1" class="s06-b5-node" style="left: 120px">
+            <p class="s06-b5-year">2017</p>
+            <i class="s06-b5-dot"></i>
+            <p class="s06-b5-name">Transformer</p>
+            <p class="s06-b5-org">谷歌</p>
+          </div>
+          <div id="s06-b5-n2" class="s06-b5-node" style="left: 370px">
+            <p class="s06-b5-year">2018</p>
+            <i class="s06-b5-dot"></i>
+            <p class="s06-b5-name">BERT</p>
+            <p class="s06-b5-org">谷歌</p>
+          </div>
+          <div id="s06-b5-n3" class="s06-b5-node" style="left: 620px">
+            <p class="s06-b5-year">2020</p>
+            <i class="s06-b5-dot"></i>
+            <p class="s06-b5-name">GPT-3</p>
+            <p class="s06-b5-org">OpenAI · 175B</p>
+          </div>
+          <div id="s06-b5-n4" class="s06-b5-node s06-b5-node--cn" style="left: 870px">
+            <p class="s06-b5-year">2021</p>
+            <i class="s06-b5-dot"></i>
+            <p class="s06-b5-name">悟道 2.0</p>
+            <p class="s06-b5-org">北京智源 · 1.75 万亿</p>
+          </div>
+          <div id="s06-b5-n5" class="s06-b5-node s06-b5-node--cn s06-b5-node--wide" style="left: 1130px">
+            <p class="s06-b5-year">2023</p>
+            <i class="s06-b5-dot"></i>
+            <div class="s06-b5-rows">
+              <p class="s06-b5-row">文心一言</p>
+              <p class="s06-b5-row"><img class="s06-b5-logo" src="assets/media/logo/qwen.png" alt="通义千问 Logo" width="34" height="34" />通义千问</p>
+              <p class="s06-b5-row">ChatGLM</p>
+            </div>
+          </div>
+          <div id="s06-b5-n6" class="s06-b5-node s06-b5-node--cn s06-b5-node--wide" style="left: 1430px">
+            <p class="s06-b5-year">2024-25</p>
+            <i class="s06-b5-dot"></i>
+            <div class="s06-b5-rows">
+              <p class="s06-b5-row"><img class="s06-b5-logo" src="assets/media/logo/deepseek.png" alt="DeepSeek Logo" width="34" height="34" />DeepSeek</p>
+              <p class="s06-b5-row"><img class="s06-b5-logo" src="assets/media/logo/kimi.png" alt="Kimi Logo" width="34" height="34" />Kimi</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-scaling-emergence-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.924">大语言模型不是 2022 年才发明的，学界研究了很多年。</p>
+        <p id="s-scaling-emergence-cap-1" class="cap-line clip" data-start="6.624" data-duration="6.686">2019 年，OpenAI 放出 GPT-2，15 亿参数。</p>
+        <p id="s-scaling-emergence-cap-2" class="cap-line clip" data-start="13.35" data-duration="5.558">它写出来的文字已经很像人了，但当时并没有引起太多的关注，</p>
+        <p id="s-scaling-emergence-cap-3" class="cap-line clip" data-start="18.948" data-duration="4.759">因为他的能力还不够出众，无法满足我们日常的工作。</p>
+        <p id="s-scaling-emergence-cap-4" class="cap-line clip" data-start="23.747" data-duration="8.562">2020 年，GPT-3 来了，1750 亿参数，任务还是同一个：猜下一个词。</p>
+        <p id="s-scaling-emergence-cap-5" class="cap-line clip" data-start="32.349" data-duration="4.994">OpenAI 发现，模型越大、数据越多、算力越多，</p>
+        <p id="s-scaling-emergence-cap-6" class="cap-line clip" data-start="37.383" data-duration="3.941">能力会按一条相当稳定的曲线往上走。</p>
+        <p id="s-scaling-emergence-cap-7" class="cap-line clip" data-start="41.364" data-duration="3.681">这就是 scaling law，规模定律。</p>
+        <p id="s-scaling-emergence-cap-8" class="cap-line clip" data-start="45.085" data-duration="3.445">直白的说就是「大力出奇迹」。</p>
+        <p id="s-scaling-emergence-cap-9" class="cap-line clip" data-start="48.57" data-duration="3.71">真正让人意外的，是另一件事。</p>
+        <p id="s-scaling-emergence-cap-10" class="cap-line clip" data-start="52.32" data-duration="4.652">GPT-3 的论文里有一组多位数加法的实验：</p>
+        <p id="s-scaling-emergence-cap-11" class="cap-line clip" data-start="57.012" data-duration="3.787">从 1.25 亿到 130 亿参数的模型，</p>
+        <p id="s-scaling-emergence-cap-12" class="cap-line clip" data-start="60.839" data-duration="5.269">三位数加法基本都在 10% 以下，跟瞎猜差不多；</p>
+        <p id="s-scaling-emergence-cap-13" class="cap-line clip" data-start="66.148" data-duration="6.997">可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。</p>
+        <p id="s-scaling-emergence-cap-14" class="cap-line clip" data-start="73.185" data-duration="7.96">两位数加法更明显：130 亿那一档只能对一半，1750 亿接近全对。</p>
+        <p id="s-scaling-emergence-cap-15" class="cap-line clip" data-start="81.185" data-duration="5.18">不是慢慢变好，是在某个门槛上，突然就会了。</p>
+        <p id="s-scaling-emergence-cap-16" class="cap-line clip" data-start="86.405" data-duration="4.466">2022 年，有研究把这个现象命名为「涌现能力」，</p>
+        <p id="s-scaling-emergence-cap-17" class="cap-line clip" data-start="90.911" data-duration="5.167">Emergent Abilities：有些能力，在小模型上根本看不到，</p>
+        <p id="s-scaling-emergence-cap-18" class="cap-line clip" data-start="96.118" data-duration="3.365">模型大到一定程度，它突然就出现了。</p>
+        <p id="s-scaling-emergence-cap-19" class="cap-line clip" data-start="99.523" data-duration="3.769">用一句话说，就是量变引起质变。</p>
+        <p id="s-scaling-emergence-cap-20" class="cap-line clip" data-start="103.332" data-duration="6.017">这也是为什么，GPT-2 时代大家没感觉，GPT-3 之后，</p>
+        <p id="s-scaling-emergence-cap-21" class="cap-line clip" data-start="109.389" data-duration="4.756">很多人觉得：大语言模型的智商非常的高。</p>
+        <p id="s-scaling-emergence-cap-22" class="cap-line clip" data-start="114.185" data-duration="4.063">大语言模型不是 OpenAI 一家的独角戏。</p>
+        <p id="s-scaling-emergence-cap-23" class="cap-line clip" data-start="118.288" data-duration="4.234">2017 年，谷歌的 Transformer 铺好了路；</p>
+        <p id="s-scaling-emergence-cap-24" class="cap-line clip" data-start="122.562" data-duration="3.784">2018 年，BERT 证明了预训练的力量；</p>
+        <p id="s-scaling-emergence-cap-25" class="cap-line clip" data-start="126.386" data-duration="4.909">2021 年，国内的悟道 2.0 进了万亿参数俱乐部；</p>
+        <p id="s-scaling-emergence-cap-26" class="cap-line clip" data-start="131.334" data-duration="5.246">2023 年，文心一言、通义千问、ChatGLM 接连发布；</p>
+        <p id="s-scaling-emergence-cap-27" class="cap-line clip" data-start="136.62" data-duration="2.772">后面还有 DeepSeek、Kimi。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S06</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-scaling-emergence-progress"></i></span>
+        <span class="cap-clock">02:21</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S06","id":"scaling-emergence","index":0,"start":0,"duration":141.12,"audioStart":0.5999999999999943,"audioDuration":138.912,"cues":[{"i":0,"t":0.7,"d":5.924,"text":"大语言模型不是 2022 年才发明的，学界研究了很多年。","sent":"大语言模型不是 2022 年才发明的，学界研究了很多年。"},{"i":1,"t":6.624,"d":6.686,"text":"2019 年，OpenAI 放出 GPT-2，15 亿参数。","sent":"2019 年，OpenAI 放出 GPT-2，15 亿参数。"},{"i":2,"t":13.35,"d":5.558,"text":"它写出来的文字已经很像人了，但当时并没有引起太多的关注，","sent":"它写出来的文字已经很像人了，但当时并没有引起太多的关注，因为他的能力还不够出众，无法满足我们日常的工作。"},{"i":3,"t":18.948,"d":4.759,"text":"因为他的能力还不够出众，无法满足我们日常的工作。","sent":"它写出来的文字已经很像人了，但当时并没有引起太多的关注，因为他的能力还不够出众，无法满足我们日常的工作。"},{"i":4,"t":23.747,"d":8.562,"text":"2020 年，GPT-3 来了，1750 亿参数，任务还是同一个：猜下一个词。","sent":"2020 年，GPT-3 来了，1750 亿参数，任务还是同一个：猜下一个词。"},{"i":5,"t":32.349,"d":4.994,"text":"OpenAI 发现，模型越大、数据越多、算力越多，","sent":"OpenAI 发现，模型越大、数据越多、算力越多，能力会按一条相当稳定的曲线往上走。"},{"i":6,"t":37.383,"d":3.941,"text":"能力会按一条相当稳定的曲线往上走。","sent":"OpenAI 发现，模型越大、数据越多、算力越多，能力会按一条相当稳定的曲线往上走。"},{"i":7,"t":41.364,"d":3.681,"text":"这就是 scaling law，规模定律。","sent":"这就是 scaling law，规模定律。"},{"i":8,"t":45.085,"d":3.445,"text":"直白的说就是「大力出奇迹」。","sent":"直白的说就是「大力出奇迹」。"},{"i":9,"t":48.57,"d":3.71,"text":"真正让人意外的，是另一件事。","sent":"真正让人意外的，是另一件事。"},{"i":10,"t":52.32,"d":4.652,"text":"GPT-3 的论文里有一组多位数加法的实验：","sent":"GPT-3 的论文里有一组多位数加法的实验：从 1.25 亿到 130 亿参数的模型，三位数加法基本都在 10% 以下，跟瞎猜差不多；可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。"},{"i":11,"t":57.012,"d":3.787,"text":"从 1.25 亿到 130 亿参数的模型，","sent":"GPT-3 的论文里有一组多位数加法的实验：从 1.25 亿到 130 亿参数的模型，三位数加法基本都在 10% 以下，跟瞎猜差不多；可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。"},{"i":12,"t":60.839,"d":5.269,"text":"三位数加法基本都在 10% 以下，跟瞎猜差不多；","sent":"GPT-3 的论文里有一组多位数加法的实验：从 1.25 亿到 130 亿参数的模型，三位数加法基本都在 10% 以下，跟瞎猜差不多；可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。"},{"i":13,"t":66.148,"d":6.997,"text":"可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。","sent":"GPT-3 的论文里有一组多位数加法的实验：从 1.25 亿到 130 亿参数的模型，三位数加法基本都在 10% 以下，跟瞎猜差不多；可一跨过 130 亿这个门槛，到 1750 亿，准确率一下跳到 80%。"},{"i":14,"t":73.185,"d":7.96,"text":"两位数加法更明显：130 亿那一档只能对一半，1750 亿接近全对。","sent":"两位数加法更明显：130 亿那一档只能对一半，1750 亿接近全对。"},{"i":15,"t":81.185,"d":5.18,"text":"不是慢慢变好，是在某个门槛上，突然就会了。","sent":"不是慢慢变好，是在某个门槛上，突然就会了。"},{"i":16,"t":86.405,"d":4.466,"text":"2022 年，有研究把这个现象命名为「涌现能力」，","sent":"2022 年，有研究把这个现象命名为「涌现能力」，Emergent Abilities：有些能力，在小模型上根本看不到，模型大到一定程度，它突然就出现了。"},{"i":17,"t":90.911,"d":5.167,"text":"Emergent Abilities：有些能力，在小模型上根本看不到，","sent":"2022 年，有研究把这个现象命名为「涌现能力」，Emergent Abilities：有些能力，在小模型上根本看不到，模型大到一定程度，它突然就出现了。"},{"i":18,"t":96.118,"d":3.365,"text":"模型大到一定程度，它突然就出现了。","sent":"2022 年，有研究把这个现象命名为「涌现能力」，Emergent Abilities：有些能力，在小模型上根本看不到，模型大到一定程度，它突然就出现了。"},{"i":19,"t":99.523,"d":3.769,"text":"用一句话说，就是量变引起质变。","sent":"用一句话说，就是量变引起质变。"},{"i":20,"t":103.332,"d":6.017,"text":"这也是为什么，GPT-2 时代大家没感觉，GPT-3 之后，","sent":"这也是为什么，GPT-2 时代大家没感觉，GPT-3 之后，很多人觉得：大语言模型的智商非常的高。"},{"i":21,"t":109.389,"d":4.756,"text":"很多人觉得：大语言模型的智商非常的高。","sent":"这也是为什么，GPT-2 时代大家没感觉，GPT-3 之后，很多人觉得：大语言模型的智商非常的高。"},{"i":22,"t":114.185,"d":4.063,"text":"大语言模型不是 OpenAI 一家的独角戏。","sent":"大语言模型不是 OpenAI 一家的独角戏。"},{"i":23,"t":118.288,"d":4.234,"text":"2017 年，谷歌的 Transformer 铺好了路；","sent":"2017 年，谷歌的 Transformer 铺好了路；2018 年，BERT 证明了预训练的力量；2021 年，国内的悟道 2.0 进了万亿参数俱乐部；2023 年，文心一言、通义千问、ChatGLM 接连发布；后面还有 DeepSeek、Kimi。"},{"i":24,"t":122.562,"d":3.784,"text":"2018 年，BERT 证明了预训练的力量；","sent":"2017 年，谷歌的 Transformer 铺好了路；2018 年，BERT 证明了预训练的力量；2021 年，国内的悟道 2.0 进了万亿参数俱乐部；2023 年，文心一言、通义千问、ChatGLM 接连发布；后面还有 DeepSeek、Kimi。"},{"i":25,"t":126.386,"d":4.909,"text":"2021 年，国内的悟道 2.0 进了万亿参数俱乐部；","sent":"2017 年，谷歌的 Transformer 铺好了路；2018 年，BERT 证明了预训练的力量；2021 年，国内的悟道 2.0 进了万亿参数俱乐部；2023 年，文心一言、通义千问、ChatGLM 接连发布；后面还有 DeepSeek、Kimi。"},{"i":26,"t":131.334,"d":5.246,"text":"2023 年，文心一言、通义千问、ChatGLM 接连发布；","sent":"2017 年，谷歌的 Transformer 铺好了路；2018 年，BERT 证明了预训练的力量；2021 年，国内的悟道 2.0 进了万亿参数俱乐部；2023 年，文心一言、通义千问、ChatGLM 接连发布；后面还有 DeepSeek、Kimi。"},{"i":27,"t":136.62,"d":2.772,"text":"后面还有 DeepSeek、Kimi。","sent":"2017 年，谷歌的 Transformer 铺好了路；2018 年，BERT 证明了预训练的力量；2021 年，国内的悟道 2.0 进了万亿参数俱乐部；2023 年，文心一言、通义千问、ChatGLM 接连发布；后面还有 DeepSeek、Kimi。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-scaling-emergence-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 第一拍：GPT-2 会写像人话的字，但它能干活吗？
+    tl.fromTo("#s06-b1-memo", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, N.cues[0].t);
+    tl.fromTo(
+      ["#s06-b1-l1", "#s06-b1-l2", "#s06-b1-l3"],
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", stagger: 0.26 },
+      N.cues[1].t
+    );
+    tl.fromTo("#s06-b1-tag", { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, N.cues[2].t + 0.1);
+    tl.fromTo("#s06-b1-underline", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 1.5, ease: "power2.inOut" }, N.cues[2].t + 1.1);
+    tl.fromTo("#s06-b1-q", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[3].t + 0.15);
+    tl.fromTo("#s06-b1-mark", { opacity: 0, scale: 0.82, rotation: -6 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.8, ease: "back.out(1.6)" }, N.cues[3].t + 0.45);
+    tl.fromTo("#s06-b1-note", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[3].t + 1.1);
+    tl.fromTo("#s06-b1-mark", { rotation: 0 }, { rotation: -3, duration: 2.8, ease: "sine.inOut", immediateRender: false }, N.cues[3].t + 1.5);
+
+    // 第一拍退场，第二拍进场：整体位移 + 淡出。
+    tl.fromTo("#s06-b1", { opacity: 1, x: 0 }, { opacity: 0, x: -70, duration: 0.55, ease: "power2.in", immediateRender: false }, N.cues[4].t);
+    tl.fromTo("#s06-b2", { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }, N.cues[4].t + 0.15);
+
+    // 第二拍：三根柱子依次长高，曲线从左往右铺开。
+    tl.fromTo("#s06-b2-task", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, N.cues[4].t + 0.5);
+    tl.fromTo(
+      ["#s06-b2-bar1", "#s06-b2-bar2", "#s06-b2-bar3"],
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.75, ease: "power3.out", stagger: 0.22 },
+      N.cues[4].t + 0.8
+    );
+    tl.fromTo(
+      ["#s06-b2-v1", "#s06-b2-v2", "#s06-b2-v3"],
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.22 },
+      N.cues[4].t + 1.35
+    );
+    tl.fromTo(
+      ["#s06-b2-cv1", "#s06-b2-cv2", "#s06-b2-cv3", "#s06-b2-cv4"],
+      { opacity: 0 },
+      { opacity: 1, duration: 0.8, ease: "power2.inOut", stagger: 0.55 },
+      N.cues[5].t + 0.6
+    );
+    tl.fromTo("#s06-b2-chips", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[5].t + 0.1);
+    tl.fromTo("#s06-b2-note", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, N.cues[6].t + 0.1);
+    tl.fromTo("#s06-b2-law", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, N.cues[7].t + 0.1);
+    tl.fromTo("#s06-b2-law-sub", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[7].t + 0.55);
+    tl.fromTo("#s06-b2-quote", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.5)" }, N.cues[8].t + 0.1);
+
+    // 第二拍退场，第三拍进场。
+    tl.fromTo("#s06-b2", { opacity: 1, x: 0 }, { opacity: 0, x: -70, duration: 0.5, ease: "power2.in", immediateRender: false }, N.cues[9].t);
+    tl.fromTo("#s06-b3", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, N.cues[9].t + 0.55);
+
+    // 第三拍：坐标、点位、悬崖，一次只推一处。
+    tl.fromTo("#s06-b3-name", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[10].t + 0.1);
+    tl.fromTo("#s06-b3 .s06-b3-ylab", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.08 }, N.cues[10].t + 0.5);
+    tl.fromTo(
+      "#s06-b3 .s06-b3-xlab",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.18 },
+      N.cues[11].t + 0.15
+    );
+    tl.fromTo("#s06-b3-ten", { opacity: 0 }, { opacity: 0.9, duration: 0.5, ease: "power2.out" }, N.cues[12].t + 0.05);
+    tl.fromTo(
+      ["#s06-b3-d0", "#s06-b3-d1", "#s06-b3-d2", "#s06-b3-d3", "#s06-b3-d4", "#s06-b3-d5", "#s06-b3-d6"],
+      { opacity: 0, scale: 0.4 },
+      { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out", stagger: 0.16 },
+      N.cues[12].t + 0.35
+    );
+    tl.fromTo("#s06-b3-flat", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[12].t + 1.5);
+    tl.fromTo("#s06-b3-d7", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.2)" }, N.cues[13].t + 0.1);
+    tl.fromTo("#s06-b3-cliff", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, N.cues[13].t + 0.35);
+    tl.fromTo("#s06-b3-80", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[13].t + 0.7);
+    tl.fromTo("#s06-b3-zoom", { scale: 1 }, { scale: 1.028, duration: 0.55, ease: "power2.out", immediateRender: false }, N.cues[13].t + 0.05);
+    tl.fromTo("#s06-b3-zoom", { scale: 1.028 }, { scale: 1, duration: 0.5, ease: "power2.inOut", immediateRender: false }, N.cues[13].t + 0.75);
+    tl.fromTo("#s06-b3-two", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, N.cues[14].t + 0.05);
+    tl.fromTo("#s06-b3-two-label", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[14].t + 0.35);
+    tl.fromTo("#s06-b3-gate", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, N.cues[15].t + 0.1);
+    tl.fromTo("#s06-b3-ring", { opacity: 0, scale: 0.5 }, { opacity: 0.9, scale: 1.15, duration: 0.32, ease: "power2.out" }, N.cues[15].t + 0.15);
+    tl.fromTo("#s06-b3-ring", { opacity: 0.9, scale: 1.15 }, { opacity: 0, scale: 1.7, duration: 0.55, ease: "power1.out", immediateRender: false }, N.cues[15].t + 0.47);
+    tl.fromTo("#s06-b3-a1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, N.cues[16].t + 0.1);
+    tl.fromTo("#s06-b3-band", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, N.cues[17].t + 0.05);
+    tl.fromTo("#s06-b3-a2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, N.cues[17].t + 0.15);
+    tl.fromTo("#s06-b3-a3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, N.cues[18].t + 0.1);
+    tl.fromTo("#s06-b3-a4", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[19].t + 0.1);
+
+    // 悬崖图在这里停留：讲「GPT-2 时代没感觉」时把低处压暗，讲「GPT-3 之后」时高处再亮一下。
+    tl.fromTo("#s06-b3-band", { opacity: 1 }, { opacity: 0.35, duration: 0.9, ease: "power2.inOut", immediateRender: false }, N.cues[20].t + 0.1);
+    tl.fromTo(
+      ["#s06-b3-d0", "#s06-b3-d1", "#s06-b3-d2", "#s06-b3-d3", "#s06-b3-d4", "#s06-b3-d5", "#s06-b3-d6"],
+      { opacity: 1 },
+      { opacity: 0.45, duration: 0.9, ease: "power2.inOut", immediateRender: false },
+      N.cues[20].t + 0.15
+    );
+    tl.fromTo("#s06-b3-flat", { opacity: 1 }, { opacity: 0.45, duration: 0.9, ease: "power2.inOut", immediateRender: false }, N.cues[20].t + 0.15);
+    tl.fromTo("#s06-b3-80", { scale: 1 }, { scale: 1.05, duration: 0.3, ease: "power2.out", immediateRender: false }, N.cues[21].t + 0.15);
+    tl.fromTo("#s06-b3-80", { scale: 1.05 }, { scale: 1, duration: 0.35, ease: "power2.inOut", immediateRender: false }, N.cues[21].t + 0.45);
+    tl.fromTo("#s06-b3-d7", { scale: 1 }, { scale: 1.18, duration: 0.3, ease: "power2.out", immediateRender: false }, N.cues[21].t + 0.15);
+    tl.fromTo("#s06-b3-d7", { scale: 1.18 }, { scale: 1, duration: 0.35, ease: "power2.inOut", immediateRender: false }, N.cues[21].t + 0.45);
+
+    // 第三拍退场，第五拍：细时间轴从左往右生长。
+    tl.fromTo("#s06-b3", { opacity: 1, x: 0 }, { opacity: 0, x: -70, duration: 0.5, ease: "power2.in", immediateRender: false }, N.cues[22].t);
+    tl.fromTo("#s06-b5", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, N.cues[22].t + 0.1);
+    tl.fromTo("#s06-b5-title", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[22].t + 0.3);
+    tl.fromTo("#s06-b5-legend", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[22].t + 0.7);
+    tl.fromTo("#s06-b5-track-fill", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[22].t + 0.35);
+    tl.fromTo("#s06-b5-track-fill", { scaleX: 0 }, { scaleX: 1, duration: 23.1, ease: "none", immediateRender: false }, N.cues[22].t + 0.35);
+    tl.fromTo("#s06-b5-n3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[22].t + 1.0);
+    tl.fromTo("#s06-b5-n1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[23].t + 0.1);
+    tl.fromTo("#s06-b5-n2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[24].t + 0.1);
+    tl.fromTo("#s06-b5-n4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[25].t + 0.1);
+    tl.fromTo("#s06-b5-n5", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[26].t + 0.1);
+    tl.fromTo("#s06-b5-n5 .s06-b5-row", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.2 }, N.cues[26].t + 0.3);
+    tl.fromTo("#s06-b5-n6", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[27].t + 0.1);
+    tl.fromTo("#s06-b5-n6 .s06-b5-row", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.22 }, N.cues[27].t + 0.3);
+    // MOTION:END
+
+    window.__timelines["s-scaling-emergence"] = tl;
+  </script>
+</template>

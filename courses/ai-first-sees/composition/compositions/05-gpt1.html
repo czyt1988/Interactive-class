@@ -1,0 +1,467 @@
+<template>
+  <style>
+/* S05 · gpt1 — the whole task is next-word prediction. Paper only: the
+   sentence, four candidate bars, a token chain, and a small 2018 plaque. */
+
+.s-gpt1-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1200px;
+  height: 500px;
+  transform-origin: 50% 0;
+}
+
+/* 「会看」不等于「会说」 */
+.s-gpt1-eq {
+  position: absolute;
+  left: 0;
+  top: 80px;
+  width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.s-gpt1-eqchip {
+  padding: 10px 26px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 38px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.s-gpt1-eqneq {
+  font-family: var(--font-mono);
+  font-size: 46px;
+  line-height: 1;
+  color: var(--stamp);
+}
+
+/* 今天天气真 ___ */
+.s-gpt1-sentence {
+  position: absolute;
+  left: 0;
+  top: 66px;
+  width: 1200px;
+  text-align: center;
+  font-size: 92px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.s-gpt1-blank {
+  display: inline-block;
+  min-width: 128px;
+  margin-left: 14px;
+  padding-bottom: 6px;
+  border-bottom: 6px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: 80px;
+  font-weight: 400;
+  color: var(--line-strong);
+  vertical-align: -6px;
+}
+
+.s-gpt1-sentence--done {
+  opacity: 0;
+}
+
+.s-gpt1-filled {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--accent-text);
+}
+
+/* candidate probabilities */
+
+.s-gpt1-cands {
+  position: absolute;
+  left: 40px;
+  top: 232px;
+  width: 1120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.s-gpt1-cand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 54px;
+  padding: 0 14px;
+  border-radius: 10px;
+}
+
+.s-gpt1-word {
+  flex: none;
+  width: 64px;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.s-gpt1-track {
+  position: relative;
+  flex: 1;
+  height: 26px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  overflow: hidden;
+}
+
+.s-gpt1-bar {
+  display: block;
+  height: 100%;
+  border-radius: 13px;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+.s-gpt1-pct {
+  flex: none;
+  width: 92px;
+  padding: 4px 8px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--ink-faint);
+  border-radius: 8px;
+}
+
+.s-gpt1-check {
+  flex: none;
+  width: 34px;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.s-gpt1-dots {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+
+/* 接龙 chain */
+
+.s-gpt1-chain {
+  position: absolute;
+  left: 40px;
+  top: 526px;
+  width: 1180px;
+}
+
+.s-gpt1-chainlabel {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.s-gpt1-tokens {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.s-gpt1-token {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.s-gpt1-token--pick {
+  border-color: transparent;
+  background: var(--accent-soft);
+}
+
+.s-gpt1-arrow {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+
+/* 2018 / GPT-1 / 117M plaque */
+
+.s-gpt1-plaque {
+  position: absolute;
+  left: 1260px;
+  top: 446px;
+  width: 384px;
+  height: 190px;
+  padding: 22px 28px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.s-gpt1-plaqueyear {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.s-gpt1-plaquename {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.s-gpt1-plaqueparams {
+  margin-top: 10px;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+.s-gpt1-plaqueparams b {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.s-gpt1-logo {
+  position: absolute;
+  left: 1452px;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffdf8;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.s-gpt1-logo .logo {
+  height: 34px;
+  width: auto;
+}
+
+/* Late beats start hidden so a mid-timeline seek cannot show them early. */
+.s-gpt1-eq,
+.s-gpt1-sentence,
+.s-gpt1-cands,
+.s-gpt1-cand,
+.s-gpt1-bar,
+.s-gpt1-pct,
+.s-gpt1-check,
+.s-gpt1-dots,
+.s-gpt1-chain,
+.s-gpt1-token,
+.s-gpt1-plaque,
+.s-gpt1-logo {
+  opacity: 0;
+}
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-gpt1"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="speak"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S05</span>
+          <span class="scene-act">第二幕 · 说</span>
+        </p>
+        <h1 id="s-gpt1-title" class="scene-title">文字接龙</h1>
+        <p class="scene-no">05 / 22</p>
+      </header>
+
+      <section id="s-gpt1-stage" class="stage">
+<div id="s-gpt1-eq" class="s-gpt1-eq">
+  <span class="s-gpt1-eqchip">会看</span>
+  <span class="s-gpt1-eqneq">≠</span>
+  <span class="s-gpt1-eqchip">会说</span>
+</div>
+
+<div id="s-gpt1-world" class="s-gpt1-world">
+  <p id="s-gpt1-sentence" class="s-gpt1-sentence">今天天气真<span id="s-gpt1-blank" class="s-gpt1-blank">?</span></p>
+  <p id="s-gpt1-done" class="s-gpt1-sentence s-gpt1-sentence--done">今天天气真<span class="s-gpt1-filled">好</span></p>
+
+  <div id="s-gpt1-cands" class="s-gpt1-cands">
+    <div id="s-gpt1-cand-1" class="s-gpt1-cand">
+      <span class="s-gpt1-word">好</span>
+      <span class="s-gpt1-track"><i id="s-gpt1-bar-1" class="s-gpt1-bar" style="width: 62%"></i></span>
+      <span id="s-gpt1-pct-1" class="s-gpt1-pct">62%</span>
+      <span id="s-gpt1-check-1" class="s-gpt1-check">✓</span>
+    </div>
+    <div id="s-gpt1-cand-2" class="s-gpt1-cand">
+      <span class="s-gpt1-word">冷</span>
+      <span class="s-gpt1-track"><i id="s-gpt1-bar-2" class="s-gpt1-bar" style="width: 18%"></i></span>
+      <span id="s-gpt1-pct-2" class="s-gpt1-pct">18%</span>
+      <span class="s-gpt1-check"></span>
+    </div>
+    <div id="s-gpt1-cand-3" class="s-gpt1-cand">
+      <span class="s-gpt1-word">热</span>
+      <span class="s-gpt1-track"><i id="s-gpt1-bar-3" class="s-gpt1-bar" style="width: 12%"></i></span>
+      <span id="s-gpt1-pct-3" class="s-gpt1-pct">12%</span>
+      <span class="s-gpt1-check"></span>
+    </div>
+    <div id="s-gpt1-cand-4" class="s-gpt1-cand">
+      <span class="s-gpt1-word">蓝</span>
+      <span class="s-gpt1-track"><i id="s-gpt1-bar-4" class="s-gpt1-bar" style="width: 6%"></i></span>
+      <span id="s-gpt1-pct-4" class="s-gpt1-pct">6%</span>
+      <span class="s-gpt1-check"></span>
+    </div>
+    <div id="s-gpt1-dots" class="s-gpt1-dots">……</div>
+  </div>
+</div>
+
+<div id="s-gpt1-chain" class="s-gpt1-chain">
+  <p class="s-gpt1-chainlabel">文字接龙</p>
+  <div class="s-gpt1-tokens">
+    <span id="s-gpt1-tok-1" class="s-gpt1-token">今天</span>
+    <span class="s-gpt1-arrow">→</span>
+    <span id="s-gpt1-tok-2" class="s-gpt1-token">天气</span>
+    <span class="s-gpt1-arrow">→</span>
+    <span id="s-gpt1-tok-3" class="s-gpt1-token">真</span>
+    <span class="s-gpt1-arrow">→</span>
+    <span id="s-gpt1-tok-4" class="s-gpt1-token s-gpt1-token--pick">好</span>
+    <span class="s-gpt1-arrow">→</span>
+    <span id="s-gpt1-tok-5" class="s-gpt1-token">，</span>
+    <span id="s-gpt1-tok-6" class="s-gpt1-token">真</span>
+    <span id="s-gpt1-tok-7" class="s-gpt1-token">舒服</span>
+    <span id="s-gpt1-tok-8" class="s-gpt1-token">。</span>
+  </div>
+</div>
+
+<div id="s-gpt1-plaque" class="s-gpt1-plaque">
+  <p class="s-gpt1-plaqueyear">2018</p>
+  <p class="s-gpt1-plaquename">GPT-1</p>
+  <p class="s-gpt1-plaqueparams"><b>117M</b> 参数</p>
+</div>
+
+<div id="s-gpt1-logo" class="s-gpt1-logo">
+  <img class="logo" src="assets/media/logo/openai.png" width="253" height="256" alt="OpenAI 标志" />
+  OpenAI
+</div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-gpt1-cap-0" class="cap-line clip" data-start="0.7" data-duration="2.218">但「会看」不等于「会说」。</p>
+        <p id="s-gpt1-cap-1" class="cap-line clip" data-start="2.918" data-duration="2.98">语言模型走的是另一条路。</p>
+        <p id="s-gpt1-cap-2" class="cap-line clip" data-start="5.938" data-duration="5.519">它的任务简单到不可思议：给你一句话，猜下一个词。</p>
+        <p id="s-gpt1-cap-3" class="cap-line clip" data-start="11.497" data-duration="5.768">2018 年，OpenAI 的 GPT-1 只有 1.17 亿个参数，</p>
+        <p id="s-gpt1-cap-4" class="cap-line clip" data-start="17.305" data-duration="2.799">它做的事就是文字接龙。</p>
+        <p id="s-gpt1-cap-5" class="cap-line clip" data-start="20.144" data-duration="6.351">你今天觉得 ChatGPT 很聪明，但它的底层动作，仍然是接龙，</p>
+        <p id="s-gpt1-cap-6" class="cap-line clip" data-start="26.535" data-duration="1.819">只是接得非常好。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S05</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-gpt1-progress"></i></span>
+        <span class="cap-clock">00:30</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S05","id":"gpt1","index":0,"start":0,"duration":30.07,"audioStart":0.6000000000000227,"audioDuration":27.864,"cues":[{"i":0,"t":0.7,"d":2.218,"text":"但「会看」不等于「会说」。","sent":"但「会看」不等于「会说」。"},{"i":1,"t":2.918,"d":2.98,"text":"语言模型走的是另一条路。","sent":"语言模型走的是另一条路。"},{"i":2,"t":5.938,"d":5.519,"text":"它的任务简单到不可思议：给你一句话，猜下一个词。","sent":"它的任务简单到不可思议：给你一句话，猜下一个词。"},{"i":3,"t":11.497,"d":5.768,"text":"2018 年，OpenAI 的 GPT-1 只有 1.17 亿个参数，","sent":"2018 年，OpenAI 的 GPT-1 只有 1.17 亿个参数，它做的事就是文字接龙。"},{"i":4,"t":17.305,"d":2.799,"text":"它做的事就是文字接龙。","sent":"2018 年，OpenAI 的 GPT-1 只有 1.17 亿个参数，它做的事就是文字接龙。"},{"i":5,"t":20.144,"d":6.351,"text":"你今天觉得 ChatGPT 很聪明，但它的底层动作，仍然是接龙，","sent":"你今天觉得 ChatGPT 很聪明，但它的底层动作，仍然是接龙，只是接得非常好。"},{"i":6,"t":26.535,"d":1.819,"text":"只是接得非常好。","sent":"你今天觉得 ChatGPT 很聪明，但它的底层动作，仍然是接龙，只是接得非常好。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-gpt1-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+/* S05 · gpt1 — the task is one sentence and one guess: pick the next word. */
+const sGpt1Cands = ["#s-gpt1-cand-1", "#s-gpt1-cand-2", "#s-gpt1-cand-3", "#s-gpt1-cand-4"];
+const sGpt1Bars = [".s-gpt1-bar"];
+const sGpt1Pcts = [".s-gpt1-pct"];
+
+// c0 (0.7) 「会看」不等于「会说」。
+tl.fromTo("#s-gpt1-eq", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.9);
+
+// c1 (2.918) 另一条路：换成一句话，缺一个词。
+tl.fromTo("#s-gpt1-eq", { opacity: 1 }, { opacity: 0, y: -10, duration: 0.35, ease: "power1.out", immediateRender: false }, 3.05);
+tl.fromTo("#s-gpt1-sentence", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 3.15);
+
+// c2 (5.938) 猜下一个词：候选词和概率条依次长出来。
+tl.fromTo("#s-gpt1-cands", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 6.25);
+tl.fromTo(sGpt1Cands, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.38, ease: "power2.out", stagger: 0.16 }, 6.35);
+tl.fromTo("#s-gpt1-dots", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.out" }, 7.0);
+tl.fromTo(sGpt1Bars, { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 1.0, ease: "power3.out", stagger: 0.22, transformOrigin: "left center" }, 6.7);
+tl.fromTo(sGpt1Pcts, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out", stagger: 0.22 }, 7.1);
+
+// c3 (11.497) 2018 / GPT-1 / 117M：镜头拉远，露出小牌子。
+tl.fromTo("#s-gpt1-world", { scale: 1, y: 0 }, { scale: 0.92, y: -10, duration: 1.0, ease: "power2.inOut" }, 11.75);
+tl.fromTo("#s-gpt1-plaque", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 11.8);
+tl.fromTo("#s-gpt1-logo", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 11.75);
+
+// c4 (17.305) 文字接龙：句子补成「好」，接龙链开始。
+tl.fromTo("#s-gpt1-sentence", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.out", immediateRender: false }, 17.45);
+tl.fromTo("#s-gpt1-done", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 17.5);
+tl.fromTo("#s-gpt1-cand-1", { backgroundColor: "rgba(232, 178, 58, 0)" }, { backgroundColor: "rgba(232, 178, 58, 0.22)", duration: 0.4, ease: "power1.out" }, 17.5);
+tl.fromTo("#s-gpt1-check-1", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 17.7);
+tl.fromTo(["#s-gpt1-cand-2", "#s-gpt1-cand-3", "#s-gpt1-cand-4"], { opacity: 1 }, { opacity: 0.5, duration: 0.45, ease: "power1.out", immediateRender: false }, 17.6);
+tl.fromTo("#s-gpt1-pct-1", { backgroundColor: "rgba(232, 178, 58, 0)", scale: 1 }, { backgroundColor: "rgba(232, 178, 58, 0.28)", scale: 1.08, duration: 0.4, ease: "power2.out" }, 17.7);
+tl.fromTo("#s-gpt1-chain", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 17.6);
+tl.fromTo(
+  ["#s-gpt1-tok-1", "#s-gpt1-tok-2", "#s-gpt1-tok-3", "#s-gpt1-tok-4"],
+  { opacity: 0, y: 10 },
+  { opacity: 1, y: 0, duration: 0.32, ease: "power2.out", stagger: 0.26 },
+  17.9
+);
+
+// c5 (20.144) ChatGPT 的底层动作仍然是接龙：链子继续往下接。
+tl.fromTo(
+  ["#s-gpt1-tok-5", "#s-gpt1-tok-6", "#s-gpt1-tok-7", "#s-gpt1-tok-8"],
+  { opacity: 0, y: 10 },
+  { opacity: 1, y: 0, duration: 0.32, ease: "power2.out", stagger: 0.26 },
+  20.45
+);
+
+// c6 (26.535) 「只是接得非常好」：把「好」的概率条留成唯一焦点。
+tl.fromTo(["#s-gpt1-cand-2", "#s-gpt1-cand-3", "#s-gpt1-cand-4"], { opacity: 0.5 }, { opacity: 0.3, duration: 0.5, ease: "power1.out", immediateRender: false }, 26.7);
+tl.fromTo("#s-gpt1-pct-1", { scale: 1.08 }, { scale: 1.18, duration: 0.45, ease: "power2.out", immediateRender: false }, 26.7);
+    // MOTION:END
+
+    window.__timelines["s-gpt1"] = tl;
+  </script>
+</template>

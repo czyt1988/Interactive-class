@@ -2,11 +2,12 @@
 
 这个仓库构建 **AI Learning**：一个用网页动画讲 AI 的教学平台。课程是自包含的静态包，站点是 FastAPI + Jinja2 的封面与目录。
 
-## 先读这三份
+## 先读这四份
 
-1. [Agent 开发方案](docs/agent-development-plan.md) —— 唯一的执行计划：阶段、验收标准、每门新课的生产模板。
-2. [架构设计](docs/architecture.md) —— 关键决策、运行时、构建、部署和风险。
-3. [课程契约](docs/course-contract.md) —— 一门课必须长什么样，字段、目录、时间规则和验收清单。
+1. [前端设计契约](DESIGN.md) —— 视觉、文案、动效、课程 composition 的唯一决策来源；做任何页面或课程视觉改动先读它。
+2. [Agent 开发方案](docs/agent-development-plan.md) —— 唯一的执行计划：阶段、验收标准、每门新课的生产模板。
+3. [架构设计](docs/architecture.md) —— 关键决策、运行时、构建、部署和风险。
+4. [课程契约](docs/course-contract.md) —— 一门课必须长什么样，字段、目录、时间规则和验收清单。
 
 ## 不可协商
 
@@ -17,6 +18,8 @@
 - 一门课一个 HyperFrames composition，一屏一个 scene。
 - 课程任务只修改 `courses/<slug>/`，平台改动另开任务。
 - HyperFrames 版本固定，升级要先跑播放器契约测试。
+- 前端与课程视觉必须遵守 [DESIGN.md](DESIGN.md)：只做亮色纸面，颜色/圆角/层级只来自 `design/tokens.css`，界面文案零 em-dash，动效必须有理由且尊重 reduced-motion。
+- 改视觉决策前先改 DESIGN.md；改令牌只改 `design/tokens.css` 再跑 `python scripts/sync_runtime.py`。
 
 ## 工作方式
 
@@ -28,10 +31,12 @@
 
 ## 当前状态
 
-v0.2：平台骨架已经落地，第一门课已经可播放。
+v0.4：第一门长视频课程按新版导演脚本（22 镜头）重做，整门课浅色纸面，可连续播放，也可导出 MP4。
 
-- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、控制条、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
-- 已有课程：`courses/ai-first-sees/`（「AI 第一次看懂世界」，9 屏 / 2:57）。
+- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、控制条、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
+- 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `大纲/AI-Agent-入门课/02-逐页脚本.md` 的 22 个镜头落地，共 22 屏 / 21:42；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
+- 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
+- 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程控制条第一个按钮是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
 - 还没做：CI、Docker/部署、课程脚手架脚本、登录、搜索。
 
 先跑一遍这三条，确认环境是通的：
@@ -40,4 +45,6 @@ v0.2：平台骨架已经落地，第一门课已经可播放。
 python scripts/sync_runtime.py          # 布置 player / runtime / GSAP / 字体
 python scripts/build_courses.py --all   # 生成 dist/courses/<slug>/
 pytest -q && ruff check .
+# 只有重做旁白/时间时才需要（需要 edge-tts、mutagen、soundfile 和网络）：
+python scripts/build_narration.py --no-tts   # 复用缓存重建时间/根 composition/ui 清单
 ```

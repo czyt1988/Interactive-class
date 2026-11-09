@@ -1,0 +1,644 @@
+<template>
+  <style>
+    /* S09 给 AI 套一层循环：左边补全，右边 Agent，中间一个有限的循环。 */
+    /* 晚出现的元素先藏住，快照 seek 到早期时间点也不会提前显示。 */
+    #s09-ed1,
+    #s09-l1,
+    #s09-l2,
+    #s09-l4,
+    #s09-l5,
+    #s09-g1,
+    #s09-g2,
+    #s09-g3,
+    #s09-cursor-logo,
+    #s09-time,
+    #s09-t2wrap,
+    #s09-shot,
+    #s09-ed2,
+    .s09-file,
+    #s09-diff-a,
+    #s09-diff-b,
+    #s09-test-red,
+    #s09-test-green,
+    #s09-loop,
+    .s09-loop-node,
+    #s09-orbit,
+    .s09-en,
+    #s09-react,
+    #s09-fc,
+    #s09-react-chip,
+    #s09-sum,
+    #s09-sum-underline {
+      opacity: 0;
+    }
+
+    .s09-ed {
+      position: absolute;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .s09-ed--l {
+      left: 0;
+      top: 60px;
+      width: 616px;
+      height: 366px;
+    }
+
+    .s09-ed--r {
+      left: 1030px;
+      top: 60px;
+      width: 634px;
+      height: 366px;
+    }
+
+    .s09-ed-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 46px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .s09-ed-head img {
+      display: block;
+      width: 26px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .s09-ed-name {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s09-ed-tag {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s09-code {
+      position: absolute;
+      inset: 46px 0 0 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 16px 22px;
+      font-size: 25px;
+      line-height: 1.72;
+      background: #fffdf8;
+    }
+
+    .s09-caret {
+      display: inline-block;
+      width: 3px;
+      height: 26px;
+      margin-left: 2px;
+      vertical-align: -4px;
+      background: var(--accent);
+    }
+
+    .s09-ghost {
+      color: var(--ink-faint);
+    }
+
+    .s09-ghost b {
+      color: var(--accent-text);
+      font-weight: 400;
+    }
+
+    /* --------------------------------------------------------- 右编辑器 */
+    .s09-tree {
+      position: absolute;
+      left: 0;
+      top: 46px;
+      width: 158px;
+      height: 204px;
+      padding: 12px 10px 12px 16px;
+      border-right: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .s09-file {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s09-file:first-child {
+      margin-top: 0;
+    }
+
+    .s09-file i {
+      display: block;
+      width: 8px;
+      height: 8px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s09-diff {
+      position: absolute;
+      left: 158px;
+      top: 46px;
+      right: 0;
+      height: 204px;
+      padding: 10px 0;
+      background: #fffdf8;
+      overflow: hidden;
+    }
+
+    .s09-diff .code-line {
+      padding: 0 16px;
+      font-size: 19px;
+      line-height: 1.8;
+    }
+
+    .s09-diff .s09-del {
+      background: rgba(178, 58, 42, 0.12);
+    }
+
+    .s09-diff .s09-add {
+      background: rgba(31, 122, 82, 0.14);
+    }
+
+    .s09-diff-hunk {
+      display: block;
+    }
+
+    .s09-term {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 116px;
+      padding: 12px 18px;
+      border-top: 1px solid var(--line);
+      background: #f8f2e7;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--ink-soft);
+      overflow: hidden;
+    }
+
+    .s09-term-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .s09-term-bar i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #c9bfae;
+    }
+
+    .s09-test-layer {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 34px;
+    }
+
+    .s09-term-red {
+      color: #b23a2a;
+    }
+
+    .s09-term-green {
+      color: #1f7a52;
+    }
+
+    /* ----------------------------------------------------------- 循环图 */
+    .s09-loop {
+      position: absolute;
+      left: 630px;
+      top: 60px;
+      width: 400px;
+      height: 366px;
+    }
+
+    .s09-loop svg {
+      position: absolute;
+      left: 70px;
+      top: 44px;
+      width: 260px;
+      height: 260px;
+      color: var(--ink-soft);
+      overflow: visible;
+    }
+
+    .s09-loop-node {
+      position: absolute;
+      width: 110px;
+      text-align: center;
+      font-size: 27px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s09-loop-node--dim {
+      color: var(--ink-faint);
+      font-weight: 500;
+    }
+
+    .s09-orbit {
+      position: absolute;
+      left: 200px;
+      top: 174px;
+      width: 0;
+      height: 0;
+    }
+
+    .s09-orbit i {
+      position: absolute;
+      left: -9px;
+      top: -114px;
+      display: block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s09-react {
+      position: absolute;
+      left: 140px;
+      top: 148px;
+      width: 120px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s09-react span {
+      display: block;
+      margin-top: 2px;
+      font-size: 21px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--accent-text);
+    }
+
+    /* --------------------------------------------------------- 底部一排 */
+    .s09-time {
+      position: absolute;
+      left: 0;
+      top: 452px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .s09-t2wrap {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .s09-time-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 10px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+
+    .s09-time-item b {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s09-time-item span {
+      font-size: 25px;
+      color: var(--ink-soft);
+    }
+
+    .s09-time-arrow {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      color: var(--accent-text);
+    }
+
+    .s09-react-chip {
+      position: absolute;
+      left: 620px;
+      top: 446px;
+      width: 640px;
+    }
+
+    .s09-chip-title {
+      font-family: var(--font-mono);
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s09-chip-sub {
+      margin-top: 4px;
+      font-size: 25px;
+      color: var(--ink-soft);
+    }
+
+    .s09-fc {
+      position: absolute;
+      left: 620px;
+      top: 546px;
+      width: 640px;
+    }
+
+    .s09-cursor-logo {
+      position: absolute;
+      left: 1456px;
+      top: 2px;
+      font-size: 28px;
+    }
+
+    .s09-shot {
+      position: absolute;
+      left: 1362px;
+      top: 446px;
+      width: 280px;
+    }
+
+    .s09-shot .media__label {
+      padding-top: 6px;
+      font-size: 19px;
+    }
+
+    .s09-sum {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s09-sum u {
+      text-decoration: none;
+      color: var(--accent-text);
+    }
+
+    .s09-sum-wrap {
+      position: absolute;
+      left: 0;
+      top: 560px;
+    }
+
+    .s09-sum-underline {
+      position: relative;
+      display: block;
+      height: 5px;
+      margin-top: 6px;
+      border-radius: 3px;
+      background: var(--accent);
+      transform-origin: left center;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-l3-agent"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S09</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-l3-agent-title" class="scene-title">给 AI 套一层循环</h1>
+        <p class="scene-no">09 / 22</p>
+      </header>
+
+      <section id="s-l3-agent-stage" class="stage">
+        <!-- 左边：补全，只是猜下一行。 -->
+        <div id="s09-ed1" class="s09-ed s09-ed--l">
+          <div class="s09-ed-head">
+            <span class="s09-ed-name">编辑器</span>
+            <span class="s09-ed-tag">cart.ts · 补全</span>
+          </div>
+          <div class="s09-code code">
+            <span id="s09-l1" class="code-line">function totalSize(items) {</span>
+            <span id="s09-l2" class="code-line">  return items.<span class="s09-caret"></span></span>
+            <span class="code-line">    <span id="s09-ghost" class="s09-ghost"><b id="s09-g1">reduce((a, b) =&gt;</b> <b id="s09-g2">a + b.size,</b> <b id="s09-g3">0);</b></span></span>
+            <span id="s09-l4" class="code-line">}</span>
+            <span id="s09-l5" class="code-line code-line--muted">// 光标停在这里，等它猜下一行</span>
+          </div>
+        </div>
+
+        <!-- 中间：观察 → 思考 → 行动 → 观察，有限地转两圈。 -->
+        <div id="s09-loop" class="s09-loop">
+          <svg viewBox="0 0 260 260" aria-hidden="true">
+            <circle cx="130" cy="130" r="105" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="9 9" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(204 56) rotate(45)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(204 204) rotate(135)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(56 204) rotate(225)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(56 56) rotate(315)" />
+          </svg>
+          <p class="s09-loop-node" style="left: 145px; top: 14px">观察</p>
+          <p class="s09-loop-node" style="left: 318px; top: 158px; width: 70px">思考</p>
+          <p class="s09-loop-node" style="left: 145px; top: 306px">行动</p>
+          <p class="s09-loop-node s09-loop-node--dim" style="left: 4px; top: 158px; width: 92px">观察</p>
+          <div id="s09-orbit" class="s09-orbit"><i></i></div>
+          <p id="s09-react" class="s09-react">ReAct<span>2022</span></p>
+        </div>
+
+        <!-- 右边：Agent 自己读文件、改代码、跑测试。 -->
+        <div id="s09-ed2" class="s09-ed s09-ed--r">
+          <div class="s09-ed-head">
+            <span class="s09-ed-name">Cursor</span>
+            <span class="s09-ed-tag">Agent 模式 · 目标：修好 api.test.ts</span>
+          </div>
+          <div class="s09-tree">
+            <p class="s09-file"><i></i>app.ts</p>
+            <p class="s09-file"><i></i>routes.ts</p>
+            <p class="s09-file"><i></i>api.test.ts</p>
+          </div>
+          <div class="s09-diff">
+            <span class="code-line">82  export async function getUser(id) {</span>
+            <div id="s09-diff-a">
+              <span class="code-line s09-del">-   const u = await users.findOne(id);</span>
+              <span class="code-line s09-add">+   const u = await users.findById(id);</span>
+            </div>
+            <div id="s09-diff-b">
+              <span class="code-line s09-del">-   if (!u) return null;</span>
+              <span class="code-line s09-add">+   if (!u) throw new Error('404');</span>
+            </div>
+          </div>
+          <div class="s09-term">
+            <div class="s09-term-bar"><i></i><i></i><i></i></div>
+            <div id="s09-test-red" class="s09-test-layer">
+              <p class="s09-term-red">✗ FAIL  test/api.test.ts</p>
+              <p class="s09-term-red">TypeError: users.findOne is not a function</p>
+            </div>
+            <div id="s09-test-green" class="s09-test-layer">
+              <p class="s09-term-green">✓ PASS  test/api.test.ts</p>
+              <p class="s09-term-green">8 passed · 0 failed</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右上：真实产品标识 -->
+        <span id="s09-cursor-logo" class="logo-chip logo-chip--sm s09-cursor-logo">
+          <img src="assets/media/logo/cursor.png" alt="Cursor Logo" width="30" height="34" />Cursor
+        </span>
+
+        <!-- 底部：Cursor 的两个时间点 -->
+        <div id="s09-time" class="s09-time">
+          <div id="s09-t1" class="s09-time-item"><b>2023.03</b><span>代码补全</span></div>
+          <span id="s09-t2wrap" class="s09-t2wrap">
+            <span class="s09-time-arrow">→</span>
+            <div id="s09-t2" class="s09-time-item"><b>2024.11</b><span>Agent 模式</span></div>
+          </span>
+        </div>
+
+        <!-- 底中：ReAct 与 Function Calling -->
+        <div id="s09-react-chip" class="s09-react-chip">
+          <p class="s09-chip-title">ReAct · 2022</p>
+          <p class="s09-chip-sub">推理 → 行动 → 观察，再推理</p>
+        </div>
+        <div id="s09-fc" class="s09-fc">
+          <p class="s09-chip-title">Function Calling · 2023.06</p>
+          <p class="s09-chip-sub">工具调用，变成一个标准接口</p>
+        </div>
+
+        <!-- 右下：Cursor Agent 模式的真实界面 -->
+        <div id="s09-shot" class="s09-shot media">
+          <img src="assets/media/shot/cursor-agent-mode.webp" alt="Cursor Agent 模式界面截图" width="262" height="174" />
+          <div class="media__label"><span>Cursor</span><span>Agent 模式截图</span></div>
+        </div>
+
+        <!-- 收束：循环加工具 -->
+        <div class="s09-sum-wrap">
+          <p id="s09-sum" class="s09-sum">循环 + 工具 → <u>Agent</u></p>
+          <i id="s09-sum-underline" class="s09-sum-underline"></i>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-l3-agent-cap-0" class="cap-line clip" data-start="0.7" data-duration="3.939">第三阶段，变化发生在程序员这边。</p>
+        <p id="s-l3-agent-cap-1" class="cap-line clip" data-start="4.639" data-duration="4.993">Cursor 最早只是代码补全，2023 年 3 月上线；</p>
+        <p id="s-l3-agent-cap-2" class="cap-line clip" data-start="9.672" data-duration="4.299">到 2024 年 11 月，它有了 Agent 模式。</p>
+        <p id="s-l3-agent-cap-3" class="cap-line clip" data-start="14.011" data-duration="4.698">区别在于，补全，是你写一行，它猜下一行；</p>
+        <p id="s-l3-agent-cap-4" class="cap-line clip" data-start="18.749" data-duration="6.475">Agent，是你给它一个目标，它自己读文件、改代码、跑测试，</p>
+        <p id="s-l3-agent-cap-5" class="cap-line clip" data-start="25.265" data-duration="1.618">看到报错再改。</p>
+        <p id="s-l3-agent-cap-6" class="cap-line clip" data-start="26.923" data-duration="5.386">给 AI 套一层循环，它就从「工具」变成了「数字工人」。</p>
+        <p id="s-l3-agent-cap-7" class="cap-line clip" data-start="32.349" data-duration="6.039">这个循环，学术界 2022 年就有个名字，叫 ReAct：</p>
+        <p id="s-l3-agent-cap-8" class="cap-line clip" data-start="38.428" data-duration="3.396">推理、行动、观察，再推理。</p>
+        <p id="s-l3-agent-cap-9" class="cap-line clip" data-start="41.864" data-duration="5.798">2023 年，OpenAI 又把 function calling 做成了标准接口。</p>
+        <p id="s-l3-agent-cap-10" class="cap-line clip" data-start="47.702" data-duration="4.416">循环加工具，Agent 的大门就打开了。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S09</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-l3-agent-progress"></i></span>
+        <span class="cap-clock">00:54</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S09","id":"l3-agent","index":0,"start":0,"duration":53.83,"audioStart":0.6000000000000227,"audioDuration":51.624,"cues":[{"i":0,"t":0.7,"d":3.939,"text":"第三阶段，变化发生在程序员这边。","sent":"第三阶段，变化发生在程序员这边。"},{"i":1,"t":4.639,"d":4.993,"text":"Cursor 最早只是代码补全，2023 年 3 月上线；","sent":"Cursor 最早只是代码补全，2023 年 3 月上线；到 2024 年 11 月，它有了 Agent 模式。"},{"i":2,"t":9.672,"d":4.299,"text":"到 2024 年 11 月，它有了 Agent 模式。","sent":"Cursor 最早只是代码补全，2023 年 3 月上线；到 2024 年 11 月，它有了 Agent 模式。"},{"i":3,"t":14.011,"d":4.698,"text":"区别在于，补全，是你写一行，它猜下一行；","sent":"区别在于，补全，是你写一行，它猜下一行；Agent，是你给它一个目标，它自己读文件、改代码、跑测试，看到报错再改。"},{"i":4,"t":18.749,"d":6.475,"text":"Agent，是你给它一个目标，它自己读文件、改代码、跑测试，","sent":"区别在于，补全，是你写一行，它猜下一行；Agent，是你给它一个目标，它自己读文件、改代码、跑测试，看到报错再改。"},{"i":5,"t":25.265,"d":1.618,"text":"看到报错再改。","sent":"区别在于，补全，是你写一行，它猜下一行；Agent，是你给它一个目标，它自己读文件、改代码、跑测试，看到报错再改。"},{"i":6,"t":26.923,"d":5.386,"text":"给 AI 套一层循环，它就从「工具」变成了「数字工人」。","sent":"给 AI 套一层循环，它就从「工具」变成了「数字工人」。"},{"i":7,"t":32.349,"d":6.039,"text":"这个循环，学术界 2022 年就有个名字，叫 ReAct：","sent":"这个循环，学术界 2022 年就有个名字，叫 ReAct：推理、行动、观察，再推理。"},{"i":8,"t":38.428,"d":3.396,"text":"推理、行动、观察，再推理。","sent":"这个循环，学术界 2022 年就有个名字，叫 ReAct：推理、行动、观察，再推理。"},{"i":9,"t":41.864,"d":5.798,"text":"2023 年，OpenAI 又把 function calling 做成了标准接口。","sent":"2023 年，OpenAI 又把 function calling 做成了标准接口。"},{"i":10,"t":47.702,"d":4.416,"text":"循环加工具，Agent 的大门就打开了。","sent":"循环加工具，Agent 的大门就打开了。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-l3-agent-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 第一拍：第三阶段，变化发生在程序员这边。先看见那个只会补全的编辑器。
+    tl.fromTo("#s09-ed1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, N.cues[0].t);
+    tl.fromTo(
+      ["#s09-l1", "#s09-l2", "#s09-l4", "#s09-l5"],
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.18 },
+      N.cues[0].t + 0.3
+    );
+
+    // 第二拍：Cursor 2023 年 3 月上线，只是代码补全。
+    tl.fromTo("#s09-cursor-logo", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[1].t);
+    tl.fromTo("#s09-time", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[1].t + 0.3);
+
+    // 第三拍：2024 年 11 月，Agent 模式；右手边放一张真实界面小卡。
+    tl.fromTo("#s09-t2wrap", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, N.cues[2].t + 0.1);
+    tl.fromTo("#s09-shot", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, N.cues[2].t + 0.7);
+
+    // 第四拍：补全是你写一行，它猜下一行。
+    tl.fromTo(
+      ["#s09-g1", "#s09-g2", "#s09-g3"],
+      { opacity: 0 },
+      { opacity: 1, duration: 0.35, ease: "power2.out", stagger: 0.2 },
+      N.cues[3].t + 0.1
+    );
+
+    // 第五拍：Agent 自己打开三个文件、改代码、跑测试，先看到红色报错。
+    tl.fromTo("#s09-ed2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, N.cues[4].t);
+    tl.fromTo(".s09-file", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.22 }, N.cues[4].t + 0.3);
+    tl.fromTo("#s09-diff-a", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[4].t + 1.2);
+    tl.fromTo("#s09-test-red", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[4].t + 4.2);
+
+    // 第六拍：看到报错再改，测试从红变绿。
+    tl.fromTo("#s09-diff-b", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[5].t + 0.1);
+    tl.fromTo("#s09-test-red", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power2.in", immediateRender: false }, N.cues[5].t + 1.0);
+    tl.fromTo("#s09-test-green", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, N.cues[5].t + 1.15);
+
+    // 第七拍：给 AI 套一层循环。有限地转两圈，停在稳定帧。
+    tl.fromTo("#s09-loop", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[6].t);
+    tl.fromTo(".s09-loop-node", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.15 }, N.cues[6].t + 0.35);
+    tl.fromTo("#s09-orbit", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, N.cues[6].t + 0.8);
+    tl.fromTo("#s09-orbit", { rotation: 0 }, { rotation: 720, duration: 3.6, ease: "power1.inOut", immediateRender: false }, N.cues[6].t + 0.8);
+
+    // 第八拍：这个循环有名字，叫 ReAct。
+    tl.fromTo("#s09-react", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, N.cues[7].t + 0.1);
+    tl.fromTo(".s09-loop-node", { scale: 1 }, { scale: 1.14, duration: 0.36, ease: "power2.out", stagger: 0.3, immediateRender: false }, N.cues[8].t + 0.1);
+    tl.fromTo(".s09-loop-node", { scale: 1.14 }, { scale: 1, duration: 0.42, ease: "power2.inOut", stagger: 0.3, immediateRender: false }, N.cues[8].t + 0.46);
+    tl.fromTo("#s09-react-chip", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[8].t + 0.5);
+
+    // 第九拍：2023 年，function calling 把工具调用做成标准接口。
+    tl.fromTo("#s09-fc", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[9].t + 0.1);
+
+    // 第十拍：循环加工具，Agent 的大门就打开了。
+    tl.fromTo("#s09-sum", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[10].t + 0.1);
+    tl.fromTo("#s09-sum-underline", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 1.6, ease: "power2.inOut" }, N.cues[10].t + 0.8);
+    // MOTION:END
+
+    window.__timelines["s-l3-agent"] = tl;
+  </script>
+</template>

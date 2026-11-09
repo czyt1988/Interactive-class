@@ -1,0 +1,389 @@
+<template>
+  <style>
+    /* S10 四加一：四个方块拼成一个环，权限像一道门立在环外。 */
+    /* 晚出现的元素先藏住，快照 seek 到早期时间点也不会提前显示。 */
+    #s10-q,
+    #s10-wrong,
+    #s10-wrong-strike,
+    #s10-wrong-tag,
+    #s10-ring,
+    .s10-node,
+    #s10-gate,
+    #s10-gate-label,
+    #s10-bound,
+    #s10-bound-tip,
+    #s10-can,
+    #s10-cannot {
+      opacity: 0;
+    }
+
+    .s10-q {
+      position: absolute;
+      left: 430px;
+      top: 286px;
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s10-wrong {
+      position: absolute;
+      left: 0;
+      top: 50px;
+      width: 340px;
+      padding: 22px 26px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s10-wrong-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s10-wrong-sub {
+      margin-top: 8px;
+      font-size: 25px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+
+    .s10-wrong-strike {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 52%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--stamp);
+      transform-origin: left center;
+    }
+
+    .s10-wrong-tag {
+      position: absolute;
+      right: 16px;
+      bottom: -18px;
+      padding: 3px 14px;
+      border-radius: 8px;
+      background: var(--stamp);
+      color: #fff8f0;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .s10-ring {
+      position: absolute;
+      left: 428px;
+      top: 138px;
+      width: 344px;
+      height: 344px;
+      color: var(--line-strong);
+    }
+
+    .s10-ring svg {
+      display: block;
+      width: 344px;
+      height: 344px;
+      overflow: visible;
+    }
+
+    .s10-node {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 220px;
+      height: 84px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s10-node i {
+      display: block;
+      width: 10px;
+      height: 10px;
+      margin-right: 14px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .s10-gate {
+      position: absolute;
+      left: 1140px;
+      top: 118px;
+      width: 320px;
+      height: 382px;
+    }
+
+    .s10-gate-beam {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 320px;
+      height: 26px;
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      background: var(--panel);
+    }
+
+    .s10-gate-post {
+      position: absolute;
+      top: 26px;
+      bottom: 0;
+      width: 26px;
+      border: 2px solid var(--ink);
+      background: var(--panel);
+    }
+
+    .s10-gate-post--l {
+      left: 0;
+    }
+
+    .s10-gate-post--r {
+      right: 0;
+    }
+
+    .s10-gate-door {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 34px;
+      bottom: 0;
+      border: 2px solid var(--ink);
+      border-top-left-radius: 60px;
+      border-top-right-radius: 60px;
+      background: var(--panel-2);
+      transform-origin: left center;
+    }
+
+    .s10-gate-door::before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      top: 60px;
+      width: 88px;
+      height: 88px;
+      border: 2px solid var(--line-strong);
+      border-radius: 50%;
+    }
+
+    .s10-gate-knob {
+      position: absolute;
+      right: 22px;
+      top: 196px;
+      display: block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+      background: var(--accent);
+    }
+
+    .s10-gate-ground {
+      position: absolute;
+      left: -60px;
+      bottom: -2px;
+      width: 440px;
+      height: 2px;
+      background: var(--ink);
+    }
+
+    .s10-gate-label {
+      position: absolute;
+      left: 1140px;
+      top: 58px;
+      width: 320px;
+      text-align: center;
+      font-size: 46px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s10-bound {
+      position: absolute;
+      left: 884px;
+      top: 308px;
+      width: 246px;
+      height: 0;
+      border-top: 3px dashed var(--line-strong);
+      transform-origin: left center;
+    }
+
+    .s10-bound-tip {
+      position: absolute;
+      opacity: 0;
+      left: 1122px;
+      top: 290px;
+      font-family: var(--font-mono);
+      font-size: 30px;
+      color: var(--ink-faint);
+    }
+
+    .s10-can,
+    .s10-cannot {
+      position: absolute;
+      top: 552px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 27px;
+      font-weight: 600;
+      white-space: nowrap;
+      color: var(--ink);
+    }
+
+    .s10-can {
+      left: 1058px;
+      background: var(--accent-soft);
+    }
+
+    .s10-cannot {
+      left: 1302px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      color: var(--ink-faint);
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-what-is-agent"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S10</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-what-is-agent-title" class="scene-title">四加一</h1>
+        <p class="scene-no">10 / 22</p>
+      </header>
+
+      <section id="s-what-is-agent-stage" class="stage">
+        <!-- 问题：什么才算 Agent？ -->
+        <p id="s10-q" class="s10-q">什么才算 Agent？</p>
+
+        <!-- 被划掉的卡片：只有一段系统提示词。 -->
+        <div id="s10-wrong" class="s10-wrong">
+          <p class="s10-wrong-title">只有系统提示词</p>
+          <p class="s10-wrong-sub">「你是一个资深客服，请耐心回答……」</p>
+          <i id="s10-wrong-strike" class="s10-wrong-strike"></i>
+          <span id="s10-wrong-tag" class="s10-wrong-tag">不算</span>
+        </div>
+
+        <!-- 前四个方块，拼成一个环。 -->
+        <div id="s10-ring" class="s10-ring">
+          <svg viewBox="0 0 344 344" aria-hidden="true">
+            <circle cx="172" cy="172" r="170" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="10 10" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(292 52) rotate(45)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(292 292) rotate(135)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(52 292) rotate(225)" />
+            <path d="M -6 -7 L 8 0 L -6 7 Z" fill="currentColor" transform="translate(52 52) rotate(315)" />
+          </svg>
+        </div>
+        <div id="s10-node-goal" class="s10-node" style="left: 490px; top: 78px"><i></i>目标</div>
+        <div id="s10-node-tools" class="s10-node" style="left: 662px; top: 268px"><i></i>工具</div>
+        <div id="s10-node-loop" class="s10-node" style="left: 490px; top: 440px"><i></i>循环</div>
+        <div id="s10-node-env" class="s10-node" style="left: 318px; top: 268px"><i></i>环境反馈</div>
+
+        <!-- 第五个：权限，像一道门，立在环外面。 -->
+        <div id="s10-bound" class="s10-bound"></div>
+        <p id="s10-bound-tip" class="s10-bound-tip">→</p>
+        <div id="s10-gate" class="s10-gate">
+          <div class="s10-gate-beam"></div>
+          <div class="s10-gate-post s10-gate-post--l"></div>
+          <div class="s10-gate-post s10-gate-post--r"></div>
+          <div id="s10-door" class="s10-gate-door"><i class="s10-gate-knob"></i></div>
+          <div class="s10-gate-ground"></div>
+        </div>
+        <p id="s10-gate-label" class="s10-gate-label">权限</p>
+        <span id="s10-can" class="s10-can">能碰什么</span>
+        <span id="s10-cannot" class="s10-cannot">不能碰什么</span>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-what-is-agent-cap-0" class="cap-line clip" data-start="0.7" data-duration="3.38">所以，什么才算 Agent？</p>
+        <p id="s-what-is-agent-cap-1" class="cap-line clip" data-start="4.08" data-duration="3.921">不是「我给它写了一段人设提示词」就算。</p>
+        <p id="s-what-is-agent-cap-2" class="cap-line clip" data-start="8.041" data-duration="5.196">真正的 Agent 至少要四件事：一个目标，一套工具，</p>
+        <p id="s-what-is-agent-cap-3" class="cap-line clip" data-start="13.277" data-duration="4.194">一个能反复执行的循环，还有环境的反馈。</p>
+        <p id="s-what-is-agent-cap-4" class="cap-line clip" data-start="17.511" data-duration="4.24">再加一条，很多人会忽略：权限。</p>
+        <p id="s-what-is-agent-cap-5" class="cap-line clip" data-start="21.791" data-duration="3.254">它能碰什么、不能碰什么。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S10</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-what-is-agent-progress"></i></span>
+        <span class="cap-clock">00:27</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S10","id":"what-is-agent","index":0,"start":0,"duration":26.76,"audioStart":0.6000000000000227,"audioDuration":24.552,"cues":[{"i":0,"t":0.7,"d":3.38,"text":"所以，什么才算 Agent？","sent":"所以，什么才算 Agent？"},{"i":1,"t":4.08,"d":3.921,"text":"不是「我给它写了一段人设提示词」就算。","sent":"不是「我给它写了一段人设提示词」就算。"},{"i":2,"t":8.041,"d":5.196,"text":"真正的 Agent 至少要四件事：一个目标，一套工具，","sent":"真正的 Agent 至少要四件事：一个目标，一套工具，一个能反复执行的循环，还有环境的反馈。"},{"i":3,"t":13.277,"d":4.194,"text":"一个能反复执行的循环，还有环境的反馈。","sent":"真正的 Agent 至少要四件事：一个目标，一套工具，一个能反复执行的循环，还有环境的反馈。"},{"i":4,"t":17.511,"d":4.24,"text":"再加一条，很多人会忽略：权限。","sent":"再加一条，很多人会忽略：权限。"},{"i":5,"t":21.791,"d":3.254,"text":"它能碰什么、不能碰什么。","sent":"它能碰什么、不能碰什么。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-what-is-agent-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 第一拍：先问一句，什么才算 Agent？
+    tl.fromTo("#s10-q", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[0].t + 0.2);
+
+    // 第二拍：只有一段人设提示词，不算。
+    tl.fromTo("#s10-wrong", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[1].t + 0.1);
+    tl.fromTo("#s10-wrong-strike", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.inOut" }, N.cues[1].t + 0.9);
+    tl.fromTo("#s10-wrong-tag", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, N.cues[1].t + 1.4);
+
+    // 第三拍：真正的 Agent 至少要有目标，和一套工具。
+    tl.fromTo("#s10-q", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, N.cues[2].t);
+    tl.fromTo("#s10-wrong", { opacity: 1 }, { opacity: 0, y: -18, duration: 0.45, ease: "power2.in", immediateRender: false }, N.cues[2].t);
+    tl.fromTo("#s10-ring", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[2].t + 0.3);
+    tl.fromTo("#s10-node-goal", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, N.cues[2].t + 0.55);
+    tl.fromTo("#s10-node-tools", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, N.cues[2].t + 1.7);
+
+    // 第四拍：还要能反复执行的循环，和环境反馈。
+    tl.fromTo("#s10-node-loop", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, N.cues[3].t + 0.1);
+    tl.fromTo("#s10-node-env", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, N.cues[3].t + 0.95);
+
+    // 第五拍：再加一条：权限。门从地面升起，立在环外面。
+    tl.fromTo("#s10-gate", { opacity: 0, y: 56 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, N.cues[4].t + 0.1);
+    tl.fromTo("#s10-gate-label", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[4].t + 0.65);
+    tl.fromTo("#s10-bound", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: "power2.out" }, N.cues[4].t + 1.1);
+    tl.fromTo("#s10-bound-tip", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, N.cues[4].t + 1.6);
+
+    // 第六拍：这道门决定它能碰什么、不能碰什么。
+    tl.fromTo("#s10-can", { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, N.cues[5].t + 0.1);
+    tl.fromTo("#s10-cannot", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, N.cues[5].t + 1.0);
+    tl.fromTo("#s10-door", { scaleX: 1 }, { scaleX: 0.88, duration: 1.4, ease: "power2.inOut", immediateRender: false }, N.cues[5].t + 1.8);
+    // MOTION:END
+
+    window.__timelines["s-what-is-agent"] = tl;
+  </script>
+</template>

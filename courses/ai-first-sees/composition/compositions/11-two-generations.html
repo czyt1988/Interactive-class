@@ -1,0 +1,502 @@
+<template>
+  <style>
+    /* S11 两代智能体：左边一张角色卡片，右边一副工程骨架，中间一匹马。 */
+    /* 晚出现的元素先藏住，快照 seek 到早期时间点也不会提前显示。 */
+    #s11-head-l,
+    #s11-head-r,
+    #s11-card,
+    #s11-quote,
+    #s11-row1,
+    #s11-row2,
+    #s11-row3,
+    #s11-foot,
+    .s11-ghost,
+    #s11-count,
+    #s11-ceiling,
+    #s11-ceiling-label,
+    #s11-rack,
+    .s11-layer,
+    #s11-collar,
+    #s11-traces,
+    #s11-cart,
+    #s11-species,
+    #s11-species-underline {
+      opacity: 0;
+    }
+
+    .s11-head {
+      position: absolute;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.1em;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    #s11-head-l {
+      left: 0;
+    }
+
+    #s11-head-r {
+      left: 1100px;
+    }
+
+    .s11-card {
+      position: absolute;
+      left: 0;
+      top: 60px;
+      width: 500px;
+      height: 440px;
+      padding: 24px 30px 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s11-card-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .s11-card-kicker {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s11-card-tag {
+      padding: 3px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 25px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s11-quote {
+      margin-top: 18px;
+      font-size: 42px;
+      line-height: 1.28;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s11-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      align-items: baseline;
+      gap: 14px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .s11-row-label {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s11-row-value {
+      font-size: 28px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s11-foot {
+      position: absolute;
+      left: 30px;
+      bottom: 18px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 27px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s11-ghost {
+      position: absolute;
+      left: 0;
+      top: 60px;
+      width: 500px;
+      height: 440px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel-2);
+    }
+
+    .s11-count {
+      position: absolute;
+      left: 0;
+      top: 536px;
+      padding: 6px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink-soft);
+    }
+
+    .s11-ceiling {
+      position: absolute;
+      left: 0;
+      top: 42px;
+      width: 500px;
+      height: 0;
+      border-top: 2px dashed var(--line-strong);
+      transform-origin: left center;
+    }
+
+    .s11-ceiling-label {
+      position: absolute;
+      left: 372px;
+      top: 4px;
+      padding: 2px 12px;
+      border-radius: 6px;
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      font-size: 25px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s11-horse {
+      position: absolute;
+      left: 540px;
+      top: 96px;
+      width: 500px;
+      height: 364px;
+    }
+
+    .s11-horse svg {
+      display: block;
+      width: 500px;
+      height: 364px;
+      overflow: visible;
+    }
+
+    .s11-stroke {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 3.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s11-body {
+      fill: var(--bg);
+      stroke: var(--ink);
+      stroke-width: 3.4;
+      stroke-linejoin: round;
+    }
+
+    .s11-harness {
+      fill: none;
+      stroke: var(--accent-text);
+      stroke-width: 5;
+      stroke-linecap: round;
+    }
+
+    .s11-cart-fill {
+      fill: var(--panel);
+      stroke: var(--ink);
+      stroke-width: 3.2;
+      stroke-linejoin: round;
+    }
+
+    .s11-rack {
+      position: absolute;
+      left: 1096px;
+      top: 52px;
+      width: 572px;
+      height: 560px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 16px;
+    }
+
+    .s11-layer {
+      position: absolute;
+      left: 1100px;
+      width: 564px;
+      height: 84px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s11-layer > i {
+      display: block;
+      width: 12px;
+      height: 12px;
+      flex: none;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .s11-layer-name {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s11-layer-sub {
+      margin-top: 2px;
+      font-size: 21px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s11-species {
+      position: absolute;
+      left: 600px;
+      top: 486px;
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s11-species u {
+      text-decoration: none;
+      color: var(--accent-text);
+    }
+
+    .s11-species-underline {
+      position: absolute;
+      left: 600px;
+      top: 542px;
+      width: 420px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--accent);
+      transform-origin: left center;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-two-generations"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S11</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-two-generations-title" class="scene-title">两代智能体</h1>
+        <p class="scene-no">11 / 22</p>
+      </header>
+
+      <section id="s-two-generations-stage" class="stage">
+        <!-- 左栏：第一代，提示词型。 -->
+        <p id="s11-head-l" class="s11-head">第一代 · 提示词型</p>
+        <div class="s11-ghost" style="left: 28px; top: 87px"></div>
+        <div class="s11-ghost" style="left: 18px; top: 78px"></div>
+        <div class="s11-ghost" style="left: 9px; top: 69px"></div>
+        <div id="s11-card" class="s11-card">
+          <div class="s11-card-head">
+            <span class="s11-card-kicker">角色卡片</span>
+            <span class="s11-card-tag">提示词型</span>
+          </div>
+          <p id="s11-quote" class="s11-quote">你是一个资深客服</p>
+          <div id="s11-row1" class="s11-row">
+            <span class="s11-row-label">人设</span>
+            <span class="s11-row-value">耐心、礼貌、不跟客户争</span>
+          </div>
+          <div id="s11-row2" class="s11-row">
+            <span class="s11-row-label">知识</span>
+            <span class="s11-row-value">产品手册、退换货政策</span>
+          </div>
+          <div id="s11-row3" class="s11-row">
+            <span class="s11-row-label">工具</span>
+            <span class="s11-row-value">查订单、改地址</span>
+          </div>
+          <span id="s11-foot" class="s11-foot">在预设范围内干活</span>
+        </div>
+        <p id="s11-count" class="s11-count">几百个 · 几千个智能体</p>
+        <div id="s11-ceiling" class="s11-ceiling"></div>
+        <p id="s11-ceiling-label" class="s11-ceiling-label">天花板</p>
+
+        <!-- 中间：一匹马，先空跑，再套上挽具拉车。 -->
+        <div id="s11-horse" class="s11-horse">
+          <svg viewBox="0 0 440 320" aria-hidden="true">
+            <line class="s11-stroke" x1="16" y1="300" x2="432" y2="300" />
+            <g id="s11-rig">
+              <g id="s11-cart">
+                <path class="s11-cart-fill" d="M 34 226 L 130 236 L 126 274 L 38 264 Z" />
+                <path class="s11-stroke" d="M 40 210 L 128 220 L 130 236 L 40 226 Z" />
+                <circle class="s11-stroke" cx="64" cy="286" r="26" />
+                <circle class="s11-stroke" cx="104" cy="292" r="22" />
+                <circle cx="64" cy="286" r="3.5" fill="#16140f" />
+                <circle cx="104" cy="292" r="3" fill="#16140f" />
+                <path class="s11-stroke" d="M 64 260 L 64 286 M 38 286 L 90 286" />
+                <path class="s11-stroke" d="M 104 270 L 104 292 M 82 292 L 126 292" />
+                <path class="s11-stroke" d="M 130 240 C 210 218 280 200 326 178" />
+                <path class="s11-stroke" d="M 128 248 C 208 226 278 208 322 186" />
+              </g>
+              <g id="s11-body">
+                <path class="s11-body" d="M 322 150 C 316 126 292 114 258 112 C 214 110 168 118 138 132 C 118 142 108 158 110 178 C 112 200 122 216 140 228 C 168 244 226 248 268 240 C 306 232 328 212 334 190 C 338 172 332 160 322 150 Z" />
+                <path class="s11-body" d="M 316 136 C 322 112 336 92 352 80 L 384 94 C 378 114 364 142 350 166 C 336 160 324 148 316 136 Z" />
+                <path class="s11-body" d="M 352 78 C 362 62 382 54 396 62 L 420 80 C 426 88 418 99 406 101 L 364 99 Z" />
+                <path class="s11-stroke" d="M 356 66 L 351 50 L 366 60" />
+                <path class="s11-stroke" d="M 368 60 L 372 44 L 380 60" />
+                <circle cx="394" cy="76" r="3.2" fill="#16140f" />
+                <circle cx="412" cy="90" r="2.2" fill="#16140f" />
+                <path class="s11-stroke" d="M 406 101 L 418 95" />
+                <path class="s11-stroke" d="M 352 78 C 340 96 330 116 324 138" />
+                <path class="s11-stroke" d="M 344 92 L 330 104 M 336 108 L 322 120" />
+                <path class="s11-stroke" d="M 304 236 L 312 266 L 304 298" />
+                <path class="s11-stroke" d="M 286 234 L 292 264 L 284 298" />
+                <path class="s11-stroke" d="M 168 236 L 160 266 L 168 298" />
+                <path class="s11-stroke" d="M 148 234 L 142 264 L 134 298" />
+                <path class="s11-stroke" d="M 296 200 C 306 214 310 226 306 238" />
+                <path class="s11-stroke" d="M 176 200 C 166 214 162 226 166 238" />
+                <path class="s11-stroke" d="M 296 298 L 312 298 M 276 298 L 292 298 M 160 298 L 176 298 M 126 298 L 142 298" />
+                <path class="s11-stroke" d="M 112 154 C 94 166 86 196 92 228" />
+                <path class="s11-stroke" d="M 100 174 C 88 198 86 216 92 234" />
+              </g>
+              <ellipse id="s11-collar" class="s11-harness" cx="334" cy="140" rx="13" ry="37" transform="rotate(-60 334 140)" />
+              <path id="s11-traces" class="s11-harness" d="M 320 170 C 270 194 205 218 142 240 M 330 176 C 280 200 212 222 150 244" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- 右栏：第二代，Harness 型，一层一层展开。 -->
+        <p id="s11-head-r" class="s11-head">第二代 · Harness 型</p>
+        <div id="s11-rack" class="s11-rack"></div>
+        <div class="s11-layer" style="top: 56px">
+          <i></i>
+          <div><p class="s11-layer-name">行动循环</p><p class="s11-layer-sub">接需求 → 处理 → 交付 → 反馈</p></div>
+        </div>
+        <div class="s11-layer" style="top: 148px">
+          <i></i>
+          <div><p class="s11-layer-name">工具执行</p><p class="s11-layer-sub">读写文件、跑命令、调接口</p></div>
+        </div>
+        <div class="s11-layer" style="top: 240px">
+          <i></i>
+          <div><p class="s11-layer-name">上下文管理</p><p class="s11-layer-sub">记得什么，忘掉什么</p></div>
+        </div>
+        <div class="s11-layer" style="top: 332px">
+          <i></i>
+          <div><p class="s11-layer-name">权限</p><p class="s11-layer-sub">能碰什么，不能碰什么</p></div>
+        </div>
+        <div class="s11-layer" style="top: 424px">
+          <i></i>
+          <div><p class="s11-layer-name">沙箱</p><p class="s11-layer-sub">在哪里跑，出界能不能停</p></div>
+        </div>
+        <div class="s11-layer" style="top: 516px">
+          <i></i>
+          <div><p class="s11-layer-name">子 Agent</p><p class="s11-layer-sub">分头干活，再汇总</p></div>
+        </div>
+
+        <!-- 收束：不是同一个物种。 -->
+        <p id="s11-species" class="s11-species">不是同一个<u>物种</u></p>
+        <i id="s11-species-underline" class="s11-species-underline"></i>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-two-generations-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.086">目前 AI 应用到今天，产生过两代智能体。</p>
+        <p id="s-two-generations-cap-1" class="cap-line clip" data-start="5.786" data-duration="7.035">第一代，是提示词型：给它一个人设、一段知识、几个工具，</p>
+        <p id="s-two-generations-cap-2" class="cap-line clip" data-start="12.861" data-duration="2.846">让它在预设范围内干活。</p>
+        <p id="s-two-generations-cap-3" class="cap-line clip" data-start="15.747" data-duration="6.195">很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。</p>
+        <p id="s-two-generations-cap-4" class="cap-line clip" data-start="21.982" data-duration="3.019">它不弱，但天花板很低。</p>
+        <p id="s-two-generations-cap-5" class="cap-line clip" data-start="25.041" data-duration="3.027">第二代，是 Harness 型：</p>
+        <p id="s-two-generations-cap-6" class="cap-line clip" data-start="28.108" data-duration="8.76">行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。</p>
+        <p id="s-two-generations-cap-7" class="cap-line clip" data-start="36.908" data-duration="5.843">不是提示词型没用，而是它和 Harness 型不是同一个物种。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S11</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-two-generations-progress"></i></span>
+        <span class="cap-clock">00:44</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S11","id":"two-generations","index":0,"start":0,"duration":44.47,"audioStart":0.5999999999999659,"audioDuration":42.264,"cues":[{"i":0,"t":0.7,"d":5.086,"text":"目前 AI 应用到今天，产生过两代智能体。","sent":"目前 AI 应用到今天，产生过两代智能体。"},{"i":1,"t":5.786,"d":7.035,"text":"第一代，是提示词型：给它一个人设、一段知识、几个工具，","sent":"第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。"},{"i":2,"t":12.861,"d":2.846,"text":"让它在预设范围内干活。","sent":"第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。"},{"i":3,"t":15.747,"d":6.195,"text":"很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。","sent":"很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。"},{"i":4,"t":21.982,"d":3.019,"text":"它不弱，但天花板很低。","sent":"它不弱，但天花板很低。"},{"i":5,"t":25.041,"d":3.027,"text":"第二代，是 Harness 型：","sent":"第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。"},{"i":6,"t":28.108,"d":8.76,"text":"行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。","sent":"第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。"},{"i":7,"t":36.908,"d":5.843,"text":"不是提示词型没用，而是它和 Harness 型不是同一个物种。","sent":"不是提示词型没用，而是它和 Harness 型不是同一个物种。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-two-generations-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 第一拍：两栏标题，中间一匹还没套挽具的马。
+    tl.fromTo("#s11-head-l", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[0].t + 0.1);
+    tl.fromTo("#s11-head-r", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, N.cues[0].t + 0.5);
+    tl.fromTo("#s11-horse", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power2.out" }, N.cues[0].t + 0.7);
+
+    // 第二拍：第一代是提示词型，一张角色卡片，人设、知识、工具逐条填进去。
+    tl.fromTo("#s11-card", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[1].t + 0.1);
+    tl.fromTo("#s11-quote", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, N.cues[1].t + 0.4);
+    tl.fromTo("#s11-row1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 1.3);
+    tl.fromTo("#s11-row2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 2.7);
+    tl.fromTo("#s11-row3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 4.1);
+
+    // 第三拍：让它在预设范围内干活。
+    tl.fromTo("#s11-foot", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, N.cues[2].t + 0.1);
+
+    // 第四拍：很多厂家说的几百个、几千个，其实是这个。卡片后面露出更多纸。
+    tl.fromTo(".s11-ghost", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out", stagger: 0.15 }, N.cues[3].t + 0.1);
+    tl.fromTo("#s11-count", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[3].t + 0.8);
+    tl.fromTo(
+      ".s11-ghost",
+      { x: 0 },
+      { x: 8, duration: 1.2, ease: "power2.inOut", stagger: 0.15, immediateRender: false },
+      N.cues[3].t + 2.6
+    );
+
+    // 第五拍：它不弱，但天花板很低。
+    tl.fromTo("#s11-ceiling", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: "power2.out" }, N.cues[4].t + 0.1);
+    tl.fromTo("#s11-ceiling-label", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[4].t + 0.5);
+
+    // 第六拍：第二代是 Harness 型。右栏骨架先立起来，马先套上颈圈。
+    tl.fromTo("#s11-rack", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, N.cues[5].t + 0.1);
+    tl.fromTo("#s11-collar", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, N.cues[5].t + 0.7);
+
+    // 第七拍：循环、工具、上下文、权限、沙箱、子 Agent，一层一层展开；挽具的拉绳也接上。
+    tl.fromTo(".s11-layer", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out", stagger: 0.85 }, N.cues[6].t + 0.1);
+    tl.fromTo("#s11-traces", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power2.out" }, N.cues[6].t + 4.0);
+    tl.fromTo(".s11-layer > i", { scale: 1 }, { scale: 1.6, duration: 0.35, ease: "power2.out", stagger: 0.25, immediateRender: false }, N.cues[6].t + 5.2);
+    tl.fromTo(".s11-layer > i", { scale: 1.6 }, { scale: 1, duration: 0.4, ease: "power2.inOut", stagger: 0.25, immediateRender: false }, N.cues[6].t + 5.55);
+
+    // 第八拍：套上挽具，拉上车；两代不是同一个物种。
+    tl.fromTo("#s11-cart", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, N.cues[7].t + 0.1);
+    tl.fromTo("#s11-rig", { x: 0 }, { x: 18, duration: 2.4, ease: "power1.inOut", immediateRender: false }, N.cues[7].t + 0.4);
+    tl.fromTo("#s11-species", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, N.cues[7].t + 1.0);
+    tl.fromTo("#s11-species-underline", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 1.6, ease: "power2.inOut" }, N.cues[7].t + 1.4);
+    // MOTION:END
+
+    window.__timelines["s-two-generations"] = tl;
+  </script>
+</template>

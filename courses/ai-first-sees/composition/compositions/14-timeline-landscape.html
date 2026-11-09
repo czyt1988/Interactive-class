@@ -1,0 +1,305 @@
+<template>
+  <style>
+    /* S14 · timeline-landscape
+       一条横向时间线，四个年份节点；每个节点下方一条成熟度小条（demo → 可用 → 好用 → 出圈），
+       2026 节点上方一枚「春节」印章。 */
+
+    .s-timeline-axis { position: absolute; left: 80px; top: 360px; width: 1504px; height: 2px; background: var(--line-strong); }
+    .s-timeline-axis-head { position: absolute; left: 1578px; top: 353px; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid var(--line-strong); opacity: 0; }
+
+    .s-timeline-year {
+      position: absolute;
+      top: 248px;
+      width: 240px;
+      margin-left: -120px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 60px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      opacity: 0;
+    }
+    .s-timeline-year--1 { left: 230px; }
+    .s-timeline-year--2 { left: 640px; }
+    .s-timeline-year--3 { left: 1050px; }
+    .s-timeline-year--4 { left: 1460px; }
+
+    .s-timeline-node { position: absolute; top: 347px; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; border: 3px solid #faf6ee; background: var(--accent); box-shadow: 0 0 0 1.5px #514b40; opacity: 0; }
+    .s-timeline-node--1 { left: 230px; }
+    .s-timeline-node--2 { left: 640px; }
+    .s-timeline-node--3 { left: 1050px; }
+    .s-timeline-node--4 { left: 1460px; }
+
+    .s-timeline-names {
+      position: absolute;
+      top: 200px;
+      width: 400px;
+      margin-left: -200px;
+      text-align: center;
+      font-size: 26px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      opacity: 0;
+    }
+    .s-timeline-names--1 { left: 230px; }
+    .s-timeline-names--2 { left: 640px; }
+    .s-timeline-names--3 { left: 1050px; }
+    .s-timeline-names--4 { left: 1460px; }
+
+    .s-timeline-tile {
+      position: absolute;
+      top: 96px;
+      width: 104px;
+      height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+    .s-timeline-tile img { display: block; width: 72px; height: 46px; object-fit: contain; }
+    .s-timeline-tile--1 { left: 178px; }
+    .s-timeline-tile--2 { left: 531px; }
+    .s-timeline-tile--3 { left: 645px; }
+    .s-timeline-tile--4 { left: 941px; }
+    .s-timeline-tile--5 { left: 1055px; }
+    .s-timeline-tile--6 { left: 1296px; }
+    .s-timeline-tile--7 { left: 1408px; }
+    .s-timeline-tile--8 { left: 1520px; }
+
+    .s-timeline-spring {
+      position: absolute;
+      left: 1394px;
+      top: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 18px;
+      border: 3px double var(--stamp);
+      border-radius: 8px;
+      color: var(--stamp);
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      opacity: 0;
+    }
+
+    .s-timeline-track { position: absolute; top: 404px; width: 340px; height: 14px; margin-left: -170px; border-radius: 7px; background: color-mix(in srgb, var(--ink) 10%, transparent); overflow: hidden; opacity: 0; }
+    .s-timeline-track--1 { left: 230px; }
+    .s-timeline-track--2 { left: 640px; }
+    .s-timeline-track--3 { left: 1050px; }
+    .s-timeline-track--4 { left: 1460px; }
+
+    .s-timeline-fill { display: block; height: 100%; width: 100%; border-radius: 7px; background: var(--accent); }
+
+    .s-timeline-stage {
+      position: absolute;
+      top: 428px;
+      width: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink);
+      opacity: 0;
+    }
+    .s-timeline-stage--1 { left: 60px; }
+    .s-timeline-stage--2 { left: 470px; }
+    .s-timeline-stage--3 { left: 880px; }
+    .s-timeline-stage--4 { left: 1290px; }
+
+    .s-timeline-marker { position: absolute; left: 230px; top: 326px; width: 14px; height: 14px; margin-left: -7px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 0 1.5px #faf6ee; opacity: 0; }
+    .s-timeline-spark { position: absolute; left: 80px; top: 357px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); opacity: 0; }
+
+    .s-timeline-note { position: absolute; left: 80px; top: 546px; font-family: var(--font-mono); font-size: 30px; color: var(--ink-soft); opacity: 0; }
+    .s-timeline-note b { color: var(--accent-text); font-weight: 700; }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-timeline-landscape"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S14</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-timeline-landscape-title" class="scene-title">从 demo 到日用</h1>
+        <p class="scene-no">14 / 22</p>
+      </header>
+
+      <section id="s-timeline-landscape-stage" class="stage">
+        <!-- 时间轴 -->
+        <span class="s-timeline-axis" id="s-timeline-axis"></span>
+        <span class="s-timeline-axis-head" id="s-timeline-axis-head"></span>
+        <span class="s-timeline-marker" id="s-timeline-marker"></span>
+        <span class="s-timeline-spark" id="s-timeline-spark"></span>
+
+        <!-- 年份 -->
+        <p class="s-timeline-year s-timeline-year--1" id="s-timeline-year1">2023</p>
+        <p class="s-timeline-year s-timeline-year--2" id="s-timeline-year2">2024</p>
+        <p class="s-timeline-year s-timeline-year--3" id="s-timeline-year3">2025</p>
+        <p class="s-timeline-year s-timeline-year--4" id="s-timeline-year4">2026</p>
+
+        <!-- 节点 -->
+        <span class="s-timeline-node s-timeline-node--1" id="s-timeline-node1"></span>
+        <span class="s-timeline-node s-timeline-node--2" id="s-timeline-node2"></span>
+        <span class="s-timeline-node s-timeline-node--3" id="s-timeline-node3"></span>
+        <span class="s-timeline-node s-timeline-node--4" id="s-timeline-node4"></span>
+
+        <!-- 产品名字 -->
+        <p class="s-timeline-names s-timeline-names--1" id="s-timeline-names1">AutoGPT</p>
+        <p class="s-timeline-names s-timeline-names--2" id="s-timeline-names2">Devin · Cursor Agent</p>
+        <p class="s-timeline-names s-timeline-names--3" id="s-timeline-names3">Claude Code · Codex</p>
+        <p class="s-timeline-names s-timeline-names--4" id="s-timeline-names4">OpenClaw · WorkBuddy · DSH</p>
+
+        <!-- Logo 小卡 -->
+        <span class="s-timeline-tile s-timeline-tile--1" id="s-timeline-tile1"><img src="assets/media/logo/autogpt.png" alt="AutoGPT 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--2" id="s-timeline-tile2"><img src="assets/media/logo/devin.png" alt="Devin 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--3" id="s-timeline-tile3"><img src="assets/media/logo/cursor.png" alt="Cursor 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--4" id="s-timeline-tile4"><img src="assets/media/logo/claude.png" alt="Claude 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--5" id="s-timeline-tile5"><img src="assets/media/logo/codex.png" alt="Codex 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--6" id="s-timeline-tile6"><img src="assets/media/logo/openclaw.png" alt="OpenClaw 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--7" id="s-timeline-tile7"><img src="assets/media/logo/workbuddy.png" alt="WorkBuddy 标志" width="72" height="46" /></span>
+        <span class="s-timeline-tile s-timeline-tile--8" id="s-timeline-tile8"><img src="assets/media/logo/dsh.png" alt="DeepSeek Harness 标志" width="72" height="46" /></span>
+
+        <!-- 2026 的春节标记 -->
+        <span class="s-timeline-spring" id="s-timeline-spring">春节</span>
+
+        <!-- 成熟度 -->
+        <span class="s-timeline-track s-timeline-track--1" id="s-timeline-track1"><i class="s-timeline-fill" id="s-timeline-fill1"></i></span>
+        <span class="s-timeline-track s-timeline-track--2" id="s-timeline-track2"><i class="s-timeline-fill" id="s-timeline-fill2"></i></span>
+        <span class="s-timeline-track s-timeline-track--3" id="s-timeline-track3"><i class="s-timeline-fill" id="s-timeline-fill3"></i></span>
+        <span class="s-timeline-track s-timeline-track--4" id="s-timeline-track4"><i class="s-timeline-fill" id="s-timeline-fill4"></i></span>
+        <span class="s-timeline-stage s-timeline-stage--1" id="s-timeline-stage1">demo</span>
+        <span class="s-timeline-stage s-timeline-stage--2" id="s-timeline-stage2">可用</span>
+        <span class="s-timeline-stage s-timeline-stage--3" id="s-timeline-stage3">好用</span>
+        <span class="s-timeline-stage s-timeline-stage--4" id="s-timeline-stage4">出圈</span>
+
+        <p class="s-timeline-note" id="s-timeline-note">概念早就出现，真正<b>好用、出圈</b>是 2025 到 2026</p>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-timeline-landscape-cap-0" class="cap-line clip" data-start="0.7" data-duration="2.575">把时间线拉直：2023 年，</p>
+        <p id="s-timeline-landscape-cap-1" class="cap-line clip" data-start="3.315" data-duration="7.349">AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，</p>
+        <p id="s-timeline-landscape-cap-2" class="cap-line clip" data-start="10.704" data-duration="6.667">Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，</p>
+        <p id="s-timeline-landscape-cap-3" class="cap-line clip" data-start="17.41" data-duration="5.985">Claude Code 和 Codex 把长任务、终端、云端做成了产品；</p>
+        <p id="s-timeline-landscape-cap-4" class="cap-line clip" data-start="23.435" data-duration="3.825">2026 年，OpenClaw 在春节前后出圈；</p>
+        <p id="s-timeline-landscape-cap-5" class="cap-line clip" data-start="27.3" data-duration="4.962">今年 3 月，WorkBuddy 把办公 Agent 推向大众。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S14</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-timeline-landscape-progress"></i></span>
+        <span class="cap-clock">00:34</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S14","id":"timeline-landscape","index":0,"start":0,"duration":33.98,"audioStart":0.6000000000000227,"audioDuration":31.776,"cues":[{"i":0,"t":0.7,"d":2.575,"text":"把时间线拉直：2023 年，","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"},{"i":1,"t":3.315,"d":7.349,"text":"AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"},{"i":2,"t":10.704,"d":6.667,"text":"Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"},{"i":3,"t":17.41,"d":5.985,"text":"Claude Code 和 Codex 把长任务、终端、云端做成了产品；","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"},{"i":4,"t":23.435,"d":3.825,"text":"2026 年，OpenClaw 在春节前后出圈；","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"},{"i":5,"t":27.3,"d":4.962,"text":"今年 3 月，WorkBuddy 把办公 Agent 推向大众。","sent":"把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-timeline-landscape-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 时间线从左往右生长，节点亮起时成熟度条跟着变长。
+    const T = N.cues.map((c) => c.t);
+    const ease = "power3.out";
+    const q = "power2.out";
+
+    // 快照会直接 seek：先显式压掉初始缩放，避免提前露出来。
+    gsap.set("#s-timeline-axis", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set(["#s-timeline-fill1", "#s-timeline-fill2", "#s-timeline-fill3", "#s-timeline-fill4"], { scaleX: 0, transformOrigin: "left center" });
+    gsap.set(["#s-timeline-node1", "#s-timeline-node2", "#s-timeline-node3", "#s-timeline-node4"], { scale: 0.4 });
+    gsap.set("#s-timeline-marker", { x: 0 });
+
+    // 次级运动：一颗小点沿时间轴缓慢右移，画面不会完全静止。
+    tl.fromTo("#s-timeline-spark", { opacity: 0.7, x: 0 }, { opacity: 0.7, x: 1480, duration: 31.5, ease: "none" }, T[0] + 1.1);
+
+    // cue0 · 把时间线拉直
+    tl.fromTo("#s-timeline-axis", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "power2.inOut" }, T[0]);
+    tl.fromTo("#s-timeline-axis-head", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 1.0);
+    tl.fromTo("#s-timeline-year1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[0] + 0.45);
+    tl.fromTo("#s-timeline-marker", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 1.2);
+
+    // cue1 · 2023 AutoGPT：demo
+    tl.fromTo("#s-timeline-node1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[1] + 0.05);
+    tl.fromTo("#s-timeline-tile1", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[1] + 0.25);
+    tl.fromTo("#s-timeline-names1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[1] + 0.6);
+    tl.fromTo("#s-timeline-track1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[1] + 0.85);
+    tl.fromTo("#s-timeline-fill1", { scaleX: 0 }, { scaleX: 0.25, duration: 0.8, ease: "power2.out" }, T[1] + 0.95);
+    tl.fromTo("#s-timeline-stage1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[1] + 1.65);
+    tl.fromTo("#s-timeline-marker", { y: 0 }, { y: -6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[1] + 2.6);
+
+    // cue2 · 2024 Devin 和 Cursor Agent：可用
+    tl.fromTo("#s-timeline-year2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[2] + 0.1);
+    tl.fromTo("#s-timeline-node2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[2] + 0.1);
+    tl.fromTo("#s-timeline-marker", { x: 0 }, { x: 410, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[2] + 0.1);
+    tl.fromTo("#s-timeline-tile2", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[2] + 0.35);
+    tl.fromTo("#s-timeline-tile3", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[2] + 0.65);
+    tl.fromTo("#s-timeline-names2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[2] + 0.9);
+    tl.fromTo("#s-timeline-track2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[2] + 0.9);
+    tl.fromTo("#s-timeline-fill2", { scaleX: 0 }, { scaleX: 0.5, duration: 0.8, ease: "power2.out" }, T[2] + 1.0);
+    tl.fromTo("#s-timeline-stage2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[2] + 1.75);
+    tl.fromTo("#s-timeline-marker", { y: 0 }, { y: -6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[2] + 2.95);
+
+    // cue3 · 2025 Claude Code 和 Codex：好用
+    tl.fromTo("#s-timeline-year3", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[3] + 0.1);
+    tl.fromTo("#s-timeline-node3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[3] + 0.1);
+    tl.fromTo("#s-timeline-marker", { x: 410 }, { x: 820, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[3] + 0.1);
+    tl.fromTo("#s-timeline-tile4", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[3] + 0.3);
+    tl.fromTo("#s-timeline-tile5", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[3] + 0.6);
+    tl.fromTo("#s-timeline-names3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[3] + 0.85);
+    tl.fromTo("#s-timeline-track3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[3] + 0.85);
+    tl.fromTo("#s-timeline-fill3", { scaleX: 0 }, { scaleX: 0.75, duration: 0.8, ease: "power2.out" }, T[3] + 0.95);
+    tl.fromTo("#s-timeline-stage3", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[3] + 1.7);
+    tl.fromTo("#s-timeline-marker", { y: 0 }, { y: -6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[3] + 2.9);
+
+    // cue4 · 2026 OpenClaw 在春节前后出圈
+    tl.fromTo("#s-timeline-year4", { opacity: 0, y: 12, scale: 1 }, { opacity: 1, y: 0, scale: 1.18, duration: 0.6, ease }, T[4] + 0.1);
+    tl.fromTo("#s-timeline-node4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1.1, duration: 0.45, ease: "back.out(2)" }, T[4] + 0.1);
+    tl.fromTo("#s-timeline-marker", { x: 820 }, { x: 1230, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[4] + 0.1);
+    tl.fromTo("#s-timeline-tile6", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[4] + 0.3);
+    tl.fromTo("#s-timeline-spring", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.55, ease: "back.out(1.6)" }, T[4] + 0.7);
+    tl.fromTo("#s-timeline-names4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[4] + 0.9);
+    tl.fromTo("#s-timeline-track4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[4] + 0.9);
+    tl.fromTo("#s-timeline-fill4", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.out" }, T[4] + 1.0);
+    tl.fromTo("#s-timeline-stage4", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[4] + 1.8);
+    tl.fromTo("#s-timeline-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[4] + 1.9);
+    tl.fromTo("#s-timeline-marker", { y: 0 }, { y: -6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[4] + 2.95);
+
+    // cue5 · 今年 3 月，WorkBuddy 把办公 Agent 推向大众
+    tl.fromTo("#s-timeline-tile7", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[5] + 0.2);
+    tl.fromTo("#s-timeline-tile8", { opacity: 0, y: 14, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease }, T[5] + 2.9);
+    // MOTION:END
+
+    window.__timelines["s-timeline-landscape"] = tl;
+  </script>
+</template>

@@ -33,6 +33,7 @@ DEFAULT_RUNTIME = ROOT / "runtime"
 SKIP_COMPOSITION = {
     "node_modules",
     ".hyperframes",
+    ".thumbnails",
     "renders",
     "package.json",
     "hyperframes.json",

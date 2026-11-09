@@ -1,0 +1,548 @@
+<template>
+  <style>
+/* S03 · alphago — a 19x19 board pushed into one corner, plus the case file.
+   The camera move is a transform on the board wrapper inside a clipped frame. */
+
+.s-ago-viewport {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 596px;
+  height: 596px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.s-ago-cam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 596px;
+  height: 596px;
+}
+
+.s-ago-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 596px;
+  height: 596px;
+  background-color: #dfb878;
+  background-image:
+    linear-gradient(rgba(70, 46, 18, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 46, 18, 0.55) 1px, transparent 1px);
+  background-size: 31px 31px;
+  background-position: 19px 19px;
+  box-shadow: inset 0 0 0 1px rgba(70, 46, 18, 0.35);
+}
+
+.s-ago-board .stone {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+}
+
+.s-ago-glow {
+  position: absolute;
+  left: 453px;
+  top: 143px;
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47, 182, 138, 0.3) 0%, rgba(47, 182, 138, 0.08) 46%, transparent 72%);
+}
+
+.s-ago-ring {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 0 7px var(--accent-soft);
+}
+
+.s-ago-boardnote {
+  position: absolute;
+  left: 0;
+  top: 606px;
+  width: 596px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------ case file */
+
+.s-ago-where {
+  position: absolute;
+  left: 670px;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.s-ago-score {
+  position: absolute;
+  left: 670px;
+  top: 58px;
+  width: 340px;
+  height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.s-ago-scorewho {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.s-ago-scoreline {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 92px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.s-ago-scoreline em {
+  font-style: normal;
+  font-size: 64px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.s-ago-scorevs {
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+
+.s-ago-photo {
+  position: absolute;
+  left: 1040px;
+  top: 58px;
+  width: 340px;
+  margin: 0;
+}
+
+.s-ago-photo .photo {
+  padding: 10px;
+}
+
+.s-ago-photo .photo img {
+  width: 100%;
+  height: 212px;
+  object-fit: cover;
+}
+
+.s-ago-photo .photo__label {
+  padding: 8px 2px 2px;
+}
+
+.s-ago-logo {
+  position: absolute;
+  left: 1410px;
+  top: 58px;
+  width: 254px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.s-ago-logo .logo {
+  height: 64px;
+  width: auto;
+}
+
+.s-ago-logo span {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.s-ago-findings {
+  position: absolute;
+  left: 670px;
+  top: 372px;
+  width: 994px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.s-ago-find {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 30px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.s-ago-findindex {
+  flex: none;
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.s-ago-find strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.s-ago-find sup {
+  font-size: 0.62em;
+}
+
+.s-ago-moves {
+  position: absolute;
+  left: 670px;
+  top: 528px;
+  width: 994px;
+  display: flex;
+  gap: 47px;
+}
+
+.s-ago-move {
+  width: 300px;
+  padding-top: 12px;
+  border-top: 3px solid var(--accent);
+}
+
+.s-ago-movechar {
+  display: block;
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.s-ago-movedesc {
+  display: block;
+  margin-top: 12px;
+  font-size: 28px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+
+/* Late beats start hidden so a mid-timeline seek cannot show them early. */
+.s-ago-viewport,
+.s-ago-stone,
+.s-ago-ring,
+.s-ago-glow,
+.s-ago-boardnote,
+.s-ago-where,
+.s-ago-score,
+.s-ago-photo,
+.s-ago-logo,
+.s-ago-find,
+.s-ago-move {
+  opacity: 0;
+}
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-alphago"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="watch"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S03</span>
+          <span class="scene-act">第一幕 · 看</span>
+        </p>
+        <h1 id="s-alphago-title" class="scene-title">机器第一次赢在「直觉」</h1>
+        <p class="scene-no">03 / 22</p>
+      </header>
+
+      <section id="s-alphago-stage" class="stage">
+<div id="s-ago-viewport" class="s-ago-viewport">
+  <div id="s-ago-cam" class="s-ago-cam">
+    <div id="s-ago-board" class="s-ago-board">
+        <i id="s-ago-stone-1" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--b" style="left: 422px; top: 112px"></i>
+        <i id="s-ago-stone-2" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--w" style="left: 453px; top: 112px"></i>
+        <i id="s-ago-stone-3" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--b" style="left: 422px; top: 143px"></i>
+        <i id="s-ago-stone-4" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--w" style="left: 453px; top: 143px"></i>
+        <i id="s-ago-stone-5" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--b" style="left: 484px; top: 143px"></i>
+        <i id="s-ago-stone-6" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--w" style="left: 453px; top: 174px"></i>
+        <i id="s-ago-stone-7" class="stone s-ago-stone s-ago-hub s-ago-b1 stone--b" style="left: 484px; top: 112px"></i>
+        <i id="s-ago-stone-8" class="stone s-ago-stone s-ago-b1 stone--w" style="left: 19px; top: 546px"></i>
+        <i id="s-ago-stone-9" class="stone s-ago-stone s-ago-b1 stone--b" style="left: 112px; top: 453px"></i>
+        <i id="s-ago-stone-10" class="stone s-ago-stone s-ago-b1 stone--w" style="left: 174px; top: 360px"></i>
+        <i id="s-ago-stone-11" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 236px; top: 577px"></i>
+        <i id="s-ago-stone-12" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 143px; top: 391px"></i>
+        <i id="s-ago-stone-13" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 360px; top: 81px"></i>
+        <i id="s-ago-stone-14" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 422px; top: 267px"></i>
+        <i id="s-ago-stone-15" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 360px; top: 484px"></i>
+        <i id="s-ago-stone-16" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 360px; top: 329px"></i>
+        <i id="s-ago-stone-17" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 484px; top: 236px"></i>
+        <i id="s-ago-stone-18" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 329px; top: 112px"></i>
+        <i id="s-ago-stone-19" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 329px; top: 19px"></i>
+        <i id="s-ago-stone-20" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 174px; top: 19px"></i>
+        <i id="s-ago-stone-21" class="stone s-ago-stone s-ago-b2 stone--b" style="left: 205px; top: 143px"></i>
+        <i id="s-ago-stone-22" class="stone s-ago-stone s-ago-b2 stone--w" style="left: 329px; top: 50px"></i>
+        <i id="s-ago-stone-23" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 19px; top: 236px"></i>
+        <i id="s-ago-stone-24" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 112px; top: 577px"></i>
+        <i id="s-ago-stone-25" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 174px; top: 205px"></i>
+        <i id="s-ago-stone-26" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 174px; top: 329px"></i>
+        <i id="s-ago-stone-27" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 174px; top: 81px"></i>
+        <i id="s-ago-stone-28" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 329px; top: 267px"></i>
+        <i id="s-ago-stone-29" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 391px; top: 205px"></i>
+        <i id="s-ago-stone-30" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 422px; top: 577px"></i>
+        <i id="s-ago-stone-31" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 81px; top: 143px"></i>
+        <i id="s-ago-stone-32" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 267px; top: 391px"></i>
+        <i id="s-ago-stone-33" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 360px; top: 298px"></i>
+        <i id="s-ago-stone-34" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 360px; top: 267px"></i>
+        <i id="s-ago-stone-35" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 81px; top: 422px"></i>
+        <i id="s-ago-stone-36" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 329px; top: 329px"></i>
+        <i id="s-ago-stone-37" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 391px; top: 81px"></i>
+        <i id="s-ago-stone-38" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 236px; top: 546px"></i>
+        <i id="s-ago-stone-39" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 205px; top: 484px"></i>
+        <i id="s-ago-stone-40" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 236px; top: 422px"></i>
+        <i id="s-ago-stone-41" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 174px; top: 267px"></i>
+        <i id="s-ago-stone-42" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 112px; top: 174px"></i>
+        <i id="s-ago-stone-43" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 546px; top: 81px"></i>
+        <i id="s-ago-stone-44" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 267px; top: 484px"></i>
+        <i id="s-ago-stone-45" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 484px; top: 298px"></i>
+        <i id="s-ago-stone-46" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 422px; top: 236px"></i>
+        <i id="s-ago-stone-47" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 267px; top: 174px"></i>
+        <i id="s-ago-stone-48" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 174px"></i>
+        <i id="s-ago-stone-49" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 391px; top: 329px"></i>
+        <i id="s-ago-stone-50" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 267px"></i>
+        <i id="s-ago-stone-51" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 205px; top: 205px"></i>
+        <i id="s-ago-stone-52" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 81px"></i>
+        <i id="s-ago-stone-53" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 515px; top: 19px"></i>
+        <i id="s-ago-stone-54" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 174px; top: 391px"></i>
+        <i id="s-ago-stone-55" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 50px; top: 205px"></i>
+        <i id="s-ago-stone-56" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 577px; top: 422px"></i>
+        <i id="s-ago-stone-57" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 298px; top: 19px"></i>
+        <i id="s-ago-stone-58" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 453px; top: 81px"></i>
+        <i id="s-ago-stone-59" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 236px; top: 174px"></i>
+        <i id="s-ago-stone-60" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 360px; top: 453px"></i>
+        <i id="s-ago-stone-61" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 112px; top: 298px"></i>
+        <i id="s-ago-stone-62" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 391px; top: 360px"></i>
+        <i id="s-ago-stone-63" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 298px; top: 360px"></i>
+        <i id="s-ago-stone-64" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 298px; top: 515px"></i>
+        <i id="s-ago-stone-65" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 174px; top: 236px"></i>
+        <i id="s-ago-stone-66" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 360px; top: 577px"></i>
+        <i id="s-ago-stone-67" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 329px; top: 81px"></i>
+        <i id="s-ago-stone-68" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 19px"></i>
+        <i id="s-ago-stone-69" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 329px; top: 515px"></i>
+        <i id="s-ago-stone-70" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 577px; top: 236px"></i>
+        <i id="s-ago-stone-71" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 112px; top: 360px"></i>
+        <i id="s-ago-stone-72" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 19px; top: 81px"></i>
+        <i id="s-ago-stone-73" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 515px; top: 174px"></i>
+        <i id="s-ago-stone-74" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 422px"></i>
+        <i id="s-ago-stone-75" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 50px; top: 143px"></i>
+        <i id="s-ago-stone-76" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 329px; top: 453px"></i>
+        <i id="s-ago-stone-77" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 391px; top: 298px"></i>
+        <i id="s-ago-stone-78" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 577px; top: 19px"></i>
+        <i id="s-ago-stone-79" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 174px; top: 577px"></i>
+        <i id="s-ago-stone-80" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 112px; top: 515px"></i>
+        <i id="s-ago-stone-81" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 453px; top: 391px"></i>
+        <i id="s-ago-stone-82" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 236px; top: 298px"></i>
+        <i id="s-ago-stone-83" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 298px; top: 236px"></i>
+        <i id="s-ago-stone-84" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 19px; top: 391px"></i>
+        <i id="s-ago-stone-85" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 360px; top: 236px"></i>
+        <i id="s-ago-stone-86" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 391px; top: 19px"></i>
+        <i id="s-ago-stone-87" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 360px; top: 391px"></i>
+        <i id="s-ago-stone-88" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 546px; top: 205px"></i>
+        <i id="s-ago-stone-89" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 577px; top: 453px"></i>
+        <i id="s-ago-stone-90" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 174px; top: 484px"></i>
+        <i id="s-ago-stone-91" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 81px; top: 391px"></i>
+        <i id="s-ago-stone-92" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 50px"></i>
+        <i id="s-ago-stone-93" class="stone s-ago-stone s-ago-b3 stone--b" style="left: 143px; top: 267px"></i>
+        <i id="s-ago-stone-94" class="stone s-ago-stone s-ago-b3 stone--w" style="left: 205px; top: 329px"></i>
+        <i id="s-ago-stone-95" class="stone s-ago-stone s-ago-b4 stone--b" style="left: 143px; top: 236px"></i>
+        <i id="s-ago-stone-96" class="stone s-ago-stone s-ago-b4 stone--w" style="left: 546px; top: 236px"></i>
+
+        <b id="s-ago-ring-1" class="s-ago-ring" style="left: 422px; top: 112px"></b>
+        <b id="s-ago-ring-2" class="s-ago-ring" style="left: 453px; top: 112px"></b>
+        <b id="s-ago-ring-3" class="s-ago-ring" style="left: 422px; top: 143px"></b>
+        <b id="s-ago-ring-4" class="s-ago-ring" style="left: 453px; top: 143px"></b>
+        <b id="s-ago-ring-5" class="s-ago-ring" style="left: 484px; top: 143px"></b>
+      <b id="s-ago-glow" class="s-ago-glow"></b>
+    </div>
+  </div>
+</div>
+
+<p id="s-ago-boardnote" class="s-ago-boardnote">19 × 19 · 361 个交叉点</p>
+
+<p id="s-ago-where" class="s-ago-where">2016.03 · 首尔</p>
+
+<div id="s-ago-score" class="s-ago-score">
+  <span class="s-ago-scorewho">AlphaGo</span>
+  <span class="s-ago-scoreline"><span>4</span><em>:</em><span>1</span></span>
+  <span class="s-ago-scorevs">李世石 · 五番棋</span>
+</div>
+
+<figure id="s-ago-photo" class="s-ago-photo">
+  <div class="photo">
+    <img src="assets/media/photo/alphago-lee-sedol.webp" width="474" height="316" alt="2016 年首尔，AlphaGo 与李世石对局的现场照片" />
+    <p class="photo__label">2016 首尔 · 人机大战</p>
+  </div>
+</figure>
+
+<div id="s-ago-logo" class="s-ago-logo">
+  <img class="logo" src="assets/media/logo/deepmind.png" width="256" height="256" alt="DeepMind 标志" />
+  <span>DeepMind</span>
+</div>
+
+<div id="s-ago-findings" class="s-ago-findings">
+  <p id="s-ago-find-1" class="s-ago-find"><span class="s-ago-findindex">01</span><span>围棋 · 人类直觉的最后堡垒</span></p>
+  <p id="s-ago-find-2" class="s-ago-find"><span class="s-ago-findindex">02</span><span><strong>10<sup>170</sup></strong> 种局面，宇宙原子只有 <strong>10<sup>80</sup></strong> 个</span></p>
+  <p id="s-ago-find-3" class="s-ago-find"><span class="s-ago-findindex">03</span><span>赢法不是 <span class="strike">穷举</span>，是下面这三件事</span></p>
+</div>
+
+<div id="s-ago-moves" class="s-ago-moves">
+  <div id="s-ago-move-1" class="s-ago-move">
+    <span class="s-ago-movechar">看</span>
+    <span class="s-ago-movedesc">看棋形</span>
+  </div>
+  <div id="s-ago-move-2" class="s-ago-move">
+    <span class="s-ago-movechar">想</span>
+    <span class="s-ago-movedesc">推演几步</span>
+  </div>
+  <div id="s-ago-move-3" class="s-ago-move">
+    <span class="s-ago-movechar">练</span>
+    <span class="s-ago-movedesc">自己跟自己下</span>
+  </div>
+</div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-alphago-cap-0" class="cap-line clip" data-start="0.7" data-duration="3.057">2016 年 3 月，首尔。</p>
+        <p id="s-alphago-cap-1" class="cap-line clip" data-start="3.757" data-duration="4.303">DeepMind 的 AlphaGo 以 4 比 1 战胜李世石。</p>
+        <p id="s-alphago-cap-2" class="cap-line clip" data-start="8.1" data-duration="3.004">这场比赛为什么震动？</p>
+        <p id="s-alphago-cap-3" class="cap-line clip" data-start="11.144" data-duration="4.445">因为围棋长期被认为是「人类直觉的最后堡垒」。</p>
+        <p id="s-alphago-cap-4" class="cap-line clip" data-start="15.629" data-duration="5.578">棋盘的变化比宇宙原子还多，机器不是靠穷举赢的。</p>
+        <p id="s-alphago-cap-5" class="cap-line clip" data-start="21.247" data-duration="8.077">它是靠「看」，看棋形；靠「想」，推演几步；靠「练」，自己跟自己下。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S03</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-alphago-progress"></i></span>
+        <span class="cap-clock">00:31</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S03","id":"alphago","index":0,"start":0,"duration":31.03,"audioStart":0.6000000000000014,"audioDuration":28.824,"cues":[{"i":0,"t":0.7,"d":3.057,"text":"2016 年 3 月，首尔。","sent":"2016 年 3 月，首尔。"},{"i":1,"t":3.757,"d":4.303,"text":"DeepMind 的 AlphaGo 以 4 比 1 战胜李世石。","sent":"DeepMind 的 AlphaGo 以 4 比 1 战胜李世石。"},{"i":2,"t":8.1,"d":3.004,"text":"这场比赛为什么震动？","sent":"这场比赛为什么震动？"},{"i":3,"t":11.144,"d":4.445,"text":"因为围棋长期被认为是「人类直觉的最后堡垒」。","sent":"因为围棋长期被认为是「人类直觉的最后堡垒」。"},{"i":4,"t":15.629,"d":5.578,"text":"棋盘的变化比宇宙原子还多，机器不是靠穷举赢的。","sent":"棋盘的变化比宇宙原子还多，机器不是靠穷举赢的。"},{"i":5,"t":21.247,"d":8.077,"text":"它是靠「看」，看棋形；靠「想」，推演几步；靠「练」，自己跟自己下。","sent":"它是靠「看」，看棋形；靠「想」，推演几步；靠「练」，自己跟自己下。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-alphago-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+/* S03 · alphago — stones drop on the narration, then the camera pushes into the
+   corner where the group reads as a shape. */
+const sAgoRings = ["#s-ago-ring-1", "#s-ago-ring-2", "#s-ago-ring-3", "#s-ago-ring-4", "#s-ago-ring-5"];
+const sAgoMoves = ["#s-ago-move-1", "#s-ago-move-2", "#s-ago-move-3"];
+
+// c0 (0.7) 2016 年 3 月，首尔：棋盘立起来，开局几手落下。
+tl.fromTo("#s-ago-viewport", { opacity: 0, scale: 0.99 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, 0.85);
+tl.fromTo("#s-ago-where", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.95);
+tl.fromTo(
+  "#s-ago-board .s-ago-b1",
+  { opacity: 0, scale: 1.7, y: -24 },
+  { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out", stagger: 0.28 },
+  1.2
+);
+
+// c1 (3.757) 4 比 1：记分牌翻出，现场照片和 DeepMind 小牌一起出现。
+tl.fromTo(
+  "#s-ago-board .s-ago-b2",
+  { opacity: 0, scale: 1.7, y: -24 },
+  { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out", stagger: 0.28 },
+  3.95
+);
+tl.fromTo("#s-ago-score", { opacity: 0, scaleY: 0.3, y: -12 }, { opacity: 1, scaleY: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.0);
+tl.fromTo("#s-ago-photo", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 4.2);
+tl.fromTo("#s-ago-logo", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 4.35);
+
+// c2 (8.1) 为什么震动：棋盘被很快填满，19 x 19 的坐标标出来。
+tl.fromTo(
+  "#s-ago-board .s-ago-b3",
+  { opacity: 0, scale: 1.7, y: -20 },
+  { opacity: 1, scale: 1, y: 0, duration: 0.26, ease: "power2.out", stagger: 0.035 },
+  8.15
+);
+tl.fromTo("#s-ago-boardnote", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, 8.5);
+
+// c3 (11.144) 人类直觉的最后堡垒：档案第一行，现场照片成为焦点。
+tl.fromTo("#s-ago-find-1", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 11.45);
+tl.fromTo("#s-ago-photo", { scale: 1 }, { scale: 1.025, duration: 0.6, ease: "power2.out" }, 11.6);
+
+// 两手下得慢：句子之间棋盘还在动。
+tl.fromTo(
+  "#s-ago-board .s-ago-b4",
+  { opacity: 0, scale: 1.7, y: -24 },
+  { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "power2.out", stagger: 1.1 },
+  13.2
+);
+
+// c4 (15.629) 变化比宇宙原子还多，不是靠穷举：数字、推镜、发光棋形。
+tl.fromTo("#s-ago-find-2", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 16.0);
+tl.fromTo(
+  "#s-ago-cam",
+  { scale: 1, x: 0, y: 0 },
+  { scale: 1.55, x: -240, y: 240, duration: 2.0, ease: "power2.inOut" },
+  17.5
+);
+tl.fromTo("#s-ago-find-3", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 18.5);
+tl.fromTo("#s-ago-glow", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "power1.out" }, 19.5);
+tl.fromTo("#s-ago-board .stone", { opacity: 1 }, { opacity: 0.5, duration: 0.8, ease: "power1.out", stagger: 0.004, immediateRender: false }, 19.3);
+tl.fromTo(sAgoRings, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.08 }, 19.7);
+
+// c5 (21.247) 看、想、练：三件事依次亮起。
+tl.fromTo(sAgoMoves[0], { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 21.4);
+tl.fromTo(sAgoMoves[1], { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 24.2);
+tl.fromTo(sAgoMoves[2], { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 26.9);
+tl.fromTo(sAgoRings, { scale: 1 }, { scale: 1.1, duration: 0.5, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, 28.2);
+    // MOTION:END
+
+    window.__timelines["s-alphago"] = tl;
+  </script>
+</template>

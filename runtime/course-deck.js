@@ -12,6 +12,9 @@ const TRANSITION_MAX_MS = 600;
 const READY_TIMEOUT_MS = 10_000;
 const PROGRESS_DEBOUNCE_MS = 900;
 
+const PREF_CAPTIONS = "ai-learning:captions";
+const PREF_SOUND = "ai-learning:sound";
+
 /* ------------------------------------------------------------------ state */
 
 const deck = {
@@ -20,6 +23,9 @@ const deck = {
   playing: false,
   ended: false,
   reducedMotion: false,
+  mode: "screens",
+  soundOn: true,
+  captionsOn: true,
   progress: { screenId: null, updatedAt: null },
   completed: new Set(),
 };
@@ -31,6 +37,25 @@ let transitionTimer = null;
 let readyTimer = null;
 let progressTimer = null;
 let lastFocused = null;
+
+function readPref(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === "on") return true;
+    if (raw === "off") return false;
+  } catch {
+    /* storage can be blocked; fall back to the default */
+  }
+  return fallback;
+}
+
+function writePref(key, on) {
+  try {
+    localStorage.setItem(key, on ? "on" : "off");
+  } catch {
+    /* storage can be blocked; the toggle still works for this page */
+  }
+}
 
 /* ------------------------------------------------------------------ utils */
 
@@ -185,6 +210,21 @@ function createPlayerAdapter(element) {
     pause() {
       element.pause();
     },
+    sendControl(action, payload = {}) {
+      // The player mounts the composition in a same-origin iframe inside its
+      // open shadow root. Unknown control actions are ignored by the pinned
+      // runtime; the composition's own listener handles `course-captions`.
+      const frame =
+        element.iframe || (element.shadowRoot && element.shadowRoot.querySelector("iframe"));
+      const target = frame && frame.contentWindow;
+      if (!target) return false;
+      try {
+        target.postMessage({ source: "hf-parent", type: "control", action, ...payload }, "*");
+        return true;
+      } catch {
+        return false;
+      }
+    },
     on(event, handler) {
       element.addEventListener(event, handler);
     },
@@ -322,15 +362,59 @@ function rangeFor(index) {
   return { start: screen.start, end: screen.start + screen.duration, screen };
 }
 
+function isContinuous() {
+  return deck.mode === "continuous";
+}
+
+function courseDuration() {
+  const duration = Number(data.composition?.duration);
+  if (Number.isFinite(duration) && duration > 0) return duration;
+  const last = data.screens[data.screens.length - 1];
+  return last ? last.start + last.duration : 0;
+}
+
 function applyRange(index) {
+  if (isContinuous()) {
+    // Continuous mode plays the whole root timeline, exactly like a video.
+    // Screens are only UI anchors on top of that single clock.
+    player.setRange(0, courseDuration());
+    return;
+  }
   const { start, end } = rangeFor(index);
   player.setRange(start, end);
+}
+
+function screenIndexAt(time) {
+  let index = 0;
+  for (let i = 0; i < data.screens.length; i += 1) {
+    if (time + 0.001 >= data.screens[i].start) index = i;
+    else break;
+  }
+  return index;
+}
+
+function syncContinuousIndex(time, { completing = false } = {}) {
+  if (!isContinuous() || deck.state !== "playing") return;
+  const index = screenIndexAt(time);
+  if (index === deck.index) return;
+  // Crossing a boundary means the screen we just left is done. Mark it before
+  // moving the UI forward so "继续上次" resumes at the right place.
+  if (index > deck.index) {
+    for (let i = deck.index; i < index; i += 1) rememberScreen(data.screens[i].id, true);
+  }
+  deck.index = index;
+  renderChapter();
+  updatePlayState();
+  if (history.state?.screenId !== data.screens[index].id) {
+    history.replaceState({ screenId: data.screens[index].id }, "", screenUrl(data.screens[index].id));
+  }
+  if (completing) updateAnnouncer();
 }
 
 function playScreen(index, { autoplay = true } = {}) {
   const bounded = clamp(index, 0, data.screens.length - 1);
   deck.index = bounded;
-  const { start, end, screen } = rangeFor(bounded);
+  const { start, screen } = rangeFor(bounded);
 
   applyRange(bounded);
   el.stageWrap.classList.remove("is-ended");
@@ -375,11 +459,35 @@ function next() {
 }
 
 function prev() {
-  if (deck.index <= 0) return;
+  if (deck.index <= 0) {
+    if (isContinuous()) replay();
+    return;
+  }
+  // Like a video player: pressing back near the start of a screen goes to the
+  // previous screen, pressing it later restarts the current one.
+  if (isContinuous()) {
+    const { start } = rangeFor(deck.index);
+    if (player.time - start > 1.5) {
+      goTo(deck.index);
+      return;
+    }
+  }
   goTo(deck.index - 1);
 }
 
 function replay() {
+  if (isContinuous()) {
+    deck.index = 0;
+    deck.ended = false;
+    applyRange(0);
+    renderChapter();
+    showTransition();
+    player.seek(0);
+    player.play();
+    setBodyState("playing");
+    updatePlayState();
+    return;
+  }
   const { start } = rangeFor(deck.index);
   showTransition();
   player.seek(start);
@@ -392,8 +500,12 @@ function finish() {
   clearTransition();
   player.pause();
   setBodyState("complete");
-  const last = data.screens[data.screens.length - 1];
-  if (last) rememberScreen(last.id, true);
+  if (isContinuous()) {
+    for (const screen of data.screens) rememberScreen(screen.id, true);
+  } else {
+    const last = data.screens[data.screens.length - 1];
+    if (last) rememberScreen(last.id, true);
+  }
   el.completeTitle.textContent = data.title;
   el.completeLead.textContent = `你完成了全部 ${data.screens.length} 屏。`;
   renderTakeaways();
@@ -432,13 +544,18 @@ function startDeck({ fromHash = false } = {}) {
     });
   }
 
-  const targetIndex = fromHash ? deck.index : deck.index || 0;
+  const targetIndex = fromHash ? deck.index : 0;
   applyRange(targetIndex);
 
   const begin = () => {
     clearTimeout(readyTimer);
     el.loading.hidden = true;
     setBodyState("playing");
+    // The click on "开始学习" is the user gesture that unlocks audio. The
+    // saved preference decides whether voice starts on; both switches can be
+    // changed at any time from the control bar.
+    if (data.audio) setMuted(!deck.soundOn);
+    sendCaptionPreference(8);
     playScreen(targetIndex, { autoplay: !deck.reducedMotion });
   };
 
@@ -523,13 +640,82 @@ async function toggleFullscreen() {
   }
 }
 
+function setMuted(muted) {
+  if (!el.player) return;
+  if (muted) el.player.setAttribute("muted", "");
+  else el.player.removeAttribute("muted");
+  deck.soundOn = !muted;
+  if (el.sound) {
+    el.sound.setAttribute("aria-pressed", String(!muted));
+    el.sound.setAttribute("aria-label", muted ? "打开配音（M）" : "关闭配音（M）");
+    el.sound.setAttribute("title", muted ? "打开配音（M）" : "关闭配音（M）");
+  }
+}
+
 function toggleMute() {
   if (!el.sound || !el.player) return;
-  const muted = el.player.hasAttribute("muted");
-  if (muted) el.player.removeAttribute("muted");
-  else el.player.setAttribute("muted", "");
-  el.sound.setAttribute("aria-pressed", String(!muted));
-  el.sound.setAttribute("aria-label", muted ? "关闭声音" : "打开声音");
+  const muted = !el.player.hasAttribute("muted");
+  writePref(PREF_SOUND, muted);
+  setMuted(muted);
+}
+
+function sendCaptionPreference(tries = 0) {
+  if (!player || !el.captions) return;
+  if (player.sendControl("course-captions", { visible: deck.captionsOn })) return;
+  if (tries > 0) setTimeout(() => sendCaptionPreference(tries - 1), 250);
+}
+
+function syncCaptionButton() {
+  if (!el.captions) return;
+  el.captions.setAttribute("aria-pressed", String(deck.captionsOn));
+  el.captions.setAttribute(
+    "aria-label",
+    deck.captionsOn ? "隐藏字幕（C）" : "显示字幕（C）",
+  );
+  el.captions.setAttribute("title", deck.captionsOn ? "字幕开（C）" : "字幕关（C）");
+}
+
+function setCaptions(on) {
+  deck.captionsOn = on;
+  writePref(PREF_CAPTIONS, on);
+  syncCaptionButton();
+  sendCaptionPreference(8);
+}
+
+function toggleCaptions() {
+  if (!el.captions) return;
+  setCaptions(!deck.captionsOn);
+}
+
+function exitCourse(event) {
+  // Modified clicks should keep their native meaning (new tab / download).
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+    return;
+  }
+  event.preventDefault();
+  // Leaving must work even while the player is still loading or has failed:
+  // stop every scheduled transition/timer, silence the player, then let the
+  // browser follow the plain link target (the href is rendered server-side).
+  clearTransition();
+  clearTimeout(readyTimer);
+  readyTimer = null;
+  try {
+    player.pause();
+  } catch {
+    /* the player may not be loaded yet */
+  }
+  try {
+    player.destroy();
+  } catch {
+    /* already destroyed */
+  }
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {
+      /* fullscreen may already be gone */
+    });
+  }
+  if (!el.transcriptWrap.hasAttribute("hidden")) closeTranscript();
+  window.location.href = el.exit.getAttribute("href");
 }
 
 /* ------------------------------------------------------------------- wiring */
@@ -539,8 +725,11 @@ function wirePlayer() {
 
   let lastTime = 0;
   player.on("timeupdate", () => {
-    const { start, end } = rangeFor(deck.index);
     const time = player.time;
+    if (isContinuous()) {
+      syncContinuousIndex(time);
+    }
+    const { start, end } = rangeFor(deck.index);
     updateClock();
     // A seek finished: the first timeupdate inside the new range is the
     // earliest honest moment to lift the transition veil.
@@ -551,6 +740,11 @@ function wirePlayer() {
   });
 
   player.on("ended", () => {
+    if (isContinuous()) {
+      deck.ended = true;
+      finish();
+      return;
+    }
     const screen = currentScreen();
     if (!screen) return;
     deck.ended = true;
@@ -590,6 +784,7 @@ function wirePlayer() {
   player.on("ready", () => {
     clearTimeout(readyTimer);
     el.loading.hidden = true;
+    sendCaptionPreference(8);
   });
 }
 
@@ -604,6 +799,7 @@ function wireControls() {
 
   el.prev.addEventListener("click", prev);
   el.next.addEventListener("click", next);
+  if (el.exit) el.exit.addEventListener("click", exitCourse);
   el.play.addEventListener("click", togglePlay);
   el.replay.addEventListener("click", replay);
   el.transcriptButton.addEventListener("click", openTranscript);
@@ -612,6 +808,7 @@ function wireControls() {
   if (scrim) scrim.addEventListener("click", closeTranscript);
   el.fullscreen.addEventListener("click", toggleFullscreen);
   if (el.sound) el.sound.addEventListener("click", toggleMute);
+  if (el.captions) el.captions.addEventListener("click", toggleCaptions);
   el.retry.addEventListener("click", () => {
     el.error.hidden = true;
     player.destroy();
@@ -652,6 +849,16 @@ function wireControls() {
       case "F":
         event.preventDefault();
         toggleFullscreen();
+        break;
+      case "c":
+      case "C":
+        event.preventDefault();
+        toggleCaptions();
+        break;
+      case "m":
+      case "M":
+        event.preventDefault();
+        toggleMute();
         break;
       case "t":
       case "T":
@@ -705,6 +912,10 @@ async function boot() {
   const node = document.getElementById("course-data");
   data = JSON.parse(node.textContent);
   deck.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  deck.mode = data.playback === "continuous" ? "continuous" : "screens";
+  deck.soundOn = readPref(PREF_SOUND, true);
+  deck.captionsOn = readPref(PREF_CAPTIONS, true);
+  document.body.dataset.deckMode = deck.mode;
 
   window.__COURSE_PROGRESS__ = data.progress || window.__COURSE_PROGRESS__ || null;
 
@@ -723,6 +934,7 @@ async function boot() {
     clockNow: $("#clock-now"),
     clockTotal: $("#clock-total"),
     clockFill: $("#clock-fill"),
+    exit: $("#btn-exit"),
     prev: $("#btn-prev"),
     next: $("#btn-next"),
     play: $("#btn-play"),
@@ -735,6 +947,7 @@ async function boot() {
     transcriptKeywords: $("#transcript-keywords"),
     fullscreen: $("#btn-fullscreen"),
     sound: $("#btn-sound"),
+    captions: $("#btn-captions"),
     announcer: $("#deck-announcer"),
     complete: $("#complete"),
     completeTitle: $("#complete-title"),
@@ -756,6 +969,13 @@ async function boot() {
   wirePlayer();
   wireControls();
   wireOutline();
+
+  // Apply saved switches before the first frame so the control bar and the
+  // composition agree even when the learner reloads mid-course.
+  if (data.audio) {
+    syncCaptionButton();
+    setMuted(!deck.soundOn);
+  }
 
   // Cover state
   const local = readLocalProgress();

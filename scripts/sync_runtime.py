@@ -50,6 +50,10 @@ SUBSET_TEXT = (
 GSAP_FILES = ("gsap.min.js",)
 PLAYER_FILES = ("hyperframes-player.global.js", "hyperframe.runtime.iife.js")
 
+# The deck shell (course-deck.js/.css, shell.html.j2) is versioned separately from
+# the pinned vendor runtime. Bump this whenever the shell or its CSS changes.
+DECK_VERSION = "1.3.0"
+
 
 class SyncError(Exception):
     pass
@@ -75,18 +79,39 @@ def copy(src: Path, dest: Path) -> Path:
     return dest
 
 
-def subset_font(source: Path, target: Path, *, max_bytes: int = 2 * 1024 * 1024) -> Path:
+def course_text(course_dir: Path) -> str:
+    """All display text of one course, so its font subset covers the real copy."""
+    parts: list[str] = []
+    manifest = course_dir / "course.json"
+    if manifest.is_file():
+        parts.append(manifest.read_text(encoding="utf-8"))
+    composition = course_dir / "composition"
+    if composition.is_dir():
+        for path in sorted(composition.rglob("*")):
+            if path.is_file() and path.suffix.lower() in {".html", ".htm", ".json"}:
+                parts.append(path.read_text(encoding="utf-8", errors="ignore"))
+    return "".join(parts)
+
+
+def subset_font(
+    source: Path,
+    target: Path,
+    *,
+    max_bytes: int = 2 * 1024 * 1024,
+    extra_text: str = "",
+) -> Path:
     """Subset the variable font to the characters we actually ship."""
     if (
         target.exists()
         and target.stat().st_size <= max_bytes
         and target.stat().st_mtime >= source.stat().st_mtime
+        and not extra_text.strip()
     ):
         return target
     from fontTools import subset
     from fontTools.ttLib import TTFont
 
-    unique = "".join(dict.fromkeys(SUBSET_TEXT))
+    unique = "".join(dict.fromkeys(SUBSET_TEXT + extra_text))
     target.parent.mkdir(parents=True, exist_ok=True)
     options = subset.Options()
     options.flavor = "woff2"
@@ -161,7 +186,7 @@ def sync_fonts() -> dict[str, str]:
         assets = course_dir / "composition" / "assets"
         if (assets / "course.css").is_file():
             target = assets / "fonts" / "NotoSansSC-VF.woff2"
-            subset_font(source, target)
+            subset_font(source, target, extra_text=course_text(course_dir))
             hashes[target.relative_to(ROOT).as_posix()] = sha256(target)
     return hashes
 
@@ -184,7 +209,7 @@ def write_version(vendor: dict[str, dict[str, str]], fonts: dict[str, str], toke
         "gsap": versions["gsap"],
         "player": PLAYER_FILES[0],
         "runtime": PLAYER_FILES[1],
-        "deckVersion": "1.0.0",
+        "deckVersion": DECK_VERSION,
         "fonts": fonts,
         "tokens": tokens,
         "files": vendor,

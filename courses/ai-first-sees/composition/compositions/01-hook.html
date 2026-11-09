@@ -1,0 +1,823 @@
+<template>
+  <style>
+/* S01 · hook — three paper evidence cards on a decade ruler.
+   Light only: cards are warm paper, the laptop screen is a paper editor. */
+
+.s-hook-deck {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 450px;
+}
+
+.s-hook-card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Three cards, three sizes and three heights: not a tiled row of clones. */
+.s-hook-card--a {
+  left: 80px;
+  top: 56px;
+  width: 440px;
+  height: 388px;
+}
+
+.s-hook-card--b {
+  left: 582px;
+  top: 18px;
+  width: 500px;
+  height: 426px;
+}
+
+.s-hook-card--c {
+  left: 1144px;
+  top: 48px;
+  width: 480px;
+  height: 396px;
+}
+
+.s-hook-cardhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 28px 14px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.s-hook-year {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.s-hook-kind {
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.s-hook-art {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.s-hook-cardfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 28px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.s-hook-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.s-hook-brand .logo {
+  height: 30px;
+  width: auto;
+}
+
+.s-hook-brand--sm .logo {
+  height: 24px;
+  width: auto;
+}
+
+.s-hook-footnote {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------- 2016: go board */
+
+.s-hook-board {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  border-radius: 6px;
+  background-color: #dfb878;
+  background-image:
+    linear-gradient(rgba(70, 46, 18, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 46, 18, 0.5) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: 8px 8px;
+  box-shadow:
+    inset 0 0 0 1px rgba(70, 46, 18, 0.35),
+    0 12px 26px -22px rgba(22, 20, 15, 0.7);
+}
+
+/* --------------------------------------------------------- 2022: chat UI */
+
+.s-hook-chat {
+  width: 420px;
+  height: 252px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+  overflow: hidden;
+  box-shadow: 0 16px 34px -28px rgba(22, 20, 15, 0.6);
+}
+
+.s-hook-chatbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.s-hook-chatname {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.s-hook-dots {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.s-hook-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.s-hook-msgs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 16px;
+}
+
+.s-hook-msg {
+  max-width: 82%;
+  padding: 8px 15px;
+  border-radius: 14px;
+  font-size: 26px;
+  line-height: 1.32;
+  color: var(--ink);
+}
+
+.s-hook-msg--user {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-bottom-right-radius: 4px;
+}
+
+.s-hook-msg--ai {
+  align-self: flex-start;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  background: var(--panel-2);
+  border-bottom-left-radius: 4px;
+}
+
+.s-hook-msg--ai span {
+  display: inline-block;
+}
+
+.s-hook-caret {
+  display: inline-block;
+  width: 3px;
+  height: 21px;
+  margin-left: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  align-self: center;
+}
+
+.s-hook-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-self: flex-start;
+}
+
+.s-hook-chip {
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fffdf8;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------ 2026: paper laptop */
+
+.s-hook-laptop {
+  position: relative;
+  width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s-hook-base {
+  width: 452px;
+  height: 9px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: #e2d8c6;
+}
+
+.s-hook-logos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.s-hook-logos .logo {
+  height: 26px;
+  width: auto;
+}
+
+.s-hook-lid {
+  width: 424px;
+  height: 218px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px 12px 5px 5px;
+  background: #e9e0d1;
+  box-shadow: 0 18px 34px -30px rgba(22, 20, 15, 0.7);
+}
+
+.s-hook-screen {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffdf8;
+  overflow: hidden;
+}
+
+.s-hook-tree {
+  width: 126px;
+  padding: 9px 7px;
+  border-right: 1px solid var(--line);
+  background: #faf6ee;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.s-hook-file {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.s-hook-file i {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.s-hook-file--dir i {
+  border-radius: 2px 2px 3px 3px;
+  background: var(--accent);
+  opacity: 0.65;
+}
+
+.s-hook-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.s-hook-code {
+  flex: 1;
+  padding: 9px 10px 4px;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  line-height: 1.62;
+  color: #2a261f;
+}
+
+.s-hook-line {
+  display: flex;
+  gap: 10px;
+  white-space: pre;
+}
+
+.s-hook-line b {
+  font-weight: 400;
+  color: #b3a894;
+}
+
+.s-hook-swap {
+  position: relative;
+  display: inline-block;
+}
+
+.s-hook-swap > span {
+  display: block;
+}
+
+.s-hook-swap .s-hook-new {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #1f7a52;
+}
+
+.s-hook-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 8px;
+  border-top: 1px solid var(--line);
+  background: #faf6ee;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.s-hook-cmd em {
+  font-style: normal;
+  color: var(--accent-text);
+}
+
+.s-hook-ok {
+  color: #1f7a52;
+}
+
+.s-hook-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  overflow: visible;
+}
+
+/* ------------------------------------------------------- decade ruler */
+
+.s-hook-ruler {
+  position: absolute;
+  left: 80px;
+  right: 40px;
+  top: 460px;
+  height: 200px;
+}
+
+.s-hook-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52px;
+  height: 2px;
+  background: var(--line);
+  transform-origin: left center;
+}
+
+.s-hook-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+.s-hook-dot {
+  position: absolute;
+  left: 0;
+  top: 46px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-soft);
+}
+
+.s-hook-tick {
+  position: absolute;
+  top: 46px;
+  width: 2px;
+  height: 14px;
+  margin-left: -1px;
+  background: var(--line-strong);
+}
+
+.s-hook-mark {
+  position: absolute;
+  top: 0;
+  width: 180px;
+  margin-left: -90px;
+  text-align: center;
+}
+
+.s-hook-mark--last {
+  margin-left: -180px;
+  text-align: right;
+}
+
+.s-hook-mark--first {
+  margin-left: 0;
+  text-align: left;
+}
+
+.s-hook-mark .s-hook-markyear {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink-faint);
+}
+
+.s-hook-wordmark {
+  position: absolute;
+  top: 66px;
+  width: 180px;
+  margin-left: -90px;
+  text-align: center;
+  font-size: 44px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.s-hook-wordmark--first {
+  margin-left: 0;
+  text-align: left;
+}
+
+.s-hook-wordmark--last {
+  margin-left: -180px;
+  text-align: right;
+}
+
+.s-hook-span-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 146px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* Late beats start hidden in CSS so a mid-timeline seek cannot show them
+   before their narration cue. GSAP fromTo still drives every reveal. */
+.s-hook-card,
+.s-hook-board .stone,
+.s-hook-msg--user,
+.s-hook-msg--ai span,
+.s-hook-caret,
+.s-hook-chip,
+.s-hook-file,
+.s-hook-line,
+.s-hook-swap .s-hook-new,
+.s-hook-cmd,
+.s-hook-cmd-ok,
+.s-hook-cursor,
+.s-hook-tick,
+.s-hook-mark,
+.s-hook-wordmark,
+.s-hook-span-note {
+  opacity: 0;
+}
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-hook"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="prologue"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S01</span>
+          <span class="scene-act">开场</span>
+        </p>
+        <h1 id="s-hook-title" class="scene-title">三个画面</h1>
+        <p class="scene-no">01 / 22</p>
+      </header>
+
+      <section id="s-hook-stage" class="stage">
+<div id="s-hook-deck" class="s-hook-deck">
+  <article id="s-hook-card-a" class="s-hook-card s-hook-card--a">
+    <header class="s-hook-cardhead">
+      <span class="s-hook-year">2016</span>
+      <span class="s-hook-kind">首尔 · 围棋</span>
+    </header>
+    <div class="s-hook-art">
+      <div class="s-hook-board">
+        <i id="s-hook-stone-1" class="stone stone--b" style="left: 64px; top: 64px"></i>
+        <i id="s-hook-stone-2" class="stone stone--w" style="left: 148px; top: 64px"></i>
+        <i id="s-hook-stone-3" class="stone stone--b" style="left: 120px; top: 92px"></i>
+        <i id="s-hook-stone-4" class="stone stone--w" style="left: 92px; top: 92px"></i>
+        <i id="s-hook-stone-5" class="stone stone--w" style="left: 64px; top: 120px"></i>
+        <i id="s-hook-stone-6" class="stone stone--b" style="left: 176px; top: 120px"></i>
+        <i id="s-hook-stone-7" class="stone stone--b" style="left: 92px; top: 148px"></i>
+        <i id="s-hook-stone-8" class="stone stone--w" style="left: 148px; top: 148px"></i>
+        <i id="s-hook-stone-9" class="stone stone--w" style="left: 176px; top: 176px"></i>
+        <i id="s-hook-stone-10" class="stone stone--b" style="left: 120px; top: 176px"></i>
+      </div>
+    </div>
+    <footer class="s-hook-cardfoot">
+      <span class="s-hook-brand">
+        <img class="logo" src="assets/media/logo/deepmind.png" width="256" height="256" alt="DeepMind 标志" />
+        DeepMind
+      </span>
+      <span class="s-hook-footnote">4 : 1</span>
+    </footer>
+  </article>
+
+  <article id="s-hook-card-b" class="s-hook-card s-hook-card--b">
+    <header class="s-hook-cardhead">
+      <span class="s-hook-year">2022</span>
+      <span class="s-hook-kind">聊天框 · 生成文字</span>
+    </header>
+    <div class="s-hook-art">
+      <div class="s-hook-chat">
+        <div class="s-hook-chatbar">
+          <span class="s-hook-chatname">ChatGPT</span>
+          <span class="s-hook-dots"><i></i><i></i><i></i></span>
+        </div>
+        <div class="s-hook-msgs">
+          <p id="s-hook-msg-u" class="s-hook-msg s-hook-msg--user">你会写东西吗？</p>
+          <p class="s-hook-msg s-hook-msg--ai"><span id="s-hook-t1">什么</span><span id="s-hook-t2">都</span><span id="s-hook-t3">可以</span><span id="s-hook-t4">写。</span><i id="s-hook-caret" class="s-hook-caret"></i></p>
+          <div class="s-hook-chips">
+            <span id="s-hook-chip-1" class="s-hook-chip">写诗</span>
+            <span id="s-hook-chip-2" class="s-hook-chip">改代码</span>
+            <span id="s-hook-chip-3" class="s-hook-chip">讲笑话</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="s-hook-cardfoot">
+      <span class="s-hook-brand">
+        <img class="logo" src="assets/media/logo/chatgpt.png" width="253" height="256" alt="ChatGPT 标志" />
+        ChatGPT
+      </span>
+    </footer>
+  </article>
+
+  <article id="s-hook-card-c" class="s-hook-card s-hook-card--c">
+    <header class="s-hook-cardhead">
+      <span class="s-hook-year">2026</span>
+      <span class="s-hook-kind">WorkBuddy · DSH</span>
+    </header>
+    <div class="s-hook-art">
+      <div class="s-hook-laptop">
+        <div class="s-hook-lid">
+          <div class="s-hook-screen">
+            <div class="s-hook-tree">
+              <p id="s-hook-tree-1" class="s-hook-file s-hook-file--dir"><i></i>src/</p>
+              <p id="s-hook-tree-2" class="s-hook-file"><i></i>app.ts</p>
+              <p id="s-hook-tree-3" class="s-hook-file"><i></i>index.html</p>
+              <p id="s-hook-tree-4" class="s-hook-file"><i></i>styles.css</p>
+              <p id="s-hook-tree-5" class="s-hook-file"><i></i>README.md</p>
+            </div>
+            <div class="s-hook-main">
+              <div class="s-hook-code">
+                <p id="s-hook-code-1" class="s-hook-line"><b>1</b><span>export function pick(x) {</span></p>
+                <p id="s-hook-code-2" class="s-hook-line"><b>2</b><span>  const best = rank(x);</span></p>
+                <p id="s-hook-code-3" class="s-hook-line"><b>3</b><span class="s-hook-swap"><span id="s-hook-code-old">  return best;</span><span id="s-hook-code-new" class="s-hook-new">  return best.id;</span></span></p>
+                <p id="s-hook-code-4" class="s-hook-line"><b>4</b><span>}</span></p>
+              </div>
+              <div id="s-hook-cmd" class="s-hook-cmd"><em>$</em><span id="s-hook-cmd-a">npm</span><span id="s-hook-cmd-b">test</span><span id="s-hook-cmd-ok" class="s-hook-ok">✓ 3 passed</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="s-hook-base"></div>
+        <svg id="s-hook-cursor" class="s-hook-cursor" width="20" height="24" viewBox="0 0 20 24" aria-hidden="true">
+          <path d="M2 2 L2 20 L7 15 L11 23 L14 21 L10 14 L17 14 Z" fill="#16140f" stroke="#fffdf8" stroke-width="1.6" />
+        </svg>
+      </div>
+    </div>
+    <footer class="s-hook-cardfoot">
+      <span class="s-hook-brand s-hook-brand--sm">
+        <img class="logo" src="assets/media/logo/openclaw.png" width="256" height="47" alt="OpenClaw 标志" />
+      </span>
+      <span class="s-hook-logos">
+        <img class="logo" src="assets/media/logo/workbuddy.png" width="256" height="256" alt="WorkBuddy 标志" />
+        <img class="logo" src="assets/media/logo/dsh.png" width="256" height="256" alt="DSH 标志" />
+      </span>
+    </footer>
+  </article>
+</div>
+
+<div id="s-hook-ruler" class="s-hook-ruler" aria-hidden="true">
+  <div id="s-hook-axis" class="s-hook-axis"></div>
+  <div id="s-hook-fill" class="s-hook-fill"></div>
+  <div id="s-hook-dot" class="s-hook-dot"></div>
+
+  <div id="s-hook-mark-16" class="s-hook-mark s-hook-mark--first" style="left: 0%">
+    <span class="s-hook-markyear">2016</span>
+  </div>
+  <div id="s-hook-mark-22" class="s-hook-mark" style="left: 60%">
+    <span class="s-hook-markyear">2022</span>
+  </div>
+  <div id="s-hook-mark-26" class="s-hook-mark s-hook-mark--last" style="left: 100%">
+    <span class="s-hook-markyear">2026</span>
+  </div>
+
+  <div id="s-hook-tick-16" class="s-hook-tick" style="left: 0%"></div>
+  <div id="s-hook-tick-22" class="s-hook-tick" style="left: 60%"></div>
+  <div id="s-hook-tick-26" class="s-hook-tick" style="left: 100%"></div>
+
+  <div id="s-hook-word-16" class="s-hook-wordmark s-hook-wordmark--first" style="left: 0%">看</div>
+  <div id="s-hook-word-22" class="s-hook-wordmark" style="left: 60%">说</div>
+  <div id="s-hook-word-26" class="s-hook-wordmark s-hook-wordmark--last" style="left: 100%">做</div>
+
+  <p id="s-hook-note" class="s-hook-span-note">十年 · 三次跃迁</p>
+</div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-hook-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.071">2016 年，一台机器在围棋上赢了李世石。</p>
+        <p id="s-hook-cap-1" class="cap-line clip" data-start="5.771" data-duration="6.119">6 年后，也就是 2022 年，一个聊天框让所有人第一次觉得，</p>
+        <p id="s-hook-cap-2" class="cap-line clip" data-start="11.93" data-duration="1.674">AI 什么都能聊。</p>
+        <p id="s-hook-cap-3" class="cap-line clip" data-start="13.644" data-duration="4.622">4 年后，2026 年，AI 不再只是回答你，</p>
+        <p id="s-hook-cap-4" class="cap-line clip" data-start="18.306" data-duration="4.622">它开始自己打开文件、写代码、跑命令。</p>
+        <p id="s-hook-cap-5" class="cap-line clip" data-start="22.967" data-duration="5.083">今天，我们要讲的就是 AI 的 10 年发展历程，</p>
+        <p id="s-hook-cap-6" class="cap-line clip" data-start="28.09" data-duration="3.131">以及如何把当前的 AI 用好。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S01</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-hook-progress"></i></span>
+        <span class="cap-clock">00:33</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S01","id":"hook","index":0,"start":0,"duration":32.92,"audioStart":0.6,"audioDuration":30.72,"cues":[{"i":0,"t":0.7,"d":5.071,"text":"2016 年，一台机器在围棋上赢了李世石。","sent":"2016 年，一台机器在围棋上赢了李世石。"},{"i":1,"t":5.771,"d":6.119,"text":"6 年后，也就是 2022 年，一个聊天框让所有人第一次觉得，","sent":"6 年后，也就是 2022 年，一个聊天框让所有人第一次觉得，AI 什么都能聊。"},{"i":2,"t":11.93,"d":1.674,"text":"AI 什么都能聊。","sent":"6 年后，也就是 2022 年，一个聊天框让所有人第一次觉得，AI 什么都能聊。"},{"i":3,"t":13.644,"d":4.622,"text":"4 年后，2026 年，AI 不再只是回答你，","sent":"4 年后，2026 年，AI 不再只是回答你，它开始自己打开文件、写代码、跑命令。"},{"i":4,"t":18.306,"d":4.622,"text":"它开始自己打开文件、写代码、跑命令。","sent":"4 年后，2026 年，AI 不再只是回答你，它开始自己打开文件、写代码、跑命令。"},{"i":5,"t":22.967,"d":5.083,"text":"今天，我们要讲的就是 AI 的 10 年发展历程，","sent":"今天，我们要讲的就是 AI 的 10 年发展历程，以及如何把当前的 AI 用好。"},{"i":6,"t":28.09,"d":3.131,"text":"以及如何把当前的 AI 用好。","sent":"今天，我们要讲的就是 AI 的 10 年发展历程，以及如何把当前的 AI 用好。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-hook-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+/* S01 · hook — narration is the clock: every beat hangs on N.cues[i].t. */
+const sHookStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => "#s-hook-stone-" + n);
+
+// c0 (0.7) 2016：棋盘卡片先立起来，棋子一颗一颗落下。
+tl.fromTo("#s-hook-card-a", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 0.8);
+tl.fromTo("#s-hook-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.out", transformOrigin: "left center" }, 0.9);
+tl.fromTo("#s-hook-fill", { scaleX: 0 }, { scaleX: 1, duration: 25.4, ease: "none", transformOrigin: "left center" }, 1.2);
+tl.fromTo("#s-hook-dot", { x: 0 }, { x: 1544, duration: 25.4, ease: "none" }, 1.2);
+tl.fromTo("#s-hook-dot", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 1.2);
+tl.fromTo("#s-hook-tick-16", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 1.0);
+tl.fromTo("#s-hook-mark-16", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 1.0);
+tl.fromTo(sHookStones, { opacity: 0, scale: 1.9, y: -30 }, { opacity: 1, scale: 1, y: 0, duration: 0.34, ease: "power2.out", stagger: 0.36 }, 1.35);
+
+// c1 (5.771) 2022：聊天框亮起，用户发一句，AI 一个字一个字往外接。
+tl.fromTo("#s-hook-card-b", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 5.9);
+tl.fromTo("#s-hook-tick-22", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 6.2);
+tl.fromTo("#s-hook-mark-22", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 6.2);
+tl.fromTo("#s-hook-msg-u", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 6.6);
+tl.fromTo("#s-hook-caret", { opacity: 0 }, { opacity: 1, duration: 0.3, repeat: 4, yoyo: true, ease: "none" }, 6.9);
+tl.fromTo(
+  ["#s-hook-t1", "#s-hook-t2", "#s-hook-t3", "#s-hook-t4"],
+  { opacity: 0, y: 8 },
+  { opacity: 1, y: 0, duration: 0.3, ease: "power1.out", stagger: 0.3 },
+  7.15
+);
+
+// c2 (11.93) 「AI 什么都能聊」：三个用途气泡接连冒出来。
+tl.fromTo(
+  ["#s-hook-chip-1", "#s-hook-chip-2", "#s-hook-chip-3"],
+  { opacity: 0, y: 12 },
+  { opacity: 1, y: 0, duration: 0.36, ease: "power2.out", stagger: 0.28 },
+  11.98
+);
+
+// c3 (13.644) 2026：笔记本卡片亮起，浅色编辑器先是空的。
+tl.fromTo("#s-hook-card-c", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 13.8);
+tl.fromTo("#s-hook-tick-26", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 13.9);
+tl.fromTo("#s-hook-mark-26", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 13.9);
+
+// c4 (18.306) 「打开文件、写代码、跑命令」：文件树展开、光标移动、代码被改。
+tl.fromTo(
+  ["#s-hook-tree-1", "#s-hook-tree-2", "#s-hook-tree-3", "#s-hook-tree-4", "#s-hook-tree-5"],
+  { opacity: 0, x: -14 },
+  { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.14 },
+  18.45
+);
+tl.fromTo(
+  "#s-hook-tree-2",
+  { backgroundColor: "rgba(47, 182, 138, 0)" },
+  { backgroundColor: "rgba(47, 182, 138, 0.2)", duration: 0.3, ease: "power1.out" },
+  19.2
+);
+tl.fromTo("#s-hook-cursor", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, 19.3);
+tl.fromTo("#s-hook-cursor", { x: 350, y: 150 }, { x: 62, y: 50, duration: 0.9, ease: "power2.inOut" }, 19.45);
+tl.fromTo(
+  ["#s-hook-code-1", "#s-hook-code-2", "#s-hook-code-3", "#s-hook-code-4"],
+  { opacity: 0, y: 6 },
+  { opacity: 1, y: 0, duration: 0.3, ease: "power1.out", stagger: 0.13 },
+  20.05
+);
+tl.fromTo("#s-hook-cursor", { x: 62, y: 50 }, { x: 236, y: 82, duration: 1.0, ease: "power2.inOut", immediateRender: false }, 20.5);
+tl.fromTo("#s-hook-code-old", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out" }, 21.55);
+tl.fromTo("#s-hook-code-new", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 21.6);
+tl.fromTo(
+  "#s-hook-code-3",
+  { backgroundColor: "rgba(47, 182, 138, 0)" },
+  { backgroundColor: "rgba(47, 182, 138, 0.22)", duration: 0.25, ease: "power1.out" },
+  21.55
+);
+tl.fromTo(
+  "#s-hook-code-3",
+  { backgroundColor: "rgba(47, 182, 138, 0.22)" },
+  { backgroundColor: "rgba(47, 182, 138, 0)", duration: 0.6, ease: "power1.out", immediateRender: false },
+  21.9
+);
+tl.fromTo("#s-hook-cursor", { x: 236, y: 82 }, { x: 112, y: 186, duration: 0.8, ease: "power2.inOut", immediateRender: false }, 21.95);
+tl.fromTo("#s-hook-cmd", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 21.9);
+tl.fromTo("#s-hook-cmd-ok", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 22.4);
+
+// c5 (22.967) 「10 年发展历程」：时间轴走到 2026，三个字在刻度下方补齐。
+tl.fromTo(
+  ["#s-hook-word-16", "#s-hook-word-22", "#s-hook-word-26"],
+  { opacity: 0, y: 14 },
+  { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.42 },
+  23.2
+);
+tl.fromTo("#s-hook-note", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, 25.3);
+
+// c6 (28.09) 「用好当前的 AI」：旧的两张退后，2026 那张留在焦点里。
+tl.fromTo("#s-hook-card-a", { opacity: 1 }, { opacity: 0.45, duration: 0.7, ease: "power2.out", immediateRender: false }, 28.25);
+tl.fromTo("#s-hook-card-b", { opacity: 1 }, { opacity: 0.45, duration: 0.7, ease: "power2.out", immediateRender: false }, 28.25);
+tl.fromTo("#s-hook-card-c", { scale: 1 }, { scale: 1.02, duration: 0.7, ease: "power2.out" }, 28.25);
+tl.fromTo("#s-hook-dot", { scale: 1 }, { scale: 1.55, duration: 0.26, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, 30.0);
+    // MOTION:END
+
+    window.__timelines["s-hook"] = tl;
+  </script>
+</template>

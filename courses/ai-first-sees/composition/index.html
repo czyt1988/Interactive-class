@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=1920, height=1080" />
+    <title>从会聊天到会干活：AI Agent 入门</title>
     <script src="assets/vendor/gsap.min.js"></script>
     <link rel="stylesheet" href="assets/course.css" />
   </head>
@@ -11,17 +12,17 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="177"
+      data-duration="1302.5"
       data-width="1920"
       data-height="1080"
     >
       <div
-        id="s-three-pictures"
-        data-screen-id="three-pictures"
-        data-composition-id="s-three-pictures"
-        data-composition-src="compositions/01-three-pictures.html"
+        id="s-hook"
+        data-screen-id="hook"
+        data-composition-id="s-hook"
+        data-composition-src="compositions/01-hook.html"
         data-start="0"
-        data-duration="21"
+        data-duration="32.92"
         data-track-index="0"
         data-track-kind="graphics"
         data-width="1920"
@@ -32,102 +33,481 @@
         data-screen-id="roadmap"
         data-composition-id="s-roadmap"
         data-composition-src="compositions/02-roadmap.html"
-        data-start="21"
-        data-duration="15"
+        data-start="32.92"
+        data-duration="29.23"
         data-track-index="1"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-board"
-        data-screen-id="board"
-        data-composition-id="s-board"
-        data-composition-src="compositions/03-board.html"
-        data-start="36"
-        data-duration="18"
+        id="s-alphago"
+        data-screen-id="alphago"
+        data-composition-id="s-alphago"
+        data-composition-src="compositions/03-alphago.html"
+        data-start="62.15"
+        data-duration="31.03"
         data-track-index="2"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-three-moves"
-        data-screen-id="three-moves"
-        data-composition-id="s-three-moves"
-        data-composition-src="compositions/04-three-moves.html"
-        data-start="54"
-        data-duration="22"
+        id="s-cnn"
+        data-screen-id="cnn"
+        data-composition-id="s-cnn"
+        data-composition-src="compositions/04-cnn.html"
+        data-start="93.18"
+        data-duration="62.83"
         data-track-index="3"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-filters"
-        data-screen-id="filters"
-        data-composition-id="s-filters"
-        data-composition-src="compositions/05-filters.html"
-        data-start="76"
-        data-duration="27"
+        id="s-gpt1"
+        data-screen-id="gpt1"
+        data-composition-id="s-gpt1"
+        data-composition-src="compositions/05-gpt1.html"
+        data-start="156.01"
+        data-duration="30.07"
         data-track-index="4"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-no-rules"
-        data-screen-id="no-rules"
-        data-composition-id="s-no-rules"
-        data-composition-src="compositions/06-no-rules.html"
-        data-start="103"
-        data-duration="21"
+        id="s-scaling-emergence"
+        data-screen-id="scaling-emergence"
+        data-composition-id="s-scaling-emergence"
+        data-composition-src="compositions/06-scaling-emergence.html"
+        data-start="186.08"
+        data-duration="141.12"
         data-track-index="5"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-alexnet"
-        data-screen-id="alexnet"
-        data-composition-id="s-alexnet"
-        data-composition-src="compositions/07-alexnet.html"
-        data-start="124"
-        data-duration="17"
+        id="s-chatgpt"
+        data-screen-id="chatgpt"
+        data-composition-id="s-chatgpt"
+        data-composition-src="compositions/07-chatgpt.html"
+        data-start="327.2"
+        data-duration="43.24"
         data-track-index="6"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-everywhere"
-        data-screen-id="everywhere"
-        data-composition-id="s-everywhere"
-        data-composition-src="compositions/08-everywhere.html"
-        data-start="141"
-        data-duration="19"
+        id="s-l1-l2"
+        data-screen-id="l1-l2"
+        data-composition-id="s-l1-l2"
+        data-composition-src="compositions/08-l1-l2.html"
+        data-start="370.44"
+        data-duration="41.32"
         data-track-index="7"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
       <div
-        id="s-recap"
-        data-screen-id="recap"
-        data-composition-id="s-recap"
-        data-composition-src="compositions/09-recap.html"
-        data-start="160"
-        data-duration="17"
+        id="s-l3-agent"
+        data-screen-id="l3-agent"
+        data-composition-id="s-l3-agent"
+        data-composition-src="compositions/09-l3-agent.html"
+        data-start="411.76"
+        data-duration="53.83"
         data-track-index="8"
         data-track-kind="graphics"
         data-width="1920"
         data-height="1080"
       ></div>
+      <div
+        id="s-what-is-agent"
+        data-screen-id="what-is-agent"
+        data-composition-id="s-what-is-agent"
+        data-composition-src="compositions/10-what-is-agent.html"
+        data-start="465.59"
+        data-duration="26.76"
+        data-track-index="9"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-two-generations"
+        data-screen-id="two-generations"
+        data-composition-id="s-two-generations"
+        data-composition-src="compositions/11-two-generations.html"
+        data-start="492.35"
+        data-duration="44.47"
+        data-track-index="10"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-harness-anatomy"
+        data-screen-id="harness-anatomy"
+        data-composition-id="s-harness-anatomy"
+        data-composition-src="compositions/12-harness-anatomy.html"
+        data-start="536.82"
+        data-duration="88.03"
+        data-track-index="11"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-tools-skills-mcp"
+        data-screen-id="tools-skills-mcp"
+        data-composition-id="s-tools-skills-mcp"
+        data-composition-src="compositions/13-tools-skills-mcp.html"
+        data-start="624.85"
+        data-duration="70.2"
+        data-track-index="12"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-timeline-landscape"
+        data-screen-id="timeline-landscape"
+        data-composition-id="s-timeline-landscape"
+        data-composition-src="compositions/14-timeline-landscape.html"
+        data-start="695.05"
+        data-duration="33.98"
+        data-track-index="13"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-foreign-agents"
+        data-screen-id="foreign-agents"
+        data-composition-id="s-foreign-agents"
+        data-composition-src="compositions/15-foreign-agents.html"
+        data-start="729.03"
+        data-duration="52.22"
+        data-track-index="14"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-china-agents"
+        data-screen-id="china-agents"
+        data-composition-id="s-china-agents"
+        data-composition-src="compositions/16-china-agents.html"
+        data-start="781.25"
+        data-duration="91.53"
+        data-track-index="15"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-stateless-notebook"
+        data-screen-id="stateless-notebook"
+        data-composition-id="s-stateless-notebook"
+        data-composition-src="compositions/17-stateless-notebook.html"
+        data-start="872.78"
+        data-duration="110.73"
+        data-track-index="16"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-long-session"
+        data-screen-id="long-session"
+        data-composition-id="s-long-session"
+        data-composition-src="compositions/18-long-session.html"
+        data-start="983.51"
+        data-duration="66.5"
+        data-track-index="17"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-compact"
+        data-screen-id="compact"
+        data-composition-id="s-compact"
+        data-composition-src="compositions/19-compact.html"
+        data-start="1050.01"
+        data-duration="80.2"
+        data-track-index="18"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-agents-md"
+        data-screen-id="agents-md"
+        data-composition-id="s-agents-md"
+        data-composition-src="compositions/20-agents-md.html"
+        data-start="1130.21"
+        data-duration="78.12"
+        data-track-index="19"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-safety"
+        data-screen-id="safety"
+        data-composition-id="s-safety"
+        data-composition-src="compositions/21-safety.html"
+        data-start="1208.33"
+        data-duration="48.21"
+        data-track-index="20"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s-closing"
+        data-screen-id="closing"
+        data-composition-id="s-closing"
+        data-composition-src="compositions/22-closing.html"
+        data-start="1256.54"
+        data-duration="45.96"
+        data-track-index="21"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- One voice track per scene. The deck plays the whole root timeline
+           continuously; each track starts when its scene starts. -->
+      <audio
+        id="nar-hook"
+        class="clip"
+        data-start="0.6"
+        data-duration="30.720"
+        data-track-index="100"
+        data-volume="1"
+        src="assets/audio/s01-hook.ogg"
+      ></audio>
+      <audio
+        id="nar-roadmap"
+        class="clip"
+        data-start="33.52"
+        data-duration="27.024"
+        data-track-index="101"
+        data-volume="1"
+        src="assets/audio/s02-roadmap.ogg"
+      ></audio>
+      <audio
+        id="nar-alphago"
+        class="clip"
+        data-start="62.75"
+        data-duration="28.824"
+        data-track-index="102"
+        data-volume="1"
+        src="assets/audio/s03-alphago.ogg"
+      ></audio>
+      <audio
+        id="nar-cnn"
+        class="clip"
+        data-start="93.78"
+        data-duration="60.624"
+        data-track-index="103"
+        data-volume="1"
+        src="assets/audio/s04-cnn.ogg"
+      ></audio>
+      <audio
+        id="nar-gpt1"
+        class="clip"
+        data-start="156.61"
+        data-duration="27.864"
+        data-track-index="104"
+        data-volume="1"
+        src="assets/audio/s05-gpt1.ogg"
+      ></audio>
+      <audio
+        id="nar-scaling-emergence"
+        class="clip"
+        data-start="186.68"
+        data-duration="138.912"
+        data-track-index="105"
+        data-volume="1"
+        src="assets/audio/s06-scaling-emergence.ogg"
+      ></audio>
+      <audio
+        id="nar-chatgpt"
+        class="clip"
+        data-start="327.8"
+        data-duration="41.040"
+        data-track-index="106"
+        data-volume="1"
+        src="assets/audio/s07-chatgpt.ogg"
+      ></audio>
+      <audio
+        id="nar-l1-l2"
+        class="clip"
+        data-start="371.04"
+        data-duration="39.120"
+        data-track-index="107"
+        data-volume="1"
+        src="assets/audio/s08-l1-l2.ogg"
+      ></audio>
+      <audio
+        id="nar-l3-agent"
+        class="clip"
+        data-start="412.36"
+        data-duration="51.624"
+        data-track-index="108"
+        data-volume="1"
+        src="assets/audio/s09-l3-agent.ogg"
+      ></audio>
+      <audio
+        id="nar-what-is-agent"
+        class="clip"
+        data-start="466.19"
+        data-duration="24.552"
+        data-track-index="109"
+        data-volume="1"
+        src="assets/audio/s10-what-is-agent.ogg"
+      ></audio>
+      <audio
+        id="nar-two-generations"
+        class="clip"
+        data-start="492.95"
+        data-duration="42.264"
+        data-track-index="110"
+        data-volume="1"
+        src="assets/audio/s11-two-generations.ogg"
+      ></audio>
+      <audio
+        id="nar-harness-anatomy"
+        class="clip"
+        data-start="537.42"
+        data-duration="85.824"
+        data-track-index="111"
+        data-volume="1"
+        src="assets/audio/s12-harness-anatomy.ogg"
+      ></audio>
+      <audio
+        id="nar-tools-skills-mcp"
+        class="clip"
+        data-start="625.45"
+        data-duration="67.992"
+        data-track-index="112"
+        data-volume="1"
+        src="assets/audio/s13-tools-skills-mcp.ogg"
+      ></audio>
+      <audio
+        id="nar-timeline-landscape"
+        class="clip"
+        data-start="695.65"
+        data-duration="31.776"
+        data-track-index="113"
+        data-volume="1"
+        src="assets/audio/s14-timeline-landscape.ogg"
+      ></audio>
+      <audio
+        id="nar-foreign-agents"
+        class="clip"
+        data-start="729.63"
+        data-duration="50.016"
+        data-track-index="114"
+        data-volume="1"
+        src="assets/audio/s15-foreign-agents.ogg"
+      ></audio>
+      <audio
+        id="nar-china-agents"
+        class="clip"
+        data-start="781.85"
+        data-duration="89.328"
+        data-track-index="115"
+        data-volume="1"
+        src="assets/audio/s16-china-agents.ogg"
+      ></audio>
+      <audio
+        id="nar-stateless-notebook"
+        class="clip"
+        data-start="873.38"
+        data-duration="108.528"
+        data-track-index="116"
+        data-volume="1"
+        src="assets/audio/s17-stateless-notebook.ogg"
+      ></audio>
+      <audio
+        id="nar-long-session"
+        class="clip"
+        data-start="984.11"
+        data-duration="64.296"
+        data-track-index="117"
+        data-volume="1"
+        src="assets/audio/s18-long-session.ogg"
+      ></audio>
+      <audio
+        id="nar-compact"
+        class="clip"
+        data-start="1050.61"
+        data-duration="78.000"
+        data-track-index="118"
+        data-volume="1"
+        src="assets/audio/s19-compact.ogg"
+      ></audio>
+      <audio
+        id="nar-agents-md"
+        class="clip"
+        data-start="1130.81"
+        data-duration="75.912"
+        data-track-index="119"
+        data-volume="1"
+        src="assets/audio/s20-agents-md.ogg"
+      ></audio>
+      <audio
+        id="nar-safety"
+        class="clip"
+        data-start="1208.93"
+        data-duration="46.008"
+        data-track-index="120"
+        data-volume="1"
+        src="assets/audio/s21-safety.ogg"
+      ></audio>
+      <audio
+        id="nar-closing"
+        class="clip"
+        data-start="1257.14"
+        data-duration="43.752"
+        data-track-index="121"
+        data-volume="1"
+        src="assets/audio/s22-closing.ogg"
+      ></audio>
     </div>
 
     <script>
       window.__timelines = window.__timelines || {};
       window.__timelines["main"] = gsap.timeline({ paused: true });
+
+      /* Caption preference. The deck posts a normal HyperFrames control
+         message; unknown actions are ignored by the runtime, ours is handled
+         here. Hiding the band is a viewer preference, the burned-in captions
+         for MP4 export are unchanged. */
+      (function () {
+        const root = document.documentElement;
+        const apply = (visible) => {
+          if (visible) delete root.dataset.captions;
+          else root.dataset.captions = "off";
+        };
+        window.addEventListener("message", (event) => {
+          const message = event.data;
+          if (!message || message.source !== "hf-parent" || message.type !== "control") return;
+          if (message.action === "course-captions") apply(message.visible !== false);
+        });
+        try {
+          if (localStorage.getItem("ai-learning:captions") === "off") apply(false);
+        } catch (error) {
+          /* storage can be blocked; captions stay on */
+        }
+      })();
     </script>
   </body>
 </html>

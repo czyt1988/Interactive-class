@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f4efe6" />
     <title>{% block title %}{{ site.title }}{% endblock %}</title>
     <meta name="description" content="{% block description %}{{ site.description }}{% endblock %}" />
     <link rel="canonical" href="{{ canonical }}" />
@@ -15,8 +17,9 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/tokens.css" />
     <link rel="stylesheet" href="/static/site.css" />
+    {% block head_extra %}{% endblock %}
   </head>
-  <body>
+  <body class="{% block body_class %}{% endblock %}">
     <a class="skip-link" href="#main">跳到正文</a>
     <header class="site-header">
       <div class="site-header__inner">
@@ -41,9 +44,10 @@
           <strong>{{ site.title }}</strong> · 把 AI 讲清楚，一屏一屏地。
         </p>
         <p class="site-footer__meta">
-          网页动画课程 · 无 CDN · 可键盘操作 · 每屏都有讲义
+          网页动画课程，无 CDN，可键盘操作，每屏都有讲义
         </p>
       </div>
     </footer>
+    <script src="/static/site.js" defer></script>
   </body>
 </html>

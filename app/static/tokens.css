@@ -1,31 +1,49 @@
-/* AI Learning design tokens. Shared by the site and the course shell. */
+/* AI Learning design tokens. Source of truth: DESIGN.md documents how these are
+ * used; this file is the implementation. Both the site and the course shell load
+ * a synced copy (see scripts/sync_runtime.py), so never define page-local copies
+ * of these values. The product is light paper only until a second theme exists. */
 :root {
+  /* paper & ink ---------------------------------------------------------- */
   --paper: #f4efe6;
   --paper-raised: #faf6ee;
   --paper-deep: #ece3d3;
   --ink: #16140f;
   --ink-soft: #514b40;
-  --ink-faint: #857c6d;
+  --ink-faint: #6b6355; /* muted labels: >=4.5:1 on paper, raised and deep */
   --line: #d9cfbf;
   --line-strong: #b9ad99;
 
+  /* accent: exactly one brand accent. Course accents are per-card identity,
+   * never interface colour. Use --accent-text for small text on paper. */
   --accent: #b8452b;
+  --accent-text: #a33a20;
   --accent-soft: #f0d9cf;
   --accent-ink: #fff8f0;
 
-  --stage: #0c0e11;
-  --stage-raised: #15181d;
-  --stage-ink: #f6f1e6;
-  --stage-muted: #a9a294;
-  --stage-line: #2b2f36;
-
+  /* type ----------------------------------------------------------------- */
   --font-sans: "Noto Sans SC", "Noto Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
 
+  /* layout --------------------------------------------------------------- */
   --maxw: 1240px;
   --gutter: clamp(20px, 4vw, 56px);
+
+  /* shape: only these steps. 6 inline, 10 mini, 14 stage, 16 card, 20 poster,
+   * full pill for interactive controls. Do not invent in-between radii. */
+  --radius-inline: 6px;
+  --radius-mini: 10px;
+  --radius-stage: 14px;
   --radius-card: 16px;
+  --radius-poster: 20px;
   --radius-pill: 999px;
+
+  /* elevation & motion --------------------------------------------------- */
   --shadow-card: 0 1px 0 rgba(22, 20, 15, 0.06), 0 18px 40px -32px rgba(22, 20, 15, 0.45);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* layers: only these three global layers; local stacks stay inside their
+   * component context. */
+  --z-header: 20;
+  --z-drawer: 40;
+  --z-skip: 60;
 }

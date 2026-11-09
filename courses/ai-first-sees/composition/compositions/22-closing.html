@@ -1,0 +1,374 @@
+<template>
+  <style>
+    /* S22 · 收尾。回到三个词，再加"用"；三张行动卡片；一条上升线收束。 */
+
+    .sc-words {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      gap: 24px;
+    }
+
+    .sc-word {
+      position: relative;
+      width: 320px;
+      height: 196px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      padding-top: 8px;
+    }
+
+    .sc-word__char {
+      font-size: 128px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+    }
+
+    .sc-word__logo {
+      height: 42px;
+      width: auto;
+      object-fit: contain;
+      margin-top: 4px;
+    }
+
+    .sc-word__name {
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+
+    .sc-word--use .sc-word__char {
+      color: var(--accent-text);
+      padding: 0 10px 6px;
+      border-bottom: 6px solid var(--accent);
+    }
+
+    .sc-cards {
+      position: absolute;
+      left: 0;
+      top: 238px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .sc-card {
+      position: relative;
+      width: 400px;
+      height: 192px;
+      padding: 22px 26px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .sc-card__no {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.14em;
+      color: var(--accent-text);
+    }
+
+    .sc-card__title {
+      margin-top: 8px;
+      font-size: 34px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .sc-card__sub {
+      margin-top: 10px;
+      font-size: 24px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+
+    .sc-rise {
+      position: absolute;
+      left: 0;
+      top: 440px;
+      width: 1664px;
+      height: 120px;
+      overflow: visible;
+    }
+
+    .sc-rise path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 5;
+      stroke-linecap: round;
+    }
+
+    .sc-rise circle {
+      fill: var(--accent);
+    }
+
+    .sc-final {
+      position: absolute;
+      left: 0;
+      top: 556px;
+      font-size: 52px;
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .sc-final em {
+      font-style: normal;
+      color: var(--accent-text);
+    }
+
+    .sc-sub {
+      position: absolute;
+      left: 0;
+      top: 620px;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+      color: var(--ink-faint);
+    }
+
+    /* Later states are invisible until the timeline reaches them. */
+    .sc-word,
+    .sc-card,
+    .sc-rise,
+    .sc-final,
+    .sc-sub {
+      opacity: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-closing"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="epilogue"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S22</span>
+          <span class="scene-act">收尾</span>
+        </p>
+        <h1 id="s-closing-title" class="scene-title">第三次跃迁</h1>
+        <p class="scene-no">22 / 22</p>
+      </header>
+
+      <section id="s-closing-stage" class="stage">
+        <div class="sc-words" id="s-closing-words">
+          <div class="sc-word" id="s-closing-word-kan">
+            <span class="sc-word__char">看</span>
+            <img class="sc-word__logo" src="assets/media/logo/deepmind.png" alt="DeepMind" />
+            <span class="sc-word__name">AlphaGo · CNN</span>
+          </div>
+          <div class="sc-word" id="s-closing-word-shuo">
+            <span class="sc-word__char">说</span>
+            <img class="sc-word__logo" src="assets/media/logo/chatgpt.png" alt="ChatGPT" />
+            <span class="sc-word__name">GPT · ChatGPT</span>
+          </div>
+          <div class="sc-word" id="s-closing-word-zuo">
+            <span class="sc-word__char">做</span>
+            <img class="sc-word__logo" src="assets/media/logo/dsh.png" alt="DeepSeek Harness" />
+            <span class="sc-word__name">Agent · Harness</span>
+          </div>
+          <div class="sc-word sc-word--use" id="s-closing-word-yong">
+            <span class="sc-word__char">用</span>
+            <span class="sc-word__name">轮到我们了</span>
+          </div>
+        </div>
+
+        <div class="sc-cards" id="s-closing-cards">
+          <article class="sc-card" id="s-closing-card-1">
+            <span class="sc-card__no">01 / 用起来</span>
+            <h2 class="sc-card__title">把真实任务交给 Agent</h2>
+            <p class="sc-card__sub">做 PPT · 处理数据 · 搭个页面 · 做个游戏</p>
+          </article>
+          <article class="sc-card" id="s-closing-card-2">
+            <span class="sc-card__no">02 / 省 token</span>
+            <h2 class="sc-card__title">一任务，一会话</h2>
+            <p class="sc-card__sub">新任务换一本干净笔记本；舍不得丢的结论先 handoff</p>
+          </article>
+          <article class="sc-card" id="s-closing-card-3">
+            <span class="sc-card__no">03 / 留记忆</span>
+            <h2 class="sc-card__title">写一份 AGENTS.md</h2>
+            <p class="sc-card__sub">项目背景、目标、目录、常用命令、禁止事项</p>
+          </article>
+        </div>
+
+        <svg class="sc-rise" id="s-closing-rise" viewBox="0 0 1664 120" aria-hidden="true">
+          <path
+            id="s-closing-rise-path"
+            d="M160 100 L504 74 L848 48 L1192 20"
+          />
+          <circle id="s-closing-dot-1" cx="160" cy="100" r="7" />
+          <circle id="s-closing-dot-2" cx="504" cy="74" r="7" />
+          <circle id="s-closing-dot-3" cx="848" cy="48" r="7" />
+          <circle id="s-closing-dot-4" cx="1192" cy="20" r="7" />
+        </svg>
+
+        <p class="sc-final" id="s-closing-final">第三次跃迁，<em>才刚刚开始</em>。</p>
+        <p class="sc-sub" id="s-closing-sub">未来 1~2 年，一起期待。</p>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-closing-cap-0" class="cap-line clip" data-start="0.7" data-duration="1.615">回到开头。</p>
+        <p id="s-closing-cap-1" class="cap-line clip" data-start="2.315" data-duration="8.216">AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；</p>
+        <p id="s-closing-cap-2" class="cap-line clip" data-start="10.571" data-duration="4.165">学会做，是 Agent 和 Harness。</p>
+        <p id="s-closing-cap-3" class="cap-line clip" data-start="14.776" data-duration="4.107">如果你当前还是仅仅只会使用对话型的大模型，</p>
+        <p id="s-closing-cap-4" class="cap-line clip" data-start="18.923" data-duration="4.799">那么建议你还是下载一个真正的 Agent 工具体验一下，</p>
+        <p id="s-closing-cap-5" class="cap-line clip" data-start="23.762" data-duration="3.515">让它帮你做个 PPT，帮你处理一下数据，</p>
+        <p id="s-closing-cap-6" class="cap-line clip" data-start="27.317" data-duration="5.49">帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。</p>
+        <p id="s-closing-cap-7" class="cap-line clip" data-start="32.847" data-duration="4.018">AI 的第三次跃迁，才刚刚开始。</p>
+        <p id="s-closing-cap-8" class="cap-line clip" data-start="36.905" data-duration="7.343">很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S22</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-closing-progress"></i></span>
+        <span class="cap-clock">00:46</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S22","id":"closing","index":0,"start":0,"duration":45.96,"audioStart":0.6000000000001364,"audioDuration":43.752,"cues":[{"i":0,"t":0.7,"d":1.615,"text":"回到开头。","sent":"回到开头。"},{"i":1,"t":2.315,"d":8.216,"text":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":2,"t":10.571,"d":4.165,"text":"学会做，是 Agent 和 Harness。","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":3,"t":14.776,"d":4.107,"text":"如果你当前还是仅仅只会使用对话型的大模型，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":4,"t":18.923,"d":4.799,"text":"那么建议你还是下载一个真正的 Agent 工具体验一下，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":5,"t":23.762,"d":3.515,"text":"让它帮你做个 PPT，帮你处理一下数据，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":6,"t":27.317,"d":5.49,"text":"帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":7,"t":32.847,"d":4.018,"text":"AI 的第三次跃迁，才刚刚开始。","sent":"AI 的第三次跃迁，才刚刚开始。"},{"i":8,"t":36.905,"d":7.343,"text":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。","sent":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-closing-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    const at = (i, offset = 0) =>
+      Math.min(N.cues[Math.min(i, N.cues.length - 1)].t + offset, N.duration - 1.4);
+
+    // 1) 回到三个词：看 → 说 → 做，各自带一个真实 logo。
+    tl.fromTo(
+      "#s-closing-word-kan",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(0, 0.2),
+    );
+    tl.fromTo(
+      "#s-closing-word-shuo",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(1, 3.6),
+    );
+    tl.fromTo(
+      "#s-closing-word-zuo",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(2),
+    );
+
+    // 2) 最后落到"用"：其余三个收小，形成 3+1。
+    tl.fromTo(
+      "#s-closing-word-yong",
+      { opacity: 0, scale: 1.35 },
+      { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" },
+      at(3),
+    );
+    tl.fromTo(
+      ["#s-closing-word-kan", "#s-closing-word-shuo", "#s-closing-word-zuo"],
+      { scale: 1 },
+      { scale: 0.94, duration: 0.45, ease: "power2.out" },
+      at(3, 0.15),
+    );
+
+    // 3) 三张行动卡片依次翻出。
+    tl.fromTo(
+      ["#s-closing-card-1", "#s-closing-card-2", "#s-closing-card-3"],
+      { opacity: 0, y: 26 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.22 },
+      at(4),
+    );
+
+    // 4) 旁白点名任务类型时，第一张卡片抬一下。
+    tl.fromTo(
+      "#s-closing-card-1",
+      { y: 0 },
+      { y: -8, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 },
+      at(5),
+    );
+
+    // 5) 说到"搭平台/做游戏"和结尾时，后两张卡片跟着亮一下。
+    tl.fromTo(
+      "#s-closing-card-2",
+      { y: 0 },
+      { y: -6, duration: 0.28, ease: "power2.out", yoyo: true, repeat: 1 },
+      at(6),
+    );
+    tl.fromTo(
+      "#s-closing-card-3",
+      { y: 0 },
+      { y: -6, duration: 0.28, ease: "power2.out", yoyo: true, repeat: 1 },
+      at(6, 0.55),
+    );
+
+    // 6) 第三次跃迁：卡片退后，上升线从左往右长出来。
+    tl.fromTo(
+      "#s-closing-cards",
+      { opacity: 1 },
+      { opacity: 0.5, duration: 0.7, ease: "power2.out" },
+      at(7),
+    );
+    tl.fromTo(
+      "#s-closing-rise",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: "power1.out" },
+      at(7, 0.2),
+    );
+    const risePath = document.getElementById("s-closing-rise-path");
+    const riseLength = risePath ? risePath.getTotalLength() : 0;
+    if (riseLength > 0) {
+      gsap.set(risePath, { strokeDasharray: riseLength, strokeDashoffset: riseLength });
+      tl.fromTo(
+        risePath,
+        { strokeDashoffset: riseLength },
+        { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" },
+        at(7, 0.3),
+      );
+    }
+    tl.fromTo(
+      ["#s-closing-dot-1", "#s-closing-dot-2", "#s-closing-dot-3", "#s-closing-dot-4"],
+      { opacity: 0, scale: 0 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.34 },
+      at(7, 0.35),
+    );
+    tl.fromTo(
+      "#s-closing-final",
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      at(7, 0.8),
+    );
+
+    // 7) 最后一句：往下收，画面稳定。
+    tl.fromTo(
+      "#s-closing-sub",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(8),
+    );
+    // MOTION:END
+
+    window.__timelines["s-closing"] = tl;
+  </script>
+</template>

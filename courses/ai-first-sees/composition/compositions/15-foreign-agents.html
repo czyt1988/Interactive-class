@@ -1,0 +1,385 @@
+<template>
+  <style>
+    /* S15 · foreign-agents
+       2023 → 2025 的横向时间线，四个产品节点：Logo + 名称 + 一句话形态 + 真实截图小证据卡；
+       下方一条形态轴：IDE / 终端 / 云端 / 开源；最后并排成「第一梯队」。 */
+
+    .s-foreign-axis { position: absolute; left: 100px; top: 226px; width: 1480px; height: 2px; background: var(--line-strong); }
+    .s-foreign-axis-head { position: absolute; left: 1580px; top: 219px; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid var(--line-strong); opacity: 0; }
+    .s-foreign-year { position: absolute; top: 236px; font-family: var(--font-mono); font-size: 26px; letter-spacing: 0.06em; color: var(--ink-faint); opacity: 0; }
+    .s-foreign-year--1 { left: 100px; }
+    .s-foreign-year--2 { left: 1470px; width: 110px; text-align: right; }
+
+    .s-foreign-node { position: absolute; top: 213px; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; border: 3px solid #faf6ee; background: var(--accent); box-shadow: 0 0 0 1.5px #514b40; opacity: 0; }
+    .s-foreign-node--1 { left: 210px; }
+    .s-foreign-node--2 { left: 620px; }
+    .s-foreign-node--3 { left: 1030px; }
+    .s-foreign-node--4 { left: 1440px; }
+
+    .s-foreign-date {
+      position: absolute;
+      top: 46px;
+      width: 400px;
+      margin-left: -200px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+    .s-foreign-date--1 { left: 210px; }
+    .s-foreign-date--2 { left: 620px; }
+    .s-foreign-date--3 { left: 1030px; }
+    .s-foreign-date--4 { left: 1440px; }
+
+    .s-foreign-name {
+      position: absolute;
+      top: 80px;
+      width: 400px;
+      margin-left: -200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      opacity: 0;
+    }
+    .s-foreign-name--1 { left: 210px; }
+    .s-foreign-name--2 { left: 620px; }
+    .s-foreign-name--3 { left: 1030px; }
+    .s-foreign-name--4 { left: 1440px; }
+    .s-foreign-name img { display: block; width: 44px; height: 44px; object-fit: contain; }
+    .s-foreign-name b { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; }
+
+    .s-foreign-line {
+      position: absolute;
+      top: 142px;
+      width: 400px;
+      margin-left: -200px;
+      text-align: center;
+      font-size: 26px;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+    .s-foreign-line--1 { left: 210px; }
+    .s-foreign-line--2 { left: 620px; }
+    .s-foreign-line--3 { left: 1030px; }
+    .s-foreign-line--4 { left: 1440px; }
+
+    .s-foreign-tags {
+      position: absolute;
+      top: 182px;
+      width: 400px;
+      margin-left: -200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .s-foreign-tags--1 { left: 210px; }
+    .s-foreign-tags--2 { left: 620px; }
+    .s-foreign-tags--3 { left: 1030px; }
+    .s-foreign-tags--4 { left: 1440px; }
+    .s-foreign-tags span {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s-foreign-shot { position: absolute; top: 266px; width: 280px; margin-left: -140px; opacity: 0; }
+    .s-foreign-shot--1 { left: 210px; }
+    .s-foreign-shot--2 { left: 620px; }
+    .s-foreign-shot--3 { left: 1030px; }
+    .s-foreign-shot--4 { left: 1440px; }
+    .s-foreign-shot .media { width: 100%; margin: 0; }
+    .s-foreign-shot .media img { width: 100%; height: 128px; object-fit: cover; object-position: top center; }
+    .s-foreign-shot .media__label { font-size: 20px; }
+    .s-foreign-shot .media__label span { white-space: nowrap; }
+    .s-foreign-shot-badge {
+      position: absolute;
+      right: 10px;
+      top: 14px;
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: #faf6ee;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s-foreign-form-axis { position: absolute; left: 160px; top: 486px; width: 1420px; height: 1.5px; background: var(--line); opacity: 0; }
+    .s-foreign-form-label { position: absolute; left: 78px; top: 458px; font-family: var(--font-mono); font-size: 24px; letter-spacing: 0.1em; color: var(--ink-faint); opacity: 0; }
+    .s-foreign-form {
+      position: absolute;
+      top: 462px;
+      width: 128px;
+      margin-left: -64px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      font-family: var(--font-mono);
+      font-size: 28px;
+      color: var(--ink);
+      opacity: 0;
+    }
+    .s-foreign-form--1 { left: 210px; }
+    .s-foreign-form--2 { left: 620px; }
+    .s-foreign-form--3 { left: 1030px; }
+    .s-foreign-form--4 { left: 1440px; }
+
+    .s-foreign-bracket { position: absolute; left: 60px; top: 26px; width: 1540px; height: 2px; background: var(--accent); }
+    .s-foreign-bracket-tick { position: absolute; top: 18px; width: 2px; height: 22px; background: var(--accent); opacity: 0; }
+    .s-foreign-bracket-tick--l { left: 60px; }
+    .s-foreign-bracket-tick--r { left: 1598px; }
+    .s-foreign-bracket-label {
+      position: absolute;
+      left: 706px;
+      top: 4px;
+      width: 248px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+      border-radius: 999px;
+      background: #faf6ee;
+      color: var(--accent-text);
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      opacity: 0;
+    }
+
+    .s-foreign-big { position: absolute; left: 480px; top: 530px; width: 704px; text-align: center; font-size: 62px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); opacity: 0; }
+    .s-foreign-sub { position: absolute; left: 400px; top: 606px; width: 864px; text-align: center; font-size: 28px; color: var(--ink-soft); opacity: 0; }
+    .s-foreign-spark { position: absolute; left: 100px; top: 223px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0; }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-foreign-agents"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="crowd"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S15</span>
+          <span class="scene-act">第四幕 · 群雄</span>
+        </p>
+        <h1 id="s-foreign-agents-title" class="scene-title">国外 Agent：四条路线</h1>
+        <p class="scene-no">15 / 22</p>
+      </header>
+
+      <section id="s-foreign-agents-stage" class="stage">
+        <!-- 时间线 -->
+        <span class="s-foreign-axis" id="s-foreign-axis"></span>
+        <span class="s-foreign-axis-head" id="s-foreign-axis-head"></span>
+        <span class="s-foreign-spark" id="s-foreign-spark"></span>
+        <span class="s-foreign-year s-foreign-year--1" id="s-foreign-year1">2023</span>
+        <span class="s-foreign-year s-foreign-year--2" id="s-foreign-year2">2025</span>
+
+        <!-- 四个节点 -->
+        <span class="s-foreign-node s-foreign-node--1" id="s-foreign-node1"></span>
+        <span class="s-foreign-node s-foreign-node--2" id="s-foreign-node2"></span>
+        <span class="s-foreign-node s-foreign-node--3" id="s-foreign-node3"></span>
+        <span class="s-foreign-node s-foreign-node--4" id="s-foreign-node4"></span>
+
+        <!-- Cursor -->
+        <p class="s-foreign-date s-foreign-date--1" id="s-foreign-date1">2023.03</p>
+        <div class="s-foreign-name s-foreign-name--1" id="s-foreign-name1"><img src="assets/media/logo/cursor.png" alt="Cursor 标志" width="44" height="44" /><b>Cursor</b></div>
+        <p class="s-foreign-line s-foreign-line--1" id="s-foreign-line1">AI IDE，补全起家</p>
+        <div class="s-foreign-tags s-foreign-tags--1">
+          <span id="s-foreign-tag1a">Agent 模式 2024.11</span>
+        </div>
+        <div class="s-foreign-shot s-foreign-shot--1" id="s-foreign-shot1">
+          <figure class="media"><img src="assets/media/shot/cursor-agent-mode.webp" alt="Cursor Agent 模式界面截图" width="264" height="128" /><figcaption class="media__label"><span>Cursor 界面</span></figcaption></figure>
+          <span class="s-foreign-shot-badge" id="s-foreign-badge1">改多文件 · 跑命令</span>
+        </div>
+
+        <!-- Claude Code -->
+        <p class="s-foreign-date s-foreign-date--2" id="s-foreign-date2">2025.02</p>
+        <div class="s-foreign-name s-foreign-name--2" id="s-foreign-name2"><img src="assets/media/logo/claude.png" alt="Claude 标志" width="44" height="44" /><b>Claude Code</b></div>
+        <p class="s-foreign-line s-foreign-line--2" id="s-foreign-line2">在终端里干活</p>
+        <div class="s-foreign-tags s-foreign-tags--2">
+          <span id="s-foreign-tag2a">02 研究预览</span>
+          <span id="s-foreign-tag2b">05 正式发布</span>
+        </div>
+        <div class="s-foreign-shot s-foreign-shot--2" id="s-foreign-shot2">
+          <figure class="media"><img src="assets/media/shot/claude-code-terminal.webp" alt="Claude Code 终端界面截图" width="264" height="128" /><figcaption class="media__label"><span>Claude 终端</span></figcaption></figure>
+        </div>
+
+        <!-- Codex -->
+        <p class="s-foreign-date s-foreign-date--3" id="s-foreign-date3">2025.05</p>
+        <div class="s-foreign-name s-foreign-name--3" id="s-foreign-name3"><img src="assets/media/logo/codex.png" alt="Codex 标志" width="44" height="44" /><b>Codex</b></div>
+        <p class="s-foreign-line s-foreign-line--3" id="s-foreign-line3">云端任务</p>
+        <div class="s-foreign-tags s-foreign-tags--3"></div>
+        <div class="s-foreign-shot s-foreign-shot--3" id="s-foreign-shot3">
+          <figure class="media"><img src="assets/media/shot/codex-cloud.webp" alt="Codex 云端任务界面截图" width="264" height="128" /><figcaption class="media__label"><span>Codex 云端</span></figcaption></figure>
+        </div>
+
+        <!-- OpenCode -->
+        <p class="s-foreign-date s-foreign-date--4" id="s-foreign-date4">2025</p>
+        <div class="s-foreign-name s-foreign-name--4" id="s-foreign-name4"><img src="assets/media/logo/opencode.png" alt="OpenCode 标志" width="44" height="44" /><b>OpenCode</b></div>
+        <p class="s-foreign-line s-foreign-line--4" id="s-foreign-line4">开源 · 跨模型</p>
+        <div class="s-foreign-tags s-foreign-tags--4"></div>
+        <div class="s-foreign-shot s-foreign-shot--4" id="s-foreign-shot4">
+          <figure class="media"><img src="assets/media/shot/opencode-tui.webp" alt="OpenCode 终端界面截图" width="264" height="128" /><figcaption class="media__label"><span>OpenCode 终端</span></figcaption></figure>
+        </div>
+
+        <!-- 形态轴 -->
+        <span class="s-foreign-form-axis" id="s-foreign-form-axis"></span>
+        <span class="s-foreign-form-label" id="s-foreign-form-label">形态</span>
+        <span class="s-foreign-form s-foreign-form--1" id="s-foreign-form1">IDE</span>
+        <span class="s-foreign-form s-foreign-form--2" id="s-foreign-form2">终端</span>
+        <span class="s-foreign-form s-foreign-form--3" id="s-foreign-form3">云端</span>
+        <span class="s-foreign-form s-foreign-form--4" id="s-foreign-form4">开源</span>
+
+        <!-- 第一梯队 -->
+        <span class="s-foreign-bracket" id="s-foreign-bracket"></span>
+        <span class="s-foreign-bracket-tick s-foreign-bracket-tick--l" id="s-foreign-bracket-tick-l"></span>
+        <span class="s-foreign-bracket-tick s-foreign-bracket-tick--r" id="s-foreign-bracket-tick-r"></span>
+        <span class="s-foreign-bracket-label" id="s-foreign-bracket-label">第一梯队</span>
+
+        <!-- 收尾 -->
+        <p class="s-foreign-big" id="s-foreign-big">谁最强？</p>
+        <p class="s-foreign-sub" id="s-foreign-sub">排名每个月都在变</p>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-foreign-agents-cap-0" class="cap-line clip" data-start="0.7" data-duration="1.645">先看国外。</p>
+        <p id="s-foreign-agents-cap-1" class="cap-line clip" data-start="2.345" data-duration="6.414">2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，</p>
+        <p id="s-foreign-agents-cap-2" class="cap-line clip" data-start="8.799" data-duration="5.616">核心是补全；到 2024 年 11 月，它有了 Agent 模式，</p>
+        <p id="s-foreign-agents-cap-3" class="cap-line clip" data-start="14.456" data-duration="3.192">开始自己改多个文件、跑命令。</p>
+        <p id="s-foreign-agents-cap-4" class="cap-line clip" data-start="17.688" data-duration="5.469">2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，</p>
+        <p id="s-foreign-agents-cap-5" class="cap-line clip" data-start="23.197" data-duration="5.157">5 月正式发布，它把「在终端里干活」做成了完整体验。</p>
+        <p id="s-foreign-agents-cap-6" class="cap-line clip" data-start="28.394" data-duration="4.327">同一年 5 月，OpenAI 发布 Codex。</p>
+        <p id="s-foreign-agents-cap-7" class="cap-line clip" data-start="32.761" data-duration="6.681">还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。</p>
+        <p id="s-foreign-agents-cap-8" class="cap-line clip" data-start="39.482" data-duration="5.283">它们有些是 IDE，有些是只有终端，有些是桌面端。</p>
+        <p id="s-foreign-agents-cap-9" class="cap-line clip" data-start="44.805" data-duration="1.843">谁最强？</p>
+        <p id="s-foreign-agents-cap-10" class="cap-line clip" data-start="46.688" data-duration="3.827">这个问题每个月都可能换答案。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S15</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-foreign-agents-progress"></i></span>
+        <span class="cap-clock">00:52</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S15","id":"foreign-agents","index":0,"start":0,"duration":52.22,"audioStart":0.6000000000000227,"audioDuration":50.016,"cues":[{"i":0,"t":0.7,"d":1.645,"text":"先看国外。","sent":"先看国外。"},{"i":1,"t":2.345,"d":6.414,"text":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":2,"t":8.799,"d":5.616,"text":"核心是补全；到 2024 年 11 月，它有了 Agent 模式，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":3,"t":14.456,"d":3.192,"text":"开始自己改多个文件、跑命令。","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":4,"t":17.688,"d":5.469,"text":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":5,"t":23.197,"d":5.157,"text":"5 月正式发布，它把「在终端里干活」做成了完整体验。","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":6,"t":28.394,"d":4.327,"text":"同一年 5 月，OpenAI 发布 Codex。","sent":"同一年 5 月，OpenAI 发布 Codex。"},{"i":7,"t":32.761,"d":6.681,"text":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。","sent":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。"},{"i":8,"t":39.482,"d":5.283,"text":"它们有些是 IDE，有些是只有终端，有些是桌面端。","sent":"它们有些是 IDE，有些是只有终端，有些是桌面端。"},{"i":9,"t":44.805,"d":1.843,"text":"谁最强？","sent":"谁最强？"},{"i":10,"t":46.688,"d":3.827,"text":"这个问题每个月都可能换答案。","sent":"这个问题每个月都可能换答案。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-foreign-agents-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 时间线生长，节点依次亮起：先 Logo，再截图，再一句话。
+    const T = N.cues.map((c) => c.t);
+    const ease = "power3.out";
+    const q = "power2.out";
+
+    // 快照会直接 seek：先显式压掉初始缩放，避免提前露出来。
+    gsap.set("#s-foreign-axis", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s-foreign-bracket", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set(["#s-foreign-node1", "#s-foreign-node2", "#s-foreign-node3", "#s-foreign-node4"], { scale: 0.4 });
+    gsap.set("#s-foreign-spark", { x: 0 });
+
+    // 次级运动：小点沿时间线缓慢右移。
+    tl.fromTo("#s-foreign-spark", { opacity: 0.55, x: 0 }, { opacity: 0.55, x: 1440, duration: 45, ease: "none" }, T[0] + 1.2);
+
+    // cue0 · 先看国外：时间线长出来
+    tl.fromTo("#s-foreign-axis", { scaleX: 0 }, { scaleX: 1, duration: 1.0, ease: "power2.inOut" }, T[0]);
+    tl.fromTo("#s-foreign-axis-head", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 0.9);
+    tl.fromTo("#s-foreign-year1", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[0] + 0.8);
+    tl.fromTo("#s-foreign-year2", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[0] + 1.5);
+
+    // cue1 · Cursor：一开始只是更好用的 AI IDE
+    tl.fromTo("#s-foreign-node1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[1] + 0.05);
+    tl.fromTo("#s-foreign-date1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[1] + 0.1);
+    tl.fromTo("#s-foreign-name1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[1] + 0.35);
+    tl.fromTo("#s-foreign-line1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[1] + 0.75);
+    tl.fromTo("#s-foreign-shot1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[1] + 1.15);
+
+    // cue2 · 2024 年 11 月有了 Agent 模式
+    tl.fromTo("#s-foreign-tag1a", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[2] + 0.1);
+
+    // cue3 · 自己改多个文件、跑命令（截图卡上盖章）
+    tl.fromTo("#s-foreign-badge1", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, T[3] + 0.1);
+
+    // cue4 · Claude Code 研究预览
+    tl.fromTo("#s-foreign-node2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[4] + 0.05);
+    tl.fromTo("#s-foreign-date2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[4] + 0.1);
+    tl.fromTo("#s-foreign-name2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[4] + 0.35);
+    tl.fromTo("#s-foreign-line2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[4] + 0.75);
+    tl.fromTo("#s-foreign-tag2a", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[4] + 0.8);
+    tl.fromTo("#s-foreign-shot2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[4] + 1.15);
+
+    // cue5 · 5 月正式发布，终端里的完整体验
+    tl.fromTo("#s-foreign-tag2b", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[5] + 0.1);
+
+    // cue6 · 同一年 5 月，OpenAI 发布 Codex
+    tl.fromTo("#s-foreign-node3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[6] + 0.05);
+    tl.fromTo("#s-foreign-date3", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 0.1);
+    tl.fromTo("#s-foreign-name3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[6] + 0.35);
+    tl.fromTo("#s-foreign-line3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 0.7);
+    tl.fromTo("#s-foreign-shot3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[6] + 1.15);
+
+    // cue7 · OpenCode：开源、跨模型
+    tl.fromTo("#s-foreign-node4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[7] + 0.05);
+    tl.fromTo("#s-foreign-date4", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[7] + 0.1);
+    tl.fromTo("#s-foreign-name4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[7] + 0.35);
+    tl.fromTo("#s-foreign-line4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[7] + 0.75);
+    tl.fromTo("#s-foreign-shot4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[7] + 1.15);
+
+    // cue8 · 形态轴：IDE / 终端 / 云端 / 开源
+    tl.fromTo("#s-foreign-form-axis", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.1);
+    tl.fromTo("#s-foreign-form-label", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.2);
+    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-foreign-form" + n, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[8] + 0.3 + i * 0.28));
+
+    // cue9 · 谁最强？
+    tl.fromTo("#s-foreign-big", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[9] + 0.15);
+
+    // cue10 · 排名每个月都可能变，但他们是一个梯队
+    tl.fromTo("#s-foreign-sub", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[10] + 0.1);
+    tl.fromTo("#s-foreign-bracket", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, T[10] + 0.45);
+    tl.fromTo("#s-foreign-bracket-tick-l", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[10] + 0.5);
+    tl.fromTo("#s-foreign-bracket-tick-r", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[10] + 0.5);
+    tl.fromTo("#s-foreign-bracket-label", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, T[10] + 0.85);
+    // MOTION:END
+
+    window.__timelines["s-foreign-agents"] = tl;
+  </script>
+</template>

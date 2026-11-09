@@ -1,151 +1,417 @@
 <template>
   <style>
-    #root {
-      background: #f4efe6;
-      color: #16140f;
-    }
+/* S02 · roadmap — four signposts on a course-length road.
+   Widths are honest: the left half is 7 screens / 6.2 min, the right half is
+   15 screens / 15.5 min, so the signs sit inside their own half. */
 
-    .rm-kicker {
-      position: absolute;
-      left: 192px;
-      top: 96px;
-      font-family: ui-monospace, monospace;
-      font-size: 28px;
-      letter-spacing: 0.14em;
-      color: #a33a20;
-    }
+.s-roadmap-sign {
+  position: absolute;
+  top: 160px;
+  width: 200px;
+  height: 288px;
+  margin-left: -100px;
+  text-align: center;
+}
 
-    .rm-title {
-      position: absolute;
-      left: 192px;
-      top: 150px;
-      width: 1400px;
-      font-size: 96px;
-      line-height: 1.1;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-    }
+.s-roadmap-sign--kan {
+  left: 152px;
+}
 
-    .rm-word {
-      position: absolute;
-      top: 380px;
-      width: 240px;
-      text-align: center;
-      font-size: 240px;
-      line-height: 1;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      color: #16140f;
-    }
+.s-roadmap-sign--shuo {
+  left: 377px;
+}
 
-    .rm-word--1 { left: 330px; }
-    .rm-word--2 { left: 650px; }
-    .rm-word--3 { left: 970px; }
-    .rm-word--4 { left: 1290px; color: #2f6f5e; }
+.s-roadmap-sign--zuo {
+  left: 780px;
+}
 
-    .rm-axis {
-      position: absolute;
-      left: 330px;
-      top: 660px;
-      width: 1200px;
-      height: 1px;
-      background: #b9ad99;
-      transform-origin: left center;
-    }
+.s-roadmap-sign--yong {
+  left: 1350px;
+}
 
-    .rm-half {
-      position: absolute;
-      top: 690px;
-      font-family: ui-monospace, monospace;
-      font-size: 28px;
-      letter-spacing: 0.1em;
-      color: #857c6d;
-    }
+.s-roadmap-char {
+  display: block;
+  height: 180px;
+  font-size: 180px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
 
-    .rm-half--1 { left: 330px; }
-    .rm-half--2 { left: 970px; }
+.s-roadmap-post {
+  display: block;
+  width: 5px;
+  height: 108px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
 
-    .rm-close {
-      position: absolute;
-      left: 192px;
-      top: 810px;
-      width: 1536px;
-      font-size: 56px;
-      line-height: 1.5;
-      color: #514b40;
-    }
+/* The fourth sign is a dashed slot until the last line of narration. */
+.s-roadmap-slot {
+  position: absolute;
+  left: 1350px;
+  top: 160px;
+  width: 200px;
+  height: 180px;
+  margin-left: -100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--line-strong);
+  border-radius: 14px;
+  font-family: var(--font-mono);
+  font-size: 84px;
+  color: var(--line-strong);
+}
 
-    .rm-close b {
-      color: #2f6f5e;
-      font-weight: 700;
-    }
+.s-roadmap-road {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 448px;
+  height: 2px;
+  background: var(--line-strong);
+  transform-origin: left center;
+}
 
-    .rm-tag {
-      position: absolute;
-      left: 192px;
-      top: 936px;
-      font-family: ui-monospace, monospace;
-      font-size: 28px;
-      letter-spacing: 0.1em;
-      color: #a33a20;
-    }
+.s-roadmap-ticks {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 450px;
+  height: 16px;
+}
+
+.s-roadmap-ticks i {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 7px;
+  margin-left: -1px;
+  background: var(--line);
+}
+
+.s-roadmap-split {
+  position: absolute;
+  left: 28.44%;
+  top: -8px;
+  width: 2px;
+  height: 22px;
+  margin-left: -1px;
+  background: var(--line-strong);
+}
+
+.s-roadmap-half {
+  position: absolute;
+  top: 482px;
+  height: 14px;
+  border-bottom: 2px solid var(--line-strong);
+}
+
+.s-roadmap-half::before,
+.s-roadmap-half::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  width: 2px;
+  height: 14px;
+  background: var(--line-strong);
+}
+
+.s-roadmap-half::before {
+  left: 0;
+}
+
+.s-roadmap-half::after {
+  right: 0;
+}
+
+.s-roadmap-half--up {
+  left: 40px;
+  width: 438px;
+}
+
+.s-roadmap-half--down {
+  left: 502px;
+  width: 1122px;
+}
+
+.s-roadmap-halflabel {
+  position: absolute;
+  top: 492px;
+  text-align: center;
+}
+
+.s-roadmap-halflabel--up {
+  left: 40px;
+  width: 438px;
+}
+
+.s-roadmap-halflabel--down {
+  left: 502px;
+  width: 1122px;
+}
+
+.s-roadmap-halftime {
+  display: block;
+  font-size: 30px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.s-roadmap-halfsub {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* 「做」旁边的注：只读 → 可读可写 */
+.s-roadmap-note {
+  position: absolute;
+  left: 780px;
+  top: 68px;
+  width: 460px;
+  margin-left: -230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.s-roadmap-tag {
+  position: relative;
+  padding: 6px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.s-roadmap-tag--accent {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--ink);
+  opacity: 0;
+}
+
+.s-roadmap-strike {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 52%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--stamp);
+}
+
+.s-roadmap-arrow {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--accent-text);
+}
+
+/* Late beats start hidden so a mid-timeline seek cannot show them early. */
+.s-roadmap-sign,
+.s-roadmap-slot,
+.s-roadmap-road,
+.s-roadmap-ticks,
+.s-roadmap-split,
+.s-roadmap-half,
+.s-roadmap-halflabel,
+.s-roadmap-note {
+  opacity: 0;
+}
+
+.s-roadmap-strike {
+  opacity: 0;
+}
   </style>
 
-  <div id="root" data-composition-id="s-roadmap" data-width="1920" data-height="1080">
-    <p id="rm-kicker" class="clip rm-kicker" data-start="0.2" data-duration="14.7">
-      第二幕之前 · 先看地图
-    </p>
-    <h1 id="rm-title" class="clip rm-title" data-start="0.3" data-duration="14.6">
-      四个字，记住整场
-    </h1>
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-roadmap"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="prologue"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S02</span>
+          <span class="scene-act">开场</span>
+        </p>
+        <h1 id="s-roadmap-title" class="scene-title">四个字</h1>
+        <p class="scene-no">02 / 22</p>
+      </header>
 
-    <span id="rm-w1" class="clip rm-word rm-word--1" data-start="1.1" data-duration="13.8">看</span>
-    <span id="rm-w2" class="clip rm-word rm-word--2" data-start="1.9" data-duration="13">说</span>
-    <span id="rm-w3" class="clip rm-word rm-word--3" data-start="2.7" data-duration="12.2">做</span>
-    <span id="rm-w4" class="clip rm-word rm-word--4" data-start="4.1" data-duration="10.8">用</span>
+      <section id="s-roadmap-stage" class="stage">
+<div id="s-roadmap-sign-kan" class="s-roadmap-sign s-roadmap-sign--kan">
+  <span class="s-roadmap-char">看</span>
+  <span class="s-roadmap-post"></span>
+</div>
+<div id="s-roadmap-sign-shuo" class="s-roadmap-sign s-roadmap-sign--shuo">
+  <span class="s-roadmap-char">说</span>
+  <span class="s-roadmap-post"></span>
+</div>
+<div id="s-roadmap-sign-zuo" class="s-roadmap-sign s-roadmap-sign--zuo">
+  <span class="s-roadmap-char">做</span>
+  <span class="s-roadmap-post"></span>
+</div>
+<div id="s-roadmap-sign-yong" class="s-roadmap-sign s-roadmap-sign--yong">
+  <span class="s-roadmap-char">用</span>
+  <span class="s-roadmap-post"></span>
+</div>
 
-    <div id="rm-axis" class="clip rm-axis" data-start="6.4" data-duration="8.5"></div>
-    <span id="rm-half-1" class="clip rm-half rm-half--1" data-start="7.0" data-duration="7.9">
-      上半场 · 看和说
-    </span>
-    <span id="rm-half-2" class="clip rm-half rm-half--2" data-start="7.3" data-duration="7.6">
-      下半场 · 做和用
-    </span>
+<div id="s-roadmap-slot" class="s-roadmap-slot">?</div>
 
-    <p id="rm-close" class="clip rm-close" data-start="9.6" data-duration="5.3">
-      这一集，只讲第一个字：<b>看</b>。
-    </p>
-    <p id="rm-tag" class="clip rm-tag" data-start="10.4" data-duration="4.5">
-      日期是路标，能力跃迁才是主线
-    </p>
+<div id="s-roadmap-road" class="s-roadmap-road"></div>
+
+<div id="s-roadmap-ticks" class="s-roadmap-ticks">
+  <i style="left: 0%"></i>
+  <i style="left: 2.53%"></i>
+  <i style="left: 4.77%"></i>
+  <i style="left: 7.15%"></i>
+  <i style="left: 11.98%"></i>
+  <i style="left: 14.29%"></i>
+  <i style="left: 25.12%"></i>
+  <i style="left: 28.44%"></i>
+  <i style="left: 31.61%"></i>
+  <i style="left: 35.75%"></i>
+  <i style="left: 37.8%"></i>
+  <i style="left: 41.21%"></i>
+  <i style="left: 47.97%"></i>
+  <i style="left: 53.36%"></i>
+  <i style="left: 55.97%"></i>
+  <i style="left: 59.98%"></i>
+  <i style="left: 67.01%"></i>
+  <i style="left: 75.51%"></i>
+  <i style="left: 80.61%"></i>
+  <i style="left: 86.77%"></i>
+  <i style="left: 92.77%"></i>
+  <i style="left: 96.47%"></i>
+  <div id="s-roadmap-split" class="s-roadmap-split"></div>
+</div>
+
+<div id="s-roadmap-half-up" class="s-roadmap-half s-roadmap-half--up"></div>
+<div id="s-roadmap-half-down" class="s-roadmap-half s-roadmap-half--down"></div>
+
+<div id="s-roadmap-label-up" class="s-roadmap-halflabel s-roadmap-halflabel--up">
+  <span class="s-roadmap-halftime">上半场 · 约 6 分钟</span>
+  <span class="s-roadmap-halfsub">S01 – S07</span>
+</div>
+<div id="s-roadmap-label-down" class="s-roadmap-halflabel s-roadmap-halflabel--down">
+  <span class="s-roadmap-halftime">下半场 · 约 15 分钟</span>
+  <span class="s-roadmap-halfsub">S08 – S22</span>
+</div>
+
+<div id="s-roadmap-note" class="s-roadmap-note">
+  <span class="s-roadmap-tag s-roadmap-tag--old">只读<span id="s-roadmap-strike" class="s-roadmap-strike"></span></span>
+  <span class="s-roadmap-arrow">→</span>
+  <span id="s-roadmap-tag-accent" class="s-roadmap-tag s-roadmap-tag--accent">可读可写</span>
+</div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-roadmap-cap-0" class="cap-line clip" data-start="0.7" data-duration="7.527">AI 这 10 年的历程，可以总结为四个字：看、说、做、用。</p>
+        <p id="s-roadmap-cap-1" class="cap-line clip" data-start="8.227" data-duration="3.97">十年前，AI 学会了看，学会了理解；</p>
+        <p id="s-roadmap-cap-2" class="cap-line clip" data-start="12.237" data-duration="4.102">后来，它学会了说，学会了生成文字；</p>
+        <p id="s-roadmap-cap-3" class="cap-line clip" data-start="16.379" data-duration="7.269">现在，它学会了做，从只读变成了可读可写，这是 AI 能力的跃迁。</p>
+        <p id="s-roadmap-cap-4" class="cap-line clip" data-start="23.688" data-duration="3.827">而我们要学的，是怎么用好它。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S02</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-roadmap-progress"></i></span>
+        <span class="cap-clock">00:29</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
   </div>
 
   <script>
+    // TIMING:BEGIN
+    const N = {"code":"S02","id":"roadmap","index":0,"start":0,"duration":29.23,"audioStart":0.6000000000000014,"audioDuration":27.024,"cues":[{"i":0,"t":0.7,"d":7.527,"text":"AI 这 10 年的历程，可以总结为四个字：看、说、做、用。","sent":"AI 这 10 年的历程，可以总结为四个字：看、说、做、用。"},{"i":1,"t":8.227,"d":3.97,"text":"十年前，AI 学会了看，学会了理解；","sent":"十年前，AI 学会了看，学会了理解；后来，它学会了说，学会了生成文字；现在，它学会了做，从只读变成了可读可写，这是 AI 能力的跃迁。"},{"i":2,"t":12.237,"d":4.102,"text":"后来，它学会了说，学会了生成文字；","sent":"十年前，AI 学会了看，学会了理解；后来，它学会了说，学会了生成文字；现在，它学会了做，从只读变成了可读可写，这是 AI 能力的跃迁。"},{"i":3,"t":16.379,"d":7.269,"text":"现在，它学会了做，从只读变成了可读可写，这是 AI 能力的跃迁。","sent":"十年前，AI 学会了看，学会了理解；后来，它学会了说，学会了生成文字；现在，它学会了做，从只读变成了可读可写，这是 AI 能力的跃迁。"},{"i":4,"t":23.688,"d":3.827,"text":"而我们要学的，是怎么用好它。","sent":"而我们要学的，是怎么用好它。"}]};
+    // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
-    tl.fromTo("#rm-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.2);
-    tl.fromTo("#rm-title", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.3);
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
 
-    tl.fromTo("#rm-w1", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 1.1);
-    tl.fromTo("#rm-w2", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 1.9);
-    tl.fromTo("#rm-w3", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" }, 2.7);
-    tl.fromTo("#rm-w4", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 4.1);
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-roadmap-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
 
-    // 第四个出现后，前三个缩小，形成 3 + 1 的层级。
-    tl.fromTo(
-      ["#rm-w1", "#rm-w2", "#rm-w3"],
-      { scale: 1, y: 0 },
-      { scale: 0.62, y: 42, transformOrigin: "50% 60%", duration: 0.7, ease: "power2.inOut" },
-      5.2,
-    );
-    tl.fromTo("#rm-w4", { scale: 1 }, { scale: 1.08, transformOrigin: "50% 60%", duration: 0.7, ease: "power2.inOut" }, 5.2);
+    // MOTION:BEGIN
+/* S02 · roadmap — signs land with the narration; the fourth sign is held back
+   until 「怎么用好它」. */
+const sRoadmapOld = ["#s-roadmap-sign-kan", "#s-roadmap-sign-shuo", "#s-roadmap-sign-zuo"];
 
-    tl.fromTo("#rm-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, 6.4);
-    tl.fromTo("#rm-half-1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 7.0);
-    tl.fromTo("#rm-half-2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 7.3);
+// c0 (0.7) 四个字：三个路标先立，第四个位置先空着。
+tl.fromTo("#s-roadmap-sign-kan", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.9);
+tl.fromTo("#s-roadmap-sign-shuo", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 2.35);
+tl.fromTo("#s-roadmap-sign-zuo", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 3.8);
+tl.fromTo("#s-roadmap-slot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 5.3);
+tl.fromTo(
+  "#s-roadmap-road",
+  { opacity: 0, scaleX: 0 },
+  { opacity: 1, scaleX: 1, duration: 0.8, ease: "power2.out", transformOrigin: "left center" },
+  1.3
+);
+tl.fromTo("#s-roadmap-ticks", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 1.9);
+tl.fromTo("#s-roadmap-split", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.out" }, 2.4);
+tl.fromTo("#s-roadmap-half-up", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 2.9);
+tl.fromTo("#s-roadmap-half-down", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 3.15);
+tl.fromTo(
+  ["#s-roadmap-label-up", "#s-roadmap-label-down"],
+  { opacity: 0, y: 8 },
+  { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.14 },
+  3.25
+);
 
-    tl.fromTo("#rm-close", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 9.6);
-    tl.fromTo("#rm-tag", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 10.4);
+// c1 (8.227) 「学会了看」：第一个路标成为焦点。
+tl.fromTo("#s-roadmap-sign-kan", { scale: 1 }, { scale: 1.1, duration: 0.5, ease: "power2.out", transformOrigin: "50% 100%" }, 8.35);
+tl.fromTo(["#s-roadmap-sign-shuo", "#s-roadmap-sign-zuo", "#s-roadmap-slot"], { opacity: 1 }, { opacity: 0.45, duration: 0.45, ease: "power1.out", immediateRender: false }, 8.5);
+
+// c2 (12.237) 「学会了说」：焦点移到第二个路标。
+tl.fromTo("#s-roadmap-sign-kan", { scale: 1.1 }, { scale: 1, duration: 0.5, ease: "power2.out", immediateRender: false }, 12.4);
+tl.fromTo("#s-roadmap-sign-kan", { opacity: 1 }, { opacity: 0.45, duration: 0.45, ease: "power1.out", immediateRender: false }, 12.4);
+tl.fromTo("#s-roadmap-sign-shuo", { scale: 1 }, { scale: 1.1, duration: 0.5, ease: "power2.out", transformOrigin: "50% 100%", immediateRender: false }, 12.4);
+tl.fromTo("#s-roadmap-sign-shuo", { opacity: 0.45 }, { opacity: 1, duration: 0.45, ease: "power1.out", immediateRender: false }, 12.4);
+
+// c3 (16.379) 「学会了做」：第三个路标亮起，下面标出只读到可读可写。
+tl.fromTo("#s-roadmap-sign-shuo", { scale: 1.1 }, { scale: 1, duration: 0.5, ease: "power2.out", immediateRender: false }, 16.55);
+tl.fromTo("#s-roadmap-sign-shuo", { opacity: 1 }, { opacity: 0.45, duration: 0.45, ease: "power1.out", immediateRender: false }, 16.55);
+tl.fromTo("#s-roadmap-sign-zuo", { scale: 1 }, { scale: 1.1, duration: 0.5, ease: "power2.out", transformOrigin: "50% 100%", immediateRender: false }, 16.55);
+tl.fromTo("#s-roadmap-sign-zuo", { opacity: 0.45 }, { opacity: 1, duration: 0.45, ease: "power1.out", immediateRender: false }, 16.55);
+tl.fromTo("#s-roadmap-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 18.5);
+tl.fromTo("#s-roadmap-tag-accent", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, 20.45);
+tl.fromTo("#s-roadmap-strike", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, 20.5);
+
+// c4 (23.688) 「怎么用好它」：第四个路标补上，其余三个缩小成 3 + 1。
+tl.fromTo("#s-roadmap-slot", { opacity: 0.45 }, { opacity: 0, duration: 0.35, ease: "power1.out", immediateRender: false }, 23.85);
+tl.fromTo("#s-roadmap-sign-yong", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 23.9);
+tl.fromTo("#s-roadmap-sign-yong", { scale: 1 }, { scale: 1.5, duration: 0.85, ease: "power3.out", transformOrigin: "50% 100%" }, 24.65);
+tl.fromTo(sRoadmapOld, { scale: 1 }, { scale: 0.62, duration: 0.75, ease: "power3.out", transformOrigin: "50% 100%", immediateRender: false }, 24.65);
+tl.fromTo("#s-roadmap-sign-zuo", { opacity: 1 }, { opacity: 0.5, duration: 0.6, ease: "power1.out", immediateRender: false }, 24.65);
+tl.fromTo("#s-roadmap-note", { opacity: 1 }, { opacity: 0, duration: 0.55, ease: "power1.out", immediateRender: false }, 24.65);
+tl.fromTo("#s-roadmap-sign-yong .s-roadmap-post", { backgroundColor: "#b9ad99" }, { backgroundColor: "#2fb68a", duration: 0.45, ease: "power1.out" }, 26.3);
+tl.fromTo(sRoadmapOld, { opacity: 0.5 }, { opacity: 0.35, duration: 0.5, ease: "power1.out", immediateRender: false }, 26.9);
+    // MOTION:END
 
     window.__timelines["s-roadmap"] = tl;
   </script>

@@ -7,6 +7,7 @@ doc (9.5): if it fails, the course cannot ship.
 from __future__ import annotations
 
 import functools
+import re
 import socket
 import threading
 from collections.abc import Iterator
@@ -174,3 +175,55 @@ def test_local_progress_survives_reload(page: Page) -> None:
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.deckReady === 'true'", timeout=25_000)
     assert page.locator("#btn-resume").is_visible()
+
+
+def _rgb(value: str) -> tuple[float, float, float]:
+    """Accept rgb()/rgba()/color(srgb ...), which color-mix() produces."""
+
+    srgb = re.search(r"color\(srgb ([0-9.]+) ([0-9.]+) ([0-9.]+)", value)
+    if srgb:
+        return tuple(float(part) * 255 for part in srgb.groups())  # type: ignore[return-value]
+    legacy = re.search(r"rgba?\(([0-9.]+), ([0-9.]+), ([0-9.]+)", value)
+    assert legacy, f"unrecognised colour: {value}"
+    return tuple(float(part) for part in legacy.groups())  # type: ignore[return-value]
+
+
+def _luminance(value: str) -> float:
+    channels = []
+    for raw in _rgb(value):
+        channel = raw / 255
+        channels.append(channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4)
+    red, green, blue = channels
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def test_deck_shell_is_light_not_dark(page: Page) -> None:
+    """The user asked for the course to be light; the deck must not be a dark app."""
+
+    assert page.locator('meta[name="color-scheme"]').get_attribute("content") == "light"
+    body_background = page.evaluate("() => getComputedStyle(document.body).backgroundColor")
+    assert _luminance(body_background) > 0.7, body_background
+    bar_background = page.evaluate("() => getComputedStyle(document.querySelector('.deck-bar')).backgroundColor")
+    assert _luminance(bar_background) > 0.6, bar_background
+
+
+def test_exit_control_ends_viewing_and_returns_to_library(page: Page) -> None:
+    # Not reachable from the cover; it appears with the stage control bar.
+    assert not page.locator("#btn-exit").is_visible()
+
+    page.click("#btn-start")
+    page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=25_000)
+
+    assert page.locator(".controls > *").first.get_attribute("id") == "btn-exit"
+
+    exit_link = page.locator("#btn-exit")
+    assert exit_link.is_visible()
+    assert exit_link.get_attribute("href") == "/"
+    assert "返回课程库" in (exit_link.get_attribute("aria-label") or "")
+
+    with page.expect_navigation(wait_until="load", timeout=15_000):
+        exit_link.click()
+    page.wait_for_function("document.body.dataset.deckReady === 'true'", timeout=25_000)
+    assert page.evaluate("() => location.pathname") == "/"
+    # A fresh document, not the deck mid-play: the cover is showing again.
+    assert page.evaluate("() => document.body.dataset.deckState") == "cover"

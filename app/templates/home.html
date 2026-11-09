@@ -1,69 +1,270 @@
 {% extends "base.html" %}
-{% block title %}{{ site.title }} · 把 AI 讲清楚，一屏一屏地{% endblock %}
-{% block description %}AI Learning 是一个用网页动画讲 AI 的课程站。每屏只讲一个概念，可以暂停、回看、读讲义，也可以在任意静态服务器上独立播放。{% endblock %}
+{% block body_class %}page-home{% endblock %}
+{% block title %}{{ site.title }} · 用网页动画讲 AI，一屏一屏地{% endblock %}
+{% block description %}AI Learning 把课程做成会停的动画幻灯片：一屏只讲一个概念，可以暂停、回看、读讲义，也能停在任意一屏。{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="/static/home.css" />{% endblock %}
 
 {% block content %}
+{% set featured = courses[0] if courses else None %}
+{% set rest = courses[1:3] if courses else [] %}
+
 <section class="hero">
   <div class="hero__copy">
     <p class="eyebrow">网页动画课程 · 一屏一个概念</p>
-    <h1>把 AI 讲清楚，<br /><span class="hero__accent">一屏一屏地。</span></h1>
-    <p class="lede">
-      不是一段被锁在播放器里的视频，而是一串可以在浏览器里停下来读的动画。
-      每屏只讲一件事，讲完就停，由你决定什么时候继续。
+    <h1 class="hero__title">把 AI 讲清楚，<br /><span class="hero__title-accent">一屏一屏地。</span></h1>
+    <p class="hero__lede">
+      每一课都是一叠会停的动画幻灯片。一屏只讲一件事，讲完就停；你可以暂停、回看、翻讲义，也可以在任何一屏转身走开。
     </p>
     <div class="hero__actions">
-      <a class="button button--primary" href="/courses">浏览课程库</a>
+      {% if featured %}
+        <a class="button button--primary" href="{{ featured.courseUrl }}">从第一课开始</a>
+      {% else %}
+        <a class="button button--primary" href="/courses">浏览课程库</a>
+      {% endif %}
       <a class="button button--ghost" href="/about">课程是怎么做的</a>
     </div>
-    <dl class="hero__facts">
-      <div><dt>节奏</dt><dd>6–10 屏</dd></div>
-      <div><dt>时长</dt><dd>2–5 分钟</dd></div>
-      <div><dt>依赖</dt><dd>无 CDN</dd></div>
-      <div><dt>离线</dt><dd>可独立部署</dd></div>
-    </dl>
   </div>
 
-  <div class="hero__stage" aria-hidden="true">
-    <div class="screen-mock">
-      <div class="screen-mock__bar">
-        <span class="screen-mock__count">03 / 09</span>
-        <span class="screen-mock__title">机器第一次赢在“直觉”</span>
-        <span class="screen-mock__dot"></span>
-      </div>
-      <div class="screen-mock__board">
-        <span class="stone stone--b" style="left: 18%; top: 22%"></span>
-        <span class="stone stone--w" style="left: 44%; top: 30%"></span>
-        <span class="stone stone--b" style="left: 61%; top: 49%"></span>
-        <span class="stone stone--w" style="left: 33%; top: 61%"></span>
-        <span class="stone stone--b" style="left: 52%; top: 70%"></span>
-        <span class="screen-mock__note">2016.03 · 首尔 · 4:1</span>
-      </div>
-      <div class="screen-mock__controls">
-        <span>← 上一屏</span>
-        <span class="screen-mock__play">▶ 暂停</span>
-        <span>下一屏 →</span>
-      </div>
+  <div class="hero__deck" aria-hidden="true">
+    <div class="deck-stack" data-deck-stack>
+      <article class="deck-slide deck-slide--format" data-slide="format" data-slot="0">
+        <header class="deck-slide__top">
+          <span class="deck-slide__counter">03 / 09</span>
+          <span class="deck-slide__tag">动画 PPT</span>
+        </header>
+        <div class="deck-slide__body">
+          <p class="deck-slide__kicker">这一屏只讲一件事</p>
+          <p class="deck-slide__headline">一屏，<br />只讲一件事。</p>
+          <div class="deck-slide__flow">
+            <span class="deck-slide__node">一个概念</span>
+            <span class="deck-slide__arrow">→</span>
+            <span class="deck-slide__node deck-slide__node--accent">一屏动画</span>
+            <span class="deck-slide__arrow">→</span>
+            <span class="deck-slide__node">一句结论</span>
+          </div>
+        </div>
+        <footer class="deck-slide__bar">
+          <span>← 上一屏</span>
+          <span class="deck-slide__play">暂停</span>
+          <span>下一屏 →</span>
+        </footer>
+      </article>
+
+      <article class="deck-slide deck-slide--notes" data-slide="notes" data-slot="1">
+        <header class="deck-slide__top">
+          <span class="deck-slide__counter">讲义 · 05</span>
+          <span class="deck-slide__tag">T 打开</span>
+        </header>
+        <div class="deck-slide__body">
+          <p class="deck-slide__kicker">暂停之后</p>
+          <p class="deck-slide__headline">这段话，<br />还在。</p>
+          <div class="deck-slide__lines">
+            <span class="deck-slide__line"></span>
+            <span class="deck-slide__line deck-slide__line--short"></span>
+            <span class="deck-slide__line"></span>
+            <span class="deck-slide__line deck-slide__line--mid"></span>
+          </div>
+        </div>
+        <footer class="deck-slide__bar">
+          <span>屏幕上的字</span>
+          <span class="deck-slide__play">讲义</span>
+          <span>文字稿</span>
+        </footer>
+      </article>
+
+      <article class="deck-slide deck-slide--stop" data-slide="stop" data-slot="2">
+        <header class="deck-slide__top">
+          <span class="deck-slide__counter">随时</span>
+          <span class="deck-slide__tag">没有倒计时</span>
+        </header>
+        <div class="deck-slide__body deck-slide__body--center">
+          <span class="deck-slide__pause-mark"><i></i><i></i></span>
+          <p class="deck-slide__headline deck-slide__headline--center">不想看了，<br />就停在这里。</p>
+          <p class="deck-slide__sub">没有连播，也不用等它放完。</p>
+        </div>
+        <footer class="deck-slide__bar">
+          <span>从头看</span>
+          <span class="deck-slide__play">继续</span>
+          <span>关掉也行</span>
+        </footer>
+      </article>
+
+      <article class="deck-slide deck-slide--next" data-slide="next" data-slot="3">
+        <header class="deck-slide__top">
+          <span class="deck-slide__counter">下一屏</span>
+          <span class="deck-slide__tag">你说了算</span>
+        </header>
+        <div class="deck-slide__body">
+          <p class="deck-slide__kicker">节奏归你</p>
+          <p class="deck-slide__headline">按一下，<br />才走一屏。</p>
+          <div class="deck-slide__keys">
+            <span class="deck-slide__key">←</span>
+            <span class="deck-slide__key deck-slide__key--wide">空格</span>
+            <span class="deck-slide__key">→</span>
+          </div>
+        </div>
+        <footer class="deck-slide__bar">
+          <span>上一屏</span>
+          <span class="deck-slide__play">暂停</span>
+          <span>下一屏</span>
+        </footer>
+      </article>
+
+      <span class="deck-stamp">会停的幻灯片</span>
     </div>
-    <p class="hero__caption">每屏都有画面、文字和讲义 —— 暂停也读得懂。</p>
   </div>
 </section>
 
-<section class="collection" aria-labelledby="collection-title">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">课程库</p>
-      <h2 id="collection-title">正在放映</h2>
-    </div>
-    <a class="text-link" href="/courses">全部课程 <span aria-hidden="true">→</span></a>
+<section class="format" aria-labelledby="format-title">
+  <header class="section-intro">
+    <h2 id="format-title">不是视频课。<br />是一叠会停的幻灯片。</h2>
+    <p class="section-intro__lede">
+      视频把节奏锁在时间轴里，网页把节奏还给你。每一屏是 16:9 的一幕动画，旁边永远跟着一份可以直接读的文字。
+    </p>
+  </header>
+
+  <div class="specimens">
+    <figure class="specimen specimen--scene">
+      <div class="specimen__plate specimen__plate--scene" aria-hidden="true">
+        <div class="mini-slide">
+          <div class="mini-slide__top">
+            <span class="mini-slide__counter">07 / 09</span>
+          </div>
+          <div class="mini-slide__grid" aria-hidden="true">
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__cell"></span><span class="mini-slide__cell"></span>
+            <span class="mini-slide__sweep"></span>
+          </div>
+          <div class="mini-slide__caption">
+            <span>一屏动画</span>
+            <span class="mini-slide__track"><i></i></span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="specimen__index">A</span>
+        <h3>画面承担论证</h3>
+        <p>关系、过程和因果，用一屏动画演出来。动效不是装饰：删掉它，论证应该会断。</p>
+      </figcaption>
+    </figure>
+
+    <figure class="specimen specimen--notes">
+      <div class="specimen__plate specimen__plate--notes" aria-hidden="true">
+        <p class="mini-notes__kicker">讲义 · 05</p>
+        <p class="mini-notes__strong">暂停之后，<br />这段话还在。</p>
+        <span class="mini-notes__rule"></span>
+        <span class="mini-notes__rule"></span>
+        <span class="mini-notes__rule mini-notes__rule--short"></span>
+      </div>
+      <figcaption>
+        <span class="specimen__index">B</span>
+        <h3>每一屏都能停下来读</h3>
+        <p>关键信息不只存在于运动里。暂停、回看、用读屏软件读，都能拿到同一份内容。</p>
+      </figcaption>
+    </figure>
+
+    <figure class="specimen specimen--rhythm">
+      <div class="specimen__plate specimen__plate--rhythm" aria-hidden="true">
+        <div class="mini-controls">
+          <span class="mini-controls__btn">← 上一屏</span>
+          <span class="mini-controls__btn mini-controls__btn--primary">暂停</span>
+          <span class="mini-controls__btn">下一屏 →</span>
+        </div>
+        <div class="mini-keys">
+          <span class="mini-keys__key">←</span>
+          <span class="mini-keys__key">→</span>
+          <span class="mini-keys__key mini-keys__key--wide">空格</span>
+          <span class="mini-keys__key">T</span>
+        </div>
+      </div>
+      <figcaption>
+        <span class="specimen__index">C</span>
+        <h3>没有自动连播</h3>
+        <p>讲完这一屏就停。下一屏什么时候开始，由你按下去那一下决定。</p>
+      </figcaption>
+    </figure>
   </div>
 
-  {% if courses %}
-    <div class="course-grid course-grid--home">
-      {% for course in courses[:3] %}
-        {% set index = loop.index %}
-        {% include "partials/course_card.html" with context %}
-      {% endfor %}
+  <dl class="format-ledger">
+    <div><dt>节奏</dt><dd>一屏一个概念</dd></div>
+    <div><dt>一课</dt><dd>2-5 分钟</dd></div>
+    <div><dt>运行</dt><dd>无 CDN，可离线</dd></div>
+    <div><dt>部署</dt><dd>独立静态包</dd></div>
+  </dl>
+
+  <blockquote class="format-quote">
+    <p>动画要承担论证。删掉它，如果论证还完整，那它大概率只是装饰。</p>
+    <cite>设计原则 · 02 / 动画要承担论证</cite>
+  </blockquote>
+</section>
+
+<section class="shelf" id="courses" aria-labelledby="shelf-title">
+  <header class="section-head">
+    <div>
+      <h2 id="shelf-title">正在放映</h2>
     </div>
+    <a class="text-link" href="/courses">全部课程 <span aria-hidden="true">→</span></a>
+  </header>
+
+  {% if featured %}
+    <article class="shelf-feature" style="--course-accent: {{ featured.accent or '#b8452b' }}">
+      <a class="shelf-feature__poster" href="{{ featured.courseUrl }}" aria-label="进入课程：{{ featured.title }}">
+        <div class="poster">
+          <div class="poster__art" aria-hidden="true">
+            <span class="poster__ghost">01</span>
+            <span class="poster__ring poster__ring--one"></span>
+            <span class="poster__ring poster__ring--two"></span>
+            <span class="poster__dots"></span>
+          </div>
+          <div class="poster__top">
+            <span class="poster__index">第 01 课</span>
+            <span class="poster__level">{{ level_label(featured.level) }}</span>
+          </div>
+          <div class="poster__title">
+            {% if featured.subtitle %}<p class="poster__subtitle">{{ featured.subtitle }}</p>{% endif %}
+            <h3>{{ featured.title }}</h3>
+          </div>
+          <div class="poster__meta">
+            <span>{{ featured.screenCount }} 屏</span>
+            <span>{{ format_duration(featured.durationSeconds) }}</span>
+            <span class="poster__open">打开 <span aria-hidden="true">→</span></span>
+          </div>
+        </div>
+      </a>
+
+      <div class="shelf-feature__info">
+        <h3 class="shelf-feature__title">这一课讲什么</h3>
+        <p class="shelf-feature__summary">{{ featured.summary }}</p>
+        {% if featured.tags %}
+          <ul class="tag-list" aria-label="主题">
+            {% for tag in featured.tags %}<li>{{ tag }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        <dl class="shelf-facts">
+          <div><dt>屏数</dt><dd>{{ featured.screenCount }} 屏</dd></div>
+          <div><dt>时长</dt><dd>{{ format_duration(featured.durationSeconds) }}</dd></div>
+          <div><dt>级别</dt><dd>{{ level_label(featured.level) }}</dd></div>
+          {% if featured.updatedAt %}<div><dt>更新</dt><dd>{{ featured.updatedAt }}</dd></div>{% endif %}
+        </dl>
+        <p class="shelf-feature__hint">封面就是课程入口：点开先看大纲，再决定从哪一屏开始。</p>
+      </div>
+    </article>
+
+    {% if rest %}
+      <div class="shelf-rest">
+        <h3 class="shelf-rest__title">接下来</h3>
+        <div class="course-grid">
+          {% for course in rest %}
+            {% set index = loop.index + 1 %}
+            {% include "partials/course_card.html" with context %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
   {% else %}
     <div class="empty-state">
       <p class="empty-state__kicker">还没有构建课程</p>
@@ -72,35 +273,5 @@
       <a class="button button--ghost" href="/about">看看制作流程</a>
     </div>
   {% endif %}
-</section>
-
-<section class="method" aria-labelledby="method-title">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">学习方式</p>
-      <h2 id="method-title">一屏，一次呼吸</h2>
-    </div>
-  </div>
-  <ol class="method__steps">
-    <li>
-      <span class="method__num">01</span>
-      <h3>先看见</h3>
-      <p>动画先把关系演示出来。不先给定义，先给一个能看懂的具体画面。</p>
-    </li>
-    <li>
-      <span class="method__num">02</span>
-      <h3>再读一遍</h3>
-      <p>每屏都有讲义。暂停、回看、用屏幕阅读器读，信息不会只存在于运动里。</p>
-    </li>
-    <li>
-      <span class="method__num">03</span>
-      <h3>自己决定下一步</h3>
-      <p>没有自动连播的时间压力。看完这一屏，再按下一屏。</p>
-    </li>
-  </ol>
-  <blockquote class="pullquote">
-    <p>动画要承担论证。删掉它，如果论证还完整，那它大概率只是装饰。</p>
-    <cite>设计原则 · 动画要承担论证</cite>
-  </blockquote>
 </section>
 {% endblock %}

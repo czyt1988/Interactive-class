@@ -63,7 +63,7 @@
 
 阶段 3 拆成 3a/3b 是有意的：range 行为是当前最大的技术风险，先用最小 spike 验证，再投入 UI。
 
-### 3.1 实施状态（2026-11-07）
+### 3.1 实施状态（2026-11-08）
 
 | 阶段 | 状态 | 证据 / 备注 |
 | --- | --- | --- |
@@ -74,22 +74,24 @@
 | 3a 播放器适配层 | ✅ 完成 | `runtime/course-deck.js` 的 `createPlayerAdapter`；`tests/e2e/test_standalone.py` 验证 range 终点 `ended` |
 | 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
 | 4 站点外壳 | ✅ 完成 | 首页、课程库（含 level/tag 过滤）、关于、404、sitemap、robots |
-| 5 样板课 | ✅ 完成（主题不同） | 用大纲第一集 `courses/ai-first-sees/` 代替「什么是 token」：9 屏 / 2:57，`check` 零 error |
-| 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（75 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
+| 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 21:42，整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 0 error |
+| 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
 | 7 发布 | ⬜ 未开始 | 无 Dockerfile、无反代配置、无生产 URL |
 | 8 课程规模化 | ⬜ 部分 | `_template` 可用；`scripts/new_course.py` 未写 |
 
-实施中与原计划不同的三处，均已同步到文档：
+实施中与原计划不同的四处，均已同步到文档：
 
 1. **构建输出目录**：`--out-dir` 指课程包根目录（默认 `dist/courses`），不自动追加 `courses/`。
 2. **`python -m http.server` 在 Windows 上可能把 `.js` 当 `text/plain`**，导致 ES module 被拒。独立部署验收改用 `scripts/serve.py`（固定 MIME）。
 3. **字体可选**：课程外壳只在课程自带 `composition/assets/fonts/*.woff2` 时注入 `@font-face`；测试夹具因此不需要 190KB 字体。
+4. **长视频课程**：`ai-first-sees` 采用 S 编号一页、旁白音频为时钟、`playback: "continuous"` 连续播放。它超出短课「6–10 屏 / 2–5 分钟」的上限，按课程契约 4.11 的中长视频例外验收；时间由 `scripts/build_narration.py` 生成，作者不手写。
 
 ### 3.2 未验证的事项
 
-- 没有在 Safari / Firefox 上跑过；`tests/e2e` 目前只用 Chromium。
+- 没有在 Safari / Firefox 上跑过；`tests/e2e` 目前只用 Chromium。长视频课程的旁白连续播放与 OGG/Opus 解码已在 Chromium 验证，Safari 的自动播放策略尚未验证。
 - 没有真机移动端验收；只做了窄视口截图。
-- `hyperframes check` 的 `dead_stretch`（静止超过 3 秒）与 `film_silent`（无音轨）仍有 warning：课程是学习者控制节奏的 deck，每屏结尾的静止是留给阅读的停顿；音频按契约默认关闭。
+- `hyperframes check` 还剩 5 条 `line_unread` 警告：个别短句的字幕停留时间低于 check 按逐词朗读估算的下限，按实际语速没有问题；`dead_stretch` 已由每页的旁白进度条消除。
+- 全片 MP4 已用 ffmpeg 校验：1920×1080 / 30fps / H.264 + AAC，21m33.5s，有声音；没有在电视和低端手机上做码率/兼容性实测。
 
 ---
 
@@ -804,7 +806,7 @@ pytest tests/e2e -q
 
 ### 14.2 步骤
 
-1. **读文档。** 读[课程契约](course-contract.md)、[架构设计](architecture.md)的 5–6 节、本计划第 1 节。
+1. **读文档。** 读[DESIGN.md](../DESIGN.md)（尤其第 8 节课程 composition 视觉契约）、[课程契约](course-contract.md)、[架构设计](architecture.md)的 5–6 节、本计划第 1 节。
 2. **脚手架。** 复制 `courses/_template/` 到 `courses/<slug>/`。
 3. **写 storyboard。** 在 `courses/<slug>/STORYBOARD.md` 写：
    - 学习者、学完能、每屏一句话论题；
@@ -843,7 +845,7 @@ pytest tests/e2e -q
 
 - [ ] `STORYBOARD.md` 完整，事实有来源。
 - [ ] `course.json` 通过校验。
-- [ ] composition 通过 `check`，每屏快照看过。
+- [ ] composition 通过 `check`，每屏快照看过，且每屏符合 [DESIGN.md](../DESIGN.md) 第 8 节（亮色纸面、安全区、字号阶梯、对比度）。
 - [ ] 构建通过，产物齐全。
 - [ ] 站点课程页完整播放。
 - [ ] 独立静态服务器完整播放。

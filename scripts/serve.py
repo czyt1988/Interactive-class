@@ -34,7 +34,9 @@ MIME_OVERRIDES = {
     ".jpeg": "image/jpeg",
     ".mp4": "video/mp4",
     ".mp3": "audio/mpeg",
+    ".ogg": "audio/ogg",
     ".opus": "audio/opus",
+    ".m4a": "audio/mp4",
     ".txt": "text/plain; charset=utf-8",
     ".xml": "application/xml",
 }

@@ -27,6 +27,7 @@ HEX_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 Level = Literal["beginner", "intermediate", "advanced"]
 Status = Literal["draft", "published", "archived"]
+Playback = Literal["screens", "continuous"]
 
 
 class StrictModel(BaseModel):
@@ -141,6 +142,7 @@ class CourseSource(StrictModel):
     takeaways: list[str] = Field(default_factory=list)
     audio: bool = False
     interactive: bool = False
+    playback: Playback = "screens"
     composition: CompositionInfo = Field(default_factory=CompositionInfo)
     screens: list[ScreenMeta]
     site: SiteInfo = Field(default_factory=SiteInfo)

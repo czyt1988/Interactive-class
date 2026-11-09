@@ -11,10 +11,30 @@ html {
 }
 
 body.deck {
+  /* Paper studio. The deck sits on the site's warm paper system instead of a
+     dark stage, so remap the shell's surface tokens locally and let every rule
+     below flip together; no component keeps a dark assumption. */
+  --stage: var(--paper);
+  --stage-raised: var(--paper-raised);
+  --stage-ink: var(--ink);
+  --stage-muted: var(--ink-soft);
+  --stage-line: var(--line);
+  --stage-line-strong: var(--line-strong);
+
+  /* The raw course accent is made for dots and washes, not for type: it is
+     only ~2.2:1 on paper. Type, focus rings and thin indicators use this
+     darkened mix, which keeps the course hue at AA contrast. */
+  --deck-accent-ink: var(--ink);
+  --deck-accent-ink: color-mix(in srgb, var(--deck-accent) 62%, var(--ink));
+  --deck-accent-wash: color-mix(in srgb, var(--deck-accent) 13%, transparent);
+
+  --deck-ink-wash: rgba(22, 20, 15, 0.05);
+
   margin: 0;
   min-height: 100%;
   background: var(--stage);
   color: var(--stage-ink);
+  color-scheme: light;
   font-family: var(--font-deck, "Noto Sans SC", system-ui, sans-serif);
   font-size: 16px;
   line-height: 1.7;
@@ -27,8 +47,8 @@ body.deck::before {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(1100px 520px at 78% -12%, color-mix(in srgb, var(--deck-accent) 22%, transparent), transparent 62%),
-    radial-gradient(900px 500px at -8% 80%, rgba(76, 125, 255, 0.1), transparent 60%);
+    radial-gradient(1100px 520px at 78% -12%, color-mix(in srgb, var(--deck-accent) 11%, transparent), transparent 62%),
+    radial-gradient(900px 500px at -8% 80%, rgba(184, 69, 43, 0.06), transparent 60%);
 }
 
 h1,
@@ -66,11 +86,11 @@ a {
   position: absolute;
   left: -9999px;
   top: 8px;
-  z-index: 60;
+  z-index: var(--z-skip);
   background: var(--stage-ink);
   color: var(--stage);
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   text-decoration: none;
 }
 
@@ -79,9 +99,14 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--deck-accent);
+  outline: 2px solid var(--deck-accent-ink);
   outline-offset: 3px;
-  border-radius: 6px;
+  border-radius: var(--radius-inline);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--deck-accent) 32%, transparent);
+  color: var(--stage-ink);
 }
 
 .deck-shell {
@@ -114,13 +139,6 @@ a {
   margin-bottom: 20px;
 }
 
-.cover__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--deck-accent);
-}
-
 .cover__title {
   font-size: clamp(36px, 4.6vw, 62px);
   line-height: 1.1;
@@ -132,7 +150,7 @@ a {
 .cover__subtitle {
   margin-top: 14px;
   font-size: clamp(17px, 1.9vw, 21px);
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
   font-weight: 600;
 }
 
@@ -180,7 +198,7 @@ a {
   top: 0.62em;
   width: 10px;
   height: 2px;
-  background: var(--deck-accent);
+  background: var(--deck-accent-ink);
 }
 
 .cover__prereq {
@@ -198,7 +216,7 @@ a {
 .cover__hint {
   margin-top: 14px;
   font-size: 13.5px;
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
 }
 
 .cover__meta {
@@ -229,9 +247,10 @@ a {
 
 .cover__aside {
   border: 1px solid var(--stage-line);
-  border-radius: 18px;
+  border-radius: var(--radius-poster);
   padding: clamp(18px, 2.4vw, 28px);
-  background: color-mix(in srgb, var(--stage-raised) 72%, transparent);
+  background: var(--stage-raised);
+  box-shadow: var(--shadow-card);
 }
 
 .outline {
@@ -240,6 +259,12 @@ a {
   padding: 0;
   display: grid;
   gap: 1px;
+  /* Long-form courses can have 30+ screens: keep the cover in one viewport and
+     let the outline scroll instead of pushing the start button off-screen. */
+  max-height: min(56dvh, 620px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 
 .outline__item {
@@ -250,7 +275,7 @@ a {
   width: 100%;
   padding: 12px 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-mini);
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -258,11 +283,12 @@ a {
 }
 
 .outline__item:hover {
-  background: rgba(246, 241, 230, 0.05);
+  background: var(--deck-ink-wash);
 }
 
 .outline__item[aria-current="step"] {
-  background: color-mix(in srgb, var(--deck-accent) 18%, transparent);
+  background: var(--deck-accent-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--deck-accent) 30%, transparent);
 }
 
 .outline__num {
@@ -331,18 +357,21 @@ a {
   width: min(100%, calc((100dvh - 250px) * 16 / 9));
   aspect-ratio: 16 / 9;
   margin-inline: auto;
-  background: #000;
-  border-radius: 14px;
+  background: var(--stage);
+  border-radius: var(--radius-stage);
   overflow: hidden;
   box-shadow:
-    0 0 0 1px rgba(246, 241, 230, 0.08),
-    0 40px 80px -50px rgba(0, 0, 0, 0.9);
+    0 0 0 1px var(--stage-line-strong),
+    0 30px 64px -48px rgba(22, 20, 15, 0.55);
 }
 
 .stage hyperframes-player {
   display: block;
   width: 100%;
   height: 100%;
+  /* The player paints its own light scene iframe; keep the host transparent so
+     no black default ever peeks through the paper stage. */
+  background: transparent;
   --hfp-width: 100%;
 }
 
@@ -381,8 +410,8 @@ a {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 2px solid rgba(246, 241, 230, 0.18);
-  border-top-color: var(--deck-accent);
+  border: 2px solid var(--stage-line);
+  border-top-color: var(--deck-accent-ink);
   animation: spin 900ms linear infinite;
 }
 
@@ -399,15 +428,16 @@ a {
   gap: 12px;
   padding: 16px clamp(14px, 2vw, 22px);
   border: 1px solid var(--stage-line);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--stage-raised) 80%, transparent);
+  border-radius: var(--radius-stage);
+  background: var(--stage-raised);
+  box-shadow: var(--shadow-card);
 }
 
 .chapter__counter {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
 }
 
 .chapter__kicker {
@@ -442,7 +472,7 @@ a {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--deck-accent);
+  background: var(--deck-accent-ink);
   transition: width 320ms var(--ease, ease);
 }
 
@@ -460,7 +490,7 @@ a {
   min-height: 40px;
   padding: 0 14px;
   border: 1px solid var(--stage-line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--stage-ink);
   font-size: 13.5px;
@@ -472,12 +502,12 @@ a {
 }
 
 .control:hover:not(:disabled) {
-  background: rgba(246, 241, 230, 0.06);
-  border-color: rgba(246, 241, 230, 0.3);
+  background: var(--deck-ink-wash);
+  border-color: var(--stage-line-strong);
 }
 
 .control:disabled {
-  opacity: 0.38;
+  opacity: 0.42;
   cursor: not-allowed;
 }
 
@@ -491,9 +521,9 @@ a {
 }
 
 .control--primary:hover:not(:disabled) {
-  background: var(--deck-accent);
-  border-color: var(--deck-accent);
-  color: #fff;
+  background: var(--deck-accent-ink);
+  border-color: var(--deck-accent-ink);
+  color: var(--stage);
 }
 
 .control__icon {
@@ -518,6 +548,40 @@ a {
   padding: 0;
   justify-content: center;
   font-size: 15px;
+}
+
+/* Caption and voice toggles: aria-pressed is the only state signal, so the
+ * off state also reads visually. Both are mute-switch semantics, not roles. */
+.control--cc {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.control--cc[aria-pressed="false"],
+.control--sound[aria-pressed="false"] {
+  opacity: 0.5;
+}
+
+.control--cc[aria-pressed="false"]:hover,
+.control--sound[aria-pressed="false"]:hover {
+  opacity: 1;
+}
+
+/* Leave-the-course pill: same geometry as the other controls, but tinted with
+   the course accent so it reads as a different verb from prev/play/next.
+   It is an <a>, so it must not inherit the browser's link underline. */
+.control--exit {
+  color: var(--deck-accent-ink);
+  border-color: var(--deck-accent-ink);
+  text-decoration: none;
+}
+
+.control--exit:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--deck-accent) 12%, transparent);
+  border-color: var(--deck-accent-ink);
+  color: var(--deck-accent-ink);
 }
 
 .control__sep {
@@ -550,7 +614,7 @@ a {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--deck-accent);
+  background: var(--deck-accent-ink);
 }
 
 .deck-hint {
@@ -562,7 +626,12 @@ a {
 
 .stage-wrap.is-ended .chapter__summary::after {
   content: " · 这一屏讲完了，按下一屏继续";
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
+}
+
+/* Continuous courses advance themselves like a video; the manual hint would lie. */
+body[data-deck-mode="continuous"] .stage-wrap.is-ended .chapter__summary::after {
+  content: "";
 }
 
 /* -------------------------------------------------------------- complete */
@@ -582,7 +651,7 @@ a {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
   margin-bottom: 16px;
 }
 
@@ -627,7 +696,7 @@ a {
   top: 0.1em;
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
 }
 
 .complete__actions,
@@ -649,7 +718,8 @@ a {
   margin-top: 18px;
   padding: 14px 16px;
   border: 1px solid var(--stage-line);
-  border-radius: 12px;
+  border-radius: var(--radius-mini);
+  background: var(--stage-raised);
   font-size: 14px;
   color: var(--stage-muted);
 }
@@ -669,7 +739,7 @@ a {
   justify-content: center;
   min-height: 48px;
   padding: 0 24px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   font-size: 15px;
   font-weight: 600;
@@ -685,22 +755,26 @@ a {
 }
 
 .btn--primary {
-  background: var(--deck-accent);
-  color: #fff;
+  background: var(--stage-ink);
+  border-color: var(--stage-ink);
+  color: var(--stage);
 }
 
 .btn--primary:hover {
-  filter: brightness(1.08);
+  background: var(--deck-accent-ink);
+  border-color: var(--deck-accent-ink);
+  color: var(--stage);
 }
 
 .btn--ghost {
-  border-color: rgba(246, 241, 230, 0.24);
+  border-color: var(--stage-line-strong);
   color: var(--stage-ink);
   background: transparent;
 }
 
 .btn--ghost:hover {
   border-color: var(--stage-ink);
+  background: var(--stage-raised);
 }
 
 /* ------------------------------------------------------------------ drawer */
@@ -708,7 +782,7 @@ a {
 .drawer {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-drawer);
   display: grid;
   justify-items: end;
 }
@@ -720,7 +794,7 @@ a {
 .drawer__scrim {
   position: absolute;
   inset: 0;
-  background: rgba(4, 5, 7, 0.62);
+  background: rgba(22, 20, 15, 0.42);
   opacity: 0;
   transition: opacity 200ms var(--ease, ease);
 }
@@ -737,6 +811,7 @@ a {
   padding: clamp(24px, 3vw, 40px);
   background: var(--stage-raised);
   border-left: 1px solid var(--stage-line);
+  box-shadow: -24px 0 60px -42px rgba(22, 20, 15, 0.5);
   transform: translateX(24px);
   opacity: 0;
   transition:
@@ -763,7 +838,7 @@ a {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--deck-accent);
+  color: var(--deck-accent-ink);
   margin-bottom: 8px;
 }
 
@@ -786,6 +861,7 @@ a {
 
 .drawer__close:hover {
   border-color: var(--stage-ink);
+  background: var(--deck-ink-wash);
 }
 
 .drawer__body {
@@ -813,7 +889,7 @@ a {
   font-size: 11px;
   letter-spacing: 0.04em;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--stage-line);
   color: var(--stage-muted);
 }
@@ -837,7 +913,8 @@ body.deck-drawer-open {
   max-width: 44em;
   padding: 18px 20px;
   border: 1px solid var(--stage-line);
-  border-radius: 12px;
+  border-radius: var(--radius-mini);
+  background: var(--stage-raised);
   font-size: 14px;
   color: var(--stage-muted);
 }
@@ -873,6 +950,11 @@ body.deck-drawer-open {
     display: none;
   }
 
+  /* Leaving the course must stay legible as a labelled action on touch. */
+  .control--exit .control__label {
+    display: inline;
+  }
+
   .control--primary {
     min-width: 72px;
   }
@@ -892,8 +974,9 @@ body.deck-drawer-open {
     content: "横屏观看动画更清楚；竖屏下建议读讲义。";
     display: block;
     padding: 10px 14px;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--deck-accent) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--deck-accent) 30%, var(--stage-line));
+    border-radius: var(--radius-mini);
+    background: var(--deck-accent-wash);
     font-size: 13px;
     text-align: center;
   }
@@ -910,7 +993,7 @@ body.deck-drawer-open {
 
   .spinner {
     animation: none;
-    border-top-color: var(--stage-line);
+    border-top-color: var(--deck-accent-ink);
   }
 }
 

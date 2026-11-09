@@ -39,6 +39,12 @@ FORBIDDEN_CLOCKS = (
     ("Math.random(", "Math.random()"),
 )
 
+# Authoring tool output lives inside the composition directory but is never
+# shipped: HyperFrames writes preview/check/render artifacts to `.hyperframes`,
+# and `node_modules` / `renders` are local tool output too. The builder skips
+# them when copying, so the asset scan must skip them as well.
+SKIP_TOOL_PARTS = {".hyperframes", ".thumbnails", "node_modules", "renders"}
+
 
 @dataclass(frozen=True)
 class AssetIssue:
@@ -210,6 +216,9 @@ def scan_composition(root: Path, *, skip_vendor: bool = True) -> list[AssetIssue
     vendor = (root / "assets" / "vendor").resolve()
     for path in sorted(root.rglob("*")):
         if not path.is_file():
+            continue
+        relative = path.relative_to(root)
+        if any(part in SKIP_TOOL_PARTS for part in relative.parts):
             continue
         if skip_vendor and vendor in path.resolve().parents:
             continue

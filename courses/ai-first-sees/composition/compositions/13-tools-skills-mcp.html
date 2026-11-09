@@ -1,0 +1,474 @@
+<template>
+  <style>
+    /* S13 · tools-skills-mcp
+       左边纸面「模型」对话框，右边三个投喂口：工具卡片 / SKILL.md 小册子 / MCP 接口面板。
+       每张卡把一段文字送进模型的上下文，最后并成一行「都是文字」。 */
+
+    /* ---- 模型对话框 ---- */
+    .s-tools-model {
+      position: absolute;
+      left: 40px;
+      top: 16px;
+      width: 560px;
+      height: 584px;
+      border: 2px solid #514b40;
+      border-radius: 18px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s-tools-model-title { position: absolute; left: 28px; top: 20px; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
+    .s-tools-model-sub { position: absolute; left: 132px; top: 40px; font-family: var(--font-mono); font-size: 22px; color: var(--ink-faint); }
+
+    .s-tools-ability {
+      position: absolute;
+      top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 12px;
+      background: #fffdf8;
+      color: var(--accent-text);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      font-weight: 700;
+      opacity: 0;
+    }
+    .s-tools-ability--1 { left: 366px; }
+    .s-tools-ability--2 { left: 434px; }
+    .s-tools-ability--3 { left: 502px; }
+
+    .s-tools-context {
+      position: absolute;
+      left: 20px;
+      top: 92px;
+      width: 520px;
+      height: 424px;
+      border: 1.5px dashed #b9ad99;
+      border-radius: 12px;
+      background: rgba(255, 253, 248, 0.5);
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .s-tools-context-label { position: absolute; left: 16px; top: 8px; font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.06em; color: var(--ink-faint); }
+    .s-tools-scan { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--accent); opacity: 0.22; }
+
+    .s-tools-bubble {
+      position: absolute;
+      left: 32px;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fffdf8;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      line-height: 1.5;
+      color: #2a261f;
+      box-shadow: 0 8px 18px -14px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+    }
+    .s-tools-bubble--1 { top: 60px; width: 456px; }
+    .s-tools-bubble--2 { top: 184px; width: 416px; }
+    .s-tools-bubble--3 { top: 308px; width: 436px; }
+    .s-tools-bubble b { color: var(--accent-text); font-weight: 700; }
+
+    .s-tools-chip {
+      position: absolute;
+      left: 28px;
+      top: 528px;
+      display: inline-flex;
+      align-items: center;
+      height: 44px;
+      padding: 0 18px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      opacity: 0;
+    }
+
+    /* ---- 三个投喂口 ---- */
+    .s-tools-card {
+      position: absolute;
+      left: 760px;
+      width: 860px;
+      height: 200px;
+      border: 2px solid #514b40;
+      border-radius: 14px;
+      background: #faf6ee;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+    .s-tools-card--1 { top: 20px; }
+    .s-tools-card--2 { top: 232px; }
+    .s-tools-card--3 { top: 444px; }
+
+    .s-tools-index { position: absolute; left: 24px; top: 18px; font-family: var(--font-mono); font-size: 24px; color: var(--accent-text); }
+    .s-tools-name { position: absolute; left: 76px; top: 12px; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+    .s-tools-status {
+      position: absolute;
+      right: 24px;
+      top: 16px;
+      padding: 5px 14px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 24px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s-tools-slot {
+      position: absolute;
+      left: 24px;
+      top: 66px;
+      right: 24px;
+      height: 116px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1.5px dashed #b9ad99;
+      border-radius: 10px;
+      background: rgba(255, 253, 248, 0.45);
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+    .s-tools-slot small { font-size: 22px; }
+
+    .s-tools-body { position: absolute; left: 24px; top: 66px; right: 24px; height: 116px; opacity: 0; }
+    .s-tools-code { position: absolute; left: 0; top: 2px; font-family: var(--font-mono); font-size: 28px; color: #2a261f; }
+    .s-tools-code b { color: var(--accent-text); font-weight: 700; }
+    .s-tools-ok { position: absolute; left: 0; top: 46px; font-family: var(--font-mono); font-size: 28px; color: #1f7a52; }
+    .s-tools-body-note { position: absolute; left: 470px; top: 6px; width: 320px; font-size: 24px; line-height: 1.5; color: var(--ink-soft); }
+
+    .s-tools-book { position: absolute; left: 0; top: 0; width: 330px; height: 116px; border: 1.5px solid #514b40; border-radius: 8px; background: #fffdf8; }
+    .s-tools-book-spine { position: absolute; left: 0; top: 0; bottom: 0; width: 12px; background: #ece3d3; border-right: 1.5px solid #b9ad99; }
+    .s-tools-book-name { position: absolute; left: 26px; top: 12px; font-family: var(--font-mono); font-size: 26px; font-weight: 700; }
+    .s-tools-book-desc { position: absolute; left: 26px; top: 48px; font-size: 24px; color: var(--ink-soft); }
+    .s-tools-book-list { position: absolute; left: 360px; top: 4px; display: flex; flex-direction: column; gap: 8px; font-size: 24px; color: var(--ink-soft); }
+    .s-tools-book-list b { font-family: var(--font-mono); font-size: 20px; color: var(--accent-text); margin-right: 8px; }
+
+    .s-tools-mcp-logo { position: absolute; left: 0; top: 8px; width: 40px; height: 44px; object-fit: contain; }
+    .s-tools-mcp-name { position: absolute; left: 54px; top: 10px; font-family: var(--font-mono); font-size: 26px; font-weight: 700; }
+    .s-tools-mcp-rows { position: absolute; left: 54px; top: 42px; display: flex; flex-direction: column; gap: 2px; font-family: var(--font-mono); font-size: 20px; line-height: 1.3; color: var(--ink-soft); }
+    .s-tools-mcp-rows b { color: var(--accent-text); font-weight: 700; margin-right: 8px; }
+    .s-tools-mcp-note { position: absolute; left: 470px; top: 8px; width: 320px; font-size: 24px; line-height: 1.5; color: var(--ink-soft); }
+
+    /* ---- 送出文字的飞行条 ---- */
+    .s-tools-guide { position: absolute; left: 604px; width: 152px; height: 0; border-top: 2px dashed color-mix(in srgb, var(--line-strong) 80%, transparent); opacity: 0; }
+    .s-tools-guide--1 { top: 120px; }
+    .s-tools-guide--2 { top: 332px; }
+    .s-tools-guide--3 { top: 544px; }
+
+    .s-tools-strip {
+      position: absolute;
+      z-index: 8;
+      left: 570px;
+      width: 190px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+      border-radius: 8px;
+      background: #fffdf8;
+      color: #2a261f;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+    .s-tools-strip--1 { top: 100px; }
+    .s-tools-strip--2 { top: 312px; }
+    .s-tools-strip--3 { top: 524px; }
+
+    /* ---- 三种提示词的回收 ---- */
+    .s-tools-recap { position: absolute; left: 760px; top: 20px; width: 860px; height: 600px; }
+    .s-tools-recap-label { position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.06em; color: var(--ink-faint); opacity: 0; }
+    .s-tools-recap-row { position: absolute; left: 0; width: 860px; height: 100px; opacity: 0; }
+    .s-tools-recap-row::before { content: ""; position: absolute; left: 0; top: 6px; width: 6px; height: 76px; border-radius: 3px; background: var(--accent); }
+    .s-tools-recap-row b { position: absolute; left: 26px; top: 0; font-size: 46px; font-weight: 700; letter-spacing: -0.02em; }
+    .s-tools-recap-row b em { font-style: normal; color: var(--accent-text); }
+    .s-tools-recap-row span { position: absolute; left: 26px; top: 58px; font-size: 24px; color: var(--ink-soft); }
+    .s-tools-recap-row--1 { top: 64px; }
+    .s-tools-recap-row--2 { top: 176px; }
+    .s-tools-recap-row--3 { top: 288px; }
+
+    .s-tools-big { position: absolute; left: 760px; top: 412px; width: 860px; text-align: center; font-size: 96px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); opacity: 0; }
+    .s-tools-big-sub { position: absolute; left: 760px; top: 548px; width: 860px; text-align: center; font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.04em; color: var(--ink-faint); opacity: 0; }
+
+    .s-tools-final { position: absolute; left: 40px; top: 618px; width: 1580px; text-align: center; font-family: var(--font-mono); font-size: 30px; color: var(--ink-soft); opacity: 0; }
+    .s-tools-final b { color: var(--accent-text); font-weight: 700; }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-tools-skills-mcp"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="make"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S13</span>
+          <span class="scene-act">第三幕 · 做</span>
+        </p>
+        <h1 id="s-tools-skills-mcp-title" class="scene-title">都是喂给模型的文字</h1>
+        <p class="scene-no">13 / 22</p>
+      </header>
+
+      <section id="s-tools-skills-mcp-stage" class="stage">
+        <!-- 左边的模型：只能读文字 -->
+        <div class="s-tools-model" id="s-tools-model">
+          <p class="s-tools-model-title">模型</p>
+          <p class="s-tools-model-sub">对话窗口</p>
+          <span class="s-tools-ability s-tools-ability--1" id="s-tools-ability1">fn</span>
+          <span class="s-tools-ability s-tools-ability--2" id="s-tools-ability2">SOP</span>
+          <span class="s-tools-ability s-tools-ability--3" id="s-tools-ability3">API</span>
+
+          <div class="s-tools-context" id="s-tools-context">
+            <span class="s-tools-context-label">上下文</span>
+            <span class="s-tools-scan" id="s-tools-scan"></span>
+            <div class="s-tools-bubble s-tools-bubble--1" id="s-tools-bubble1"><b>write_file</b>(path, content)<br />→ ok</div>
+            <div class="s-tools-bubble s-tools-bubble--2" id="s-tools-bubble2"><b>SKILL.md</b><br />这类活怎么做的步骤与脚本</div>
+            <div class="s-tools-bubble s-tools-bubble--3" id="s-tools-bubble3"><b>工具说明书</b><br />db · calendar · drawing</div>
+          </div>
+
+          <span class="s-tools-chip" id="s-tools-chip">模型只能读文字</span>
+        </div>
+
+        <!-- 三个投喂口 -->
+        <div class="s-tools-card s-tools-card--1" id="s-tools-card1">
+          <span class="s-tools-index">01</span>
+          <span class="s-tools-name">工具</span>
+          <span class="s-tools-status" id="s-tools-status1">固定格式、固定返回</span>
+          <div class="s-tools-slot" id="s-tools-slot1"><span>投喂口</span><small>一段固定格式的文字</small></div>
+          <div class="s-tools-body" id="s-tools-body1">
+            <p class="s-tools-code"><b>write_file</b>(path, content)</p>
+            <p class="s-tools-ok" id="s-tools-ok">→ ok</p>
+            <p class="s-tools-body-note">参数是路径和内容；<br />返回的也是文字。</p>
+          </div>
+        </div>
+
+        <div class="s-tools-card s-tools-card--2" id="s-tools-card2">
+          <span class="s-tools-index">02</span>
+          <span class="s-tools-name">Skill</span>
+          <span class="s-tools-status" id="s-tools-status2">固定流程</span>
+          <div class="s-tools-slot" id="s-tools-slot2"><span>投喂口</span><small>一份说明书</small></div>
+          <div class="s-tools-body" id="s-tools-body2">
+            <div class="s-tools-book" id="s-tools-book">
+              <span class="s-tools-book-spine"></span>
+              <p class="s-tools-book-name">SKILL.md</p>
+              <p class="s-tools-book-desc">这类活怎么做</p>
+            </div>
+            <div class="s-tools-book-list">
+              <span><b>01</b>步骤</span>
+              <span><b>02</b>注意事项</span>
+              <span><b>03</b>脚本</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-tools-card s-tools-card--3" id="s-tools-card3">
+          <span class="s-tools-index">03</span>
+          <span class="s-tools-name">MCP</span>
+          <span class="s-tools-status" id="s-tools-status3">统一接口</span>
+          <div class="s-tools-slot" id="s-tools-slot3"><span>投喂口</span><small>外部软件登记好的能力</small></div>
+          <div class="s-tools-body" id="s-tools-body3">
+            <img class="s-tools-mcp-logo" id="s-tools-mcp-logo" src="assets/media/logo/mcp.png" alt="MCP 标志" width="40" height="44" />
+            <p class="s-tools-mcp-name">MCP Server</p>
+            <div class="s-tools-mcp-rows">
+              <span><b>数据库</b>db.query</span>
+              <span><b>日历</b>cal.create</span>
+              <span><b>画图</b>draw.image</span>
+            </div>
+            <p class="s-tools-mcp-note">外部软件按同一个格式，<br />把能力登记成工具说明书。</p>
+          </div>
+        </div>
+
+        <!-- 投喂引导线 -->
+        <span class="s-tools-guide s-tools-guide--1" id="s-tools-guide1"></span>
+        <span class="s-tools-guide s-tools-guide--2" id="s-tools-guide2"></span>
+        <span class="s-tools-guide s-tools-guide--3" id="s-tools-guide3"></span>
+
+        <!-- 飞进上下文的文字 -->
+        <div class="s-tools-strip s-tools-strip--1" id="s-tools-strip1">write_file</div>
+        <div class="s-tools-strip s-tools-strip--2" id="s-tools-strip2">SKILL.md</div>
+        <div class="s-tools-strip s-tools-strip--3" id="s-tools-strip3">工具说明</div>
+
+        <!-- 回收：三种提前写好的提示词，最后并成一行 -->
+        <div class="s-tools-recap" id="s-tools-recap">
+          <p class="s-tools-recap-label" id="s-tools-recap-label">三种提前写好的提示词</p>
+          <div class="s-tools-recap-row s-tools-recap-row--1" id="s-tools-recap1">
+            <b>工具 = <em>格式</em></b>
+            <span>调用什么、参数是什么</span>
+          </div>
+          <div class="s-tools-recap-row s-tools-recap-row--2" id="s-tools-recap2">
+            <b>Skill = <em>流程</em></b>
+            <span>这类活先做什么、再做什么</span>
+          </div>
+          <div class="s-tools-recap-row s-tools-recap-row--3" id="s-tools-recap3">
+            <b>MCP = <em>接口</em></b>
+            <span>外部软件登记能力的统一格式</span>
+          </div>
+        </div>
+        <p class="s-tools-big" id="s-tools-big">都是文字</p>
+        <p class="s-tools-big-sub" id="s-tools-big-sub">工具 / Skill / MCP，最后都是它读过的字</p>
+
+        <p class="s-tools-final" id="s-tools-final">Harness 的能力边界 <b>=</b> 你提前喂进去的文字</p>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-tools-skills-mcp-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.854">工具、Skill、MCP，名字不一样，但有一件事是一样的：</p>
+        <p id="s-tools-skills-mcp-cap-1" class="cap-line clip" data-start="6.594" data-duration="5.383">它们最后都得变成一段文字，塞进模型的上下文里。</p>
+        <p id="s-tools-skills-mcp-cap-2" class="cap-line clip" data-start="11.977" data-duration="2.656">因为模型只能读文字。</p>
+        <p id="s-tools-skills-mcp-cap-3" class="cap-line clip" data-start="14.673" data-duration="6.301">工具，是一个固定格式：我告诉你，你可以调用 write_file，</p>
+        <p id="s-tools-skills-mcp-cap-4" class="cap-line clip" data-start="21.014" data-duration="2.035">参数是路径和内容；</p>
+        <p id="s-tools-skills-mcp-cap-5" class="cap-line clip" data-start="23.09" data-duration="5.955">你按这个格式说，我替你去执行，再把结果以文字还给你。</p>
+        <p id="s-tools-skills-mcp-cap-6" class="cap-line clip" data-start="29.085" data-duration="2.61">Skill，是一段固定流程：</p>
+        <p id="s-tools-skills-mcp-cap-7" class="cap-line clip" data-start="31.735" data-duration="6.412">把我做这类事的经验写成一份说明书，需要的时候整段喂进去，</p>
+        <p id="s-tools-skills-mcp-cap-8" class="cap-line clip" data-start="38.187" data-duration="1.343">模型照着做。</p>
+        <p id="s-tools-skills-mcp-cap-9" class="cap-line clip" data-start="39.57" data-duration="5.126">MCP，是一个统一的接口：外部软件按同一个格式，</p>
+        <p id="s-tools-skills-mcp-cap-10" class="cap-line clip" data-start="44.736" data-duration="5.471">把自己的能力登记成工具说明书，Agent 就能接上它。</p>
+        <p id="s-tools-skills-mcp-cap-11" class="cap-line clip" data-start="50.247" data-duration="6.156">你可以把它们理解成三种「提前写好的提示词」：工具是格式，</p>
+        <p id="s-tools-skills-mcp-cap-12" class="cap-line clip" data-start="56.443" data-duration="2.837">Skill 是流程，MCP 是接口。</p>
+        <p id="s-tools-skills-mcp-cap-13" class="cap-line clip" data-start="59.32" data-duration="5.984">所以 Harness 的能力边界，很多时候不取决于模型多聪明，</p>
+        <p id="s-tools-skills-mcp-cap-14" class="cap-line clip" data-start="65.344" data-duration="3.142">而取决于你提前给它喂了什么。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S13</span>
+        <span class="cap-progress" aria-hidden="true"><i id="s-tools-skills-mcp-progress"></i></span>
+        <span class="cap-clock">01:10</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S13","id":"tools-skills-mcp","index":0,"start":0,"duration":70.2,"audioStart":0.6000000000000227,"audioDuration":67.992,"cues":[{"i":0,"t":0.7,"d":5.854,"text":"工具、Skill、MCP，名字不一样，但有一件事是一样的：","sent":"工具、Skill、MCP，名字不一样，但有一件事是一样的：它们最后都得变成一段文字，塞进模型的上下文里。"},{"i":1,"t":6.594,"d":5.383,"text":"它们最后都得变成一段文字，塞进模型的上下文里。","sent":"工具、Skill、MCP，名字不一样，但有一件事是一样的：它们最后都得变成一段文字，塞进模型的上下文里。"},{"i":2,"t":11.977,"d":2.656,"text":"因为模型只能读文字。","sent":"因为模型只能读文字。"},{"i":3,"t":14.673,"d":6.301,"text":"工具，是一个固定格式：我告诉你，你可以调用 write_file，","sent":"工具，是一个固定格式：我告诉你，你可以调用 write_file，参数是路径和内容；你按这个格式说，我替你去执行，再把结果以文字还给你。"},{"i":4,"t":21.014,"d":2.035,"text":"参数是路径和内容；","sent":"工具，是一个固定格式：我告诉你，你可以调用 write_file，参数是路径和内容；你按这个格式说，我替你去执行，再把结果以文字还给你。"},{"i":5,"t":23.09,"d":5.955,"text":"你按这个格式说，我替你去执行，再把结果以文字还给你。","sent":"工具，是一个固定格式：我告诉你，你可以调用 write_file，参数是路径和内容；你按这个格式说，我替你去执行，再把结果以文字还给你。"},{"i":6,"t":29.085,"d":2.61,"text":"Skill，是一段固定流程：","sent":"Skill，是一段固定流程：把我做这类事的经验写成一份说明书，需要的时候整段喂进去，模型照着做。"},{"i":7,"t":31.735,"d":6.412,"text":"把我做这类事的经验写成一份说明书，需要的时候整段喂进去，","sent":"Skill，是一段固定流程：把我做这类事的经验写成一份说明书，需要的时候整段喂进去，模型照着做。"},{"i":8,"t":38.187,"d":1.343,"text":"模型照着做。","sent":"Skill，是一段固定流程：把我做这类事的经验写成一份说明书，需要的时候整段喂进去，模型照着做。"},{"i":9,"t":39.57,"d":5.126,"text":"MCP，是一个统一的接口：外部软件按同一个格式，","sent":"MCP，是一个统一的接口：外部软件按同一个格式，把自己的能力登记成工具说明书，Agent 就能接上它。"},{"i":10,"t":44.736,"d":5.471,"text":"把自己的能力登记成工具说明书，Agent 就能接上它。","sent":"MCP，是一个统一的接口：外部软件按同一个格式，把自己的能力登记成工具说明书，Agent 就能接上它。"},{"i":11,"t":50.247,"d":6.156,"text":"你可以把它们理解成三种「提前写好的提示词」：工具是格式，","sent":"你可以把它们理解成三种「提前写好的提示词」：工具是格式，Skill 是流程，MCP 是接口。"},{"i":12,"t":56.443,"d":2.837,"text":"Skill 是流程，MCP 是接口。","sent":"你可以把它们理解成三种「提前写好的提示词」：工具是格式，Skill 是流程，MCP 是接口。"},{"i":13,"t":59.32,"d":5.984,"text":"所以 Harness 的能力边界，很多时候不取决于模型多聪明，","sent":"所以 Harness 的能力边界，很多时候不取决于模型多聪明，而取决于你提前给它喂了什么。"},{"i":14,"t":65.344,"d":3.142,"text":"而取决于你提前给它喂了什么。","sent":"所以 Harness 的能力边界，很多时候不取决于模型多聪明，而取决于你提前给它喂了什么。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
+    tl.fromTo("#s-tools-skills-mcp-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
+
+    // MOTION:BEGIN
+    // 旁白是时钟：每一段投喂都钉在 N.cues[i].t 上。
+    const T = N.cues.map((c) => c.t);
+    const ease = "power3.out";
+    const q = "power2.out";
+
+    // 快照会直接 seek：缩放型元素先显式归零，避免提前露出来。
+    gsap.set(["#s-tools-big"], { opacity: 0, scale: 0.92 });
+    gsap.set(["#s-tools-ability1", "#s-tools-ability2", "#s-tools-ability3"], { scale: 0.6 });
+
+    // 次级运动：上下文区域的扫描线缓慢下移。
+    tl.fromTo("#s-tools-scan", { y: 0 }, { y: 420, duration: 34, ease: "none" }, 0.9);
+
+    // cue0 · 模型窗口 + 三个投喂口
+    tl.fromTo("#s-tools-model", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.7, ease }, T[0]);
+    [1, 2, 3].forEach((n, i) => tl.fromTo("#s-tools-card" + n, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[0] + 0.25 + i * 0.3));
+
+    // cue1 · 上下文区打开，投喂引导线出现
+    tl.fromTo("#s-tools-context", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[1] + 0.05);
+    [1, 2, 3].forEach((n, i) => tl.fromTo("#s-tools-guide" + n, { opacity: 0 }, { opacity: 0.55, duration: 0.4, ease: q }, T[1] + 0.3 + i * 0.15));
+
+    // cue2 · 模型只能读文字
+    tl.fromTo("#s-tools-chip", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[2] + 0.1);
+
+    // cue3 · 工具：固定格式
+    tl.fromTo("#s-tools-slot1", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in" }, T[3] + 0.1);
+    tl.fromTo("#s-tools-body1", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[3] + 0.25);
+    tl.fromTo("#s-tools-status1", { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[3] + 0.6);
+
+    // cue4 · 工具说明飞进上下文
+    tl.fromTo("#s-tools-strip1", { opacity: 0, x: 0, y: 0 }, { opacity: 1, duration: 0.2, ease: q }, T[4] + 0.05);
+    tl.fromTo("#s-tools-strip1", { x: 0, y: 0 }, { x: -478, y: 68, duration: 0.95, ease: "power2.inOut", immediateRender: false }, T[4] + 0.2);
+    tl.fromTo("#s-tools-strip1", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power1.in", immediateRender: false }, T[4] + 1.06);
+    tl.fromTo("#s-tools-bubble1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[4] + 1.1);
+    tl.fromTo("#s-tools-ability1", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, T[4] + 1.35);
+
+    // cue5 · 执行结果也以文字返回
+    tl.fromTo("#s-tools-ok", { scale: 1 }, { scale: 1.12, duration: 0.2, ease: "power1.out", immediateRender: false }, T[5] + 0.15);
+    tl.fromTo("#s-tools-ok", { scale: 1.12 }, { scale: 1, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[5] + 0.35);
+
+    // cue6 · Skill：一段固定流程
+    tl.fromTo("#s-tools-slot2", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in" }, T[6] + 0.1);
+    tl.fromTo("#s-tools-body2", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[6] + 0.25);
+    tl.fromTo("#s-tools-status2", { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[6] + 0.6);
+
+    // cue7 · 整份 Skill 喂进上下文
+    tl.fromTo("#s-tools-strip2", { opacity: 0, x: 0, y: 0 }, { opacity: 1, duration: 0.2, ease: q }, T[7] + 0.05);
+    tl.fromTo("#s-tools-strip2", { x: 0, y: 0 }, { x: -478, y: -20, duration: 0.95, ease: "power2.inOut", immediateRender: false }, T[7] + 0.2);
+    tl.fromTo("#s-tools-strip2", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power1.in", immediateRender: false }, T[7] + 1.06);
+    tl.fromTo("#s-tools-bubble2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[7] + 1.1);
+    tl.fromTo("#s-tools-ability2", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, T[7] + 1.35);
+
+    // cue8 · 模型照着做
+    tl.fromTo("#s-tools-bubble2", { scale: 1 }, { scale: 1.02, duration: 0.3, ease: "power1.out", immediateRender: false }, T[8] + 0.1);
+    tl.fromTo("#s-tools-bubble2", { scale: 1.02 }, { scale: 1, duration: 0.45, ease: "power1.inOut", immediateRender: false }, T[8] + 0.4);
+    tl.fromTo("#s-tools-book", { opacity: 1 }, { opacity: 0.72, duration: 0.6, ease: "power1.inOut", immediateRender: false }, T[8] + 0.4);
+
+    // cue9 · MCP：统一的接口
+    tl.fromTo("#s-tools-slot3", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in" }, T[9] + 0.1);
+    tl.fromTo("#s-tools-body3", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[9] + 0.25);
+    tl.fromTo("#s-tools-status3", { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[9] + 0.6);
+
+    // cue10 · 外部软件登记成工具说明书
+    tl.fromTo("#s-tools-strip3", { opacity: 0, x: 0, y: 0 }, { opacity: 1, duration: 0.2, ease: q }, T[10] + 0.05);
+    tl.fromTo("#s-tools-strip3", { x: 0, y: 0 }, { x: -478, y: -108, duration: 0.95, ease: "power2.inOut", immediateRender: false }, T[10] + 0.2);
+    tl.fromTo("#s-tools-strip3", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power1.in", immediateRender: false }, T[10] + 1.06);
+    tl.fromTo("#s-tools-bubble3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[10] + 1.1);
+    tl.fromTo("#s-tools-ability3", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, T[10] + 1.35);
+
+    // cue11 · 回收成三种「提前写好的提示词」
+    [1, 2, 3].forEach((n, i) => {
+      tl.fromTo("#s-tools-card" + n, { opacity: 1, y: 0 }, { opacity: 0, y: -10, duration: 0.45, ease: "power2.in", immediateRender: false }, T[11] + 0.1 + i * 0.08);
+    });
+    tl.fromTo("#s-tools-recap-label", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[11] + 0.5);
+    tl.fromTo("#s-tools-recap1", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[11] + 0.7);
+
+    // cue12 · Skill 是流程，MCP 是接口
+    tl.fromTo("#s-tools-recap2", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[12] + 0.1);
+    tl.fromTo("#s-tools-recap3", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[12] + 0.45);
+
+    // cue13 · 三张卡片并成一行字
+    [1, 2, 3].forEach((n, i) => {
+      tl.fromTo("#s-tools-recap" + n, { opacity: 1, y: 0 }, { opacity: 0, y: 60, duration: 0.55, ease: "power2.in", immediateRender: false }, T[13] + 0.1 + i * 0.08);
+    });
+    tl.fromTo("#s-tools-recap-label", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[13] + 0.15);
+    tl.fromTo("#s-tools-big", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.4)" }, T[13] + 0.35);
+    tl.fromTo("#s-tools-big-sub", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[13] + 1.1);
+
+    // cue14 · 能力边界取决于喂了什么
+    tl.fromTo("#s-tools-final", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[14] + 0.1);
+    tl.fromTo("#s-tools-chip", { scale: 1 }, { scale: 1.06, duration: 0.3, ease: "power1.out", immediateRender: false }, T[14] + 0.3);
+    tl.fromTo("#s-tools-chip", { scale: 1.06 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[14] + 0.6);
+    // MOTION:END
+
+    window.__timelines["s-tools-skills-mcp"] = tl;
+  </script>
+</template>
