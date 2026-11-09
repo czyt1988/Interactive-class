@@ -427,7 +427,7 @@
    ```
 5. 浏览器验收（Playwright 或手工）：1440×900 与 390×844；亮色；无横向滚动；对比度；reduced-motion；课程退出按钮。
 6. 更新 `docs/screenshots/` 里受影响的截图。
-7. 不自动 commit，除非用户明确要求。
+7. 按 [AGENTS.md](AGENTS.md#提交规则) 的提交规则提交。
 
 ---
 

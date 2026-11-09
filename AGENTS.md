@@ -25,9 +25,56 @@
 
 - 一次任务只做一个阶段，完成该阶段全部验收项再结束。
 - 不直接编辑 `dist/`；它是构建产物。
-- 不自动 commit，除非用户明确要求。
+- 每次任务收尾都按下方「提交规则」提交，不攒改动，也不把无关改动混进同一个提交。
 - 结束前跑本阶段的验证命令，并报告“验证了什么、没验证什么”。
 - 改变架构决策前，先更新架构文档的决策表。
+
+## 提交规则
+
+每次任务收尾都必须提交一次，让仓库和本地工作区保持同步；不需要用户再额外说“提交”。
+
+### 什么时候提交
+
+- 一个任务一次提交：验收项全部做完、验证命令通过之后提交。
+- 任务分几个阶段时，每个阶段结束提交一次；中途的 WIP 提交要在任务结束前整理干净。
+- 提交前先看 `git status --short`，只暂存本任务改动的文件。看到不属于本任务的改动，先停下问用户，不要顺手带进去。
+- 分路径 `git add`，不要无脑 `git add -A`；暂存后用 `git diff --cached --stat` 和 `git diff --cached` 复核一遍再提交。
+- 用户明确要求“把当前项目全部提交”时，可以整仓暂存，但仍要逐项复核暂存清单。
+
+### 提交前验证
+
+按改动范围至少跑：
+
+- 所有任务：`pytest -q && ruff check .`
+- 改课程或运行时：`python scripts/build_courses.py --all`
+- 改 `design/tokens.css`、字体或 vendor：`python scripts/sync_runtime.py`，并确认 `runtime/VERSION.json` 的 hash 更新
+- 改站点或课程视觉：按 [DESIGN.md](DESIGN.md) 的验收方式补截图或 Playwright 检查
+
+验证不过不提交。跑不了的验证要在提交信息和给用户的报告里说明原因。
+
+### 提交信息
+
+- 用 Conventional Commits：`<type>(<scope>): <中文一句话>`；type 取 `feat`、`fix`、`docs`、`chore`、`refactor`、`test`、`build`、`perf`、`style`。
+- scope 用模块名或课程 slug，例如 `feat(course): ...`、`fix(runtime): ...`、`docs(agents): ...`。
+- 标题说清楚做了什么，不写“update”“修改”这类空话；正文写动机、影响面和没验证的部分。
+- 一个提交只做一件事；发现“顺便改了”的内容，拆成另一个提交。
+- 不使用 `--no-verify` 跳过 hook；hook 失败先修问题。
+
+### 不要提交的东西
+
+- 视频与渲染产物：`*.mp4`、`*.webm`、`*.mov`、`*.mkv`、`*.avi`、`*.m4v`、`*.flv`、`*.wmv`、`renders/`、`courses/*/renders/`。课程是 HTML 静态包，视频只是本地导出结果，占空间且可重建。
+- 构建产物与缓存：`dist/`、`runtime/vendor/`、`*.egg-info/`、`courses/*/narration/cache/`、`courses/*/composition/.snaps-*/`、`courses/*/composition/.review-*/`、`courses/*/composition/.thumbnails/`
+- 环境与本地状态：`.venv*/`、`node_modules/`、`.hyperframes/`、`.run/`、`.tmp/`、`*.log`、`.env`、`.vscode/`
+- 本地工具：`tools/ffmpeg/`
+- 上游素材：`大纲/`（可复现的文本源已提交在 `courses/*/narration/scenes*.json`）
+- 单个文件超过 20 MB 的资产默认不进库，先问用户；播放必需的字体子集（woff2）和课程 OGG 旁白除外，且应尽量压缩/子集化。
+
+`.gitignore` 是这份清单的权威版本。新增一类产物时，先在 `.gitignore` 里加规则，再提交代码，不要提交完再补。
+
+### 提交之后
+
+- `git status` 应该干净（只剩被忽略的构建产物）。不干净说明有漏提交或误提交，先查清楚。
+- 配置了 remote 就 `git push` 同步；没有 remote 时本地提交即可，并在报告里写“未推送”。
 
 ## 当前状态
 
