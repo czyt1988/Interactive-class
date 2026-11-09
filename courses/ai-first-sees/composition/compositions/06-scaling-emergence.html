@@ -222,6 +222,7 @@
     .s06-b2-svg {
       position: absolute;
       inset: 0;
+      z-index: 2;
       width: 940px;
       height: 430px;
       overflow: visible;
@@ -242,6 +243,7 @@
     .s06-b2-bar {
       position: absolute;
       bottom: 0;
+      z-index: 1;
       width: 160px;
       border: 2px solid var(--ink);
       border-bottom: none;
@@ -256,12 +258,15 @@
 
     .s06-b2-val {
       position: absolute;
+      z-index: 3;
       width: 160px;
       text-align: center;
       font-family: var(--font-mono);
       font-size: 38px;
       font-weight: 700;
       color: var(--ink);
+      /* 曲线从标签附近穿过去：给数字一层纸色晕影，线条仍在、字也清楚。 */
+      text-shadow: 0 0 4px var(--bg), 0 0 10px var(--bg);
     }
 
     .s06-b2-under {
@@ -752,18 +757,49 @@
                 <clipPath id="s06-b2-c2"><rect x="250" y="0" width="270" height="430" /></clipPath>
                 <clipPath id="s06-b2-c3"><rect x="500" y="0" width="300" height="430" /></clipPath>
                 <clipPath id="s06-b2-c4"><rect x="780" y="0" width="160" height="430" /></clipPath>
-                <path
-                  id="s06-b2-curve-d"
-                  class="s06-b2-curve"
-                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
-                />
               </defs>
               <line class="s06-b2-axis" x1="0" y1="430" x2="940" y2="430" />
               <line class="s06-b2-axis" x1="1" y1="6" x2="1" y2="430" />
-              <g id="s06-b2-cv1" clip-path="url(#s06-b2-c1)"><use href="#s06-b2-curve-d" /></g>
-              <g id="s06-b2-cv2" clip-path="url(#s06-b2-c2)"><use href="#s06-b2-curve-d" /></g>
-              <g id="s06-b2-cv3" clip-path="url(#s06-b2-c3)"><use href="#s06-b2-curve-d" /></g>
-              <g id="s06-b2-cv4" clip-path="url(#s06-b2-c4)"><use href="#s06-b2-curve-d" /></g>
+              <g id="s06-b2-cv1" clip-path="url(#s06-b2-c1)">
+                <path
+                  class="s06-b2-curve"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
+                />
+              </g>
+              <g id="s06-b2-cv2" clip-path="url(#s06-b2-c2)">
+                <path
+                  class="s06-b2-curve"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
+                />
+              </g>
+              <g id="s06-b2-cv3" clip-path="url(#s06-b2-c3)">
+                <path
+                  class="s06-b2-curve"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
+                />
+              </g>
+              <g id="s06-b2-cv4" clip-path="url(#s06-b2-c4)">
+                <path
+                  class="s06-b2-curve"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  d="M 24 424 C 110 420, 150 396, 200 370 C 290 330, 400 296, 480 260 C 590 212, 690 116, 760 70 C 820 34, 870 24, 918 18"
+                />
+              </g>
             </svg>
             <div id="s06-b2-bar1" class="s06-b2-bar" style="left: 120px; height: 60px"></div>
             <div id="s06-b2-bar2" class="s06-b2-bar" style="left: 400px; height: 170px"></div>

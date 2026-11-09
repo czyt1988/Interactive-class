@@ -267,17 +267,17 @@
     .s-harness-perm-stamp { position: absolute; left: 22px; top: 208px; padding: 4px 12px; border: 2px double var(--stamp); border-radius: 6px; color: var(--stamp); font-family: var(--font-mono); font-size: 24px; font-weight: 700; letter-spacing: 0.12em; }
 
     /* ---- 行动循环：四步闭环 ---- */
-    .s-harness-loop { position: absolute; z-index: 4; left: 60px; top: 0; width: 880px; height: 168px; }
+    .s-harness-loop { position: absolute; z-index: 4; left: 60px; top: 0; width: 880px; height: 184px; }
     .s-harness-step {
       position: absolute;
       top: 44px;
       width: 170px;
-      height: 70px;
+      height: 92px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 4px;
       border: 2px solid #514b40;
       border-radius: 14px;
       background: #faf6ee;
@@ -288,18 +288,18 @@
     .s-harness-step--2 { left: 230px; }
     .s-harness-step--3 { left: 460px; }
     .s-harness-step--4 { left: 690px; }
-    .s-harness-step span { font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.1em; color: var(--ink-faint); }
-    .s-harness-step b { font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
-    .s-harness-arrow { position: absolute; top: 64px; width: 60px; text-align: center; font-family: var(--font-mono); font-size: 32px; color: var(--accent-text); opacity: 0; }
+    .s-harness-step span { font-family: var(--font-mono); font-size: 20px; line-height: 1; letter-spacing: 0.1em; color: var(--ink-faint); }
+    .s-harness-step b { font-size: 38px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
+    .s-harness-arrow { position: absolute; top: 71px; width: 60px; text-align: center; font-family: var(--font-mono); font-size: 32px; color: var(--accent-text); opacity: 0; }
     .s-harness-arrow--1 { left: 170px; }
     .s-harness-arrow--2 { left: 400px; }
     .s-harness-arrow--3 { left: 630px; }
     .s-harness-loop-conn { position: absolute; width: 3px; background: var(--accent); opacity: 0; }
-    .s-harness-loop-conn--l { left: 83px; top: 124px; height: 18px; }
-    .s-harness-loop-conn--r { left: 773px; top: 114px; height: 28px; }
-    .s-harness-return { position: absolute; left: 85px; top: 140px; width: 690px; height: 0; border-top: 3px dashed var(--accent); transform-origin: left center; opacity: 0; }
-    .s-harness-return-dot { position: absolute; left: 778px; top: 135px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); opacity: 0; }
-    .s-harness-return-head { position: absolute; left: 79px; top: 114px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--accent); opacity: 0; }
+    .s-harness-loop-conn--l { left: 83px; top: 146px; height: 12px; }
+    .s-harness-loop-conn--r { left: 773px; top: 136px; height: 22px; }
+    .s-harness-return { position: absolute; left: 85px; top: 158px; width: 690px; height: 0; border-top: 3px dashed var(--accent); transform-origin: left center; opacity: 0; }
+    .s-harness-return-dot { position: absolute; left: 778px; top: 153px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); opacity: 0; }
+    .s-harness-return-head { position: absolute; left: 79px; top: 136px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--accent); opacity: 0; }
 
     /* ---- 坐在工位里的人 ---- */
     .s-harness-sitter { position: absolute; z-index: 1; left: 636px; top: 248px; width: 140px; height: 240px; opacity: 0; }
@@ -338,7 +338,7 @@
     .s-harness-vendor-note { position: absolute; z-index: 6; left: 1230px; top: 426px; width: 380px; text-align: center; font-family: var(--font-mono); font-size: 26px; color: var(--ink-soft); opacity: 0; }
 
     .s-harness-emph { position: absolute; z-index: 5; border: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 16px; opacity: 0; }
-    .s-harness-emph--loop { left: 46px; top: -6px; width: 892px; height: 172px; }
+    .s-harness-emph--loop { left: 46px; top: -6px; width: 892px; height: 184px; }
     .s-harness-emph--skill { left: 940px; top: 104px; width: 248px; height: 310px; }
   </style>
 

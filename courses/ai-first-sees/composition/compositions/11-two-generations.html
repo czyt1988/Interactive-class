@@ -14,6 +14,7 @@
     #s11-count,
     #s11-ceiling,
     #s11-ceiling-label,
+    #s11-toy,
     #s11-rack,
     .s11-layer,
     #s11-collar,
@@ -128,7 +129,7 @@
       left: 0;
       top: 60px;
       width: 500px;
-      height: 440px;
+      height: 400px;
       border: 1px solid var(--line);
       border-radius: 16px;
       background: var(--panel-2);
@@ -136,8 +137,8 @@
 
     .s11-count {
       position: absolute;
-      left: 0;
-      top: 536px;
+      left: 276px;
+      top: 530px;
       padding: 6px 16px;
       border: 1px solid var(--line-strong);
       border-radius: 8px;
@@ -173,15 +174,32 @@
     .s11-horse {
       position: absolute;
       left: 540px;
-      top: 96px;
+      top: 84px;
       width: 500px;
-      height: 364px;
+      height: 380px;
     }
 
     .s11-horse svg {
       display: block;
       width: 500px;
-      height: 364px;
+      height: 380px;
+      overflow: visible;
+    }
+
+    /* 玩具木马：第一代只是这只摇椅木马，和第七拍的真挽马是两类东西。 */
+    .s11-toy {
+      position: absolute;
+      left: 22px;
+      top: 490px;
+      width: 240px;
+      height: 170px;
+      transform-origin: 50% 92%;
+    }
+
+    .s11-toy svg {
+      display: block;
+      width: 240px;
+      height: 170px;
       overflow: visible;
     }
 
@@ -202,8 +220,8 @@
 
     .s11-harness {
       fill: none;
-      stroke: var(--accent-text);
-      stroke-width: 5;
+      stroke: var(--accent);
+      stroke-width: 5.5;
       stroke-linecap: round;
     }
 
@@ -212,6 +230,56 @@
       stroke: var(--ink);
       stroke-width: 3.2;
       stroke-linejoin: round;
+    }
+
+    /* 木头玩具用更亮的纸面填色，和“真马”的纸底拉开；阴影纸色只做鬃毛、尾巴、鞍子。 */
+    .s11-wood {
+      fill: var(--panel);
+      stroke: var(--ink);
+      stroke-width: 3.2;
+      stroke-linejoin: round;
+    }
+
+    .s11-paper2 {
+      fill: var(--panel-2);
+      stroke: var(--ink);
+      stroke-width: 3.2;
+      stroke-linejoin: round;
+    }
+
+    .s11-detail {
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.7;
+    }
+
+    .s11-hoof {
+      fill: var(--ink-soft);
+      stroke: var(--ink);
+      stroke-width: 2.6;
+      stroke-linejoin: round;
+    }
+
+    /* 远侧腿和蹄退后一档：纸色深一点、线细一点。 */
+    .s11-farleg,
+    .s11-farhoof {
+      fill: var(--panel-2);
+      stroke: var(--ink);
+      stroke-width: 2.8;
+      stroke-linejoin: round;
+    }
+
+    .s11-hub {
+      fill: var(--bg);
+      stroke: var(--ink);
+      stroke-width: 3;
+    }
+
+    .s11-dot {
+      fill: var(--ink);
     }
 
     .s11-rack {
@@ -335,50 +403,103 @@
           </div>
           <span id="s11-foot" class="s11-foot">在预设范围内干活</span>
         </div>
+        <!-- 第一代的图腾：一只摇椅木马。像马，只是玩具。 -->
+        <div id="s11-toy" class="s11-toy">
+          <svg viewBox="0 0 240 170" aria-hidden="true">
+            <!-- 弧形摇杆：远侧一道，近侧一道。 -->
+            <path class="s11-detail" d="M 24 128 Q 122 152 230 126" />
+            <path class="s11-paper2" d="M 12 136 Q 120 172 228 136 L 230 128 Q 120 154 10 128 Z" />
+
+            <!-- 远侧两条腿。 -->
+            <path class="s11-wood" d="M 68 100 L 82 102 L 88 138 L 74 138 Z" />
+            <path class="s11-wood" d="M 152 102 L 166 100 L 178 136 L 164 138 Z" />
+
+            <!-- 近侧两条腿。 -->
+            <path class="s11-wood" d="M 54 102 L 68 104 L 72 140 L 58 140 Z" />
+            <path class="s11-wood" d="M 140 106 L 154 104 L 166 138 L 152 140 Z" />
+
+            <!-- 身体。 -->
+            <path class="s11-wood" d="M 54 92 C 54 82 68 74 90 72 C 116 70 142 74 154 82 C 164 90 164 102 154 108 C 142 116 112 118 88 114 C 68 110 54 102 54 92 Z" />
+
+            <!-- 鞍子。 -->
+            <path class="s11-paper2" d="M 96 72 C 106 68 118 68 128 72 L 127 79 C 118 76 106 76 97 79 Z" />
+
+            <!-- 脖子和头。 -->
+            <path class="s11-wood" d="M 140 86 C 146 72 156 60 168 53 C 176 49 188 50 194 55 C 204 61 212 68 214 76 C 216 83 212 88 204 88 C 197 88 191 84 187 79 C 181 83 175 87 167 89 C 157 91 147 90 140 86 Z" />
+
+            <!-- 鬃毛、尾巴、耳朵、把手、眼睛、木纹。 -->
+            <path class="s11-paper2" d="M 174 50 C 166 58 158 68 151 78 C 147 84 144 88 141 91 C 150 79 158 66 168 54 Z" />
+            <path class="s11-paper2" d="M 62 84 C 50 92 42 106 40 122 L 54 124 C 56 108 60 96 68 90 Z" />
+            <path class="s11-wood" d="M 168 54 L 166 38 L 178 50 Z" />
+            <path class="s11-wood" d="M 178 50 L 180 36 L 190 50 Z" />
+            <path class="s11-stroke" d="M 134 80 L 134 57 C 134 52 138 49 143 49 L 151 49 C 156 49 159 53 158 58 L 158 78" stroke-width="5" />
+            <circle class="s11-dot" cx="194" cy="68" r="2.6" />
+            <path class="s11-detail" d="M 208 81 C 203 83 198 81 195 78" />
+            <path class="s11-detail" d="M 76 84 C 86 80 96 80 106 82" />
+            <path class="s11-detail" d="M 80 100 C 92 96 104 96 116 98" />
+          </svg>
+        </div>
+
         <p id="s11-count" class="s11-count">几百个 · 几千个智能体</p>
         <div id="s11-ceiling" class="s11-ceiling"></div>
         <p id="s11-ceiling-label" class="s11-ceiling-label">天花板</p>
 
-        <!-- 中间：一匹马，先空跑，再套上挽具拉车。 -->
+        <!-- 中间：一匹真马，先空身站着；第六拍套上颈圈和拉绳，第八拍拉上双轮小车。 -->
         <div id="s11-horse" class="s11-horse">
-          <svg viewBox="0 0 440 320" aria-hidden="true">
-            <line class="s11-stroke" x1="16" y1="300" x2="432" y2="300" />
+          <svg viewBox="0 0 500 380" aria-hidden="true">
+            <line class="s11-stroke" x1="6" y1="340" x2="494" y2="340" />
+
             <g id="s11-rig">
+              <!-- 双轮小车：车厢、靠背、辐条轮、车辕。 -->
               <g id="s11-cart">
-                <path class="s11-cart-fill" d="M 34 226 L 130 236 L 126 274 L 38 264 Z" />
-                <path class="s11-stroke" d="M 40 210 L 128 220 L 130 236 L 40 226 Z" />
-                <circle class="s11-stroke" cx="64" cy="286" r="26" />
-                <circle class="s11-stroke" cx="104" cy="292" r="22" />
-                <circle cx="64" cy="286" r="3.5" fill="#16140f" />
-                <circle cx="104" cy="292" r="3" fill="#16140f" />
-                <path class="s11-stroke" d="M 64 260 L 64 286 M 38 286 L 90 286" />
-                <path class="s11-stroke" d="M 104 270 L 104 292 M 82 292 L 126 292" />
-                <path class="s11-stroke" d="M 130 240 C 210 218 280 200 326 178" />
-                <path class="s11-stroke" d="M 128 248 C 208 226 278 208 322 186" />
+                <path class="s11-cart-fill" d="M 4 214 L 124 214 L 124 258 L 0 258 Z" />
+                <path class="s11-stroke" d="M 2 230 L 123 230 M 1 244 L 123 244" stroke-width="2.6" />
+                <path class="s11-cart-fill" d="M 4 214 L 4 190 C 4 183 9 180 16 180 L 24 180 L 24 214 Z" />
+                <path class="s11-stroke" d="M 122 246 C 190 250 268 250 322 246" stroke-width="5" />
+                <circle class="s11-stroke" cx="48" cy="296" r="44" />
+                <circle class="s11-stroke" cx="48" cy="296" r="37" />
+                <path class="s11-stroke" d="M 11 296 L 85 296 M 22 270 L 74 322 M 48 259 L 48 333 M 22 322 L 74 270" />
+                <circle class="s11-hub" cx="48" cy="296" r="6.5" />
+                <circle class="s11-dot" cx="48" cy="296" r="2.4" />
               </g>
-              <g id="s11-body">
-                <path class="s11-body" d="M 322 150 C 316 126 292 114 258 112 C 214 110 168 118 138 132 C 118 142 108 158 110 178 C 112 200 122 216 140 228 C 168 244 226 248 268 240 C 306 232 328 212 334 190 C 338 172 332 160 322 150 Z" />
-                <path class="s11-body" d="M 316 136 C 322 112 336 92 352 80 L 384 94 C 378 114 364 142 350 166 C 336 160 324 148 316 136 Z" />
-                <path class="s11-body" d="M 352 78 C 362 62 382 54 396 62 L 420 80 C 426 88 418 99 406 101 L 364 99 Z" />
-                <path class="s11-stroke" d="M 356 66 L 351 50 L 366 60" />
-                <path class="s11-stroke" d="M 368 60 L 372 44 L 380 60" />
-                <circle cx="394" cy="76" r="3.2" fill="#16140f" />
-                <circle cx="412" cy="90" r="2.2" fill="#16140f" />
-                <path class="s11-stroke" d="M 406 101 L 418 95" />
-                <path class="s11-stroke" d="M 352 78 C 340 96 330 116 324 138" />
-                <path class="s11-stroke" d="M 344 92 L 330 104 M 336 108 L 322 120" />
-                <path class="s11-stroke" d="M 304 236 L 312 266 L 304 298" />
-                <path class="s11-stroke" d="M 286 234 L 292 264 L 284 298" />
-                <path class="s11-stroke" d="M 168 236 L 160 266 L 168 298" />
-                <path class="s11-stroke" d="M 148 234 L 142 264 L 134 298" />
-                <path class="s11-stroke" d="M 296 200 C 306 214 310 226 306 238" />
-                <path class="s11-stroke" d="M 176 200 C 166 214 162 226 166 238" />
-                <path class="s11-stroke" d="M 296 298 L 312 298 M 276 298 L 292 298 M 160 298 L 176 298 M 126 298 L 142 298" />
-                <path class="s11-stroke" d="M 112 154 C 94 166 86 196 92 228" />
-                <path class="s11-stroke" d="M 100 174 C 88 198 86 216 92 234" />
-              </g>
-              <ellipse id="s11-collar" class="s11-harness" cx="334" cy="140" rx="13" ry="37" transform="rotate(-60 334 140)" />
-              <path id="s11-traces" class="s11-harness" d="M 320 170 C 270 194 205 218 142 240 M 330 176 C 280 200 212 222 150 244" />
+
+              <!-- 远侧两条腿：先画，藏在身体后面，纸色稍深一档。 -->
+              <path class="s11-farleg" d="M 232 222 C 229 242 225 256 220 266 C 217 278 217 300 219 312 L 223 316 L 224 340 L 204 340 L 205 316 L 209 312 C 207 300 206 290 204 282 C 200 280 196 276 196 272 C 199 258 201 238 204 212 C 205 206 206 202 207 200 Z" />
+              <path class="s11-farhoof" d="M 204 326 L 224 326 L 225 340 L 203 340 Z" />
+              <path class="s11-farleg" d="M 352 196 C 353 220 354 240 354 258 C 355 278 355 298 356 314 L 360 318 L 361 340 L 341 340 L 342 318 L 346 314 C 344 296 342 278 341 258 C 339 238 336 220 332 206 Z" />
+              <path class="s11-farhoof" d="M 341 326 L 361 326 L 362 340 L 340 340 Z" />
+
+              <!-- 颈、鬃、躯干。 -->
+              <path class="s11-body" d="M 318 126 C 338 108 364 94 394 88 C 400 94 404 104 406 112 C 406 126 396 146 378 162 C 368 170 358 176 352 180 C 340 168 324 150 318 126 Z" />
+              <path class="s11-body" d="M 162 120 C 196 116 232 126 262 130 C 290 134 310 130 320 128 C 340 134 354 154 354 176 C 354 198 346 216 330 228 C 304 240 264 242 232 236 C 204 231 184 216 176 194 C 164 174 158 146 162 120 Z" />
+
+              <!-- 近侧两条腿：画在身体前面之前的最后一层，腿根由身体盖住。 -->
+              <path class="s11-body" d="M 206 222 C 203 242 199 256 194 266 C 191 278 191 300 193 312 L 197 316 L 198 340 L 178 340 L 179 316 L 183 312 C 181 300 180 290 178 282 C 174 280 170 276 170 272 C 173 258 175 238 178 212 C 179 206 180 202 181 200" />
+              <path class="s11-body" d="M 344 178 C 342 204 338 232 334 260 C 333 278 331 298 330 314 L 334 318 L 335 340 L 313 340 L 314 318 L 318 314 C 317 296 315 278 314 260 C 312 240 308 224 302 216" />
+              <path class="s11-hoof" d="M 180 324 L 200 324 L 201 340 L 179 340 Z" />
+              <path class="s11-hoof" d="M 314 324 L 334 324 L 335 340 L 313 340 Z" />
+
+              <!-- 头、耳朵。 -->
+              <path class="s11-body" d="M 396 92 C 407 91 417 97 425 104 C 439 115 452 123 460 129 C 466 133 466 139 462 142 L 454 145 C 446 145 440 139 434 134 C 425 127 418 120 412 113 C 405 105 400 98 396 92 Z" />
+              <path class="s11-body" d="M 404 93 C 404 86 407 80 412 77 C 416 82 416 88 415 94 Z" />
+              <path class="s11-body" d="M 391 93 C 391 86 395 79 401 76 C 405 81 406 88 405 94 Z" />
+              <path class="s11-paper2" d="M 396 86 C 380 94 358 106 340 118 C 332 123 324 127 318 130 L 304 148 C 322 137 342 126 358 117 C 374 108 386 100 396 92 C 398 90 397 88 396 86 Z" />
+
+              <!-- 细节：眼、鼻、嘴、颊、鬃毛。 -->
+              <circle class="s11-dot" cx="418" cy="108" r="2.6" />
+              <path class="s11-detail" d="M 450 132 C 446 131 446 136 449 137" />
+              <path class="s11-detail" d="M 452 142 C 446 144 440 142 436 139" />
+              <path class="s11-detail" d="M 414 116 C 420 124 426 131 432 137" />
+              <path class="s11-detail" d="M 384 98 C 366 107 348 118 332 129" />
+
+              <!-- 挽具：颈圈和拉绳（强调色）。 -->
+              <ellipse id="s11-collar" class="s11-harness" cx="342" cy="144" rx="26" ry="8.5" transform="rotate(43 342 144)" />
+              <path id="s11-traces" class="s11-harness" d="M 358 158 C 298 174 222 194 124 216 M 354 168 C 294 184 218 204 120 228" />
+
+              <!-- 尾巴。 -->
+              <path class="s11-paper2" d="M 164 120 C 156 130 151 144 149 158 C 146 178 146 200 150 220 C 153 240 159 260 167 276 C 171 284 171 290 167 294 C 160 288 153 279 148 268 C 141 250 137 226 137 202 C 137 178 141 154 149 136 C 153 126 159 120 164 120 Z" />
+              <path class="s11-detail" d="M 158 140 C 149 176 148 220 154 254" />
+              <path class="s11-detail" d="M 151 160 C 144 192 143 226 149 256" />
             </g>
           </svg>
         </div>
@@ -459,6 +580,9 @@
     // 第二拍：第一代是提示词型，一张角色卡片，人设、知识、工具逐条填进去。
     tl.fromTo("#s11-card", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, N.cues[1].t + 0.1);
     tl.fromTo("#s11-quote", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, N.cues[1].t + 0.4);
+    // 卡片下方摆一只摇椅木马：第一代看着像马，其实只是个玩具。
+    tl.fromTo("#s11-toy", { opacity: 0, y: 18, rotation: -5 }, { opacity: 1, y: 0, rotation: 0, duration: 0.7, ease: "back.out(1.4)" }, N.cues[1].t + 0.9);
+    tl.fromTo("#s11-toy", { rotation: 0 }, { rotation: -2.5, duration: 0.34, yoyo: true, repeat: 3, ease: "sine.inOut", immediateRender: false }, N.cues[1].t + 1.75);
     tl.fromTo("#s11-row1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 1.3);
     tl.fromTo("#s11-row2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 2.7);
     tl.fromTo("#s11-row3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, N.cues[1].t + 4.1);

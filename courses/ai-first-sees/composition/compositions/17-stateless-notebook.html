@@ -6,106 +6,251 @@
       inset: 0;
     }
 
-    /* ---------------------------------------------- 拍1：三个「还在」的小窗口 */
+    /* ---------------------------------------------- 拍1：同一个对话，换模型 / 断网 / 第二天 */
     .s17-remember-head {
       position: absolute;
       left: 0;
-      top: 8px;
+      top: 6px;
       font-family: var(--font-mono);
-      font-size: 28px;
-      letter-spacing: 0.12em;
+      font-size: 27px;
+      letter-spacing: 0.1em;
       color: var(--ink-faint);
     }
 
-    .s17-win {
+    /* 主窗口：一个真实的 harness 对话窗，右上角是模型下拉框 */
+    .s17-chatwin {
       position: absolute;
-      top: 74px;
-      width: 500px;
-      height: 320px;
+      left: 18px;
+      top: 58px;
+      width: 916px;
+      height: 486px;
       border: 1px solid var(--line);
       border-radius: 16px;
       background: var(--panel);
       box-shadow: var(--shadow);
-      overflow: hidden;
+      z-index: 3;
     }
 
-    #s-stateless-notebook-win-0 { left: 18px; }
-    #s-stateless-notebook-win-1 { left: 582px; }
-    #s-stateless-notebook-win-2 { left: 1146px; }
-
-    .s17-win-bar {
+    .s17-chatbar {
       display: flex;
       align-items: center;
-      gap: 8px;
-      height: 46px;
+      gap: 10px;
+      height: 62px;
       padding: 0 18px;
       border-bottom: 1px solid var(--line);
+      border-radius: 16px 16px 0 0;
       background: var(--panel-2);
-      font-family: var(--font-mono);
-      font-size: 25px;
-      color: var(--ink-soft);
     }
 
-    .s17-win-bar i {
+    .s17-chatbar > i {
       width: 10px;
       height: 10px;
+      flex: none;
       border-radius: 50%;
       background: var(--line-strong);
-      flex: none;
     }
 
-    .s17-win-bar span {
+    .s17-chatbar-title {
       margin-left: 10px;
-      letter-spacing: 0.06em;
+      font-size: 25px;
+      font-weight: 600;
+      color: var(--ink);
     }
 
-    .s17-win-body {
+    .s17-chatbar-sub {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--ink-faint);
+    }
+
+    /* 模型下拉：harness 里那个可选模型的按钮 */
+    .s17-model {
+      position: relative;
+      margin-left: auto;
+      z-index: 14;
+    }
+
+    .s17-model-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 40px;
+      padding: 0 13px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      font-size: 23px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s17-model-btn i {
+      width: 12px;
+      height: 12px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s17-model-btn b {
+      font-weight: 600;
+    }
+
+    .s17-model-caret {
+      font-family: var(--font-mono);
+      font-size: 17px;
+      color: var(--ink-faint);
+    }
+
+    .s17-model-name--a,
+    .s17-model-name--b {
+      display: inline-block;
+    }
+
+    .s17-model-name--b {
+      opacity: 0;
+      position: absolute;
+      left: 46px;
+    }
+
+    .s17-model-menu {
+      position: absolute;
+      right: 0;
+      top: 50px;
+      width: 382px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+      box-shadow: 0 26px 60px -42px rgba(22, 20, 15, 0.72);
+      opacity: 0;
+    }
+
+    .s17-model-opt {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 50px;
+      padding: 0 34px 0 16px;
+      border-radius: 8px;
+      font-size: 23px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s17-model-opt > span:first-child {
+      flex: 1;
+    }
+
+    .s17-model-opt small {
+      flex: none;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      color: var(--ink-faint);
+    }
+
+    .s17-model-opt span,
+    .s17-model-opt small {
+      position: relative;
+      z-index: 1;
+    }
+
+    .s17-model-hl {
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      top: 5px;
+      height: 45px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      z-index: 0;
+    }
+
+    .s17-model-check {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      margin-top: -5.5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+      z-index: 1;
+    }
+
+    .s17-chat-input {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      bottom: 18px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 0 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      font-size: 24px;
+      color: var(--ink-faint);
+    }
+
+    .s17-chat-send {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+    }
+
+    .s17-chat-body {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      padding: 22px 20px 0;
+      gap: 16px;
+      padding: 26px 28px 0;
     }
 
     .s17-bubble {
-      max-width: 400px;
-      padding: 13px 18px;
+      max-width: 560px;
+      padding: 14px 20px;
       border: 1px solid var(--line);
       border-radius: 12px;
       font-size: 27px;
-      line-height: 1.32;
+      line-height: 1.34;
     }
 
     .s17-bubble--me {
-      background: var(--panel-2);
-      color: var(--ink-soft);
+      align-self: flex-end;
+      background: var(--accent-soft);
+      color: var(--ink);
     }
 
     .s17-bubble--ai {
-      align-self: flex-end;
+      align-self: flex-start;
       background: #fffdf8;
       color: var(--ink);
     }
 
-    .s17-win-state {
+    .s17-chat-foot {
       position: absolute;
-      left: 22px;
-      bottom: 74px;
-      font-family: var(--font-mono);
-      font-size: 23px;
-      color: var(--ink-faint);
-    }
-
-    .s17-win-foot {
-      position: absolute;
-      left: 20px;
-      right: 20px;
-      bottom: 20px;
+      left: 26px;
+      right: 26px;
+      bottom: 90px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .s17-win-badge {
+    .s17-chat-badge {
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -116,7 +261,7 @@
       color: var(--ink);
     }
 
-    .s17-win-badge::before {
+    .s17-chat-badge::before {
       content: "";
       width: 12px;
       height: 12px;
@@ -124,18 +269,58 @@
       background: var(--accent);
     }
 
-    .s17-win-tag {
+    .s17-chat-note {
       font-family: var(--font-mono);
-      font-size: 23px;
+      font-size: 22px;
       color: var(--ink-faint);
+    }
+
+    /* 右侧两张小卡：断网 / 第二天 */
+    .s17-sidecard {
+      position: absolute;
+      left: 986px;
+      width: 476px;
+      padding: 22px 26px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    #s-stateless-notebook-win-1 { top: 74px; }
+    #s-stateless-notebook-win-2 { top: 306px; }
+
+    .s17-sidecard-title {
+      font-size: 31px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s17-sidecard-text {
+      margin-top: 10px;
+      font-size: 25px;
+      line-height: 1.42;
+      color: var(--ink-soft);
+    }
+
+    .s17-sidecard-badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 5px 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--accent-text);
     }
 
     .s17-stateless {
       position: absolute;
-      left: 300px;
-      top: 452px;
-      width: 1064px;
-      height: 96px;
+      left: 180px;
+      top: 562px;
+      width: 1010px;
+      height: 82px;
       display: flex;
       align-items: center;
       gap: 26px;
@@ -143,6 +328,7 @@
       border: 2px dashed var(--line-strong);
       border-radius: 16px;
       background: color-mix(in srgb, var(--panel) 82%, transparent);
+      z-index: 4;
     }
 
     .s17-stateless-label {
@@ -407,56 +593,34 @@
       z-index: 4;
     }
 
-    .s17-expert-head {
+    /* 专家：纸面人物，墨线描边 + 纸色填充，戴眼镜的前辈 */
+    .s17-expert {
       position: absolute;
-      left: 1008px;
-      top: 290px;
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: var(--ink);
+      left: 1002px;
+      top: 286px;
+      width: 260px;
+      height: 226px;
     }
 
-    .s17-expert-body {
-      position: absolute;
-      left: 934px;
-      top: 378px;
-      width: 240px;
-      height: 152px;
-      border-radius: 48% 48% 10% 10%;
-      background: var(--ink);
+    .s17-expert svg {
+      display: block;
+      width: 260px;
+      height: 226px;
+      overflow: visible;
     }
 
-    .s17-expert-arm {
-      position: absolute;
-      left: 1152px;
-      top: 428px;
-      width: 136px;
-      height: 24px;
-      border-radius: 12px;
-      background: var(--ink);
-      transform: rotate(26deg);
-      transform-origin: 0 50%;
-      z-index: 6;
-    }
-
-    .s17-expert-hand {
-      position: absolute;
-      left: 1256px;
-      top: 470px;
-      width: 44px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--ink);
-      z-index: 6;
+    .s17-expert-glasses {
+      fill: rgba(255, 253, 248, 0.55);
+      stroke: #514b40;
+      stroke-width: 3;
     }
 
     .s17-passbook {
       position: absolute;
-      left: 974px;
-      top: 388px;
-      width: 160px;
-      height: 108px;
+      left: 970px;
+      top: 396px;
+      width: 168px;
+      height: 100px;
       background: #c9a06a;
       border: 2px solid #8a6428;
       border-radius: 4px 8px 8px 4px;
@@ -479,70 +643,50 @@
       position: absolute;
       left: 30px;
       right: 22px;
-      top: 26px;
+      top: 24px;
       height: 10px;
       border-top: 2px solid rgba(58, 40, 14, 0.4);
       border-bottom: 2px solid rgba(58, 40, 14, 0.4);
     }
 
+    /* 专家翻开笔记本：一页一页翻 */
+    .s17-passbook-page {
+      position: absolute;
+      left: 16px;
+      top: 6px;
+      width: 138px;
+      height: 88px;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 2px 6px 6px 2px;
+      background: #fffdf8;
+      transform-origin: left center;
+      opacity: 0;
+      z-index: 2;
+    }
+
+    /* 门外排队的学生：纸面人物，抱着自己的笔记本 */
     .s17-person {
       position: absolute;
       z-index: 4;
     }
 
-    .s17-p-head {
-      position: absolute;
-      left: 28%;
-      top: 2%;
-      width: 44%;
-      padding-top: 44%;
-      border-radius: 50%;
-      background: var(--ink);
-    }
-
-    .s17-p-body {
-      position: absolute;
-      left: 10%;
-      bottom: 0;
-      width: 80%;
-      height: 76%;
-      border-radius: 42% 42% 6% 6%;
-      background: var(--ink);
-    }
-
-    .s17-p-arm {
-      position: absolute;
-      left: 40%;
-      top: 48%;
-      width: 30%;
-      height: 7%;
-      border-radius: 4px;
-      background: var(--ink);
-      transform: rotate(14deg);
-      transform-origin: 0 50%;
-    }
-
-    .s17-p-book {
-      position: absolute;
-      right: 7%;
-      top: 46%;
-      width: 34%;
-      height: 21%;
-      background: #c9a06a;
-      border: 2px solid #6b4a22;
-      border-radius: 3px;
-      transform: rotate(-7deg);
+    .s17-person svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
     }
 
     .s17-p-flag {
       position: absolute;
-      right: 2%;
-      top: 40%;
-      width: 44%;
-      height: 31%;
+      right: -18px;
+      top: 42%;
+      width: 54px;
+      height: 54px;
       border: 3px solid var(--lamp);
-      border-radius: 8px;
-      transform: rotate(-7deg);
+      border-radius: 10px;
+      transform: rotate(-8deg);
+      opacity: 0;
     }
 
     .s17-sessiontag {
@@ -567,56 +711,207 @@
       color: var(--accent-text);
     }
 
-    /* -------------------------------------------- 拍3：摊开的笔记本内部 */
+    /* -------------------------------------------- 拍3：摊开的笔记本，一页一页翻 */
     .s17-bookinner {
       position: absolute;
       inset: 0;
+      z-index: 10;
     }
 
-    .s17-book-cover {
+    #s-stateless-notebook-book {
+      background: color-mix(in srgb, var(--paper) 96%, transparent);
+    }
+
+    .s17-nb-stack {
       position: absolute;
-      left: 132px;
-      top: 84px;
-      width: 1400px;
-      height: 552px;
-      background: #c9a06a;
-      border: 3px solid #8a6428;
-      border-radius: 12px;
+      left: 96px;
+      top: 42px;
+      width: 1450px;
+      height: 560px;
+      border: 2px solid var(--line-strong);
+      border-radius: 16px;
+      background: #f4ecdd;
       box-shadow: var(--shadow);
     }
 
-    .s17-page {
+    .s17-nb-stack::before,
+    .s17-nb-stack::after {
+      content: "";
       position: absolute;
-      top: 96px;
-      width: 440px;
-      height: 528px;
-      padding: 20px 24px;
-      border: 1px solid var(--line);
+      left: -8px;
+      right: -8px;
+      height: 10px;
+      border: 2px solid var(--line-strong);
+      border-radius: 6px;
+      background: #faf6ee;
+    }
+
+    .s17-nb-stack::before { top: -14px; }
+    .s17-nb-stack::after { bottom: -14px; }
+
+    .s17-nb-paper {
+      position: absolute;
+      left: 84px;
+      top: 26px;
+      width: 1460px;
+      height: 552px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px 14px 14px 8px;
       background: #fffdf8;
+      box-shadow: 0 22px 50px -40px rgba(22, 20, 15, 0.5);
     }
 
-    #s-stateless-notebook-pg1 {
-      left: 152px;
-      border-radius: 10px 3px 3px 10px;
-    }
-
-    #s-stateless-notebook-pg2 { left: 592px; }
-
-    #s-stateless-notebook-pg3 {
-      left: 1032px;
-      border-radius: 3px 10px 10px 3px;
-    }
-
-    .s17-page-peek {
+    /* 左侧线圈装订 */
+    .s17-nb-binding {
       position: absolute;
-      left: 1472px;
-      top: 104px;
-      width: 54px;
-      height: 512px;
+      left: 44px;
+      top: 40px;
+      width: 76px;
+      height: 526px;
+    }
+
+    .s17-nb-ring {
+      position: absolute;
+      left: 32px;
+      width: 46px;
+      height: 13px;
+      border: 2.5px solid var(--ink-soft);
+      border-radius: 999px;
+      background: #f4ecdd;
+    }
+
+    .s17-nb-pages {
+      position: absolute;
+      left: 126px;
+      top: 48px;
+      width: 1372px;
+      height: 484px;
+      overflow: visible;
+    }
+
+    /* 页：一张一张叠着，翻页时缩向左侧装订线 */
+    .s17-sheet {
+      position: absolute;
+      inset: 0;
+      padding: 26px 40px 30px;
       border: 1px solid var(--line);
-      border-radius: 0 8px 8px 0;
-      background-color: #f4ecdd;
-      background-image: repeating-linear-gradient(90deg, transparent 0 3px, rgba(81, 75, 64, 0.12) 3px 4px);
+      border-radius: 8px;
+      background: #fffdf8;
+      transform-origin: left center;
+      backface-visibility: hidden;
+      overflow: hidden;
+    }
+
+    .s17-sheet-shade {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(22, 20, 15, 0.22), rgba(22, 20, 15, 0.02) 34%, transparent 62%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .s17-page-no {
+      position: absolute;
+      left: 40px;
+      top: 26px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+    }
+
+    .s17-page-title {
+      position: absolute;
+      left: 40px;
+      top: 58px;
+      margin: 0;
+      font-size: 44px;
+      line-height: 1.12;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s17-page-sub {
+      position: absolute;
+      left: 40px;
+      top: 120px;
+      margin: 0;
+      font-size: 24px;
+      color: var(--accent-text);
+    }
+
+    .s17-pager {
+      position: absolute;
+      right: 34px;
+      bottom: 10px;
+      padding: 6px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      z-index: 4;
+    }
+
+    .s17-pager b {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s17-pager-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .s17-reader {
+      position: absolute;
+      left: 1520px;
+      top: 96px;
+      width: 150px;
+      z-index: 11;
+      text-align: center;
+    }
+
+    .s17-sheet--ghost {
+      opacity: 0;
+      z-index: 5;
+    }
+
+    #s-stateless-notebook-close {
+      transform: scaleX(0);
+      z-index: 6;
+      border: 2px solid #8a6428;
+      background: #c9a06a;
+    }
+
+    .s17-close-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 34px;
+      letter-spacing: 0.2em;
+      color: #3a2a10;
+    }
+
+    .s17-reader svg {
+      display: block;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto;
+    }
+
+    .s17-reader-cap {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
     }
 
     .s17-pid {
@@ -636,10 +931,10 @@
 
     .s17-sop {
       position: absolute;
-      left: 24px;
-      right: 24px;
-      top: 118px;
-      padding: 16px 20px;
+      left: 40px;
+      right: 40px;
+      top: 168px;
+      padding: 18px 26px;
       border: 2px solid var(--ink);
       border-radius: 10px;
       background: #fffdf8;
@@ -647,7 +942,7 @@
 
     .s17-sop-row {
       position: relative;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .s17-sop-row:last-child {
@@ -665,7 +960,7 @@
     .s17-sop-v {
       display: block;
       margin-top: 4px;
-      font-size: 26px;
+      font-size: 28px;
       line-height: 1.3;
       color: var(--ink);
     }
@@ -685,8 +980,8 @@
 
     .s17-stamp {
       position: absolute;
-      right: 26px;
-      bottom: 28px;
+      right: 44px;
+      top: 30px;
       padding: 8px 22px;
       border: 3px double #3a5f9e;
       border-radius: 8px;
@@ -699,9 +994,9 @@
 
     .s17-chat {
       position: absolute;
-      left: 24px;
-      right: 24px;
-      top: 118px;
+      left: 40px;
+      right: 40px;
+      top: 168px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -711,12 +1006,12 @@
     .s17-msg {
       position: relative;
       width: fit-content;
-      max-width: 338px;
+      max-width: 640px;
       margin: 0;
-      padding: 10px 14px;
+      padding: 13px 18px;
       border: 1px solid var(--line);
       border-radius: 10px;
-      font-size: 26px;
+      font-size: 30px;
       line-height: 1.32;
     }
 
@@ -760,26 +1055,26 @@
 
     .s17-lastq {
       position: absolute;
-      left: 24px;
-      right: 24px;
-      top: 118px;
-      padding: 16px 18px;
+      left: 40px;
+      right: 40px;
+      top: 168px;
+      padding: 22px 26px;
       border: 1px dashed var(--line-strong);
       border-radius: 10px;
     }
 
     .s17-lastq-v {
       position: relative;
-      font-size: 26px;
+      font-size: 34px;
       line-height: 1.42;
       color: var(--ink);
     }
 
     .s17-answer {
       position: absolute;
-      left: 24px;
-      right: 24px;
-      top: 300px;
+      left: 40px;
+      right: 40px;
+      top: 344px;
       min-height: 176px;
       padding: 14px 16px;
       border: 2px dashed var(--line-strong);
@@ -788,16 +1083,16 @@
 
     .s17-answer-k {
       font-family: var(--font-mono);
-      font-size: 22px;
+      font-size: 23px;
       letter-spacing: 0.1em;
       color: var(--ink-faint);
     }
 
     .s17-ansline {
       position: relative;
-      margin-top: 16px;
-      padding-left: 20px;
-      font-size: 25px;
+      margin-top: 20px;
+      padding-left: 22px;
+      font-size: 30px;
       line-height: 1.35;
       color: var(--ink);
     }
@@ -933,8 +1228,10 @@
       top: 0;
       width: 52px;
       height: 52px;
+      border: 2.5px solid #514b40;
       border-radius: 50%;
-      background: var(--ink);
+      background: radial-gradient(circle at 38% 46%, #16140f 3px, transparent 3.6px),
+        radial-gradient(circle at 62% 46%, #16140f 3px, transparent 3.6px), #f2e2c9;
     }
 
     .s17-head::after {
@@ -944,8 +1241,10 @@
       bottom: 0;
       width: 88px;
       height: 60px;
+      border: 2.5px solid #514b40;
+      border-bottom: none;
       border-radius: 44% 44% 0 0;
-      background: var(--ink);
+      background: #e4d5bd;
     }
 
     .s17-head-cap {
@@ -1361,12 +1660,6 @@
       transform-origin: left center;
     }
 
-    .s17-expertfront {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-    }
-
     .s17-person--0 { left: 336px; top: 349px; width: 128px; height: 243px; z-index: 8; }
     .s17-person--1 { left: 246px; top: 375px; width: 114px; height: 217px; z-index: 7; }
     .s17-person--2 { left: 164px; top: 398px; width: 102px; height: 194px; z-index: 6; }
@@ -1396,7 +1689,8 @@
 
     /* 快照会直接 seek 到中段，晚出现的元素必须在 CSS 里先隐藏，不能只靠 fromTo 的 from 状态。 */
     .s17-remember-head,
-    .s17-win,
+    .s17-chatwin,
+    .s17-sidecard,
     .s17-stateless,
     .s17-question,
     .s17-room,
@@ -1405,8 +1699,8 @@
     .s17-hatchwrap,
     .s17-person,
     .s17-expertwrap,
-    .s17-expertfront,
     .s17-passbook,
+    .s17-passbook-page,
     .s17-sessiontag,
     .s17-bookinner,
     .s17-sop,
@@ -1429,7 +1723,12 @@
     .s17-leader,
     .s17-callout,
     .s17-final,
-    .s17-p-flag {
+    .s17-p-flag,
+    #s-stateless-notebook-ghost1,
+    #s-stateless-notebook-ghost2,
+    #s-stateless-notebook-pager-b,
+    #s-stateless-notebook-pager-c,
+    .s17-reader {
       opacity: 0;
     }
 
@@ -1529,45 +1828,64 @@
       </header>
 
       <section id="s-stateless-notebook-stage" class="stage">
-        <!-- 拍1：换模型 / 断网 / 第二天，三个「它还记得」的小窗口 -->
+        <!-- 拍1：一个真实对话窗：换模型（下拉选）/ 断网 / 第二天，记录都还在 -->
         <div id="s-stateless-notebook-remember" class="s17-layer">
           <p id="s-stateless-notebook-head" class="s17-remember-head">同一个对话：换了模型 / 断了网 / 过了一夜</p>
 
-          <div id="s-stateless-notebook-win-0" class="s17-win">
-            <div class="s17-win-bar"><i></i><i></i><i></i><span>换成另一个模型</span></div>
-            <div class="s17-win-body">
+          <div id="s-stateless-notebook-win-0" class="s17-chatwin">
+            <div class="s17-chatbar">
+              <i></i><i></i><i></i>
+              <span class="s17-chatbar-title">周报助手</span>
+              <span class="s17-chatbar-sub">新会话</span>
+              <div id="s-stateless-notebook-model" class="s17-model">
+                <div class="s17-model-btn">
+                  <i></i>
+                  <b id="s-stateless-notebook-model-a" class="s17-model-name--a">Claude Sonnet 4</b>
+                  <b id="s-stateless-notebook-model-b" class="s17-model-name--b">GPT-5</b>
+                  <span class="s17-model-caret">▾</span>
+                </div>
+                <div id="s-stateless-notebook-menu" class="s17-model-menu">
+                  <div class="s17-model-opt">
+                    <span>Claude Sonnet 4</span><small>Anthropic</small>
+                    <span id="s-stateless-notebook-check-a" class="s17-model-check" style="opacity: 1"></span>
+                  </div>
+                  <div class="s17-model-opt">
+                    <span>GPT-5</span><small>OpenAI</small>
+                    <span id="s-stateless-notebook-check-b" class="s17-model-check"></span>
+                  </div>
+                  <div class="s17-model-opt">
+                    <span>DeepSeek-V3</span><small>DeepSeek</small>
+                    <span class="s17-model-check"></span>
+                  </div>
+                  <div class="s17-model-opt">
+                    <span>Kimi K2</span><small>月之暗面</small>
+                    <span class="s17-model-check"></span>
+                  </div>
+                  <span id="s-stateless-notebook-hl" class="s17-model-hl"></span>
+                </div>
+              </div>
+            </div>
+            <div class="s17-chat-body">
               <p class="s17-bubble s17-bubble--me">帮我把这份周报改短一点。</p>
               <p class="s17-bubble s17-bubble--ai">好了，三条结论都保留了。</p>
             </div>
-            <div class="s17-win-foot">
-              <span class="s17-win-badge">记录还在</span>
-              <span class="s17-win-tag">model-B</span>
+            <div class="s17-chat-foot">
+              <span id="s-stateless-notebook-badge-0" class="s17-chat-badge">记录还在</span>
+              <span class="s17-chat-note">同一会话 · 12 条消息</span>
             </div>
+            <div class="s17-chat-input"><span>继续输入…</span><span class="s17-chat-send"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M 4 10 L 16 10 M 11 5 L 16 10 L 11 15" stroke="#fffdf8" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg></span></div>
           </div>
 
-          <div id="s-stateless-notebook-win-1" class="s17-win">
-            <div class="s17-win-bar"><i></i><i></i><i></i><span>断网，重新连接</span></div>
-            <div class="s17-win-body">
-              <p class="s17-bubble s17-bubble--me">刚才说到哪了？</p>
-              <p class="s17-bubble s17-bubble--ai">说到第二版大纲，继续。</p>
-            </div>
-            <p class="s17-win-state">连接已断开 · 重新连接后恢复</p>
-            <div class="s17-win-foot">
-              <span class="s17-win-badge">记录还在</span>
-              <span class="s17-win-tag">reconnect</span>
-            </div>
+          <div id="s-stateless-notebook-win-1" class="s17-sidecard">
+            <p class="s17-sidecard-title">断网，重新连接</p>
+            <p class="s17-sidecard-text">记录一直在你手里，重新连上，接着刚才那句聊。</p>
+            <span class="s17-sidecard-badge">reconnect · 记录还在</span>
           </div>
 
-          <div id="s-stateless-notebook-win-2" class="s17-win">
-            <div class="s17-win-bar"><i></i><i></i><i></i><span>第二天，打开</span></div>
-            <div class="s17-win-body">
-              <p class="s17-bubble s17-bubble--me">昨天那个方案，接着做。</p>
-              <p class="s17-bubble s17-bubble--ai">好，从昨天停下的地方继续。</p>
-            </div>
-            <div class="s17-win-foot">
-              <span class="s17-win-badge">它还记得</span>
-              <span class="s17-win-tag">day-2</span>
-            </div>
+          <div id="s-stateless-notebook-win-2" class="s17-sidecard">
+            <p class="s17-sidecard-title">第二天，打开</p>
+            <p class="s17-sidecard-text">昨天那个方案，从停下的地方继续。</p>
+            <span class="s17-sidecard-badge">day-2 · 它还记得</span>
           </div>
 
           <div id="s-stateless-notebook-stateless" class="s17-stateless">
@@ -1605,39 +1923,157 @@
 
           <div id="s-stateless-notebook-queue" class="s17-layer">
             <div id="s-stateless-notebook-person-0" class="s17-person s17-person--0">
-              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
-              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-0" class="s17-p-flag"></span>
+              <svg viewBox="0 0 110 190">
+                <rect x="36" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="59" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="33" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <rect x="56" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <path d="M 20 156 L 22 94 Q 26 62 55 58 Q 84 62 88 94 L 90 156 Z" fill="#f0e8da" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 47 60 L 55 78 L 63 60" fill="#fffdf8" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="55" cy="30" r="21" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 35 24 Q 38 7 55 6 Q 72 7 75 24 Q 66 16 55 15 Q 44 16 35 24 Z" fill="#514b40" />
+                <circle cx="47" cy="32" r="2.2" fill="#16140f" />
+                <circle cx="63" cy="32" r="2.2" fill="#16140f" />
+                <path d="M 50 40 Q 55 44 60 40" stroke="#514b40" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M 24 88 Q 16 112 30 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 86 88 Q 94 112 80 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <g transform="rotate(-6 55 120)">
+                  <rect x="34" y="104" width="42" height="32" rx="3" fill="#c9a06a" stroke="#8a6428" stroke-width="2.5" />
+                  <line x1="41" y1="104" x2="41" y2="136" stroke="#8a6428" stroke-width="2" />
+                  <line x1="48" y1="114" x2="70" y2="114" stroke="#fffdf8" stroke-width="3" />
+                  <line x1="48" y1="122" x2="64" y2="122" stroke="#fffdf8" stroke-width="3" />
+                </g>
+              </svg>
+              <span id="s-stateless-notebook-flag-0" class="s17-p-flag"></span>
             </div>
             <div id="s-stateless-notebook-person-1" class="s17-person s17-person--1">
-              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
-              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-1" class="s17-p-flag"></span>
+              <svg viewBox="0 0 110 190">
+                <rect x="36" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="59" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="33" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <rect x="56" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <path d="M 20 156 L 22 94 Q 26 62 55 58 Q 84 62 88 94 L 90 156 Z" fill="#e9dfcc" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 47 60 L 55 78 L 63 60" fill="#fffdf8" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="55" cy="30" r="21" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 35 24 Q 38 7 55 6 Q 72 7 75 24 Q 66 16 55 15 Q 44 16 35 24 Z" fill="#514b40" />
+                <circle cx="47" cy="32" r="2.2" fill="#16140f" />
+                <circle cx="63" cy="32" r="2.2" fill="#16140f" />
+                <path d="M 50 40 Q 55 44 60 40" stroke="#514b40" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M 24 88 Q 16 112 30 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 86 88 Q 94 112 80 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <g transform="rotate(-6 55 120)">
+                  <rect x="34" y="104" width="42" height="32" rx="3" fill="#c9a06a" stroke="#8a6428" stroke-width="2.5" />
+                  <line x1="41" y1="104" x2="41" y2="136" stroke="#8a6428" stroke-width="2" />
+                  <line x1="48" y1="114" x2="70" y2="114" stroke="#fffdf8" stroke-width="3" />
+                  <line x1="48" y1="122" x2="64" y2="122" stroke="#fffdf8" stroke-width="3" />
+                </g>
+              </svg>
+              <span id="s-stateless-notebook-flag-1" class="s17-p-flag"></span>
             </div>
             <div id="s-stateless-notebook-person-2" class="s17-person s17-person--2">
-              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
-              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-2" class="s17-p-flag"></span>
+              <svg viewBox="0 0 110 190">
+                <rect x="36" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="59" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="33" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <rect x="56" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <path d="M 20 156 L 22 94 Q 26 62 55 58 Q 84 62 88 94 L 90 156 Z" fill="#f3e7d2" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 47 60 L 55 78 L 63 60" fill="#fffdf8" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="55" cy="30" r="21" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 35 24 Q 38 7 55 6 Q 72 7 75 24 Q 66 16 55 15 Q 44 16 35 24 Z" fill="#514b40" />
+                <circle cx="47" cy="32" r="2.2" fill="#16140f" />
+                <circle cx="63" cy="32" r="2.2" fill="#16140f" />
+                <path d="M 50 40 Q 55 44 60 40" stroke="#514b40" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M 24 88 Q 16 112 30 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 86 88 Q 94 112 80 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <g transform="rotate(-6 55 120)">
+                  <rect x="34" y="104" width="42" height="32" rx="3" fill="#c9a06a" stroke="#8a6428" stroke-width="2.5" />
+                  <line x1="41" y1="104" x2="41" y2="136" stroke="#8a6428" stroke-width="2" />
+                  <line x1="48" y1="114" x2="70" y2="114" stroke="#fffdf8" stroke-width="3" />
+                  <line x1="48" y1="122" x2="64" y2="122" stroke="#fffdf8" stroke-width="3" />
+                </g>
+              </svg>
+              <span id="s-stateless-notebook-flag-2" class="s17-p-flag"></span>
             </div>
             <div id="s-stateless-notebook-person-3" class="s17-person s17-person--3">
-              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
-              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-3" class="s17-p-flag"></span>
+              <svg viewBox="0 0 110 190">
+                <rect x="36" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="59" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="33" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <rect x="56" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <path d="M 20 156 L 22 94 Q 26 62 55 58 Q 84 62 88 94 L 90 156 Z" fill="#e2d2b8" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 47 60 L 55 78 L 63 60" fill="#fffdf8" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="55" cy="30" r="21" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 35 24 Q 38 7 55 6 Q 72 7 75 24 Q 66 16 55 15 Q 44 16 35 24 Z" fill="#514b40" />
+                <circle cx="47" cy="32" r="2.2" fill="#16140f" />
+                <circle cx="63" cy="32" r="2.2" fill="#16140f" />
+                <path d="M 50 40 Q 55 44 60 40" stroke="#514b40" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M 24 88 Q 16 112 30 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 86 88 Q 94 112 80 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <g transform="rotate(-6 55 120)">
+                  <rect x="34" y="104" width="42" height="32" rx="3" fill="#c9a06a" stroke="#8a6428" stroke-width="2.5" />
+                  <line x1="41" y1="104" x2="41" y2="136" stroke="#8a6428" stroke-width="2" />
+                  <line x1="48" y1="114" x2="70" y2="114" stroke="#fffdf8" stroke-width="3" />
+                  <line x1="48" y1="122" x2="64" y2="122" stroke="#fffdf8" stroke-width="3" />
+                </g>
+              </svg>
+              <span id="s-stateless-notebook-flag-3" class="s17-p-flag"></span>
             </div>
             <div id="s-stateless-notebook-person-4" class="s17-person s17-person--4">
-              <span class="s17-p-head"></span><span class="s17-p-body"></span><span class="s17-p-arm"></span>
-              <span class="s17-p-book"></span><span id="s-stateless-notebook-flag-4" class="s17-p-flag"></span>
+              <svg viewBox="0 0 110 190">
+                <rect x="36" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="59" y="150" width="15" height="34" rx="4" fill="#e4d5bd" stroke="#514b40" stroke-width="2.5" />
+                <rect x="33" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <rect x="56" y="180" width="22" height="9" rx="4" fill="#514b40" />
+                <path d="M 20 156 L 22 94 Q 26 62 55 58 Q 84 62 88 94 L 90 156 Z" fill="#efe3ce" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 47 60 L 55 78 L 63 60" fill="#fffdf8" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="55" cy="30" r="21" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 35 24 Q 38 7 55 6 Q 72 7 75 24 Q 66 16 55 15 Q 44 16 35 24 Z" fill="#514b40" />
+                <circle cx="47" cy="32" r="2.2" fill="#16140f" />
+                <circle cx="63" cy="32" r="2.2" fill="#16140f" />
+                <path d="M 50 40 Q 55 44 60 40" stroke="#514b40" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M 24 88 Q 16 112 30 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 86 88 Q 94 112 80 128" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <g transform="rotate(-6 55 120)">
+                  <rect x="34" y="104" width="42" height="32" rx="3" fill="#c9a06a" stroke="#8a6428" stroke-width="2.5" />
+                  <line x1="41" y1="104" x2="41" y2="136" stroke="#8a6428" stroke-width="2" />
+                  <line x1="48" y1="114" x2="70" y2="114" stroke="#fffdf8" stroke-width="3" />
+                  <line x1="48" y1="122" x2="64" y2="122" stroke="#fffdf8" stroke-width="3" />
+                </g>
+              </svg>
+              <span id="s-stateless-notebook-flag-4" class="s17-p-flag"></span>
             </div>
-          </div>
-
-          <div id="s-stateless-notebook-expert" class="s17-expertwrap">
-            <span class="s17-expert-head"></span>
-            <span class="s17-expert-body"></span>
-          </div>
-          <div id="s-stateless-notebook-expertfront" class="s17-expertfront">
-            <span class="s17-expert-arm"></span>
-            <span class="s17-expert-hand"></span>
           </div>
 
           <div class="s17-desk"></div>
 
-          <div id="s-stateless-notebook-passbook" class="s17-passbook"></div>
+          <div id="s-stateless-notebook-expert" class="s17-expertwrap">
+            <div class="s17-expert">
+              <svg viewBox="0 0 260 226">
+                <path d="M 20 250 L 25 178 Q 34 140 82 130 L 182 130 Q 230 140 239 178 L 244 250 Z" fill="#e4d5bd" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+                <path d="M 118 108 L 118 138 L 146 138 L 146 108 Z" fill="#f0debf" stroke="#514b40" stroke-width="2.5" />
+                <circle cx="132" cy="78" r="47" fill="#f2e2c9" stroke="#514b40" stroke-width="3" />
+                <circle cx="85" cy="80" r="8" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <circle cx="179" cy="80" r="8" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+                <path d="M 87 66 Q 90 26 132 24 Q 174 26 177 66 Q 160 50 132 48 Q 104 50 87 66 Z" fill="#514b40" />
+                <circle cx="112" cy="82" r="13" class="s17-expert-glasses" />
+                <circle cx="152" cy="82" r="13" class="s17-expert-glasses" />
+                <path d="M 125 82 L 139 82" stroke="#514b40" stroke-width="3" />
+                <path d="M 99 82 L 85 80 M 165 82 L 179 80" stroke="#514b40" stroke-width="2.5" />
+                <circle cx="112" cy="82" r="3.2" fill="#16140f" />
+                <circle cx="152" cy="82" r="3.2" fill="#16140f" />
+                <path d="M 100 63 Q 111 58 122 63 M 142 63 Q 153 58 164 63" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 132 86 L 132 96 Q 132 100 127 100" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 120 108 Q 132 116 144 108" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                <path d="M 98 132 L 132 168 L 166 132" fill="#fffdf8" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M 120 132 L 132 150 L 144 132" fill="#f0e8da" stroke="#514b40" stroke-width="2" />
+                <path d="M 100 182 L 164 182" stroke="#514b40" stroke-width="2" opacity="0.32" />
+              </svg>
+            </div>
+          </div>
+
+          <div id="s-stateless-notebook-passbook" class="s17-passbook">
+            <span id="s-stateless-notebook-passpage" class="s17-passbook-page"></span>
+          </div>
 
           <div class="s17-shelf">
             <span class="s17-shelf-book" style="left: 66px; width: 26px; height: 54px"></span>
@@ -1659,63 +2095,117 @@
           <div id="s-stateless-notebook-sessiontag" class="s17-sessiontag">一本笔记本 <b>=</b> 一次会话</div>
         </div>
 
-        <!-- 拍3：镜头推进笔记本内部：系统提示 / 对话 / 工具便签 / 最后一页 -->
+        <!-- 拍3：镜头推进笔记本内部：一页一页翻。第 1 页系统提示，第 2 页聊过的内容 -->
         <div id="s-stateless-notebook-book" class="s17-layer">
           <div id="s-stateless-notebook-bookinner" class="s17-bookinner">
-            <div class="s17-book-cover"></div>
-
-            <div id="s-stateless-notebook-pg1" class="s17-page">
-              <p class="s17-pid">第 1 页 · Harness 写</p>
-              <h2 class="s17-ptitle">系统提示词</h2>
-              <div id="s-stateless-notebook-sop" class="s17-sop">
-                <p class="s17-sop-row">
-                  <span class="s17-sop-k">你是谁</span>
-                  <span class="s17-sop-v">替你干活的 Coding Agent</span>
-                  <span id="s-stateless-notebook-u0" class="s17-underline"></span>
-                </p>
-                <p class="s17-sop-row">
-                  <span class="s17-sop-k">能做什么</span>
-                  <span class="s17-sop-v">读文件、跑命令、改代码</span>
-                  <span id="s-stateless-notebook-u1" class="s17-underline"></span>
-                </p>
-                <p class="s17-sop-row">
-                  <span class="s17-sop-k">不能做什么</span>
-                  <span class="s17-sop-v">替你确认高风险操作</span>
-                  <span id="s-stateless-notebook-u2" class="s17-underline"></span>
-                </p>
-              </div>
-              <span id="s-stateless-notebook-stamp" class="s17-stamp">系统</span>
+            <div class="s17-nb-stack"></div>
+            <div class="s17-nb-paper"></div>
+            <div class="s17-nb-binding" aria-hidden="true">
+              <i class="s17-nb-ring" style="top: 6px"></i>
+              <i class="s17-nb-ring" style="top: 43px"></i>
+              <i class="s17-nb-ring" style="top: 80px"></i>
+              <i class="s17-nb-ring" style="top: 117px"></i>
+              <i class="s17-nb-ring" style="top: 154px"></i>
+              <i class="s17-nb-ring" style="top: 191px"></i>
+              <i class="s17-nb-ring" style="top: 228px"></i>
+              <i class="s17-nb-ring" style="top: 265px"></i>
+              <i class="s17-nb-ring" style="top: 302px"></i>
+              <i class="s17-nb-ring" style="top: 339px"></i>
+              <i class="s17-nb-ring" style="top: 376px"></i>
+              <i class="s17-nb-ring" style="top: 413px"></i>
+              <i class="s17-nb-ring" style="top: 450px"></i>
+              <i class="s17-nb-ring" style="top: 487px"></i>
             </div>
 
-            <div id="s-stateless-notebook-pg2" class="s17-page">
-              <p class="s17-pid">第 2 页 · 对话</p>
-              <h2 class="s17-ptitle">你们聊过的每一句</h2>
-              <div class="s17-chat">
-                <p class="s17-msg s17-msg--me">你：这个报错怎么修？<span id="s-stateless-notebook-u3" class="s17-underline"></span></p>
-                <p class="s17-msg s17-msg--ai">专家：我先看错误日志。<span id="s-stateless-notebook-u4" class="s17-underline"></span></p>
-                <p class="s17-msg s17-msg--me">你：好，改小一点。<span id="s-stateless-notebook-u5" class="s17-underline"></span></p>
+            <div id="s-stateless-notebook-pages" class="s17-nb-pages">
+              <!-- 最后一页：第 20 页（最底下一张） -->
+              <div id="s-stateless-notebook-pg3" class="s17-sheet">
+                <span class="s17-sheet-shade"></span>
+                <p class="s17-page-no">第 20 页 · 最后一页</p>
+                <h2 class="s17-page-title">这次的问题</h2>
+                <div class="s17-lastq">
+                  <p class="s17-lastq-v">把登录页的错误提示改清楚，<br />别动样式文件。<span id="s-stateless-notebook-u6" class="s17-underline"></span></p>
+                </div>
+                <div id="s-stateless-notebook-answer" class="s17-answer">
+                  <p class="s17-answer-k">这一页的答案</p>
+                  <p class="s17-ansline">先改 LoginForm 的提示文案</p>
+                  <p class="s17-ansline">样式文件不动</p>
+                  <p class="s17-ansline">补一条回归测试</p>
+                </div>
               </div>
-              <div id="s-stateless-notebook-sticky" class="s17-sticky">
-                <p class="s17-sticky-k">工具结果</p>
-                <p class="s17-sticky-v">log.txt 已读完<br />定位到 3 条线索</p>
+
+              <!-- 第 2 页：你们聊过的每一句 -->
+              <div id="s-stateless-notebook-pg2" class="s17-sheet">
+                <span class="s17-sheet-shade"></span>
+                <p class="s17-page-no">第 2 页 · 对话</p>
+                <h2 class="s17-page-title">你们聊过的每一句</h2>
+                <p class="s17-page-sub">中间还夹着工具返回的结果</p>
+                <div class="s17-chat">
+                  <p class="s17-msg s17-msg--me">你：这个报错怎么修？<span id="s-stateless-notebook-u3" class="s17-underline"></span></p>
+                  <p class="s17-msg s17-msg--ai">专家：我先看错误日志。<span id="s-stateless-notebook-u4" class="s17-underline"></span></p>
+                  <p class="s17-msg s17-msg--me">你：好，改小一点。<span id="s-stateless-notebook-u5" class="s17-underline"></span></p>
+                </div>
+                <div id="s-stateless-notebook-sticky" class="s17-sticky">
+                  <p class="s17-sticky-k">工具结果</p>
+                  <p class="s17-sticky-v">log.txt 已读完<br />定位到 3 条线索</p>
+                </div>
               </div>
+
+              <!-- 第 1 页：系统提示词（最上面一张） -->
+              <div id="s-stateless-notebook-pg1" class="s17-sheet">
+                <span class="s17-sheet-shade"></span>
+                <p class="s17-page-no">第 1 页 · Harness 写</p>
+                <h2 class="s17-page-title">系统提示词</h2>
+                <p class="s17-page-sub">你是谁、能做什么、不能做什么</p>
+                <div id="s-stateless-notebook-sop" class="s17-sop">
+                  <p class="s17-sop-row">
+                    <span class="s17-sop-k">你是谁</span>
+                    <span class="s17-sop-v">替你干活的 Coding Agent</span>
+                    <span id="s-stateless-notebook-u0" class="s17-underline" style="width: 340px"></span>
+                  </p>
+                  <p class="s17-sop-row">
+                    <span class="s17-sop-k">能做什么</span>
+                    <span class="s17-sop-v">读文件、跑命令、改代码</span>
+                    <span id="s-stateless-notebook-u1" class="s17-underline" style="width: 320px"></span>
+                  </p>
+                  <p class="s17-sop-row">
+                    <span class="s17-sop-k">不能做什么</span>
+                    <span class="s17-sop-v">替你确认高风险操作</span>
+                    <span id="s-stateless-notebook-u2" class="s17-underline" style="width: 280px"></span>
+                  </p>
+                </div>
+                <span id="s-stateless-notebook-stamp" class="s17-stamp">系统</span>
+              </div>
+
+              <!-- 快速翻过的空白页：只负责翻页的动势 -->
+              <div id="s-stateless-notebook-ghost1" class="s17-sheet s17-sheet--ghost"><span class="s17-sheet-shade" style="opacity: 0.5"></span></div>
+              <div id="s-stateless-notebook-ghost2" class="s17-sheet s17-sheet--ghost"><span class="s17-sheet-shade" style="opacity: 0.5"></span></div>
+
+              <!-- 合上本子时压下来的封底 -->
+              <div id="s-stateless-notebook-close" class="s17-sheet"><span class="s17-close-label">会话笔记本</span></div>
             </div>
 
-            <div id="s-stateless-notebook-pg3" class="s17-page">
-              <p class="s17-pid">第 3 页 · 最后一页</p>
-              <h2 class="s17-ptitle">这次的问题</h2>
-              <div class="s17-lastq">
-                <p class="s17-lastq-v">把登录页的错误提示改清楚，<br />别动样式文件。<span id="s-stateless-notebook-u6" class="s17-underline"></span></p>
-              </div>
-              <div id="s-stateless-notebook-answer" class="s17-answer">
-                <p class="s17-answer-k">下一页 · 答案</p>
-                <p class="s17-ansline">先改 LoginForm 的提示文案</p>
-                <p class="s17-ansline">样式文件不动</p>
-                <p class="s17-ansline">补一条回归测试</p>
-              </div>
+            <div class="s17-pager">
+              <span id="s-stateless-notebook-pager-a">第 1 页 <b>/ 共 20 页</b></span>
+              <span id="s-stateless-notebook-pager-b" class="s17-pager-label">第 2 页 <b>/ 共 20 页</b></span>
+              <span id="s-stateless-notebook-pager-c" class="s17-pager-label">第 20 页 <b>/ 共 20 页</b></span>
             </div>
 
-            <div class="s17-page-peek"></div>
+            <div id="s-stateless-notebook-reader" class="s17-reader" aria-hidden="true">
+              <svg viewBox="0 0 130 130">
+                <path d="M 8 130 Q 12 96 42 88 L 88 88 Q 118 96 122 130 Z" fill="#e4d5bd" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+                <path d="M 52 92 L 65 108 L 78 92" fill="#fffdf8" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+                <circle cx="65" cy="64" r="42" fill="#f2e2c9" stroke="#514b40" stroke-width="3" />
+                <path d="M 27 52 Q 30 22 65 20 Q 100 22 103 52 Q 88 40 65 38 Q 42 40 27 52 Z" fill="#514b40" />
+                <circle cx="51" cy="68" r="11" class="s17-expert-glasses" />
+                <circle cx="79" cy="68" r="11" class="s17-expert-glasses" />
+                <path d="M 62 68 L 68 68" stroke="#514b40" stroke-width="2.5" />
+                <circle cx="51" cy="68" r="2.6" fill="#16140f" />
+                <circle cx="79" cy="68" r="2.6" fill="#16140f" />
+                <path d="M 56 88 Q 65 94 74 88" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+              </svg>
+              <p class="s17-reader-cap">专家在读</p>
+            </div>
           </div>
 
           <div id="s-stateless-notebook-next" class="s17-nextbook">
@@ -1872,19 +2362,27 @@
     // S17 · 每一拍都钉在对应句子的 N.cues[i].t 上；一次只推一个视觉焦点。
     const C = N.cues;
 
-    // 拍1：三个「它还认得我」的小窗口（0-20s）
+    // 拍1：一个真实对话窗 + 两张现象小卡（0-20s）
     tl.fromTo("#s-stateless-notebook-head", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[0].t + 0.2);
     tl.fromTo("#s-stateless-notebook-win-0", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[0].t + 0.4);
+    // 换模型：点开模型下拉框
+    tl.fromTo("#s-stateless-notebook-menu", { opacity: 0, y: -10, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power3.out" }, C[0].t + 1.0);
+    // 高亮从 Claude 移到 GPT-5，勾选跟着走
+    tl.fromTo("#s-stateless-notebook-hl", { y: 0 }, { y: 51, duration: 0.45, ease: "power2.inOut", immediateRender: false }, C[0].t + 2.4);
+    tl.fromTo("#s-stateless-notebook-check-a", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, C[0].t + 2.5);
+    tl.fromTo("#s-stateless-notebook-check-b", { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, C[0].t + 2.6);
+    // 选中后下拉收起，窗口右侧的模型名换成 GPT-5
+    tl.fromTo("#s-stateless-notebook-menu", { opacity: 1 }, { opacity: 0, y: -8, duration: 0.35, ease: "power2.in", immediateRender: false }, C[0].t + 4.4);
+    tl.fromTo("#s-stateless-notebook-model-a", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, C[0].t + 4.5);
+    tl.fromTo("#s-stateless-notebook-model-b", { opacity: 0 }, { opacity: 1, duration: 0.35, immediateRender: false }, C[0].t + 4.55);
+    // 记录还在：气泡和角标不跟着模型走
+    tl.fromTo("#s-stateless-notebook-badge-0", { scale: 0.92 }, { scale: 1, duration: 0.45, ease: "back.out(1.8)", immediateRender: false }, C[0].t + 5.0);
+
     tl.fromTo("#s-stateless-notebook-win-1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[1].t + 0.15);
     tl.fromTo("#s-stateless-notebook-win-2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[1].t + 0.55);
-    tl.fromTo(
-      [".s17-win-badge"],
-      { scale: 0.94 },
-      { scale: 1, duration: 0.4, ease: "power2.out", stagger: 0.12 },
-      C[1].t + 1.1
-    );
+    tl.fromTo(".s17-chat-badge, .s17-sidecard-badge", { scale: 0.94 }, { scale: 1, duration: 0.4, ease: "power2.out", stagger: 0.12 }, C[1].t + 1.1);
 
-    // 旁白说「API 默认不记得你」：模型的无状态被标出来，三个窗口退成背景
+    // 旁白说「API 默认不记得你」：模型的无状态被标出来，对话窗和卡片退成背景
     tl.fromTo("#s-stateless-notebook-stateless", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[2].t + 0.25);
     tl.fromTo(
       ["#s-stateless-notebook-win-0", "#s-stateless-notebook-win-1", "#s-stateless-notebook-win-2"],
@@ -1893,7 +2391,7 @@
       C[2].t + 0.25
     );
 
-    // 「那这些记忆，到底存在哪？」：三个窗口先退场，问题卡再进来，避免同位置文字同时可见
+    // 「那这些记忆，到底存在哪？」：窗和卡先退场，问题卡再进来，避免同位置文字同时可见
     tl.fromTo(
       ["#s-stateless-notebook-win-0", "#s-stateless-notebook-win-1", "#s-stateless-notebook-win-2"],
       { opacity: 0.4 },
@@ -1912,19 +2410,29 @@
     tl.fromTo("#s-stateless-notebook-glow", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, C[5].t + 0.3);
     tl.fromTo("#s-stateless-notebook-hatchwrap", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, C[5].t + 1.9);
 
-    // 「他不认人，只认笔记本」：专家剪影出现，一本笔记从传递窗递到桌上
-    tl.fromTo(
-      ["#s-stateless-notebook-expert", "#s-stateless-notebook-expertfront"],
-      { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.7, ease: "power2.out", stagger: 0.06 },
-      C[6].t + 0.15
-    );
+    // 「他不认人，只认笔记本」：专家出现，一本笔记从传递窗递到桌上
+    tl.fromTo("#s-stateless-notebook-expert", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, C[6].t + 0.15);
     tl.fromTo(
       "#s-stateless-notebook-passbook",
       { opacity: 0, x: -474, y: -16, rotation: -9 },
       { opacity: 1, x: 0, y: 0, rotation: -2, duration: 1.15, ease: "power2.inOut" },
       C[6].t + 0.9
     );
+    // 专家翻开本子：一页一页看着翻
+    [0.2, 1.1, 2.0].forEach((off) => {
+      tl.fromTo(
+        "#s-stateless-notebook-passpage",
+        { opacity: 0.92, scaleX: 1 },
+        { scaleX: 0, duration: 0.42, ease: "power2.inOut", immediateRender: false },
+        C[7].t + off
+      );
+      tl.fromTo(
+        "#s-stateless-notebook-passpage",
+        { opacity: 0.92, scaleX: 0 },
+        { opacity: 0, duration: 0.12, immediateRender: false },
+        C[7].t + off + 0.42
+      );
+    });
 
     // 「门外排着成千上万的人」：队伍从门外排进来
     const queueIn = [
@@ -1959,33 +2467,52 @@
       { opacity: 1, scale: 1, rotation: -8, duration: 0.45, ease: "back.out(2)" },
       C[9].t + 2.6
     );
+    // 第一页：你是谁、能做什么、不能做什么，逐条划线
+    ["#s-stateless-notebook-u0", "#s-stateless-notebook-u1", "#s-stateless-notebook-u2"].forEach((sel, i) => {
+      tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, C[9].t + 1.3 + i * 1.4);
+    });
 
-    // 「后面是你们聊过的每一句话，中间还夹着工具返回的结果」
-    tl.fromTo(".s17-chat .s17-msg", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.35 }, C[10].t + 0.2);
+    // 「后面是你们聊过的每一句话」：翻到第 2 页
+    tl.fromTo("#s-stateless-notebook-pg1 .s17-sheet-shade", { opacity: 0 }, { opacity: 0.5, duration: 0.3, ease: "power1.in", immediateRender: false }, C[10].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-pg1", { scaleX: 1 }, { scaleX: 0, duration: 0.62, ease: "power2.inOut", immediateRender: false }, C[10].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-pager-a", { opacity: 1 }, { opacity: 0, duration: 0.2, immediateRender: false }, C[10].t + 0.62);
+    tl.fromTo("#s-stateless-notebook-pager-b", { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: false }, C[10].t + 0.66);
+    tl.fromTo(".s17-chat .s17-msg", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.35 }, C[10].t + 0.55);
     tl.fromTo("#s-stateless-notebook-sticky", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[10].t + 2.2);
 
-    // 「从第一页开始读，一直读到最后一页」：7 条下划线按顺序扫过
-    const reads = [
-      "#s-stateless-notebook-u0",
-      "#s-stateless-notebook-u1",
-      "#s-stateless-notebook-u2",
-      "#s-stateless-notebook-u3",
-      "#s-stateless-notebook-u4",
-      "#s-stateless-notebook-u5",
-      "#s-stateless-notebook-u6",
-    ];
-    reads.forEach((sel, i) => {
-      tl.fromTo(sel, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power2.out" }, C[11].t + 0.15 + i * 0.72);
+    // 「从第一页开始读，一直读到最后一页」：专家探过来，一页一页飞快翻过去
+    tl.fromTo("#s-stateless-notebook-reader", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[11].t + 0.15);
+    [0.55, 1.15].forEach((off, i) => {
+      tl.fromTo(
+        `#s-stateless-notebook-ghost${i + 1}`,
+        { opacity: 1, scaleX: 1 },
+        { scaleX: 0, duration: 0.36, ease: "power2.in", immediateRender: false },
+        C[11].t + off
+      );
+      tl.fromTo(
+        `#s-stateless-notebook-ghost${i + 1}`,
+        { opacity: 1 },
+        { opacity: 0, duration: 0.12, immediateRender: false },
+        C[11].t + off + 0.36
+      );
     });
+    // 翻到最后：第 20 页
+    tl.fromTo("#s-stateless-notebook-pg2 .s17-sheet-shade", { opacity: 0 }, { opacity: 0.5, duration: 0.3, immediateRender: false }, C[11].t + 2.15);
+    tl.fromTo("#s-stateless-notebook-pg2", { scaleX: 1 }, { scaleX: 0, duration: 0.55, ease: "power2.inOut", immediateRender: false }, C[11].t + 2.15);
+    tl.fromTo("#s-stateless-notebook-pager-b", { opacity: 1 }, { opacity: 0, duration: 0.2, immediateRender: false }, C[11].t + 2.6);
+    tl.fromTo("#s-stateless-notebook-pager-c", { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: false }, C[11].t + 2.64);
+    tl.fromTo("#s-stateless-notebook-u6", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, C[11].t + 3.4);
 
     // 「在下一页写下答案，合上，递出去」
     tl.fromTo("#s-stateless-notebook-answer .s17-answer-k", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, C[12].t + 0.1);
     tl.fromTo(".s17-ansline", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.24 }, C[12].t + 0.3);
+    // 合上：封底从左往右盖下来，再把本子递出画面
+    tl.fromTo("#s-stateless-notebook-close", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, C[12].t + 1.95);
     tl.fromTo(
       "#s-stateless-notebook-bookinner",
       { opacity: 1, x: 0 },
       { opacity: 0, x: 180, duration: 0.85, ease: "power2.in", immediateRender: false },
-      C[12].t + 2.1
+      C[12].t + 2.55
     );
 
     // 「下一个本子进来，他又是从头开始」

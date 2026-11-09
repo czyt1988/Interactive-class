@@ -17,60 +17,37 @@
       inset: 0;
     }
 
+    /* 合着的厚书：斜等轴测 3D（顶面书皮 + 正面页块 + 右侧页块），逐页变厚。 */
+    .s18-book-svg {
+      position: absolute;
+      left: 40px;
+      top: 100px;
+      width: 620px;
+      height: 220px;
+      overflow: visible;
+    }
+
     .s18-book-label {
       position: absolute;
       left: 70px;
-      top: 112px;
+      top: 34px;
       font-family: var(--font-mono);
-      font-size: 24px;
-      letter-spacing: 0.1em;
+      font-size: 22px;
+      letter-spacing: 0.08em;
       color: #3a352d;
-    }
-
-    .s18-book-bottom {
-      position: absolute;
-      left: 70px;
-      top: 300px;
-      width: 300px;
-      height: 18px;
-      border: 2px solid #8a6428;
-      border-radius: 4px;
-      background: #c9a06a;
-    }
-
-    .s18-book-top {
-      position: absolute;
-      left: 70px;
-      top: 282px;
-      width: 300px;
-      height: 18px;
-      border: 2px solid #8a6428;
-      border-radius: 4px 4px 2px 2px;
-      background: #c9a06a;
-      z-index: 3;
-    }
-
-    .s18-sheet {
-      position: absolute;
-      left: 76px;
-      width: 288px;
-      height: 14px;
-      border-bottom: 1px solid #cbb27a;
-      background: #fffdf8;
-      z-index: 2;
     }
 
     .s18-reread {
       position: absolute;
-      left: 392px;
-      top: 168px;
-      width: 214px;
-      padding: 10px 16px;
+      left: 396px;
+      top: 24px;
+      width: 188px;
+      padding: 8px 14px;
       border: 1px solid var(--line-strong);
       border-radius: 12px;
       background: var(--panel);
-      font-size: 24px;
-      line-height: 1.4;
+      font-size: 22px;
+      line-height: 1.35;
       color: var(--ink);
       box-shadow: var(--shadow);
     }
@@ -80,27 +57,6 @@
       color: var(--accent-text);
       font-weight: 600;
       letter-spacing: 0.02em;
-    }
-
-    .s18-readwrap {
-      position: absolute;
-      left: 74px;
-      top: 156px;
-      width: 292px;
-      height: 150px;
-      overflow: hidden;
-      z-index: 4;
-    }
-
-    .s18-readbar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 34px;
-      border-top: 3px solid var(--lamp);
-      background: rgba(232, 178, 58, 0.22);
-      opacity: 0;
     }
 
     .s18-gauge-label {
@@ -172,7 +128,7 @@
 
     .s18-chart-label {
       position: absolute;
-      left: 620px;
+      left: 700px;
       top: 12px;
       font-family: var(--font-mono);
       font-size: 24px;
@@ -257,44 +213,39 @@
       color: var(--accent-text);
     }
 
+    /* 新本子：同一套斜等轴测画法，薄、干净，书皮侧面挂一枚黄色书签。 */
     .s18-newbook {
       position: absolute;
-      left: 120px;
-      top: 66px;
-      width: 260px;
-      height: 158px;
-      border: 3px solid #8a6428;
-      border-radius: 5px 10px 10px 5px;
-      background: #c9a06a;
-      box-shadow: var(--shadow);
+      inset: 0;
       z-index: 2;
     }
 
-    .s18-newbook::before {
-      content: "";
+    .s18-newbook-fig {
       position: absolute;
-      left: 16px;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: #8a6428;
+      left: 110px;
+      top: 100px;
+      width: 440px;
+      height: 220px;
+      overflow: visible;
     }
 
     .s18-newbook-label {
       position: absolute;
-      left: 40px;
-      top: 44px;
-      font-size: 30px;
-      color: #3a2a10;
+      left: 540px;
+      top: 234px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--ink);
     }
 
     .s18-newbook-tab {
       position: absolute;
-      left: 40px;
-      top: 92px;
-      padding: 6px 14px;
+      left: 540px;
+      top: 290px;
+      padding: 8px 16px;
       border: 1px solid #8a6428;
-      border-radius: 4px;
+      border-radius: 6px;
       background: #fffdf8;
       font-family: var(--font-mono);
       font-size: 22px;
@@ -385,50 +336,11 @@
 
     .s18-stuffedwrap {
       position: absolute;
-      left: 30px;
-      top: 6px;
-      width: 230px;
-      height: 262px;
-    }
-
-    .s18-stuffed {
-      position: absolute;
-      left: 0;
-      top: 46px;
-      width: 210px;
-      height: 210px;
-      border: 3px solid #8a6428;
-      border-radius: 5px 10px 10px 5px;
-      background: #c9a06a;
-    }
-
-    .s18-stuffed::before {
-      content: "";
-      position: absolute;
-      left: 14px;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: #8a6428;
-    }
-
-    .s18-stuffed-pages {
-      position: absolute;
-      left: 40px;
-      top: 12px;
-      width: 150px;
-      height: 46px;
-      border: 2px solid var(--line-strong);
-      border-radius: 3px;
-      background: #fffdf8;
-      transform: rotate(-6deg);
-      box-shadow: 0 8px 14px -12px rgba(22, 20, 15, 0.6);
-    }
-
-    .s18-stuffed-pages--b {
-      left: 64px;
-      top: 24px;
-      transform: rotate(7deg);
+      left: 22px;
+      top: 8px;
+      width: 240px;
+      height: 284px;
+      overflow: visible;
     }
 
     .s18-tease-q {
@@ -463,7 +375,9 @@
 
     /* 快照会直接 seek 到中段：晚出现的元素在 CSS 里先隐藏。 */
     .s18-book,
-    .s18-sheet,
+    .s18-leaf,
+    #s18-readmark,
+    #s18-ribbon,
     .s18-chart,
     .s18-reread,
     .s18-gauge-label,
@@ -504,19 +418,161 @@
         <div id="s18-diagrams" class="s18-layer s18-diagrams">
           <div id="s18-book" class="s18-book">
             <p class="s18-book-label">一本会话 · 聊到第 20 轮</p>
-            <div class="s18-book-bottom"></div>
-            <div class="s18-sheet" style="top: 286px"></div>
-            <div class="s18-sheet" style="top: 272px"></div>
-            <div class="s18-sheet" style="top: 258px"></div>
-            <div class="s18-sheet" style="top: 244px"></div>
-            <div class="s18-sheet" style="top: 230px"></div>
-            <div class="s18-sheet" style="top: 216px"></div>
-            <div class="s18-sheet" style="top: 202px"></div>
-            <div class="s18-sheet" style="top: 188px"></div>
-            <div class="s18-sheet" style="top: 174px"></div>
-            <div class="s18-sheet" style="top: 160px"></div>
-            <div id="s18-book-top" class="s18-book-top"></div>
-            <div class="s18-readwrap"><div id="s18-readbar" class="s18-readbar"></div></div>
+            <!-- S18-BOOK-SVG:BEGIN -->
+            <svg id="s18-book-svg" class="s18-book-svg" viewBox="0 0 620 220" width="620" height="220" aria-hidden="true">
+              <defs>
+                <filter id="s18-book-shadow" x="-25%" y="-60%" width="150%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <g filter="url(#s18-book-shadow)">
+                <path d="M 36 211 L 456 211 L 573 149 L 153 149 Z" fill="#332816" opacity="0.2"/>
+              </g>
+              <!-- 下封皮 -->
+              <path d="M 36 204 L 456 204 L 456 196 L 36 196 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 456 204 L 573 142 L 573 134 L 456 196 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 36 196 L 456 196 L 573 134 L 153 134 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+              <!-- 页块：20 个页片 -->
+                          <g class="s18-leaf">
+                          <path d="M 47.3 193.19 L 455.3 193.19 L 455.3 187.59 L 47.3 187.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 193.19 L 561.7 136.81 L 561.7 131.21 L 455.3 187.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="193.79" x2="455.3" y2="193.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="193.79" x2="561.7" y2="137.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 187.59 L 455.3 187.59 L 455.3 181.99 L 47.3 181.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 187.59 L 561.7 131.21 L 561.7 125.61 L 455.3 181.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="188.19" x2="455.3" y2="188.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="188.19" x2="561.7" y2="131.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 181.99 L 455.3 181.99 L 455.3 176.39 L 47.3 176.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 181.99 L 561.7 125.61 L 561.7 120.01 L 455.3 176.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="182.59" x2="455.3" y2="182.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="182.59" x2="561.7" y2="126.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 176.39 L 455.3 176.39 L 455.3 170.79 L 47.3 170.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 176.39 L 561.7 120.01 L 561.7 114.41 L 455.3 170.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="176.99" x2="455.3" y2="176.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="176.99" x2="561.7" y2="120.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 170.79 L 455.3 170.79 L 455.3 165.19 L 47.3 165.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 170.79 L 561.7 114.41 L 561.7 108.81 L 455.3 165.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="171.39" x2="455.3" y2="171.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="171.39" x2="561.7" y2="115.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 165.19 L 455.3 165.19 L 455.3 159.59 L 47.3 159.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 165.19 L 561.7 108.81 L 561.7 103.21 L 455.3 159.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="165.79" x2="455.3" y2="165.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="165.79" x2="561.7" y2="109.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 159.59 L 455.3 159.59 L 455.3 153.99 L 47.3 153.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 159.59 L 561.7 103.21 L 561.7 97.61 L 455.3 153.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="160.19" x2="455.3" y2="160.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="160.19" x2="561.7" y2="103.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 153.99 L 455.3 153.99 L 455.3 148.39 L 47.3 148.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 153.99 L 561.7 97.61 L 561.7 92.01 L 455.3 148.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="154.59" x2="455.3" y2="154.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="154.59" x2="561.7" y2="98.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 148.39 L 455.3 148.39 L 455.3 142.79 L 47.3 142.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 148.39 L 561.7 92.01 L 561.7 86.41 L 455.3 142.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="148.99" x2="455.3" y2="148.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="148.99" x2="561.7" y2="92.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 142.79 L 455.3 142.79 L 455.3 137.19 L 47.3 137.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 142.79 L 561.7 86.41 L 561.7 80.81 L 455.3 137.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="143.39" x2="455.3" y2="143.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="143.39" x2="561.7" y2="87.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 137.19 L 455.3 137.19 L 455.3 131.59 L 47.3 131.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 137.19 L 561.7 80.81 L 561.7 75.21 L 455.3 131.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="137.79" x2="455.3" y2="137.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="137.79" x2="561.7" y2="81.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 131.59 L 455.3 131.59 L 455.3 125.99 L 47.3 125.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 131.59 L 561.7 75.21 L 561.7 69.61 L 455.3 125.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="132.19" x2="455.3" y2="132.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="132.19" x2="561.7" y2="75.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 125.99 L 455.3 125.99 L 455.3 120.39 L 47.3 120.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 125.99 L 561.7 69.61 L 561.7 64.01 L 455.3 120.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="126.59" x2="455.3" y2="126.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="126.59" x2="561.7" y2="70.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 120.39 L 455.3 120.39 L 455.3 114.79 L 47.3 114.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 120.39 L 561.7 64.01 L 561.7 58.41 L 455.3 114.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="120.99" x2="455.3" y2="120.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="120.99" x2="561.7" y2="64.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 114.79 L 455.3 114.79 L 455.3 109.19 L 47.3 109.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 114.79 L 561.7 58.41 L 561.7 52.81 L 455.3 109.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="115.39" x2="455.3" y2="115.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="115.39" x2="561.7" y2="59.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 109.19 L 455.3 109.19 L 455.3 103.59 L 47.3 103.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 109.19 L 561.7 52.81 L 561.7 47.21 L 455.3 103.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="109.79" x2="455.3" y2="109.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="109.79" x2="561.7" y2="53.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 103.59 L 455.3 103.59 L 455.3 97.99 L 47.3 97.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 103.59 L 561.7 47.21 L 561.7 41.61 L 455.3 97.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="104.19" x2="455.3" y2="104.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="104.19" x2="561.7" y2="47.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 97.99 L 455.3 97.99 L 455.3 92.39 L 47.3 92.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 97.99 L 561.7 41.61 L 561.7 36.01 L 455.3 92.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="98.59" x2="455.3" y2="98.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="98.59" x2="561.7" y2="42.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 92.39 L 455.3 92.39 L 455.3 86.79 L 47.3 86.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 92.39 L 561.7 36.01 L 561.7 30.41 L 455.3 86.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="92.99" x2="455.3" y2="92.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="92.99" x2="561.7" y2="36.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s18-leaf">
+                          <path d="M 47.3 86.79 L 455.3 86.79 L 455.3 81.19 L 47.3 81.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 86.79 L 561.7 30.41 L 561.7 24.81 L 455.3 81.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="87.39" x2="455.3" y2="87.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="87.39" x2="561.7" y2="31.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+              <g id="s18-readmark">
+                <path d="M 47.3 193.19 L 455.3 193.19 L 455.3 161.19 L 47.3 161.19 Z" fill="rgba(232, 178, 58, 0.42)"/>
+                <path d="M 455.3 193.19 L 561.7 136.81 L 561.7 104.81 L 455.3 161.19 Z" fill="rgba(232, 178, 58, 0.30)"/>
+                <line x1="47.3" y1="161.19" x2="455.3" y2="161.19" stroke="#e8b23a" stroke-width="3" stroke-linecap="round"/>
+                <line x1="455.3" y1="161.19" x2="561.7" y2="104.81" stroke="#e8b23a" stroke-width="3" stroke-linecap="round"/>
+              </g>
+              <g id="s18-cover">
+                <path d="M 36 196 L 456 196 L 456 186 L 36 186 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 456 196 L 573 134 L 573 124 L 456 186 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 36 186 L 456 186 L 573 124 L 153 124 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M 153 124 L 573 124 L 557.1 132.43 L 137.1 132.43 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="137.1" y1="132.43" x2="557.1" y2="132.43" stroke="#dcb980" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+                <path d="M 81.21 174.76 L 453.21 174.76 L 527.79 135.24 L 155.79 135.24 Z" fill="none" stroke="rgba(122, 84, 34, 0.42)" stroke-width="1.4" stroke-linejoin="round"/>
+                <line x1="37" y1="183.6" x2="455" y2="183.6" stroke="#dcb980" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+                <path d="M 47.3 196 L 455.3 196 L 455.3 199.4 L 47.3 199.4 Z" fill="rgba(60, 45, 25, 0.10)"/>
+                <g id="s18-ribbon">
+                  <path d="M 373.7 199 L 383.7 199 L 383.7 225 L 373.7 225 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.3" stroke-linejoin="round"/>
+                  <line x1="378.7" y1="202" x2="378.7" y2="222" stroke="#8a6428" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+                </g>
+              </g>
+            </svg>
+            <!-- S18-BOOK-SVG:END -->
           </div>
 
           <p id="s18-gauge-label" class="s18-gauge-label">累计 token</p>
@@ -564,6 +620,69 @@
         </div>
 
         <div id="s18-newbook" class="s18-newbook">
+          <div class="s18-newbook-fig">
+            <!-- S18-NEWBOOK-SVG:BEGIN -->
+            <svg id="s18-newbook-svg" class="s18-newbook-svg" viewBox="0 0 440 220" width="440" height="220" aria-hidden="true">
+              <defs>
+                <filter id="s18-newbook-shadow" x="-25%" y="-60%" width="150%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <g filter="url(#s18-newbook-shadow)">
+                <path d="M 40 207 L 320 207 L 403 163 L 123 163 Z" fill="#332816" opacity="0.2"/>
+              </g>
+              <!-- 下封皮 -->
+              <path d="M 40 200 L 320 200 L 320 192 L 40 192 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 320 200 L 403 156 L 403 148 L 320 192 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 40 192 L 320 192 L 403 148 L 123 148 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+              <!-- 页块：8 个页片 -->
+                        <path d="M 51.3 189.19 L 319.3 189.19 L 319.3 181.19 L 51.3 181.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 189.19 L 391.7 150.81 L 391.7 142.81 L 319.3 181.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="189.79" x2="319.3" y2="189.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="189.79" x2="391.7" y2="151.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 181.19 L 319.3 181.19 L 319.3 173.19 L 51.3 173.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 181.19 L 391.7 142.81 L 391.7 134.81 L 319.3 173.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="181.79" x2="319.3" y2="181.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="181.79" x2="391.7" y2="143.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 173.19 L 319.3 173.19 L 319.3 165.19 L 51.3 165.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 173.19 L 391.7 134.81 L 391.7 126.81 L 319.3 165.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="173.79" x2="319.3" y2="173.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="173.79" x2="391.7" y2="135.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 165.19 L 319.3 165.19 L 319.3 157.19 L 51.3 157.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 165.19 L 391.7 126.81 L 391.7 118.81 L 319.3 157.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="165.79" x2="319.3" y2="165.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="165.79" x2="391.7" y2="127.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 157.19 L 319.3 157.19 L 319.3 149.19 L 51.3 149.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 157.19 L 391.7 118.81 L 391.7 110.81 L 319.3 149.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="157.79" x2="319.3" y2="157.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="157.79" x2="391.7" y2="119.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 149.19 L 319.3 149.19 L 319.3 141.19 L 51.3 141.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 149.19 L 391.7 110.81 L 391.7 102.81 L 319.3 141.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="149.79" x2="319.3" y2="149.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="149.79" x2="391.7" y2="111.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 141.19 L 319.3 141.19 L 319.3 133.19 L 51.3 133.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 141.19 L 391.7 102.81 L 391.7 94.81 L 319.3 133.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="141.79" x2="319.3" y2="141.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="141.79" x2="391.7" y2="103.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 51.3 133.19 L 319.3 133.19 L 319.3 125.19 L 51.3 125.19 Z" fill="#fffdf8"/>
+                        <path d="M 319.3 133.19 L 391.7 94.81 L 391.7 86.81 L 319.3 125.19 Z" fill="#f2eadc"/>
+                        <line x1="51.3" y1="133.79" x2="319.3" y2="133.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="319.3" y1="133.79" x2="391.7" y2="95.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+              <g transform="translate(0 -64)">
+                <path d="M 40 192 L 320 192 L 320 182 L 40 182 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 320 192 L 403 148 L 403 138 L 320 182 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 40 182 L 320 182 L 403 138 L 123 138 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M 123 138 L 403 138 L 387.1 146.43 L 107.1 146.43 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="107.1" y1="146.43" x2="387.1" y2="146.43" stroke="#dcb980" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+                <path d="M 85.2 170.76 L 317.2 170.76 L 357.8 149.24 L 125.8 149.24 Z" fill="none" stroke="rgba(122, 84, 34, 0.42)" stroke-width="1.4" stroke-linejoin="round"/>
+                <line x1="41" y1="179.6" x2="319" y2="179.6" stroke="#dcb980" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+                <path d="M 51.3 192 L 319.3 192 L 319.3 195.4 L 51.3 195.4 Z" fill="rgba(60, 45, 25, 0.10)"/>
+                <g>
+                  <path d="M 265.7 195 L 275.7 195 L 275.7 221 L 265.7 221 Z" fill="#e8b23a" stroke="#8a6428" stroke-width="1.3" stroke-linejoin="round"/>
+                  <line x1="270.7" y1="198" x2="270.7" y2="218" stroke="#8a6428" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+                </g>
+              </g>
+            </svg>
+            <!-- S18-NEWBOOK-SVG:END -->
+          </div>
           <span class="s18-newbook-label">新会话</span>
           <span class="s18-newbook-tab">第 1 页 · 这次的任务</span>
         </div>
@@ -601,9 +720,132 @@
         <div id="s18-tease" class="s18-tease">
           <div class="s18-tease-card">
             <div class="s18-stuffedwrap">
-              <div class="s18-stuffed"></div>
-              <span class="s18-stuffed-pages"></span>
-              <span class="s18-stuffed-pages s18-stuffed-pages--b"></span>
+              <!-- S18-STUFFED-SVG:BEGIN -->
+            <svg id="s18-stuffed-svg" class="s18-stuffed-svg" viewBox="0 0 240 284" width="240" height="284" aria-hidden="true">
+              <defs>
+                <filter id="s18-stuffed-shadow" x="-25%" y="-60%" width="150%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <g filter="url(#s18-stuffed-shadow)">
+                <path d="M 30 245 L 150 245 L 230 197 L 110 197 Z" fill="#332816" opacity="0.2"/>
+              </g>
+              <!-- 下封皮 -->
+              <path d="M 30 238 L 150 238 L 150 230 L 30 230 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 150 238 L 230 190 L 230 182 L 150 230 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 30 230 L 150 230 L 230 182 L 110 182 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+              <!-- 页块：24 个页片 -->
+                        <path d="M 41.14 226.91 L 149.14 226.91 L 149.14 221.41 L 41.14 221.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 226.91 L 218.86 185.09 L 218.86 179.59 L 149.14 221.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="227.51" x2="149.14" y2="227.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="227.51" x2="218.86" y2="185.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 221.41 L 149.14 221.41 L 149.14 215.91 L 41.14 215.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 221.41 L 218.86 179.59 L 218.86 174.09 L 149.14 215.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="222.01" x2="149.14" y2="222.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="222.01" x2="218.86" y2="180.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 215.91 L 149.14 215.91 L 149.14 210.41 L 41.14 210.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 215.91 L 218.86 174.09 L 218.86 168.59 L 149.14 210.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="216.51" x2="149.14" y2="216.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="216.51" x2="218.86" y2="174.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 210.41 L 149.14 210.41 L 149.14 204.91 L 41.14 204.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 210.41 L 218.86 168.59 L 218.86 163.09 L 149.14 204.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="211.01" x2="149.14" y2="211.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="211.01" x2="218.86" y2="169.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 204.91 L 149.14 204.91 L 149.14 199.41 L 41.14 199.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 204.91 L 218.86 163.09 L 218.86 157.59 L 149.14 199.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="205.51" x2="149.14" y2="205.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="205.51" x2="218.86" y2="163.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 199.41 L 149.14 199.41 L 149.14 193.91 L 41.14 193.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 199.41 L 218.86 157.59 L 218.86 152.09 L 149.14 193.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="200.01" x2="149.14" y2="200.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="200.01" x2="218.86" y2="158.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 193.91 L 149.14 193.91 L 149.14 188.41 L 41.14 188.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 193.91 L 218.86 152.09 L 218.86 146.59 L 149.14 188.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="194.51" x2="149.14" y2="194.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="194.51" x2="218.86" y2="152.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 188.41 L 149.14 188.41 L 149.14 182.91 L 41.14 182.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 188.41 L 218.86 146.59 L 218.86 141.09 L 149.14 182.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="189.01" x2="149.14" y2="189.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="189.01" x2="218.86" y2="147.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 182.91 L 149.14 182.91 L 149.14 177.41 L 41.14 177.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 182.91 L 218.86 141.09 L 218.86 135.59 L 149.14 177.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="183.51" x2="149.14" y2="183.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="183.51" x2="218.86" y2="141.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 177.41 L 149.14 177.41 L 149.14 171.91 L 41.14 171.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 177.41 L 218.86 135.59 L 218.86 130.09 L 149.14 171.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="178.01" x2="149.14" y2="178.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="178.01" x2="218.86" y2="136.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 171.91 L 149.14 171.91 L 149.14 166.41 L 41.14 166.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 171.91 L 218.86 130.09 L 218.86 124.59 L 149.14 166.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="172.51" x2="149.14" y2="172.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="172.51" x2="218.86" y2="130.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 166.41 L 149.14 166.41 L 149.14 160.91 L 41.14 160.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 166.41 L 218.86 124.59 L 218.86 119.09 L 149.14 160.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="167.01" x2="149.14" y2="167.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="167.01" x2="218.86" y2="125.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 160.91 L 149.14 160.91 L 149.14 155.41 L 41.14 155.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 160.91 L 218.86 119.09 L 218.86 113.59 L 149.14 155.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="161.51" x2="149.14" y2="161.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="161.51" x2="218.86" y2="119.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 155.41 L 149.14 155.41 L 149.14 149.91 L 41.14 149.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 155.41 L 218.86 113.59 L 218.86 108.09 L 149.14 149.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="156.01" x2="149.14" y2="156.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="156.01" x2="218.86" y2="114.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 149.91 L 149.14 149.91 L 149.14 144.41 L 41.14 144.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 149.91 L 218.86 108.09 L 218.86 102.59 L 149.14 144.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="150.51" x2="149.14" y2="150.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="150.51" x2="218.86" y2="108.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 144.41 L 149.14 144.41 L 149.14 138.91 L 41.14 138.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 144.41 L 218.86 102.59 L 218.86 97.09 L 149.14 138.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="145.01" x2="149.14" y2="145.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="145.01" x2="218.86" y2="103.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 138.91 L 149.14 138.91 L 149.14 133.41 L 41.14 133.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 138.91 L 218.86 97.09 L 218.86 91.59 L 149.14 133.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="139.51" x2="149.14" y2="139.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="139.51" x2="218.86" y2="97.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 133.41 L 149.14 133.41 L 149.14 127.91 L 41.14 127.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 133.41 L 218.86 91.59 L 218.86 86.09 L 149.14 127.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="134.01" x2="149.14" y2="134.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="134.01" x2="218.86" y2="92.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 127.91 L 149.14 127.91 L 149.14 122.41 L 41.14 122.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 127.91 L 218.86 86.09 L 218.86 80.59 L 149.14 122.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="128.51" x2="149.14" y2="128.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="128.51" x2="218.86" y2="86.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 122.41 L 149.14 122.41 L 149.14 116.91 L 41.14 116.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 122.41 L 218.86 80.59 L 218.86 75.09 L 149.14 116.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="123.01" x2="149.14" y2="123.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="123.01" x2="218.86" y2="81.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 116.91 L 149.14 116.91 L 149.14 111.41 L 41.14 111.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 116.91 L 218.86 75.09 L 218.86 69.59 L 149.14 111.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="117.51" x2="149.14" y2="117.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="117.51" x2="218.86" y2="75.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 111.41 L 149.14 111.41 L 149.14 105.91 L 41.14 105.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 111.41 L 218.86 69.59 L 218.86 64.09 L 149.14 105.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="112.01" x2="149.14" y2="112.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="112.01" x2="218.86" y2="70.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 105.91 L 149.14 105.91 L 149.14 100.41 L 41.14 100.41 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 105.91 L 218.86 64.09 L 218.86 58.59 L 149.14 100.41 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="106.51" x2="149.14" y2="106.51" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="106.51" x2="218.86" y2="64.69" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                        <path d="M 41.14 100.41 L 149.14 100.41 L 149.14 94.91 L 41.14 94.91 Z" fill="#fffdf8"/>
+                        <path d="M 149.14 100.41 L 218.86 58.59 L 218.86 53.09 L 149.14 94.91 Z" fill="#f2eadc"/>
+                        <line x1="41.14" y1="101.01" x2="149.14" y2="101.01" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                        <line x1="149.14" y1="101.01" x2="218.86" y2="59.19" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+              <g transform="translate(0 -132)">
+                <path d="M 30 230 L 150 230 L 150 220 L 30 220 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 150 230 L 230 182 L 230 172 L 150 220 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 30 220 L 150 220 L 230 172 L 110 172 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M 110 172 L 230 172 L 214.57 181.26 L 94.57 181.26 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="94.57" y1="181.26" x2="214.57" y2="181.26" stroke="#dcb980" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+                <path d="M 74.58 207.65 L 146.58 207.65 L 185.42 184.35 L 113.42 184.35 Z" fill="none" stroke="rgba(122, 84, 34, 0.42)" stroke-width="1.4" stroke-linejoin="round"/>
+                <line x1="31" y1="217.6" x2="149" y2="217.6" stroke="#dcb980" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+                <path d="M 41.14 230 L 149.14 230 L 149.14 233.4 L 41.14 233.4 Z" fill="rgba(60, 45, 25, 0.10)"/>
+              </g>
+              <g>
+                <path d="M 44 241 L 122 241 L 130 259 L 52 259 Z" fill="#fffdf8" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M 96 246 L 182 246 L 185 266 L 99 266 Z" fill="#f2eadc" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M 140 243 L 200 243 L 211 259 L 151 259 Z" fill="#fffdf8" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+              </g>
+            </svg>
+            <!-- S18-STUFFED-SVG:END -->
             </div>
             <p id="s18-tease-q" class="s18-tease-q">任务天生就长，中途没法换本子。<br />本子写满了怎么办？</p>
             <p id="s18-tease-arrow" class="s18-tease-arrow"><b>→</b> 下一屏：上下文压缩</p>
@@ -653,11 +895,29 @@
     // S18 · 每一拍钉在 N.cues[i].t 上。
     const C = N.cues;
 
-    // 「聊到第 20 轮」：本子逐页变厚，累计 token 的柱一根根立起来
+    // 一本书的厚度：20 轮对话 = 20 个页片，书皮跟着页块一页一页往上抬。
+    const LEAF = 20;
+    const LEAF_H = 5.6;
+    const LEAF_T0 = C[0].t + 0.45;
+    const LEAF_GAP = 0.26;
+
+    // 「聊到第 20 轮」：薄本子先出现，再一页一页变厚；累计 token 柱一根根立起来
     tl.fromTo("#s18-chart", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, C[0].t + 0.15);
-    tl.fromTo("#s18-book", { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" }, C[0].t + 0.2);
-    tl.fromTo("#s18-book .s18-sheet", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 1.0 }, C[0].t + 0.8);
-    tl.fromTo("#s18-book-top", { y: 0 }, { y: -140, duration: 10.2, ease: "power1.inOut" }, C[0].t + 0.8);
+    tl.fromTo("#s18-book", { opacity: 0 }, { opacity: 1, duration: 0.55, ease: "power2.out" }, C[0].t + 0.2);
+    tl.fromTo(
+      ".s18-leaf",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.18, ease: "power1.out", stagger: LEAF_GAP },
+      LEAF_T0
+    );
+    for (let i = 0; i < LEAF; i++) {
+      tl.fromTo(
+        "#s18-cover",
+        { y: -i * LEAF_H },
+        { y: -(i + 1) * LEAF_H, duration: 0.22, ease: "power2.out", immediateRender: false },
+        LEAF_T0 + i * LEAF_GAP
+      );
+    }
     tl.fromTo(
       ".s18-bar",
       { opacity: 0, scaleY: 0 },
@@ -668,12 +928,25 @@
     tl.fromTo("#s18-gauge", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[0].t + 1.05);
     tl.fromTo(".s18-gauge-ticks", { opacity: 0 }, { opacity: 1, duration: 0.5 }, C[0].t + 1.1);
     tl.fromTo("#s18-gauge-fill", { scaleX: 0 }, { scaleX: 1, duration: 23.5, ease: "power1.in" }, C[0].t + 1.2);
+    // 书厚到能夹住书签带时，书签带才露出来
+    tl.fromTo("#s18-ribbon", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, C[0].t + 2.6);
 
-    // 「每答一次，专家都要从头读一遍」：本子上反复扫过一条读痕
+    // 「每答一次，专家都要从头读一遍」：黄色读痕从第一页扫到最后一页，扫三遍
     tl.fromTo("#s18-reread", { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[1].t + 0.1);
-    [0.4, 2.2, 4.0].forEach((offset) => {
-      tl.fromTo("#s18-readbar", { opacity: 0.9, y: 0 }, { y: 116, duration: 1.3, ease: "power1.inOut", immediateRender: false }, C[1].t + offset);
-      tl.fromTo("#s18-readbar", { opacity: 0.9 }, { opacity: 0, duration: 0.4, immediateRender: false }, C[1].t + offset + 1.15);
+    [0.2, 1.85, 3.5].forEach((offset) => {
+      tl.fromTo("#s18-readmark", { opacity: 0 }, { opacity: 1, duration: 0.16, immediateRender: false }, C[1].t + offset);
+      tl.fromTo(
+        "#s18-readmark",
+        { y: 0 },
+        { y: -76, duration: 1.05, ease: "power1.inOut", immediateRender: false },
+        C[1].t + offset
+      );
+      tl.fromTo(
+        "#s18-readmark",
+        { opacity: 1 },
+        { opacity: 0, duration: 0.26, immediateRender: false },
+        C[1].t + offset + 0.95
+      );
     });
 
     // 「每一轮都重新买一遍」：光带从第 1 根柱扫到最后，再扫一遍
@@ -687,10 +960,18 @@
     tl.fromTo("#s18-burn", { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[4].t + 0.1);
     tl.fromTo("#s18-gauge-num", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[4].t + 0.35);
 
-    // 「第一个使用习惯：一任务，一会话」：旧本子推到一边，桌上滑进一本干净的新本子
-    tl.fromTo(".s18-book-label", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.out" }, C[5].t + 0.1);
-    tl.fromTo("#s18-diagrams", { opacity: 1 }, { opacity: 0.22, duration: 0.6, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.1);
-    tl.fromTo("#s18-newbook", { opacity: 0, x: 220 }, { opacity: 1, x: 0, duration: 0.85, ease: "power3.out" }, C[5].t + 0.3);
+    // 「第一个使用习惯：一任务，一会话」：旧本子和「从头读」退场，token 图表淡成背景，
+    // 桌上滑进一本干净的新本子
+    tl.fromTo("#s18-book", { opacity: 1 }, { opacity: 0, duration: 0.55, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.1);
+    tl.fromTo("#s18-reread", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.out", immediateRender: false }, C[5].t + 0.05);
+    tl.fromTo("#s18-diagrams", { opacity: 1 }, { opacity: 0.16, duration: 0.7, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.1);
+    tl.fromTo(
+      [".s18-gauge-label", "#s18-gauge", ".s18-gauge-ticks", "#s18-gauge-num", "#s18-smallq", "#s18-burn"],
+      { opacity: 1 },
+      { opacity: 0, duration: 0.45, ease: "power1.out", immediateRender: false },
+      C[5].t + 0.1
+    );
+    tl.fromTo("#s18-newbook", { opacity: 0, x: 200 }, { opacity: 1, x: 0, duration: 0.85, ease: "power3.out" }, C[5].t + 0.3);
     tl.fromTo("#s18-phrase", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, C[5].t + 0.2);
 
     // 五条「什么时候该新开」
@@ -710,7 +991,7 @@
     // 「可有些任务天生就长…本子写满了怎么办？」：先让上方的图表、卡片彻底退场，再上问题卡
     tl.fromTo(".s18-card", { opacity: 0.16 }, { opacity: 0, duration: 0.2, stagger: 0.02, immediateRender: false }, C[11].t + 0.02);
     tl.fromTo("#s18-newbook", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, C[11].t + 0.02);
-    tl.fromTo("#s18-diagrams", { opacity: 0.22 }, { opacity: 0, duration: 0.25, immediateRender: false }, C[11].t + 0.02);
+    tl.fromTo("#s18-diagrams", { opacity: 0.16 }, { opacity: 0, duration: 0.25, immediateRender: false }, C[11].t + 0.02);
     tl.fromTo("#s18-tease", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, C[11].t + 0.3);
     // 页尾留一点小动作，不然后 5 秒完全静止
     tl.fromTo("#s18-tease-arrow", { scale: 1 }, { scale: 1.08, duration: 0.6, ease: "power2.out", immediateRender: false }, C[11].t + 2.4);
