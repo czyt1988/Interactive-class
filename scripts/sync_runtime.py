@@ -1,7 +1,7 @@
 """Copy pinned vendor assets into the runtime and course template.
 
 Sources come from ``tools/node_modules`` (authoring-only, never shipped) and
-``design/``. Outputs land in ``runtime/vendor``, ``courses/_template`` and
+``design/``. Outputs land in ``runtime/vendor``, ``course-template`` and
 ``app/static``. Every copied file is hashed into ``runtime/VERSION.json`` so a
 stale bundle is visible without opening the course.
 
@@ -22,7 +22,8 @@ TOOLS = ROOT / "tools" / "node_modules"
 RUNTIME = ROOT / "runtime"
 DESIGN = ROOT / "design"
 APP_STATIC = ROOT / "app" / "static"
-TEMPLATE_ASSETS = ROOT / "courses" / "_template" / "composition" / "assets"
+TEMPLATE_ROOT = ROOT / "course-template"
+TEMPLATE_ASSETS = TEMPLATE_ROOT / "composition" / "assets"
 COURSE_ROOT = ROOT / "courses"
 
 # Subset covering common Chinese text plus punctuation and latin/digits.
@@ -173,12 +174,17 @@ def sync_vendor() -> dict[str, dict[str, str]]:
 def sync_fonts() -> dict[str, str]:
     source = require(DESIGN / "fonts" / "NotoSansSC-VF.ttf", "见 design/README.md 的字体下载步骤")
     hashes: dict[str, str] = {}
-    for target in (
-        TEMPLATE_ASSETS / "fonts" / "NotoSansSC-VF.woff2",
-        APP_STATIC / "fonts" / "NotoSansSC-VF.woff2",
-    ):
-        subset_font(source, target)
-        hashes[target.relative_to(ROOT).as_posix()] = sha256(target)
+
+    # The template ships visible copy of its own, so its font subset must cover it
+    # exactly like a real course does. It is no longer under COURSE_ROOT, so it
+    # needs this explicit pass.
+    template_font = TEMPLATE_ASSETS / "fonts" / "NotoSansSC-VF.woff2"
+    subset_font(source, template_font, extra_text=course_text(TEMPLATE_ROOT))
+    hashes[template_font.relative_to(ROOT).as_posix()] = sha256(template_font)
+
+    app_font = APP_STATIC / "fonts" / "NotoSansSC-VF.woff2"
+    subset_font(source, app_font)
+    hashes[app_font.relative_to(ROOT).as_posix()] = sha256(app_font)
 
     for course_dir in sorted(COURSE_ROOT.iterdir()) if COURSE_ROOT.is_dir() else []:
         if not course_dir.is_dir() or course_dir.name.startswith((".", "_")):

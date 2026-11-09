@@ -18,7 +18,7 @@
 1. **属性写入顺序**：先写 `range-start` 再写 `range-end`，中间会出现 start > end 的瞬间，播放器会 clamp 并回写。适配层固定先写 `range-end`、再写 `range-start`，并记住上一次的 range，避免重复写属性触发重新加载。
 2. **`window.__timelines` 的初始化时机**：根 composition 的脚本可能比 runtime 先跑。根 composition 里要写
    `window.__timelines = window.__timelines || {};`，否则会报
-   `Cannot set properties of undefined (setting 'main')`。这是实际踩到的错误，已经写进 `courses/_template/` 和课程契约。
+   `Cannot set properties of undefined (setting 'main')`。这是实际踩到的错误，已经写进 `course-template/` 和课程契约。
 
 ## 适配层接口（`runtime/course-deck.js`）
 

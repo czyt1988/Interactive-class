@@ -77,7 +77,7 @@
 | 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 21:42，整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 0 error |
 | 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
 | 7 发布 | ⬜ 未开始 | 无 Dockerfile、无反代配置、无生产 URL |
-| 8 课程规模化 | ⬜ 部分 | `_template` 可用；`scripts/new_course.py` 未写 |
+| 8 课程规模化 | ✅ 完成 | 独立模板包 `course-template/`、`scripts/new_course.py`、`scripts/import_course.py`、开发环境 `/import` 导入页、`course_imports` 来源记录 |
 
 实施中与原计划不同的四处，均已同步到文档：
 
@@ -92,6 +92,7 @@
 - 没有真机移动端验收；只做了窄视口截图。
 - `hyperframes check` 还剩 5 条 `line_unread` 警告：个别短句的字幕停留时间低于 check 按逐词朗读估算的下限，按实际语速没有问题；`dead_stretch` 已由每页的旁白进度条消除。
 - 全片 MP4 已用 ffmpeg 校验：1920×1080 / 30fps / H.264 + AAC，21m33.5s，有声音；没有在电视和低端手机上做码率/兼容性实测。
+- 课程导入在 TestClient、真实构建流水线和 Playwright 自检（1440px / 390px、真实点击导入、CSP、同源 Origin）中验证过；没有在 TLS 终止的反向代理后验证同源 Origin，也没有在 Safari / Firefox 上打开过 `/import`。
 
 ---
 
@@ -225,7 +226,7 @@ curl http://127.0.0.1:8000/api/health
    不要用 `latest`。
 2. 创建 `scripts/sync_runtime.py`：
    - 从 `tools/node_modules/hyperframes/dist/` 拷贝 `hyperframes-player.global.js`、`hyperframe.runtime.iife.js`；
-   - 拷贝 GSAP、字体到 `courses/_template/composition/assets/` 以及所有已有课程；
+   - 拷贝 GSAP、字体到 `course-template/composition/assets/` 以及所有已有课程；
    - 拷贝 `design/tokens.css` 到 `runtime/tokens.css`（课程外壳共用）和 `app/static/tokens.css`（站点）；字体同步到 `app/static/fonts/`；
    - 写 `runtime/VERSION.json`（版本 + SHA-256）；
    - 拷贝 LICENSE/NOTICE。
@@ -236,14 +237,14 @@ curl http://127.0.0.1:8000/api/health
    - `vendor/` 由 sync 脚本填充。
 4. 创建 `scripts/build_courses.py`：
    - 使用 Phase 1 的 resolver；
-   - 扫描源时跳过 `_template`、`_fixtures` 和隐藏目录；
+   - 扫描源时跳过 `_` 和 `.` 开头的目录（独立模板包 `course-template/` 不在 `courses/` 下）；
    - 校验 scene 文件、vendor、字体、外部资源加载、大小预算；
    - 用 Jinja2 渲染 `shell.html.j2`；
    - 拷贝 composition（排除 `node_modules`、`.hyperframes`、`renders`、`*.mp4`、`package.json`、`hyperframes.json`、源地图）；
    - 拷贝 runtime（排除 `shell.html.j2`）、LICENSES；
    - 写解析后的 `course.json`；
    - 支持 `--course <slug>`、`--all`、`--check-only`、`--include-drafts`，以及测试用的 `--source-dir` / `--out-dir`。
-5. 创建 `courses/_template/`：
+5. 创建 `course-template/`（独立模板包；当时先放在 `courses/_template/`，Phase 8 抽出）：
    - `course.json` 模板；
    - `STORYBOARD.md` 模板；
    - `composition/` 最小两屏工程；
@@ -598,7 +599,7 @@ pytest tests/e2e/test_site.py -q
 
 ### 任务
 
-1. 复制 `courses/_template/` 到 `courses/what-is-a-token/`。
+1. 用 `python scripts/new_course.py what-is-a-token --title "..."` 生成脚手架（从 `course-template/` 复制 `course.json`、`STORYBOARD.md`、`composition/`）。
 2. 写 `courses/what-is-a-token/STORYBOARD.md`：
    - 学习者是谁；
    - 学完能做什么；
@@ -755,34 +756,27 @@ pytest tests/e2e -q
 
 让“新增一门课”成为可重复的任务，而不是每次重新理解平台。
 
-### 任务
+### 状态（2026-11-09）
 
-1. `scripts/new_course.py <slug> --title "..."`：
-   - 复制 `_template`；
-   - 替换 slug/title/package name；
-   - 生成 `STORYBOARD.md` 骨架；
-   - 不覆盖已存在目录。
-2. 完善 `courses/_template/`：
-   - 两屏示例；
-   - 本地 GSAP/字体；
-   - `course.css` 基础设计系统；
-   - `package.json` 固定版本；
-   - 注释说明“哪些文件不要改”。
-3. 更新[课程契约](course-contract.md)：
-   - 与实际实现一致的字段/命令；
-   - 新增常见错误；
-   - 版本号。
-4. 更新本计划的“每门新课的生产模板”（第 14 节）。
-5. 用脚手架从零做第二门课，记录所有平台摩擦点；能修的在 Phase 8 修。
-6. 写 HyperFrames 升级 playbook（或确认架构 9.8 足够）。
+已完成，模板、脚手架、导入和作者文档都落在仓库里：
+
+| 交付 | 位置 | 说明 |
+| --- | --- | --- |
+| 独立模板包 | `course-template/` | 可直接交给外部作者或其他 AI；`AGENTS.md` 是给 AI 的操作指引，`COURSE-CONTRACT.md` 与 `STYLE.md` 是作者版规范，`composition/` 是可构建的两屏骨架 |
+| 脚手架 | `scripts/new_course.py` | 从模板生成 `courses/<slug>/`，替换 slug/title/package name，不覆盖已有目录 |
+| 导入 | `scripts/import_course.py`、开发环境 `/import` | 校验 → 临时目录复制 → 构建 → 原子移动到 `courses/<slug>/`；`course_imports` 表记录来源，数据库仍不存课程内容 |
+| 收件箱 | `course-inbox/`（不进 Git） | 外部课程文件夹放这里，用 `--inbox` 或页面批量导入 |
+
+原任务里的第 5、6 项（用脚手架从零做第二门课、HyperFrames 升级 playbook）仍按原计划在下一门真实课程里验证；升级流程见[架构设计](architecture.md) 9.8。
 
 ### 验收
 
-- [ ] `python scripts/new_course.py demo-course --title "演示课程"` 能生成可构建的课程骨架。
-- [ ] 新课程不需要改 `app/`、`runtime/`、`site` 模板。
-- [ ] 第二门课通过 Phase 5 的全部验收。
-- [ ] 课程契约和实际字段/命令一致。
-- [ ] 新课程任务模板可以直接复制使用。
+- [x] `python scripts/new_course.py demo-course --title "演示课程"` 能生成可构建的课程骨架。
+- [x] 新课程不需要改 `app/`、`runtime/`、`site` 模板。
+- [x] 外部课程文件夹可以通过 `python scripts/import_course.py` 或 `/import` 导入并出现在课程库。
+- [x] 课程契约和实际字段/命令一致。
+- [x] 新课程任务模板可以直接复制使用。
+- [ ] 第二门课通过 Phase 5 的全部验收（等第二门真实课程落地）。
 
 ---
 
@@ -807,7 +801,7 @@ pytest tests/e2e -q
 ### 14.2 步骤
 
 1. **读文档。** 读[DESIGN.md](../DESIGN.md)（尤其第 8 节课程 composition 视觉契约）、[课程契约](course-contract.md)、[架构设计](architecture.md)的 5–6 节、本计划第 1 节。
-2. **脚手架。** 复制 `courses/_template/` 到 `courses/<slug>/`。
+2. **脚手架。** 运行 `python scripts/new_course.py <slug> --title "..."`（等价于从 `course-template/` 复制 `course.json`、`STORYBOARD.md` 和 `composition/`）。
 3. **写 storyboard。** 在 `courses/<slug>/STORYBOARD.md` 写：
    - 学习者、学完能、每屏一句话论题；
    - 每屏“看见什么”“动画如何论证”“屏幕文字”“讲义”“时长”；
@@ -834,7 +828,8 @@ pytest tests/e2e -q
 | 路径 | 课程任务 |
 | --- | --- |
 | `courses/<slug>/` | 可以创建/修改 |
-| `courses/_template/` | 只读；需要改时开平台任务 |
+| `course-template/` | 只读；需要改时开平台任务 |
+| `course-inbox/` | 可以放入待导入的课程文件夹（不进 Git） |
 | `app/` | 只读 |
 | `runtime/` | 只读 |
 | `design/` | 只读 |
@@ -878,7 +873,7 @@ pytest tests/e2e -q
 - 音频：<有/无>
 
 要求：
-1. 先复制 courses/_template 到 courses/<slug>/，再写 STORYBOARD.md；不要直接写 HTML。
+1. 先用 `python scripts/new_course.py <slug> --title "..."` 生成脚手架，再写 STORYBOARD.md；不要直接写 HTML。
 2. 逐屏实现 composition；每加一屏跑一次 composition 的 check 和 snapshot。
 3. 构建后在站点和独立静态服务器上各走一遍。
 4. 只修改 courses/<slug>/；需要平台改动时停下来报告。
@@ -948,6 +943,10 @@ pytest tests/e2e -q
 | 构建全部课程 | `python scripts/build_courses.py --all` |
 | 构建单门课程 | `python scripts/build_courses.py --course <slug>` |
 | 只校验不构建 | `python scripts/build_courses.py --check-only` |
+| 生成新课程脚手架 | `python scripts/new_course.py <slug> --title "课程标题"` |
+| 导入外部课程 | `python scripts/import_course.py <课程文件夹>` |
+| 批量导入收件箱 | `python scripts/import_course.py --inbox` |
+| 导入前只校验 | `python scripts/import_course.py --dry-run <课程文件夹>` |
 | HyperFrames 检查 | 在 `composition/` 下 `npx --yes hyperframes@0.9.19 check` |
 | 逐屏快照 | 在 `composition/` 下 `npx --yes hyperframes@0.9.19 snapshot` |
 | 独立部署验收 | `python -m http.server 8081 -d dist/courses/<slug>` |

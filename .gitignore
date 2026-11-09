@@ -41,6 +41,9 @@ renders/
 node_modules/
 .hyperframes/
 
+# 导入收件箱：作者把外部生成的课程文件夹放在这里，由 scripts/import_course.py 或 /import 页面导入
+/course-inbox/
+
 # 本地配置（.env.example 需要提交）
 .env
 

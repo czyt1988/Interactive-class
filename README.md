@@ -4,7 +4,7 @@
 
 AI Learning 是一个用网页动画讲 AI 的教学网站。每一屏只讲一个概念；短课点一下进入下一屏，长视频课程会随旁白自动接续。一门课是一串可以直接在浏览器里播放的动画，而不是一段被锁在播放器里的视频。
 
-当前状态：**v0.5，平台骨架可用，第一门长视频课程已按新版脚本重做，后台可按需生成课程视频**。站点、课程契约、构建流水线、课程外壳、匿名进度、后台设置页和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 22 屏 / 21:42，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
+当前状态：**v0.6，平台骨架可用，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳、匿名进度、后台设置页、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 22 屏 / 21:42，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
 
 ## 为什么要做
 
@@ -93,6 +93,7 @@ AI 教学常见两种形态：长视频和图文。
 
 - **站点**：FastAPI + Jinja2，服务端渲染。负责封面、课程库、课程入口、只读目录 API 和进度 API。没有 SPA，没有前端路由。
 - **课程**：独立的静态包。自带课程外壳、播放器运行时、composition、字体和封面。可以部署到任何静态服务器。
+- **课程模板与导入**：`course-template/` 是独立的课程模板包，可交给外部作者或 AI；外部生成的课程文件夹通过 `scripts/import_course.py`（或开发环境 `/import` 页面）校验、复制到 `courses/<slug>/`、构建到 `dist/`，并在 SQLite 记一条来源。课程内容仍然是文件，数据库不存课程内容。
 - **动画**：HyperFrames composition。一门课一个工程，一屏一个 scene，浏览器里由 `<hyperframes-player>` 播放。
 - **构建**：Python 构建脚本。校验课程契约，解析每屏的时间范围，生成课程页面，打包运行时，输出到 `dist/`。
 - **数据**：课程内容仍然放在文件里，用 Git 管理；用户、会话和学习进度放在 SQLite，迁移用 Alembic。课程包不依赖数据库也能完整播放，数据库是站点侧的能力。
@@ -141,19 +142,20 @@ ai-learning/
 │  ├─ main.py                    # create_app、健康检查、错误模型、静态挂载
 │  ├─ config.py                  # 路径、环境变量、站点信息
 │  ├─ db.py                      # SQLite / SQLAlchemy engine + pragmas
-│  ├─ models.py                  # users / sessions / progress
+│  ├─ models.py                  # users / sessions / progress / course_imports
 │  ├─ schemas.py                 # 进度 API 的请求/响应
 │  ├─ deps.py                    # settings / catalog / db 依赖
 │  ├─ auth/sessions.py           # 匿名会话、HttpOnly Cookie
 │  ├─ repositories/progress.py   # 进度读写
-│  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载
+│  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载、导入
 │  ├─ videos/                    # 后台视频渲染：工具链发现、进程渲染、任务与产物
 │  ├─ api/                       # /api/courses、/api/progress、/api/health
 │  ├─ web/routes.py              # 首页、课程库、关于、sitemap
 │  ├─ web/admin.py               # 后台设置、视频生成/下载、状态轮询
-│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页与登录页）
-│  └─ static/                    # 站点 CSS、字体、favicon、后台脚本
-├─ migrations/                   # Alembic 迁移（0001_initial）
+│  ├─ web/import_routes.py       # /import 课程导入页（仅开发环境）
+│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页、导入页与登录页）
+│  └─ static/                    # 站点 CSS、字体、favicon、后台与导入样式
+├─ migrations/                   # Alembic 迁移（0001_initial、0002_course_imports）
 ├─ data/                         # SQLite 文件与后台生成的视频，不提交
 │  └─ videos/                    # 在线生成的 MP4 与元数据
 ├─ runtime/                      # 课程外壳运行时（所有课程共用）
@@ -163,8 +165,15 @@ ai-learning/
 │  ├─ vendor/                    # HyperFrames player / runtime（不进 Git）
 │  └─ VERSION.json               # 固定版本 + 每个文件的 SHA-256
 ├─ design/                       # 设计令牌与字体源文件
+├─ course-template/              # 独立课程模板包：交给外部作者或 AI 用
+│  ├─ AGENTS.md                  # 给 AI 的课程生成指引
+│  ├─ COURSE-CONTRACT.md         # 作者版规范
+│  ├─ STYLE.md                   # 课程画面视觉规范
+│  ├─ course.json                # 合法占位清单
+│  ├─ STORYBOARD.md              # 分镜脚手架
+│  └─ composition/               # 两屏骨架 + 本地字体 / GSAP
+├─ course-inbox/                 # 外部课程收件箱，供导入使用（不进 Git）
 ├─ courses/
-│  ├─ _template/                 # 课程脚手架（两屏最小工程）
 │  ├─ ai-first-sees/             # 第一门课：AI 第一次看懂世界
 │  └─ <slug>/                    # 每门课一个目录
 │     ├─ course.json
@@ -177,6 +186,8 @@ ai-learning/
 ├─ scripts/
 │  ├─ sync_runtime.py            # 拉取 player/runtime/GSAP、子集化字体、同步令牌
 │  ├─ build_courses.py           # 校验 + 构建课程包
+│  ├─ new_course.py              # 从课程模板生成新课程脚手架
+│  ├─ import_course.py           # 导入外部课程文件夹
 │  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
 │  └─ launcher.py                # star / restart / stop 的实现
 ├─ tests/
@@ -284,13 +295,54 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 
 目标：只动 `courses/<slug>/`，不改站点代码。
 
-1. 复制 `courses/_template/` 到 `courses/<slug>/`，先读一遍课程契约。
+1. 先生成脚手架：`python scripts/new_course.py <slug> --title "课程标题"`（从 `course-template/` 复制 `course.json`、`STORYBOARD.md`、`composition/`）。外部作者也可以拿 `course-template/` 按它的 `AGENTS.md` 生成，再用下一节的导入流程带进来。
 2. 写 `STORYBOARD.md`：每屏一句话，说明这一屏让学习者看见什么、动画如何论证。
-3. 写 `course.json`：标题、承诺、目标、每一屏的文案。
+3. 改 `course.json`：标题、承诺、目标、每一屏的文案；交付前把 `status` 改成 `published`。
 4. 在 `composition/` 里用 HyperFrames 做每一屏的 scene，并在根 composition 里挂好时间。
 5. 运行 `python scripts/build_courses.py --course <slug>`，打开两个地址验收：站点里的 `/courses/<slug>/`，以及 `python scripts/serve.py` 打开的同一个目录。
 
 构建完成后，课程清单、封面、目录和 API 会自动更新。具体字段和校验规则见[课程契约](docs/course-contract.md)。
+
+## 课程模板与导入
+
+`course-template/` 是独立的课程模板包：两屏可构建骨架 + 给作者和 AI 的文档。它不放在 `courses/` 下参与构建，可以整个文件夹交给外部作者或其他 AI，放进 AI 的工作目录后由其中的 `AGENTS.md` 指引生成课程。
+
+```text
+course-template/
+├─ AGENTS.md            # 给 AI 的操作指引：输入、流程、硬规则、自检、交付
+├─ COURSE-CONTRACT.md   # 作者版规范：目录、字段、时间、资源、错误码
+├─ STYLE.md             # 课程画面视觉规范（纸色、字阶、安全区、动效）
+├─ course.json          # 合法占位清单（slug 仍是 your-course-slug）
+├─ STORYBOARD.md        # 分镜脚手架
+└─ composition/         # 根 composition + 两屏 scene + 本地字体 / GSAP
+```
+
+外部作者产出的课程文件夹有两种方式进入站点：
+
+1. **导入（推荐）**：把整个课程文件夹放进仓库根的 `course-inbox/`（该目录不进 Git），然后：
+
+   ```bash
+   python scripts/import_course.py --inbox            # 批量导入收件箱
+   python scripts/import_course.py <课程文件夹>       # 只导入一个
+   python scripts/import_course.py --dry-run <文件夹>  # 只校验，不落盘
+   ```
+
+   开发环境也可以打开 `/import` 页面：列出收件箱里的课程、校验状态和「导入」按钮，并显示最近导入记录；生产环境（`ENV=prod`）不开放这个页面。导入会先校验、再在隐藏临时目录里构建，全部通过才原子替换 `courses/<slug>/` 和 `dist/courses/<slug>/`，失败会回滚。成功后站点下一次请求就能看到新课，不用重启。
+
+2. **直接放进课程目录**：复制成 `courses/<slug>/`（目录名必须等于 `course.json` 的 `slug`），运行 `python scripts/build_courses.py --course <slug>`；也可以用 `python scripts/import_course.py courses/<slug>` 校验并原地重建。
+
+导入成功后会在 SQLite 的 `course_imports` 表更新一条来源记录（slug、标题、来源路径、内容哈希、屏数、时长、导入时间）。课程内容仍然在文件里，数据库只记来源；表没迁移或数据库不可用时导入照常完成，只打印警告。
+
+模板自带的字体是预生成的字符子集；导入的课程如果用了子集外的新字，跑一次 `python scripts/sync_runtime.py` 会按课程文案重新生成子集。
+
+导入相关配置（完整说明见 `.env.example`）：
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `COURSES_INBOX_DIR` | `course-inbox` | 导入收件箱目录 |
+| `COURSE_IMPORT_ENABLED` | `dev` 为 1，`prod` 为 0 | 是否开放 `/import` 页面 |
+
+模板包的完整用法见 [course-template/README.md](course-template/README.md)；导入的字段和错误码规则见[课程契约](docs/course-contract.md) 7.7。
 
 ## 站点
 
@@ -304,7 +356,8 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 - **v0.2**：FastAPI 站点、课程契约与解析器、构建流水线、SQLite + Alembic 匿名进度、课程外壳（封面/切屏/控制条/讲义/完成页/错误页）、第一门课「AI 第一次看懂世界」、Playwright 独立部署验收。
 - **v0.3**：CI（契约/外部资源/独立部署）、Docker 与部署、课程脚手架脚本、更多系列课程。
 - **v0.4**：长视频课程按新版导演脚本重做，22 屏 / 21:42，旁白驱动、连续播放。
-- **v0.5（当前）**：后台设置页 `/admin`，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
+- **v0.5**：后台设置页 `/admin`，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
+- **v0.6（当前）**：课程模板抽成独立包 `course-template/`，外部作者可以拿它交给 AI 生成课程；`scripts/new_course.py` 脚手架、`scripts/import_course.py` 和开发环境 `/import` 页面支持把外部课程校验、构建并登记来源后直接加入课程库。
 - **v1.0**：课程库规模化、质量门、账号与跨设备进度。
 
 没有日期承诺。先把结构做对，再往上加课程。
@@ -314,6 +367,7 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 - [前端设计契约](DESIGN.md)：视觉、文案、动效与课程 composition 的唯一准则。
 - [架构设计](docs/architecture.md)：系统边界、关键决策、运行时、构建、部署和风险。
 - [课程契约](docs/course-contract.md)：一门课需要长什么样，字段、目录、时间规则和验收清单。
+- [课程模板包](course-template/README.md)：可以整个交付给外部作者的课程骨架、AI 操作指引和作者规范。
 - [Agent 开发方案](docs/agent-development-plan.md)：按阶段执行的任务、验收标准和每门新课的生产模板。
 
 ## 致谢

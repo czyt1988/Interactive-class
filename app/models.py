@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -93,3 +93,28 @@ class ScreenProgress(Base):
     )
 
 
+class CourseImport(Base):
+    """Where an imported course came from.
+
+    Course content never enters this table: files under ``courses/<slug>/`` stay
+    the single source of truth and the catalog still reads only ``dist/``. This
+    row answers "which external folder produced this course, and when was it last
+    imported", which is enough for the import page and provenance questions.
+    """
+
+    __tablename__ = "course_imports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    source_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    source_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    screens: Mapped[int] = mapped_column(nullable=False)
+    duration_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )

@@ -32,6 +32,7 @@ from app.db import create_db_engine, create_session_factory
 from app.formatting import format_duration
 from app.videos.manager import RenderManager
 from app.web.admin import router as admin_router
+from app.web.import_routes import router as import_router
 from app.web.routes import LEVEL_LABELS, SITE_DESCRIPTION
 from app.web.routes import router as web_router
 
@@ -236,6 +237,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse({"status": "ok", "db": {"ok": True, "schemaVersion": version}})
 
     app.include_router(web_router)
+    app.include_router(import_router)
     app.include_router(admin_router)
     app.include_router(courses_api_router)
     app.include_router(progress_api_router)

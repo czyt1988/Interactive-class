@@ -48,7 +48,7 @@
 ### 1.2 非目标
 
 - 不在 v1 做完整账号体系：登录、注册、找回密码、付费、证书和讨论区属于后续阶段。v1 先把 SQLite 数据层、匿名会话和进度 API 做好，让账号可以在此基础上长出来。
-- 不把课程内容放进数据库。课程清单和 composition 是文件，用 Git 版本化；数据库只存用户状态。
+- 不把课程内容放进数据库。课程清单和 composition 是文件，用 Git 版本化；数据库只存用户状态。导入的 `course_imports` 表只登记来源（slug、路径、哈希、时间），不改变这条边界。
 - 不把 MP4 作为主要分发格式。
 - 不在 v1 做随堂测验、分支剧情和复杂交互。
 - 不在 v1 为手机竖屏单独制作一套 composition。
@@ -100,6 +100,8 @@
 | D12 | 长视频课程统一浅色纸面；四幕只换强调色，「黑屋」等比喻用暖灯、墨色剪影和牛皮纸笔记本画在纸面上（仅 `playback: "continuous"` + `audio: true` 的课程） | 用户明确要求整门课不要深色背景：上一版深墨/黑屋页与前后浅色页割裂。叙事靠道具、光影和运动表达，不靠页面底色；D12 取代原「纸面/深墨/黑屋三种底色」方案 | 少了一种用底色切换幕的强标记，需要靠编号、强调色和道具维持节奏 | 用户要求恢复深色叙事场景，或大纲改版 |
 | D13 | 旁白课程的播放器提供暂停、字幕开关、配音开关，偏好存 localStorage | 用户要求能停、能取消字幕、能取消配音。字幕开关隐藏画面底部旁白条，不打断时间轴；配音开关静音但不暂停时间轴。根 composition 通过 HyperFrames 的父级 control 消息接收字幕偏好 | 多两个控制条按钮和一条消息通道；偏好只在本机保存 | 播放器契约变化，或需要账号级偏好同步 |
 | D14 | MP4 不是主链路，但后台设置页可以在服务器上按需渲染课程视频：从 `dist/courses/<slug>/composition/` 复制到临时工作目录，调用固定版本 HyperFrames CLI，输出到 `data/videos/`，同一时间只跑一个任务 | 用户不想把视频提交进 Git，也不希望部署产物内置视频；按需生成让视频只存在于服务器数据目录，可重建、可删除。渲染源用构建产物，和网页播放的是同一份 composition | 生产机需要 Node、Chromium、FFmpeg 等创作期依赖；一次渲染耗时接近视频时长；后台写接口需要访问控制（`ADMIN_TOKEN`） | 视频成为主要分发形态，或需要多机并发渲染（改为独立渲染服务/任务队列） |
+| D15 | 课程模板抽成仓库根的独立包 `course-template/`：两屏可构建骨架 + 给 AI 的 `AGENTS.md` + 作者版 `COURSE-CONTRACT.md`/`STYLE.md`；平台内用 `scripts/new_course.py` 复制它生成脚手架 | 多人协作时，外部作者不需要克隆平台仓库；把整个文件夹交给 AI 当工作目录，规则自包含。模板移出 `courses/` 后不会被构建或课程扫描误当成课程，也让「平台代码」和「课程结构」的边界更清楚 | 模板文档与平台课程契约有重复，需要靠测试和同一任务内的同步更新防漂移；模板里的字体/GSAP 仍由 `sync_runtime.py` 统一生成 | 出现第二套模板（例如长视频课专用）且无法用同一骨架覆盖时 |
+| D16 | 外部课程通过导入流水线进入平台：`scripts/import_course.py` 或开发环境 `/import` 页面校验 → 在隐藏 staging 目录构建 → 原子替换 `courses/<slug>/` 与 `dist/courses/<slug>/`；成功后只在 SQLite 的 `course_imports` 表登记来源 | 用户希望「把生成好的文件夹直接放进软件配置的目录，选中导入」就能加入课程库。导入把校验和构建放在落盘之前，失败不会留下半个课程；数据库登记来源方便多人协作时追溯，但课程内容仍然只存在于文件和 `dist/`，不破坏 D5 | 导入需要 `scripts/` 作者工具（生产镜像没有），因此页面默认只在 dev 开放；来源路径是本地信息，换机器后只能作为历史记录 | 需要多人在线提交课程（那时应做上传/审核后台，而不是本地目录导入） |
 
 ### 3.1 三个需要展开的决定
 
@@ -392,6 +394,8 @@ courses/<slug>/
 
 `composition/` 本身就是一个合法的 HyperFrames 项目，可以在里面运行 `npx hyperframes preview`、`check`、`snapshot`；只想快速看播放效果时可以用 `npx hyperframes play`。课程任务的主要工作发生在这里。
 
+新课程脚手架从仓库根的独立模板包 `course-template/` 复制（见 D15）；外部作者拿到的也是这个文件夹，生成完成后按 D16 导入。模板不在 `courses/` 下，构建和课程扫描都不会碰到它。
+
 ### 6.3 构建产物
 
 ```text
@@ -491,7 +495,7 @@ app/
 ├─ main.py                 # create_app、lifespan、路由和 mount
 ├─ config.py               # 路径、环境变量、站点信息、DATABASE_URL
 ├─ db.py                   # SQLAlchemy engine/session、SQLite pragmas
-├─ models.py               # User / Session / CourseProgress / ScreenProgress
+├─ models.py               # User / Session / CourseProgress / ScreenProgress / CourseImport
 ├─ schemas.py              # 进度 API 的 Pydantic 请求/响应
 ├─ auth/
 │  └─ sessions.py          # 匿名会话、cookie、未来的登录会话
@@ -501,12 +505,15 @@ app/
 │  ├─ models.py            # 课程清单 Pydantic 模型
 │  ├─ composition.py       # 解析根 composition 的 screen host
 │  ├─ resolver.py          # 合并 course.json + composition，校验
+│  ├─ importing.py         # 外部课程导入：校验、staging 构建、原子落盘、来源记录
 │  └─ loader.py            # 扫描 dist/、缓存、错误收集
 ├─ api/
 │  ├─ courses.py           # 只读课程 JSON API
 │  └─ progress.py          # 学习进度 API
 ├─ web/
-│  └─ routes.py            # 首页、课程库、关于、404
+│  ├─ routes.py            # 首页、课程库、关于、404
+│  ├─ admin.py             # 后台设置与视频生成
+│  └─ import_routes.py     # /import 课程导入页（仅开发环境）
 ├─ templates/
 └─ static/
 
@@ -514,7 +521,7 @@ migrations/                # Alembic
 data/                      # SQLite 文件，gitignored
 ```
 
-`catalog` 是一个深模块：对外只暴露 `load_catalog()`、`get_course(slug)` 和 `resolve_course(source)` 之类的接口；扫描、解析、合并、校验、缓存都藏在里面。Web 和 API 都依赖它，构建脚本也复用它，避免出现两套时间解析逻辑。
+`catalog` 是一个深模块：对外只暴露 `load_catalog()`、`get_course(slug)` 和 `resolve_course(source)` 之类的接口；扫描、解析、合并、校验、缓存都藏在里面。Web 和 API 都依赖它，构建脚本也复用它，避免出现两套时间解析逻辑。`catalog/importing.py` 复用 resolver 和构建期资产校验；它对 `scripts/` 的依赖是函数内延迟 import，所以生产镜像只装 `app/` 时导入模块本身仍然可用，只是 `/import` 页面在 dev 才启用（见 D16）。
 
 数据库是另一个独立边界：`db` + `models` + `repositories` 负责用户状态；`catalog` 不读数据库，数据库也不存课程内容。这样课程目录可以继续从 `dist/` 重建，用户数据可以单独备份和迁移。
 
@@ -530,7 +537,7 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 4. 按 `order`、`featured`、发布时间排序，生成 `Catalog`。
 5. 缓存结果，并用清单文件 mtime / 目录签名失效。构建完成后下一次请求就能看到新课程，不需要重启进程；请求路径只做廉价的 `stat`，不重复解析 composition。
 
-源课程到解析清单的转换发生在构建期（见 9.1）。这样生产镜像只需要 `app/` 和 `dist/`，不需要课程源文件、Node 或 HyperFrames。
+源课程到解析清单的转换发生在构建期（见 9.1）。这样生产镜像只需要 `app/` 和 `dist/`，不需要课程源文件、Node 或 HyperFrames。导入（D16）是开发/创作环境的作者工具：它把外部文件夹校验后复制进 `courses/` 并构建，生产站点仍然只读 `dist/`；`/import` 页面在 `ENV=prod` 下不开放。
 
 错误策略：
 
@@ -584,6 +591,8 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 | POST | `/admin/videos/<slug>/render` | 在服务器上开始渲染该课程视频（单任务） |
 | GET | `/admin/videos/<slug>/download` | 下载已生成的课程视频 |
 | GET | `/admin/status` | 后台轮询用的视频状态 JSON |
+| GET | `/import` | 课程导入页（仅开发环境；收件箱候选、校验状态、最近导入） |
+| POST | `/import` | 执行导入（仅开发环境；同源检查；写入 `courses/` 并构建） |
 | GET | `/api/courses` | 已发布课程摘要列表 |
 | GET | `/api/courses/<slug>` | 单门课的解析后清单 |
 | GET | `/healthz` | 进程健康检查 |
@@ -634,6 +643,8 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 | `VIDEO_HYPERFRAMES_VERSION` | `0.9.19` | npx 兜底时固定使用的版本 |
 | `VIDEO_NODE_BIN` / `VIDEO_NPX_BIN` | `node` / `npx` | Node 与 npx 可执行文件 |
 | `VIDEO_FFMPEG_DIR` | 空（自动发现） | 存放 `ffmpeg` / `ffprobe` 的目录；空时依次尝试仓库 `tools/ffmpeg/bin` 和 PATH |
+| `COURSES_INBOX_DIR` | `<repo>/course-inbox` | 外部课程收件箱；`/import` 页面与 `import_course.py --inbox` 使用，Web 只在开发环境读 |
+| `COURSE_IMPORT_ENABLED` | `dev` 为 1，`prod` 为 0 | 是否开放 `/import` 课程导入页 |
 
 配置用 `pydantic-settings`，从环境变量和 `.env` 读取。不要在生产环境读取仓库相对路径以外的用户输入。
 
@@ -646,6 +657,7 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 - 数据库文件不放在 Web 根目录下，用 volume 和最小权限；备份文件同样不要公开。
 - `StaticFiles` 负责路径规范化，不要让自定义路由拼接未校验的文件路径。
 - 不要把草稿构建进生产产物。`status` 过滤在构建期完成，而不是只靠前端隐藏。
+- `/import` 是开发/创作工具：默认只在 `ENV=dev` 开放；POST 只接受收件箱的直接子目录名（防路径逃逸）并检查同源 `Origin`。生产部署保持 `COURSE_IMPORT_ENABLED=0`，不要把它当成上传入口。
 - 不把密钥、内网地址、绝对路径写进课程清单或构建产物。
 - 开启 `X-Content-Type-Options: nosniff`、`Referrer-Policy: strict-origin-when-cross-origin`，生产环境加 HSTS。
 
@@ -691,12 +703,14 @@ SQLite 的限制也要写清楚：
 | `sessions` | `id`、`user_id`、`token_hash`、`created_at`、`expires_at`、`last_seen_at` | 匿名会话和登录会话共用；只存 token 哈希，不存明文 |
 | `course_progress` | `user_id`、`course_slug`、`last_screen_id`、`started_at`、`updated_at`、`completed_at` | 每用户每课程一行；`last_screen_id` 用于“继续上次” |
 | `screen_progress` | `user_id`、`course_slug`、`screen_id`、`completed_at`、`updated_at` | 复合主键；用于完成度、回顾、未来的学习看板 |
+| `course_imports` | `id`、`slug`（唯一）、`title`、`source_path`、`source_hash`、`content_hash`、`screens`、`duration_seconds`、`imported_at`、`updated_at` | 导入来源记录：哪门课、从哪个文件夹、导入了什么内容。只记来源，不存课程内容；课程目录仍以 `dist/` 为准 |
 
 约束：
 
 - `users.email` 唯一（大小写归一后）；SQLite 允许多个 `NULL`，匿名用户不受影响。
 - `sessions.token_hash` 唯一；token 是 32 字节随机值，Cookie 里放原文，数据库只存 SHA-256。
 - `course_slug`、`screen_id` 不是数据库外键：课程是文件，API 写入前用 catalog 校验 slug 和屏幕 id，避免数据库和课程包互相绑定。
+- `course_imports.slug` 也不是外键：它记录导入来源，课程从 `dist/` 消失后记录仍可保留用于追溯；清理策略由运维决定。
 - 时间统一 UTC；API 输出 ISO 8601。
 - 外键开启 `ON DELETE CASCADE`：删用户时删会话和进度。
 
@@ -1081,14 +1095,17 @@ ResolvedCourse 1 ─── * ResolvedScreen
 users 1 ─── * sessions
   │
   └─ 1 ─── * course_progress 1 ─── * screen_progress
+
+course_imports（导入来源登记，与用户/进度无关）
 ```
 
 - `users`：匿名用户和未来注册用户共用；`is_anonymous` 区分。
 - `sessions`：匿名/登录会话；只存 token 哈希。
 - `course_progress`：每用户每课程一行，记录 `last_screen_id`、完成时间。
 - `screen_progress`：每用户每课程每屏一行，记录完成时间。
+- `course_imports`：每 slug 一行，记录导入来源路径、来源哈希、内容哈希和导入时间；课程内容不在库里，课程目录仍以 `dist/` 为准。
 
-课程包仍然是静态的；进度通过站点 API 读写，不进入课程包。没有数据库时，课程页退回 `localStorage`，课程继续独立部署。详细字段、匿名会话、迁移和备份见 7.9–7.10。
+课程包仍然是静态的；进度通过站点 API 读写，不进入课程包。没有数据库时，课程页退回 `localStorage`，课程继续独立部署。导入来源记录同理：数据库不可用时导入照常完成，只是不记来源。详细字段、匿名会话、迁移和备份见 7.9–7.10。
 
 ---
 
@@ -1119,6 +1136,9 @@ users 1 ─── * sessions
 8. `test_a11y`：课程页无严重 axe 问题；键盘可以完成主流程。
 9. `test_no_external`：构建产物没有外部资源加载（允许引用链接）。
 10. `test_budget`：首屏和总大小不超预算。
+11. `test_import` / `test_new_course`：外部课程文件夹校验、staging 构建、原子落盘、失败回滚；占位 slug / 保留 slug / 目标已存在 / 覆盖导入 / 原地重建；`course_imports` upsert；从 `course-template/` 生成可构建脚手架。
+12. `test_course_template`：模板包结构齐全、无外部资源、复制并改 slug 后可解析与构建、作者文档指引齐全。
+13. `test_import_web`：`/import` 的 GET/POST、收件箱候选与校验状态、路径逃逸拒绝、prod/未启用时 404、导入后目录与数据库记录。
 
 ### 11.3 测试数据
 
@@ -1236,6 +1256,7 @@ Nginx / Caddy
 | `/courses/<slug>/` | 静态 | 课程页 |
 | `/courses/<slug>/composition/...` | 静态 | composition 资源 |
 | `/courses/<slug>/runtime/...` | 静态 | 课程外壳运行时 |
+| `/import` | 动态（仅开发环境） | 课程导入页：收件箱候选、校验状态、最近导入 |
 | `/api/courses` | JSON | 课程摘要 |
 | `/api/courses/<slug>` | JSON | 课程详情 |
 | `/api/progress/<course_slug>` | JSON | 当前用户进度（GET/PUT） |

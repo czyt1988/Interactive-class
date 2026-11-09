@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}导入课程 · {{ site.title }}{% endblock %}
+{% block description %}开发环境专用的课程导入页：扫描课程收件箱、校验并导入外部作者生成的课程。{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/static/import.css" />
+{% endblock %}
+
+{% block content %}
+<section class="page-head page-head--narrow">
+  <p class="eyebrow">课程导入</p>
+  <h1>把新课程带进来</h1>
+  <p class="lede">这个页面只读课程收件箱，不碰别处的文件。每个文件夹先完整校验，通过后才会复制进课程库、构建课程包，并在数据库里记下来源。</p>
+</section>
+
+{% if imported %}
+  <div class="import-notice import-notice--ok" role="status">
+    <p class="import-notice__label">导入成功</p>
+    <p class="import-notice__text">{{ imported }}</p>
+  </div>
+{% endif %}
+
+{% if error %}
+  <div class="import-notice import-notice--fail" role="alert">
+    <p class="import-notice__label">导入没有完成</p>
+    <p class="import-notice__text">{{ error }}</p>
+  </div>
+{% endif %}
+
+<section class="import-inbox" aria-labelledby="inbox-title">
+  <h2 id="inbox-title">收件箱</h2>
+  <dl class="import-inbox__facts">
+    <div>
+      <dt>目录</dt>
+      <dd><code>{{ inbox_display }}</code></dd>
+    </div>
+    <div>
+      <dt>状态</dt>
+      <dd>{{ '已就绪' if inbox_exists else '尚未创建' }}</dd>
+    </div>
+    <div>
+      <dt>草稿</dt>
+      <dd>{{ '开启，草稿课程也会构建' if include_drafts else '关闭，草稿课程只复制不构建' }}</dd>
+    </div>
+  </dl>
+  <p class="import-inbox__hint">把外部作者生成的课程文件夹整个放进收件箱：每个文件夹里要有 <code>course.json</code> 和 <code>composition/</code>。页面只扫描第一层目录，隐藏目录和 <code>_</code> 开头的目录会被跳过。</p>
+  <p class="import-inbox__meta">路径来自 <code>.env.example</code> 的 <code>COURSES_INBOX_DIR</code>；页面开关是 <code>COURSE_IMPORT_ENABLED</code>，生产环境默认关闭。命令行等价操作：<code>python scripts/import_course.py --inbox</code></p>
+</section>
+
+<section class="import-candidates" aria-labelledby="candidates-title">
+  <div class="import-section-head">
+    <div>
+      <h2 id="candidates-title">收件箱里的课程</h2>
+      <p class="import-section-head__meta">{{ candidates|length }} 个文件夹，{{ ready_count }} 个可导入</p>
+    </div>
+    {% if candidates %}
+      <form class="import-section-head__form" method="post" action="/import">
+        <input type="hidden" name="action" value="all" />
+        <button class="button button--primary" type="submit"{% if not ready_count %} disabled{% endif %}>导入全部可导入课程</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if candidates %}
+    <div class="import-course-list">
+      {% for candidate in candidates %}
+        <article class="import-course import-course--{{ candidate.status }}">
+          <div class="import-course__main">
+            <p class="import-course__folder">{{ candidate.name }}/</p>
+            <h3 class="import-course__title">{{ candidate.title or candidate.slug or candidate.name }}</h3>
+            <p class="import-course__meta">
+              <span class="import-badge import-badge--{{ candidate.status }}">{{ candidate.status }}</span>
+              <span>{{ status_labels[candidate.status] }}</span>
+              {% if candidate.slug %}<span>slug <code>{{ candidate.slug }}</code></span>{% endif %}
+              {% if candidate.screens is not none and candidate.duration is not none %}<span>{{ candidate.screens }} 屏，{{ format_duration(candidate.duration) }}</span>{% endif %}
+            </p>
+          </div>
+          <div class="import-course__side">
+            {% if candidate.status == "ready" %}
+              <form method="post" action="/import">
+                <input type="hidden" name="folder" value="{{ candidate.name }}" />
+                <input type="hidden" name="action" value="single" />
+                <button class="button button--primary" type="submit">导入</button>
+              </form>
+            {% elif candidate.status == "exists" %}
+              <form method="post" action="/import">
+                <input type="hidden" name="folder" value="{{ candidate.name }}" />
+                <input type="hidden" name="action" value="single" />
+                <input type="hidden" name="overwrite" value="1" />
+                <button class="button button--ghost" type="submit">覆盖导入</button>
+              </form>
+              <p class="import-course__hint"><code>courses/{{ candidate.slug }}/</code> 已存在。覆盖会替换现有课程目录并重新构建。</p>
+            {% else %}
+              <p class="import-course__hint">先修复下面的错误，再回来导入。</p>
+            {% endif %}
+          </div>
+          {% if candidate.errors %}
+            <ul class="import-errors import-course__errors">
+              {% for item in candidate.errors %}
+                <li class="import-errors__item">
+                  <p class="import-errors__message">{{ item.message }}</p>
+                  <p class="import-errors__meta">
+                    <code>{{ item.code }}</code>
+                    {% if item.file %}<span>{{ item.file }}</span>{% endif %}
+                    {% if item.field %}<span>字段 {{ item.field }}</span>{% endif %}
+                    {% if item.screen_id %}<span>屏 {{ item.screen_id }}</span>{% endif %}
+                  </p>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    {% if inbox_exists %}
+      <div class="empty-state">
+        <p class="empty-state__kicker">收件箱是空的</p>
+        <h3>还没有扫描到课程文件夹。</h3>
+        <p>在收件箱里放一个课程文件夹，例如 <code>course-inbox/what-is-a-token/</code>，里面要有 <code>course.json</code> 和 <code>composition/</code>。刷新本页就会出现在这里。</p>
+        <p>还没有课程可放？<code>course-template/</code> 是给外部作者和 AI 的独立模板包，按里面的 <code>AGENTS.md</code> 生成课程，再把产出文件夹放进收件箱。</p>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p class="empty-state__kicker">收件箱尚未创建</p>
+        <h3>先建一个放课程的文件夹。</h3>
+        <p>在仓库根创建 <code>course-inbox/</code>，或把 <code>.env</code> 里的 <code>COURSES_INBOX_DIR</code> 指到别的目录。把外部作者的课程文件夹整个放进去，页面只读这个目录。</p>
+        <p>模板包在 <code>course-template/</code>：外部作者按里面的 <code>AGENTS.md</code> 生成课程，产出的文件夹直接放进收件箱。</p>
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="import-recent" aria-labelledby="recent-title">
+  <h2 id="recent-title">最近导入</h2>
+  {% if not db_ready %}
+    <p class="import-recent__warning">数据库未迁移，导入仍可用，只是不记来源。运行 <code>alembic upgrade head</code> 建表后刷新本页。</p>
+  {% elif recent %}
+    <div class="import-table-wrap">
+      <table class="import-table">
+        <thead>
+          <tr>
+            <th scope="col">课程</th>
+            <th scope="col">屏数</th>
+            <th scope="col">来源</th>
+            <th scope="col">导入时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in recent %}
+            <tr>
+              <td class="import-table__course">
+                <span class="import-table__title">{{ row.title }}</span>
+                <code>{{ row.slug }}</code>
+              </td>
+              <td>{{ row.screens }} 屏</td>
+              <td><code class="import-table__source" title="{{ row.source_path }}">{{ row.source_path }}</code></td>
+              <td class="import-table__time">{{ row.updated_label or "未知" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="import-recent__empty">还没有导入记录。第一次导入成功后，这里会记下来源文件夹和时间。</p>
+  {% endif %}
+</section>
+
+<p class="import-footnote">/import 只在开发环境开放。导入会真实写入 <code>courses/</code> 和 <code>dist/</code>，运行前先确认文件夹来源可信。</p>
+{% endblock %}

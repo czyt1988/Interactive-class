@@ -1,7 +1,7 @@
 # 课程契约 v1
 
 > 这份文档定义一门课从源文件到可播放课程包的全部约定。
-> 课程任务主要依赖这份文档、`courses/_template/` 和 HyperFrames 技能；视觉、配色、场景版式与文案规范以 [DESIGN.md](../DESIGN.md) 为准；[架构设计](architecture.md)用于理解运行时边界，不要求课程作者记住平台内部实现。
+> 课程任务主要依赖这份文档、独立模板包 [`course-template/`](../course-template/README.md) 和 HyperFrames 技能；视觉、配色、场景版式与文案规范以 [DESIGN.md](../DESIGN.md) 为准；[架构设计](architecture.md)用于理解运行时边界，不要求课程作者记住平台内部实现。
 
 ## 1. 一个课程包是什么
 
@@ -46,6 +46,8 @@ courses/<slug>/
          ├─ gsap.min.js
          └─ LICENSES/
 ```
+
+`course-template/` 是同一份目录结构的独立模板包：它不在 `courses/` 下参与构建，而是交给课程作者或外部 AI 当作工作目录，生成完成后整个文件夹按 7.7 导入。模板包的作者文档（`AGENTS.md`、`COURSE-CONTRACT.md`、`STYLE.md`）与本契约保持一致；冲突时以本契约为准。
 
 命名规则：
 
@@ -622,11 +624,15 @@ v1 不支持自定义课程页 HTML。每门课的差异通过封面图、强调
 
 ### 7.2 脚手架
 
+平台内的新课程用脚手架脚本生成（只复制 `course.json`、`STORYBOARD.md` 和 `composition/`）：
+
 ```bash
-cp -r courses/_template courses/<slug>
+python scripts/new_course.py <slug> --title "课程标题"
 ```
 
-改 `course.json` 的 `slug`、`title`、`subtitle`、`summary`、`outcomes`、`accent`。
+它会校验 `slug` 命名、拒绝覆盖已存在目录、把 `composition/package.json` 的 name 改成 `course-<slug>`，并把 `course.json` 的 `status` 重置为 `draft`。生成后改 `course.json` 的 `slug`、`title`、`subtitle`、`summary`、`outcomes`、`accent`。
+
+外部作者拿到的模板包是仓库根目录的 `course-template/`：同一份两屏骨架，加上给作者和 AI 阅读的 `AGENTS.md`、`COURSE-CONTRACT.md`、`STYLE.md`。整个文件夹就是工作目录，生成完成后按 7.7 导入。
 
 ### 7.3 做 scene
 
@@ -676,6 +682,39 @@ cd courses/<slug>/composition && npx --yes hyperframes@0.9.19 check
 2. 当审稿人：每屏一个论题？术语第一次出现有解释？事实有来源？
 3. 当挑刺的人：暂停在任意一帧可读吗？最后一帧稳定吗？手机横屏能用吗？键盘顺手吗？
 
+### 7.7 导入外部生成的课程
+
+外部作者用 `course-template/` 生成的课程，不要求克隆整个仓库，按文件夹交付即可。导入是构建流水线的前置封装，不改变契约：
+
+```bash
+python scripts/import_course.py <课程文件夹>        # 导入一个课程文件夹
+python scripts/import_course.py <父文件夹>          # 批量：导入其下所有含 course.json 的目录
+python scripts/import_course.py --inbox             # 批量：扫描仓库根 course-inbox/
+python scripts/import_course.py courses/<slug>      # 课程已在 courses/：只校验并重新构建
+```
+
+`course-inbox/` 是默认收件箱（不进 Git）。开发环境还提供 `/import` 页面：列出收件箱里的课程文件夹、显示校验状态、点击导入，并显示最近导入记录；生产环境（`ENV=prod`）不开放这个页面。
+
+导入的约定：
+
+1. **输入是课程文件夹本身**：里面有 `course.json`（必须）、`composition/`（必须）、可选 `cover.webp` 和 `STORYBOARD.md`。作者文件夹的名字不重要，最终目录名以 `course.json` 的 `slug` 为准。
+2. **slug 不能是占位符或保留名**（`your-course-slug`、`_template`、`template`、`course-template`）；出现时报 `slug_reserved`，需在 `course.json` 里改成课程自己的 slug。
+3. **先校验后落盘**：导入先在隐藏的临时目录里完成解析、资产扫描和构建，全部通过后才移动到 `courses/<slug>/` 并原子替换 `dist/courses/<slug>/`；失败不会留下半个课程。
+4. **目标已存在**：默认报 `course_exists` 并停止；显式传 `--overwrite`（或页面上的覆盖导入）才替换。
+5. **数据库只记来源**：成功后往 `course_imports` 表 upsert 一行（slug、标题、来源路径、来源哈希、内容哈希、屏数、时长、导入时间）。课程内容仍然在文件里，站点目录仍然只读 `dist/`；表没迁移或数据库不可用时导入照常完成，只打印警告。
+6. **站点无需重启**：构建完成后目录加载器按 `dist/` 签名失效，下一次请求就能看到新课。
+7. **草稿**：`status: "draft"` 的课程在 `--include-drafts` 打开时才会构建；构建被跳过时导入仍成功，但会提示先改成 `published`。
+
+导入失败的错误码沿用 5.2；新增三个：
+
+| 错误码 | 含义 | 修复 |
+| --- | --- | --- |
+| `slug_reserved` | `course.json` 的 slug 还是占位符或保留名 | 改成课程自己的小写连字符 slug |
+| `course_exists` | `courses/<slug>/` 已存在 | 换 slug，或显式 `--overwrite` |
+| `import_failed` | 复制、构建或替换过程中失败 | 看错误消息里的路径和原因；工作区已回滚 |
+
+导入不替代人工验收：课程仍然要按第 8 节逐项检查。
+
 ## 8. 验收清单
 
 ### 内容
@@ -690,6 +729,7 @@ cd courses/<slug>/composition && npx --yes hyperframes@0.9.19 check
 ### 元数据
 
 - [ ] `slug` 等于目录名，符合命名规则。
+- [ ] 从模板或外部文件夹导入的课程：slug 已替换占位符，`python scripts/import_course.py --dry-run <文件夹>` 通过。
 - [ ] 标题、副标题、summary、outcomes、takeaways 完整。
 - [ ] `level`、`tags`、`order`、`featured` 合理。
 - [ ] 封面存在时 ≤ 300KB；没有封面时接受排版封面。
@@ -771,6 +811,7 @@ cd courses/<slug>/composition && npx --yes hyperframes@0.9.19 check
 ## 10. 版本与升级
 
 - 契约版本是 `schemaVersion: 1`。
+- 独立模板包 `course-template/` 与本契约同版本；改字段、目录或时间规则时，同一任务内同步更新模板包里的 `COURSE-CONTRACT.md`、`course.json` 和 `STORYBOARD.md`。
 - 新增可选字段不升 major；删除/改语义升 major，并提供迁移说明。
 - HyperFrames/player/runtime 版本在 `runtime/VERSION.json` 里固定。
 - 升级 HyperFrames 后，所有课程要重新构建，并通过播放器契约测试和至少两门课的逐屏快照。
@@ -795,6 +836,9 @@ v1 不可以。用封面、强调色、文案和 composition 做差异。需要�
 
 **一门课可以拆成多个 composition 吗？**
 v1 不建议。超过 15 屏、50MB 或需要不同画布尺寸时，拆成系列课程，每门课仍是独立包。
+
+**能把别人做好的课程直接放进项目吗？**
+可以。课程文件夹通过 `python scripts/import_course.py`（或开发环境的 `/import` 页面）导入：校验、复制到 `courses/<slug>/`、构建到 `dist/`，并在 SQLite 的 `course_imports` 表记一条来源。也可以手动复制到 `courses/<slug>/` 后跑 `python scripts/build_courses.py --course <slug>`。两种方式都要通过本契约；数据库只记来源，不存课程内容。
 
 **可以离线看吗？**
 可以离线播放（所有资源本地），但需要通过 HTTP 静态服务器打开，不能双击 `file://`。player 需要同源 iframe 和 runtime 注入。

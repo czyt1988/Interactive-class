@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "slug": "your-course-slug",
+  "title": "待替换：课程标题",
+  "subtitle": "待替换：一句副标题，写清这门课讲什么",
+  "summary": "待替换：40 到 160 字的课程摘要，写清主题、目标读者和学完能做什么。它会出现在课程卡片和搜索摘要里，所以不要写空话，写这门课具体解决什么问题。",
+  "description": "待替换：长描述。补充课程结构、覆盖范围、不覆盖什么，纯文本即可。它只用于课程页和 SEO，不影响播放。",
+  "level": "beginner",
+  "tags": ["待替换", "模板"],
+  "language": "zh-CN",
+  "status": "draft",
+  "featured": false,
+  "order": 100,
+  "accent": "#B8452B",
+  "outcomes": [
+    "待替换：学完能说清的第一个结论",
+    "待替换：学完能说清的第二个结论",
+    "待替换：学完能做出的一个判断"
+  ],
+  "prerequisites": ["待替换：先修知识或经验", "不需要编程或数学基础"],
+  "takeaways": [
+    "待替换：完成页回顾的第一条",
+    "待替换：完成页回顾的第二条"
+  ],
+  "audio": false,
+  "interactive": false,
+  "playback": "screens",
+  "composition": {
+    "entry": "composition/index.html",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "screens": [
+    {
+      "id": "hello",
+      "kicker": "01 / 开场",
+      "title": "第一屏说什么",
+      "summary": "这一屏只讲一件事：用一句话写出论题。",
+      "transcript": "第一屏说什么。这一屏只讲一件事：用一句话写出论题。把它换成本课的内容。",
+      "autoAdvance": false
+    },
+    {
+      "id": "world",
+      "kicker": "02 / 展开",
+      "title": "第二屏讲什么",
+      "summary": "第二屏也只讲一件事：把第一屏的结论往前推一步。",
+      "transcript": "第二屏讲什么。第二屏也只讲一件事：把第一屏的结论往前推一步。生词和注释用等宽标签。",
+      "autoAdvance": false
+    }
+  ],
+  "site": {
+    "homeUrl": "/",
+    "backLabel": "返回课程库"
+  },
+  "credits": {
+    "author": "AI Learning",
+    "updatedAt": "2026-11-09",
+    "sources": []
+  }
+}

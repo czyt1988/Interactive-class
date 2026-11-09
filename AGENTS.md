@@ -9,12 +9,16 @@
 3. [架构设计](docs/architecture.md) —— 关键决策、运行时、构建、部署和风险。
 4. [课程契约](docs/course-contract.md) —— 一门课必须长什么样，字段、目录、时间规则和验收清单。
 
+新增课程、改课程模板或对接外部作者时，再读 [course-template/README.md](course-template/README.md)；交给外部 AI 的是 `course-template/AGENTS.md`。
+
 ## 不可协商
 
 - 课程必须能作为独立静态包部署；没有 API、数据库或登录态也能完整播放。
 - 主链路不输出 MP4，不使用 SPA 框架。
 - 视频仍不是主链路；后台设置页可以按需生成课程视频，产物留在服务器 `data/videos/`，不进 Git、不进构建产物。
 - 课程内容放在文件里；用户、会话和进度放在 SQLite。数据库属于站点，不属于课程包。
+- 课程模板包 `course-template/` 是独立交付物：它不在 `courses/` 下参与构建；改课程字段、目录或时间规则时，同一任务内同步更新模板包里的作者文档和骨架。
+- 导入只做三件事：校验、把课程源文件复制进 `courses/<slug>/`、构建；数据库只在 `course_imports` 表登记来源，课程内容不写库。
 - 运行时不引用 CDN；player、runtime、GSAP、字体全部本地。
 - 一门课一个 HyperFrames composition，一屏一个 scene。
 - 课程任务只修改 `courses/<slug>/`，平台改动另开任务。
@@ -26,6 +30,7 @@
 
 - 一次任务只做一个阶段，完成该阶段全部验收项再结束。
 - 不直接编辑 `dist/`；它是构建产物。
+- 新增课程用 `python scripts/new_course.py <slug> --title "..."`；外部作者的课程用 `python scripts/import_course.py`（或开发环境 `/import` 页面）导入，不要手工拼 `dist/`。
 - 每次任务收尾都按下方「提交规则」提交，不攒改动，也不把无关改动混进同一个提交。
 - 结束前跑本阶段的验证命令，并报告“验证了什么、没验证什么”。
 - 改变架构决策前，先更新架构文档的决策表。
@@ -79,14 +84,15 @@
 
 ## 当前状态
 
-v0.5：新增后台设置页，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
+v0.6：课程模板抽成独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
 
 - 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、控制条、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
 - 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。
+- 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `大纲/AI-Agent-入门课/02-逐页脚本.md` 的 22 个镜头落地，共 22 屏 / 21:42；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
 - 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程控制条第一个按钮是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
-- 还没做：CI、Docker/部署、课程脚手架脚本、登录、搜索。
+- 还没做：CI、Docker/部署、登录、搜索。
 
 先跑一遍这三条，确认环境是通的：
 

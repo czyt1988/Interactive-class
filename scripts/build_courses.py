@@ -388,6 +388,29 @@ def build_course(
     return result
 
 
+def validate_course_source(
+    course_dir: Path, *, slug: str | None = None
+) -> tuple[ResolvedCourse | None, list[CatalogError]]:
+    """Resolve ``course_dir`` and validate its assets without writing anything.
+
+    ``slug`` lets importers validate an external folder whose directory name is
+    not the manifest slug yet (the imported course will live under
+    ``courses/<slug>``). Returns ``(course, [])`` on success, ``(None, errors)``
+    otherwise. The errors keep file, field, screen id and expected value, same as
+    the build pipeline.
+    """
+
+    resolved_dir = course_dir.resolve()
+    try:
+        course = resolve_course(resolved_dir, slug=slug)
+    except CourseResolutionError as exc:
+        return None, exc.errors
+    errors = _validate_assets(resolved_dir, course)
+    if errors:
+        return None, errors
+    return course, []
+
+
 def discover_courses(source_root: Path) -> list[Path]:
     if not source_root.is_dir():
         return []
