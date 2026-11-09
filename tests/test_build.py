@@ -47,6 +47,12 @@ def test_build_excludes_authoring_files(tmp_path: Path, source_dir: Path) -> Non
     (source_dir / SLUG / "composition" / "hyperframes.json").write_text("{}", encoding="utf-8")
     (source_dir / SLUG / "composition" / "node_modules").mkdir()
     (source_dir / SLUG / "composition" / "node_modules" / "x.js").write_text("//", encoding="utf-8")
+    # Per-run snapshot/review caches are gitignored and can be large; they must
+    # never be copied into the bundle or counted against its budget.
+    (source_dir / SLUG / "composition" / ".snaps-review").mkdir()
+    (source_dir / SLUG / "composition" / ".snaps-review" / "frame.png").write_bytes(b"x" * 4096)
+    (source_dir / SLUG / "composition" / ".review-2026-11").mkdir()
+    (source_dir / SLUG / "composition" / ".review-2026-11" / "frame.png").write_bytes(b"x" * 4096)
 
     build_all(source_root=source_dir, out_root=tmp_path / "dist", courses=[SLUG])
     bundle = tmp_path / "dist" / SLUG
@@ -54,6 +60,8 @@ def test_build_excludes_authoring_files(tmp_path: Path, source_dir: Path) -> Non
     assert not (bundle / "composition" / "package.json").exists()
     assert not (bundle / "composition" / "hyperframes.json").exists()
     assert not (bundle / "composition" / "node_modules").exists()
+    assert not (bundle / "composition" / ".snaps-review").exists()
+    assert not (bundle / "composition" / ".review-2026-11").exists()
     assert not (bundle / "runtime" / "shell.html.j2").exists()
 
 

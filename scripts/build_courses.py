@@ -40,12 +40,20 @@ SKIP_COMPOSITION = {
     ".DS_Store",
     "Thumbs.db",
 }
+# Per-run authoring caches, also ignored by .gitignore. Their names carry a
+# suffix (``.snaps-s19-v2``, ``.review-2026-11``), so they need a prefix check
+# instead of an exact set entry.
+SKIP_COMPOSITION_PREFIXES = (".snaps-", ".review-")
 SKIP_SUFFIXES = {".mp4", ".map"}
 
 MAX_COURSE_BYTES = 15 * 1024 * 1024
 MAX_HTML_BYTES = 200 * 1024
 MAX_IMAGE_BYTES = 500 * 1024
 MAX_COVER_BYTES = 300 * 1024
+
+
+def _skip_composition_name(name: str) -> bool:
+    return name in SKIP_COMPOSITION or name.startswith(SKIP_COMPOSITION_PREFIXES)
 
 
 @dataclass
@@ -96,7 +104,7 @@ def _iter_composition_files(root: Path) -> list[Path]:
         if not path.is_file():
             continue
         relative_parts = path.relative_to(root).parts
-        if any(part in SKIP_COMPOSITION for part in relative_parts):
+        if any(_skip_composition_name(part) for part in relative_parts):
             continue
         if path.suffix.lower() in SKIP_SUFFIXES:
             continue
@@ -208,7 +216,7 @@ def _copy_composition(source: Path, target: Path) -> None:
     def ignore(_directory: str, names: list[str]) -> set[str]:
         ignored: set[str] = set()
         for name in names:
-            if name in SKIP_COMPOSITION or Path(name).suffix.lower() in SKIP_SUFFIXES:
+            if _skip_composition_name(name) or Path(name).suffix.lower() in SKIP_SUFFIXES:
                 ignored.add(name)
         return ignored
 

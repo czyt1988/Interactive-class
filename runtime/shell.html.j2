@@ -133,21 +133,23 @@
       {# ---------------------------------------------------------------- stage #}
       <section id="stage-wrap" class="stage-wrap" aria-label="课程播放器" hidden>
         <div id="stage" class="stage" data-poster="{{ theme.coverUrl or '' }}">
-          <hyperframes-player
-            id="hf-player"
-            runtime-src="./runtime/vendor/hyperframe.runtime.iife.js"
-            width="{{ course.composition.width }}"
-            height="{{ course.composition.height }}"
-            {% if theme.coverUrl %}poster="{{ theme.coverUrl }}"{% endif %}
-            muted
-            disable-click-to-play
-          ></hyperframes-player>
+          <div class="stage__canvas">
+            <hyperframes-player
+              id="hf-player"
+              runtime-src="./runtime/vendor/hyperframe.runtime.iife.js"
+              width="{{ course.composition.width }}"
+              height="{{ course.composition.height }}"
+              {% if theme.coverUrl %}poster="{{ theme.coverUrl }}"{% endif %}
+              muted
+              disable-click-to-play
+            ></hyperframes-player>
 
-          <div id="loading" class="stage__veil stage__veil--loading" hidden>
-            <span class="spinner" aria-hidden="true"></span>
-            <p>正在准备第一帧…</p>
+            <div id="loading" class="stage__veil stage__veil--loading" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <p>正在准备第一帧…</p>
+            </div>
+            <div id="transition" class="stage__veil stage__veil--transition" hidden aria-hidden="true"></div>
           </div>
-          <div id="transition" class="stage__veil stage__veil--transition" hidden aria-hidden="true"></div>
         </div>
 
         <div class="deck-bar">
@@ -181,6 +183,10 @@
               <span class="control__label">下一屏</span><span aria-hidden="true">→</span>
             </button>
 
+            <button id="btn-skip-end" class="control control--skip" type="button" aria-label="跳到本屏结尾（End）" title="跳到本屏结尾，直接看最终画面（End）">
+              <span aria-hidden="true">⇥</span><span class="control__label">跳到最后</span>
+            </button>
+
             <span class="control__sep" aria-hidden="true"></span>
 
             <button id="btn-replay" class="control control--icon" type="button" aria-label="重播这一屏" title="重播这一屏（R 不可用，点击即可）">
@@ -201,16 +207,26 @@
               <span aria-hidden="true">⛶</span>
             </button>
 
-            <div class="clock" aria-hidden="true">
+            <div class="clock" aria-label="当前屏进度">
               <span id="clock-now">0:00</span>
-              <span class="clock__bar"><span id="clock-fill" class="clock__fill"></span></span>
+              <input
+                id="scene-seek"
+                class="seek"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value="0"
+                aria-label="当前屏进度，可拖动"
+                aria-valuetext="0:00 / 0:00"
+              />
               <span id="clock-total">0:00</span>
             </div>
           </div>
         </div>
 
         <p class="deck-hint">
-          键盘：← → 切屏 · 空格 播放/暂停 · C 字幕 · M 配音 · T 讲义 · F 全屏 · Esc 关闭讲义
+          键盘：← → 切屏 · 空格 播放/暂停 · End 跳到本屏结尾 · C 字幕 · M 配音 · T 讲义 · F 全屏 · Esc 关闭讲义
         </p>
       </section>
 

@@ -22,6 +22,8 @@ const deck = {
   index: 0,
   playing: false,
   ended: false,
+  seeking: false,
+  resumeAfterSeek: false,
   reducedMotion: false,
   mode: "screens",
   soundOn: true,
@@ -277,8 +279,8 @@ function renderChapter() {
     data.screens.length,
   ).padStart(2, "0")}`;
 
-  const total = data.screens.length;
-  el.progressFill.style.width = `${((deck.index + 1) / total) * 100}%`;
+  const total = Math.max(0.001, courseDuration());
+  el.progressFill.style.width = `${((data.screens[deck.index]?.start || 0) / total) * 100}%`;
 
   el.prev.disabled = deck.index === 0;
   // The last screen keeps "next" enabled: that click is how the learner reaches
@@ -349,10 +351,31 @@ function updatePlayState() {
 function updateClock() {
   const screen = currentScreen();
   if (!screen) return;
-  const within = clamp(player.time - screen.start, 0, screen.duration);
+  // After "jump to the end" (or a natural end) the bar must read as complete,
+  // even though the player clock stops a frame or two before the range edge.
+  const within = deck.ended
+    ? screen.duration
+    : clamp(player.time - screen.start, 0, screen.duration);
   el.clockNow.textContent = formatClock(within);
   el.clockTotal.textContent = formatClock(screen.duration);
-  el.clockFill.style.width = `${(within / Math.max(0.001, screen.duration)) * 100}%`;
+
+  // The scene scrubber is the one control that can jump through a screen. Its
+  // thumb only moves while the learner is not dragging it.
+  if (!deck.seeking) {
+    el.sceneSeek.max = String(Math.max(0.1, screen.duration));
+    el.sceneSeek.value = String(within);
+  }
+  el.sceneSeek.style.setProperty("--seek-progress", `${(within / Math.max(0.001, screen.duration)) * 100}%`);
+  el.sceneSeek.setAttribute(
+    "aria-valuetext",
+    `${formatClock(within)} / ${formatClock(screen.duration)}`,
+  );
+
+  // Course progress grows continuously inside a screen instead of jumping by
+  // one step per screen: the bar should read like a video timeline.
+  const course = Math.max(0.001, courseDuration());
+  const courseTime = clamp(screen.start + within, 0, course);
+  el.progressFill.style.width = `${(courseTime / course) * 100}%`;
 }
 
 /* --------------------------------------------------------------- navigation */
@@ -428,8 +451,22 @@ function playScreen(index, { autoplay = true } = {}) {
   if (autoplay) {
     player.play();
   }
+  // Coming from the previous screen (or the completion page) must not inherit
+  // its ended state, scrub position or filled course progress.
+  deck.ended = false;
+  deck.seeking = false;
+  deck.resumeAfterSeek = false;
+  el.stageWrap.classList.remove("is-ended");
+  el.sceneSeek.max = String(Math.max(0.1, screen.duration));
+  el.sceneSeek.value = "0";
+  el.sceneSeek.style.setProperty("--seek-progress", "0%");
+  el.sceneSeek.setAttribute(
+    "aria-valuetext",
+    `${formatClock(0)} / ${formatClock(screen.duration)}`,
+  );
   el.clockNow.textContent = "0:00";
   el.clockTotal.textContent = formatClock(screen.duration);
+  el.progressFill.style.width = `${(start / Math.max(0.001, courseDuration())) * 100}%`;
   updatePlayState();
 }
 
@@ -479,6 +516,8 @@ function replay() {
   if (isContinuous()) {
     deck.index = 0;
     deck.ended = false;
+    deck.seeking = false;
+    deck.resumeAfterSeek = false;
     applyRange(0);
     renderChapter();
     showTransition();
@@ -490,10 +529,105 @@ function replay() {
   }
   const { start } = rangeFor(deck.index);
   showTransition();
+  deck.ended = false;
+  deck.seeking = false;
+  deck.resumeAfterSeek = false;
   player.seek(start);
   player.play();
   setBodyState("playing");
   updatePlayState();
+}
+
+function markScreenEnded() {
+  const screen = currentScreen();
+  if (!screen) return;
+  deck.ended = true;
+  deck.seeking = false;
+  renderChapter();
+  rememberScreen(screen.id, true);
+  updatePlayState();
+  el.stageWrap.classList.add("is-ended");
+  el.sceneSeek.value = String(screen.duration);
+  el.sceneSeek.style.setProperty("--seek-progress", "100%");
+  el.sceneSeek.setAttribute(
+    "aria-valuetext",
+    `${formatClock(screen.duration)} / ${formatClock(screen.duration)}`,
+  );
+}
+
+/** Start scrubbing: pause, remember whether to resume, and drop the ended state. */
+function beginScrub() {
+  if (deck.state !== "playing" || deck.seeking) return;
+  deck.seeking = true;
+  deck.resumeAfterSeek = !player.paused;
+  deck.ended = false;
+  player.pause();
+  clearTransition();
+  el.stageWrap.classList.remove("is-ended");
+}
+
+/** Seek the current screen while the learner drags the scene progress bar. */
+function scrubTo(value) {
+  if (deck.state !== "playing") return;
+  const screen = currentScreen();
+  if (!screen) return;
+  if (!deck.seeking) beginScrub();
+  const within = clamp(Number(value) || 0, 0, screen.duration);
+  player.seek(screen.start + within);
+  el.clockNow.textContent = formatClock(within);
+  el.sceneSeek.style.setProperty(
+    "--seek-progress",
+    `${(within / Math.max(0.001, screen.duration)) * 100}%`,
+  );
+  el.sceneSeek.setAttribute(
+    "aria-valuetext",
+    `${formatClock(within)} / ${formatClock(screen.duration)}`,
+  );
+}
+
+/** Release the scrubber: resume if it was playing, or settle on the final frame. */
+function endScrub() {
+  if (!deck.seeking || deck.state !== "playing") return;
+  const screen = currentScreen();
+  if (!screen) return;
+  const within = clamp(Number(el.sceneSeek.value) || 0, 0, screen.duration);
+  const resume = deck.resumeAfterSeek;
+  deck.seeking = false;
+  deck.resumeAfterSeek = false;
+  if (within >= screen.duration - 0.1) {
+    jumpToScreenEnd({ announce: false });
+    return;
+  }
+  deck.ended = false;
+  el.stageWrap.classList.remove("is-ended");
+  if (resume) player.play();
+  updateClock();
+}
+
+/**
+ * Skip the rest of the current screen and show its final frame.
+ *
+ * Works in both playback modes: short courses stay on the current screen until
+ * the learner presses next, while continuous (narrated) courses keep the same
+ * single clock and simply pause on the final frame of the scene.
+ */
+function jumpToScreenEnd({ announce = true } = {}) {
+  if (deck.state !== "playing") return;
+  const { start, end } = rangeFor(deck.index);
+  const target = Math.max(start, end - PLAYBACK_END_SLACK);
+  deck.resumeAfterSeek = false;
+  deck.seeking = false;
+  // Mark the screen ended before seeking: seeking close to the range edge can
+  // make the player emit its own `ended`, and the handler must not treat that
+  // as a second, natural end.
+  deck.ended = true;
+  player.pause();
+  clearTransition();
+  player.seek(target);
+  markScreenEnded();
+  if (announce) {
+    el.announcer.textContent = `已跳到第 ${deck.index + 1} 屏结尾：${currentScreen().title}`;
+  }
 }
 
 function finish() {
@@ -604,6 +738,19 @@ function togglePlay() {
     return;
   }
   if (deck.state === "complete" || deck.state === "error") return;
+  // After a natural end (or after "jump to the end") the play button restarts
+  // this screen; playing the remaining 0 seconds would look broken. Continuous
+  // courses resume the single clock and advance into the next screen.
+  if (deck.ended) {
+    if (isContinuous()) {
+      deck.ended = false;
+      el.stageWrap.classList.remove("is-ended");
+      player.play();
+      return;
+    }
+    replay();
+    return;
+  }
   if (player.paused) player.play();
   else player.pause();
 }
@@ -740,30 +887,36 @@ function wirePlayer() {
   });
 
   player.on("ended", () => {
+    // A stale `ended` can arrive after a seek near the range edge, after a
+    // jump-to-end, or while switching screens. Only accept it when it belongs
+    // to the current screen's own end.
+    if (deck.ended) return;
+    const endedScreen = currentScreen();
+    if (!endedScreen) return;
+    const endedRange = rangeFor(deck.index);
+    if (Math.abs(player.time - endedRange.end) > 0.25) return;
+
     if (isContinuous()) {
       deck.ended = true;
       finish();
       return;
     }
-    const screen = currentScreen();
-    if (!screen) return;
-    deck.ended = true;
-    renderChapter();
-    rememberScreen(screen.id, true);
+    const screen = endedScreen;
+    markScreenEnded();
     if (screen.autoAdvance && deck.index < data.screens.length - 1 && !deck.reducedMotion) {
       setTimeout(() => {
         if (deck.index < data.screens.length - 1) next();
       }, 900);
       return;
     }
-    updatePlayState();
-    el.stageWrap.classList.add("is-ended");
     el.next.focus();
   });
 
   player.on("play", () => {
     el.stageWrap.classList.remove("is-ended");
+    deck.ended = false;
     updatePlayState();
+    updateClock();
   });
 
   player.on("pause", updatePlayState);
@@ -802,6 +955,15 @@ function wireControls() {
   if (el.exit) el.exit.addEventListener("click", exitCourse);
   el.play.addEventListener("click", togglePlay);
   el.replay.addEventListener("click", replay);
+  el.skipEnd.addEventListener("click", () => jumpToScreenEnd());
+  // Scene scrubbing: pointerdown pauses immediately so the frame follows the
+  // thumb; `input` fires for dragging and keyboard arrows, `change` on release.
+  el.sceneSeek.addEventListener("pointerdown", beginScrub);
+  el.sceneSeek.addEventListener("input", () => scrubTo(Number(el.sceneSeek.value)));
+  el.sceneSeek.addEventListener("change", endScrub);
+  el.sceneSeek.addEventListener("pointerup", () => {
+    if (deck.seeking) endScrub();
+  });
   el.transcriptButton.addEventListener("click", openTranscript);
   el.transcriptClose.addEventListener("click", closeTranscript);
   const scrim = $(".drawer__scrim", el.transcriptWrap);
@@ -844,6 +1006,10 @@ function wireControls() {
       case "Spacebar":
         event.preventDefault();
         togglePlay();
+        break;
+      case "End":
+        event.preventDefault();
+        jumpToScreenEnd();
         break;
       case "f":
       case "F":
@@ -933,10 +1099,11 @@ async function boot() {
     progressFill: $("#course-progress-fill"),
     clockNow: $("#clock-now"),
     clockTotal: $("#clock-total"),
-    clockFill: $("#clock-fill"),
+    sceneSeek: $("#scene-seek"),
     exit: $("#btn-exit"),
     prev: $("#btn-prev"),
     next: $("#btn-next"),
+    skipEnd: $("#btn-skip-end"),
     play: $("#btn-play"),
     replay: $("#btn-replay"),
     transcriptButton: $("#btn-transcript"),

@@ -93,6 +93,7 @@
 - `hyperframes check` 还剩 5 条 `line_unread` 警告：个别短句的字幕停留时间低于 check 按逐词朗读估算的下限，按实际语速没有问题；`dead_stretch` 已由每页的旁白进度条消除。
 - 全片 MP4 已用 ffmpeg 校验：1920×1080 / 30fps / H.264 + AAC，21m33.5s，有声音；没有在电视和低端手机上做码率/兼容性实测。
 - 课程导入在 TestClient、真实构建流水线和 Playwright 自检（1440px / 390px、真实点击导入、CSP、同源 Origin）中验证过；没有在 TLS 终止的反向代理后验证同源 Origin，也没有在 Safari / Firefox 上打开过 `/import`。
+- 播放页全视口布局与逐屏进度是 2026-11 这轮改的：浏览器验收范围是 Chromium 下 1920×1080 / 1600×900 / 1366×768 / 390×844，用真实鼠标拖动当前屏进度、跳到最后、`End`、确认播放页无滚动；未验证 Safari / Firefox 和真机触摸。
 
 ---
 

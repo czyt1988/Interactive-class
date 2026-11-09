@@ -84,9 +84,9 @@
 
 ## 当前状态
 
-v0.6：课程模板抽成独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
+v0.7：播放页改成全视口舞台 + 通栏控制条，当前屏进度可拖动，新增「跳到最后」（`End`）；课程模板仍是独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
 
-- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、控制条、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
+- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
 - 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。
 - 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `大纲/AI-Agent-入门课/02-逐页脚本.md` 的 22 个镜头落地，共 22 屏 / 21:42；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。

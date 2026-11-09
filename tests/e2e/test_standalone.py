@@ -227,3 +227,147 @@ def test_exit_control_ends_viewing_and_returns_to_library(page: Page) -> None:
     assert page.evaluate("() => location.pathname") == "/"
     # A fresh document, not the deck mid-play: the cover is showing again.
     assert page.evaluate("() => document.body.dataset.deckState") == "cover"
+
+
+def _start_playing(page: Page) -> None:
+    page.click("#btn-start")
+    page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=25_000)
+    page.wait_for_timeout(250)
+
+
+def _player_state(page: Page) -> dict[str, object]:
+    return page.evaluate(
+        """
+        () => {
+          const player = document.querySelector('#hf-player');
+          const seek = document.querySelector('#scene-seek');
+          return {
+            paused: player.paused,
+            time: player.currentTime,
+            ended: document.querySelector('#stage-wrap').classList.contains('is-ended'),
+            seekMax: Number(seek.max),
+            seekValue: Number(seek.value),
+          };
+        }
+        """
+    )
+
+
+def _drag_seek(page: Page, fraction: float) -> None:
+    box = page.locator("#scene-seek").bounding_box()
+    assert box, "scene seek must be visible while playing"
+    x = box["x"] + box["width"] * fraction
+    y = box["y"] + box["height"] / 2
+    page.mouse.move(box["x"] + 2, y)
+    page.mouse.down()
+    page.mouse.move(x, y, steps=12)
+    page.wait_for_timeout(150)
+    page.mouse.up()
+
+
+def test_scene_scrubber_can_be_dragged_while_paused(page: Page) -> None:
+    _start_playing(page)
+    # Pause first: dragging while paused must paint a frame and stay paused.
+    page.click("#btn-play")
+    page.wait_for_function("() => document.querySelector('#hf-player').paused === true", timeout=10_000)
+
+    _drag_seek(page, 0.6)
+    page.wait_for_timeout(500)
+    state = _player_state(page)
+    assert state["seekMax"] == pytest.approx(2.0, abs=0.1)
+    assert 0.9 <= float(state["time"]) <= 1.6, state
+    assert state["paused"] is True
+    assert state["ended"] is False
+
+    # The same control is keyboard operable: focus it and extend the range.
+    page.focus("#scene-seek")
+    before = _player_state(page)["seekValue"]
+    page.keyboard.press("ArrowRight")
+    page.wait_for_timeout(300)
+    after = _player_state(page)
+    assert after["seekValue"] > before
+    assert after["paused"] is True
+
+
+def test_scene_scrubber_resumes_playback_after_drag(page: Page) -> None:
+    _start_playing(page)
+    _drag_seek(page, 0.5)
+    page.wait_for_timeout(600)
+    state = _player_state(page)
+    # Playback was running before the drag, so releasing the thumb resumes it.
+    assert state["paused"] is False
+    assert float(state["time"]) >= 0.6, state
+
+
+def test_jump_to_end_shows_the_final_frame(page: Page) -> None:
+    _start_playing(page)
+    page.click("#btn-skip-end")
+    page.wait_for_function(
+        "() => document.querySelector('#stage-wrap').classList.contains('is-ended')",
+        timeout=15_000,
+    )
+    page.wait_for_timeout(300)
+    state = _player_state(page)
+    assert state["paused"] is True
+    assert float(state["time"]) >= 1.7, state
+    assert state["seekValue"] == pytest.approx(float(state["seekMax"]), abs=0.1)
+
+    # "Next" still works and the new screen clears the ended state.
+    page.click("#btn-next")
+    page.wait_for_function(
+        "() => document.querySelector('#chapter-title').textContent === '第二屏'", timeout=15_000
+    )
+    page.wait_for_timeout(250)
+    assert _player_state(page)["ended"] is False
+
+
+def test_end_key_jumps_to_the_end_of_the_screen(page: Page) -> None:
+    _start_playing(page)
+    page.keyboard.press("End")
+    page.wait_for_function(
+        "() => document.querySelector('#stage-wrap').classList.contains('is-ended')",
+        timeout=15_000,
+    )
+    state = _player_state(page)
+    assert state["paused"] is True
+    assert float(state["time"]) >= 1.7, state
+
+
+def test_playing_page_fills_the_viewport_without_scrolling(page: Page) -> None:
+    _start_playing(page)
+    layout = page.evaluate(
+        """
+        () => {
+          const rect = (selector) => {
+            const box = document.querySelector(selector).getBoundingClientRect();
+            return { x: box.x, y: box.y, width: box.width, height: box.height, bottom: box.bottom };
+          };
+          return {
+            viewport: { width: innerWidth, height: innerHeight },
+            scrollHeight: document.documentElement.scrollHeight,
+            shell: rect('.deck-shell'),
+            canvas: rect('.stage__canvas'),
+            bar: rect('.deck-bar'),
+            hint: rect('.deck-hint'),
+            seek: rect('#scene-seek'),
+            skip: rect('#btn-skip-end'),
+          };
+        }
+        """
+    )
+    viewport = layout["viewport"]
+    assert layout["scrollHeight"] <= viewport["height"] + 2
+    assert layout["shell"]["width"] == pytest.approx(viewport["width"], abs=1)
+    assert layout["shell"]["height"] == pytest.approx(viewport["height"], abs=1)
+    assert layout["bar"]["width"] == pytest.approx(viewport["width"], abs=1)
+    # The deck bar and the keyboard hint together end at the viewport bottom.
+    assert max(layout["bar"]["bottom"], layout["hint"]["bottom"]) == pytest.approx(
+        viewport["height"], abs=2
+    )
+    assert layout["bar"]["y"] > layout["canvas"]["bottom"]
+    assert layout["canvas"]["width"] <= viewport["width"]
+    assert layout["canvas"]["height"] <= viewport["height"]
+    assert layout["canvas"]["height"] > viewport["height"] * 0.5
+    assert layout["seek"]["width"] > 200
+    assert layout["skip"]["width"] > 0
+

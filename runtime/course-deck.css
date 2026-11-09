@@ -31,7 +31,8 @@ body.deck {
   --deck-ink-wash: rgba(22, 20, 15, 0.05);
 
   margin: 0;
-  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--stage);
   color: var(--stage-ink);
   color-scheme: light;
@@ -114,6 +115,8 @@ a {
   z-index: 1;
   width: min(1440px, 100% - 48px);
   margin-inline: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding-block: clamp(20px, 4vh, 44px) 40px;
 }
 
@@ -365,6 +368,13 @@ a {
     0 30px 64px -48px rgba(22, 20, 15, 0.55);
 }
 
+.stage__canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .stage hyperframes-player {
   display: block;
   width: 100%;
@@ -591,6 +601,10 @@ a {
   margin-inline: 4px;
 }
 
+.control--skip {
+  font-weight: 600;
+}
+
 .clock {
   display: flex;
   align-items: center;
@@ -601,20 +615,82 @@ a {
   color: var(--stage-muted);
 }
 
-.clock__bar {
-  display: block;
-  width: clamp(60px, 9vw, 120px);
-  height: 3px;
-  border-radius: 2px;
-  background: var(--stage-line);
-  overflow: hidden;
+/* Scene scrubber: a thin timeline that grows into a normal range control on
+ * hover/focus. The filled part is driven by --seek-progress from the deck. */
+.seek {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1 1 auto;
+  width: clamp(72px, 9vw, 120px);
+  min-width: 0;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
-.clock__fill {
-  display: block;
-  height: 100%;
-  width: 0;
+.seek::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--deck-accent-ink) 0 var(--seek-progress, 0%),
+    var(--stage-line) var(--seek-progress, 0%) 100%
+  );
+}
+
+.seek::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--stage-line);
+}
+
+.seek::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
   background: var(--deck-accent-ink);
+}
+
+.seek::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border: 2px solid var(--stage-raised);
+  border-radius: 50%;
+  background: var(--deck-accent-ink);
+  opacity: 0;
+  transition: opacity 120ms var(--ease, ease);
+}
+
+.seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--stage-raised);
+  border-radius: 50%;
+  background: var(--deck-accent-ink);
+  opacity: 0;
+  transition: opacity 120ms var(--ease, ease);
+}
+
+.seek:hover::-webkit-slider-thumb,
+.seek:focus-visible::-webkit-slider-thumb,
+.seek:active::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.seek:hover::-moz-range-thumb,
+.seek:focus-visible::-moz-range-thumb,
+.seek:active::-moz-range-thumb {
+  opacity: 1;
+}
+
+.seek:focus-visible {
+  outline: 2px solid var(--deck-accent-ink);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
 }
 
 .deck-hint {
@@ -919,6 +995,151 @@ body.deck-drawer-open {
   color: var(--stage-muted);
 }
 
+/* ------------------------------------------------------ player fills view */
+/* The cover and the completion page are reading surfaces: they keep the
+ * centered 1440px column. While a course plays, the page becomes the player:
+ * the stage takes all height left by the control deck, and the deck spans the
+ * full viewport width with no page scroll. */
+
+body.deck[data-deck-state="playing"],
+body.deck[data-deck-state="loading"] {
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+body.deck[data-deck-state="playing"] .deck-shell,
+body.deck[data-deck-state="loading"] .deck-shell {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.deck[data-deck-state="playing"] .stage-wrap,
+body.deck[data-deck-state="loading"] .stage-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.deck[data-deck-state="playing"] .stage,
+body.deck[data-deck-state="loading"] .stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: auto;
+  margin: 0;
+  padding: clamp(6px, 1.2vh, 16px);
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+body.deck[data-deck-state="playing"] .stage__canvas,
+body.deck[data-deck-state="loading"] .stage__canvas {
+  /* Fill the height while keeping 16:9: whichever dimension is tighter wins.
+   * The cq units need `.stage` as a size container; browsers without them keep
+   * the vh-based fallback. */
+  width: min(100%, calc((100vh - 220px) * 16 / 9));
+  width: min(100%, calc((100dvh - 220px) * 16 / 9));
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+  border-radius: var(--radius-stage);
+  box-shadow:
+    0 0 0 1px var(--stage-line-strong),
+    0 24px 60px -40px rgba(22, 20, 15, 0.55);
+}
+
+body.deck[data-deck-state="playing"] .deck-bar,
+body.deck[data-deck-state="loading"] .deck-bar {
+  width: 100%;
+  border-radius: 0;
+  border-inline: 0;
+  border-bottom: 0;
+  padding: 10px clamp(14px, 2.4vw, 36px) 12px;
+  gap: 8px;
+  box-shadow: none;
+}
+
+body.deck[data-deck-state="playing"] .chapter,
+body.deck[data-deck-state="loading"] .chapter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 14px;
+  row-gap: 2px;
+}
+
+body.deck[data-deck-state="playing"] .chapter__counter,
+body.deck[data-deck-state="loading"] .chapter__counter,
+body.deck[data-deck-state="playing"] .chapter__kicker,
+body.deck[data-deck-state="loading"] .chapter__kicker {
+  margin: 0;
+}
+
+body.deck[data-deck-state="playing"] .chapter__title,
+body.deck[data-deck-state="loading"] .chapter__title {
+  font-size: clamp(17px, 1.5vw, 21px);
+  margin: 0;
+}
+
+body.deck[data-deck-state="playing"] .chapter__summary,
+body.deck[data-deck-state="loading"] .chapter__summary {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.deck[data-deck-state="playing"] .clock,
+body.deck[data-deck-state="loading"] .clock {
+  flex: 1 1 260px;
+  min-width: 200px;
+}
+
+body.deck[data-deck-state="playing"] .deck-hint,
+body.deck[data-deck-state="loading"] .deck-hint {
+  padding: 0 clamp(14px, 2.4vw, 36px) 6px;
+}
+
+body.deck[data-deck-state="playing"] .stage-wrap:fullscreen,
+body.deck[data-deck-state="loading"] .stage-wrap:fullscreen {
+  background: var(--stage);
+}
+
+/* Completion and error are reading surfaces too: keep them vertically
+ * centered in the viewport instead of leaving the whole height blank below. */
+body.deck[data-deck-state="complete"] .deck-shell,
+body.deck[data-deck-state="error"] .deck-shell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Extra-short viewports: drop the secondary copy so the picture keeps the room. */
+@media (max-height: 760px) {
+  body.deck[data-deck-state="playing"] .chapter__summary,
+  body.deck[data-deck-state="loading"] .chapter__summary,
+  body.deck[data-deck-state="playing"] .deck-hint,
+  body.deck[data-deck-state="loading"] .deck-hint {
+    display: none;
+  }
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 1080px) {
@@ -952,6 +1173,11 @@ body.deck-drawer-open {
 
   /* Leaving the course must stay legible as a labelled action on touch. */
   .control--exit .control__label {
+    display: inline;
+  }
+
+  /* The skip-to-end control is the answer to "I only want the final frame". */
+  .control--skip .control__label {
     display: inline;
   }
 
