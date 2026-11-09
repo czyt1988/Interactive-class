@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}后台设置 · {{ site.title }}{% endblock %}
+{% block description %}查看课程、生成课程视频并下载。视频保存在服务器上，不进入 Git。{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/static/admin.css" />
+{% endblock %}
+
+{% block content %}
+<section class="page-head page-head--narrow">
+  <p class="eyebrow">后台</p>
+  <h1>课程视频</h1>
+  <p class="lede">视频按需在服务器上生成，保存在本机数据目录里，不进入 Git。每门课一条，生成完成即可下载。</p>
+  <dl class="page-head__stats">
+    <div><dt>课程</dt><dd>{{ rows|length }} 门</dd></div>
+    <div><dt>已生成</dt><dd>{{ generated_count }} 门</dd></div>
+    <div><dt>生成环境</dt><dd>{{ '就绪' if environment.ready else '未就绪' }}</dd></div>
+  </dl>
+</section>
+
+{% if not admin_protected %}
+  <div class="admin-notice admin-notice--warn" role="note">
+    <p>后台没有设置访问密码。能打开这个页面的人都能触发视频生成和下载。部署到公网前，请在 <code>.env</code> 里设置 <code>ADMIN_TOKEN</code>。</p>
+  </div>
+{% endif %}
+
+{% if notice %}
+  <div class="admin-notice" role="status">
+    <p>{{ notice }}</p>
+  </div>
+{% endif %}
+
+<section class="admin-env" aria-labelledby="admin-env-title">
+  <div class="admin-env__head">
+    <h2 id="admin-env-title">生成环境</h2>
+    <p class="admin-env__quality">渲染质量：{{ environment.quality_label }}</p>
+  </div>
+  <dl class="admin-env__checks">
+    {% for check in environment.checks %}
+      <div class="admin-env__check">
+        <dt>{{ check.label }}</dt>
+        <dd class="{% if check.ok %}is-ok{% else %}is-missing{% endif %}">
+          <span class="admin-env__mark" aria-hidden="true">{{ '✓' if check.ok else '×' }}</span>
+          {{ check.detail }}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+  <p class="admin-env__meta{% if not environment.output_writable %} is-missing{% endif %}">视频目录：{{ environment.output_label }}{% if environment.output_writable %}（可写）{% else %}（不可写，检查 VIDEO_OUTPUT_DIR 的权限）{% endif %}</p>
+  {% if not environment.ready %}
+    <p class="admin-env__hint">补齐缺的依赖后刷新本页。安装步骤见 README 的「在线生成课程视频」一节。</p>
+  {% endif %}
+</section>
+
+<section class="admin-list" aria-labelledby="admin-list-title" data-admin-list data-admin-busy="{{ 'true' if busy else 'false' }}">
+  <h2 id="admin-list-title">课程列表</h2>
+
+  {% for row in rows %}
+    <article class="admin-course" data-admin-course="{{ row.slug }}" data-admin-state="{{ row.status }}">
+      <div class="admin-course__main">
+        <p class="admin-course__kicker">{{ row.slug }}</p>
+        <h3 class="admin-course__title">{{ row.title }}</h3>
+        <p class="admin-course__meta">{{ row.screen_count }} 屏，{{ row.duration_label }}</p>
+        {% if row.note %}<p class="admin-course__note">{{ row.note }}</p>{% endif %}
+      </div>
+      <div class="admin-course__side">
+        <p class="admin-course__status admin-course__status--{{ row.status }}" role="status" data-admin-status>{{ row.status_label }}{% if row.elapsed_label %}，{{ row.elapsed_label }}{% endif %}</p>
+        {% if row.size_label and row.generated_label %}
+          <p class="admin-course__file">{{ row.size_label }}，{{ row.generated_label }}</p>
+        {% endif %}
+        <div class="admin-course__actions">
+          <form method="post" action="{{ row.render_url }}">
+            <button class="button button--primary" type="submit" data-admin-generate {% if not row.can_generate %}disabled{% endif %}>{{ row.render_label }}</button>
+          </form>
+          {% if row.can_download %}
+            <a class="button button--ghost" href="{{ row.download_url }}">下载视频</a>
+          {% endif %}
+        </div>
+        {% if row.reason %}<p class="admin-course__hint">{{ row.reason }}</p>{% endif %}
+      </div>
+    </article>
+  {% endfor %}
+</section>
+
+<p class="admin-footnote">不开启 JavaScript 也能用：点「生成视频」提交后刷新页面查看状态。</p>
+<script src="/static/admin.js" defer></script>
+{% endblock %}

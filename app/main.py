@@ -29,6 +29,9 @@ from app.api.progress import router as progress_api_router
 from app.catalog.loader import CatalogLoader
 from app.config import Settings, get_settings
 from app.db import create_db_engine, create_session_factory
+from app.formatting import format_duration
+from app.videos.manager import RenderManager
+from app.web.admin import router as admin_router
 from app.web.routes import LEVEL_LABELS, SITE_DESCRIPTION
 from app.web.routes import router as web_router
 
@@ -84,16 +87,6 @@ def register_mime_types() -> None:
 register_mime_types()
 
 
-def format_duration(seconds: float) -> str:
-    total = max(1, round(seconds))
-    minutes, rest = divmod(total, 60)
-    if minutes == 0:
-        return f"{rest} 秒"
-    if rest == 0:
-        return f"{minutes} 分钟"
-    return f"{minutes} 分 {rest} 秒"
-
-
 def level_label(level: str) -> str:
     return LEVEL_LABELS.get(level, level)
 
@@ -124,7 +117,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             catalog.stats.published,
             catalog.stats.invalid,
         )
-        yield
+        # A previous process may have died mid-render; mark it interrupted so
+        # the admin page never shows a stale "generating" row forever.
+        app.state.video_manager.reconcile()
+        try:
+            yield
+        finally:
+            app.state.video_manager.close()
 
     app = FastAPI(
         title=active.site_title,
@@ -140,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         active.courses_dist_dir,
         verify_bundles=bool(active.verify_course_bundles),
     )
+    app.state.video_manager = RenderManager(active)
     app.state.engine = create_db_engine(active.database_url)
     app.state.session_factory = create_session_factory(app.state.engine)
     app.state.build_info = {}
@@ -236,6 +236,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse({"status": "ok", "db": {"ok": True, "schemaVersion": version}})
 
     app.include_router(web_router)
+    app.include_router(admin_router)
     app.include_router(courses_api_router)
     app.include_router(progress_api_router)
 

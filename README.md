@@ -4,7 +4,7 @@
 
 AI Learning 是一个用网页动画讲 AI 的教学网站。每一屏只讲一个概念；短课点一下进入下一屏，长视频课程会随旁白自动接续。一门课是一串可以直接在浏览器里播放的动画，而不是一段被锁在播放器里的视频。
 
-当前状态：**v0.4，平台骨架可用，第一门长视频课程已按新版脚本重做**。站点、课程契约、构建流水线、课程外壳、匿名进度和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 22 屏 / 21:42，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以直接导出 MP4。CI 与部署还没做。
+当前状态：**v0.5，平台骨架可用，第一门长视频课程已按新版脚本重做，后台可按需生成课程视频**。站点、课程契约、构建流水线、课程外壳、匿名进度、后台设置页和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 22 屏 / 21:42，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
 
 ## 为什么要做
 
@@ -96,8 +96,8 @@ AI 教学常见两种形态：长视频和图文。
 - **动画**：HyperFrames composition。一门课一个工程，一屏一个 scene，浏览器里由 `<hyperframes-player>` 播放。
 - **构建**：Python 构建脚本。校验课程契约，解析每屏的时间范围，生成课程页面，打包运行时，输出到 `dist/`。
 - **数据**：课程内容仍然放在文件里，用 Git 管理；用户、会话和学习进度放在 SQLite，迁移用 Alembic。课程包不依赖数据库也能完整播放，数据库是站点侧的能力。
-- **视频**：不是运行时输出。长视频课程的同一份 composition 可以导出带旁白和烧录字幕的 MP4（附属产物），其他课程需要时也可以导出静帧或短片。
-- **Node**：只出现在课程创作和 HyperFrames 校验阶段，不出现在生产运行时。
+- **视频**：不是运行时输出，也不进仓库。后台设置页可以在服务器上按需调用 HyperFrames CLI，把同一份 composition 渲染成带旁白和烧录字幕的 MP4，产物留在 `data/videos/`，可删除、可重建。
+- **Node**：生产站点页面不依赖 Node；只有后台生成视频时才调用服务器上的 HyperFrames CLI。
 
 站点和课程的关系：
 
@@ -147,12 +147,15 @@ ai-learning/
 │  ├─ auth/sessions.py           # 匿名会话、HttpOnly Cookie
 │  ├─ repositories/progress.py   # 进度读写
 │  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载
+│  ├─ videos/                    # 后台视频渲染：工具链发现、进程渲染、任务与产物
 │  ├─ api/                       # /api/courses、/api/progress、/api/health
 │  ├─ web/routes.py              # 首页、课程库、关于、sitemap
-│  ├─ templates/                 # Jinja2 模板（含课程卡片局部模板）
-│  └─ static/                    # 站点 CSS、字体、favicon
+│  ├─ web/admin.py               # 后台设置、视频生成/下载、状态轮询
+│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页与登录页）
+│  └─ static/                    # 站点 CSS、字体、favicon、后台脚本
 ├─ migrations/                   # Alembic 迁移（0001_initial）
-├─ data/                         # SQLite 文件，不提交
+├─ data/                         # SQLite 文件与后台生成的视频，不提交
+│  └─ videos/                    # 在线生成的 MP4 与元数据
 ├─ runtime/                      # 课程外壳运行时（所有课程共用）
 │  ├─ shell.html.j2              # 课程页面模板
 │  ├─ course-deck.js             # 播放器适配层 + 状态机
@@ -233,6 +236,50 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 
 > 在 Windows 上用 `python -m http.server` 打开课程包时，`.js` 可能被注册表映射成 `text/plain`，浏览器会拒绝执行 ES module。用 `scripts/serve.py` 验收，它固定了课程包需要的 MIME 类型。
 
+## 在线生成课程视频
+
+视频不提交进 Git：项目部署到服务器后，打开 `/admin`（页脚也有「后台设置」入口），即可看到课程列表、每门课的屏数和视频状态。点「生成视频」，服务器会用构建产物里同一份 composition 渲染 MP4；完成后点「下载视频」。页面不需要额外的前端构建。
+
+生成发生在服务器上，工作方式如下：
+
+1. 后台把 `dist/courses/<slug>/composition/` 复制到临时工作目录，不污染 `dist/`。
+2. 调用固定版本的 HyperFrames CLI 渲染，质量档默认 `looks`。
+3. 视频和元数据写到 `data/videos/`（`<slug>.mp4` 和 `<slug>.json`），失败时保留 `<slug>.render.log`。
+4. 同一时间只跑一个任务；服务重启后不会续跑，遗留任务标记为中断。
+
+### 服务器前提
+
+站点页面本身仍然只依赖 Python。只有在线生成视频需要下面这些，装在跑站点的机器上：
+
+| 依赖 | 用途 | 安装方式 |
+| --- | --- | --- |
+| Node.js 22+ | 运行 HyperFrames CLI | 发行版包管理器或 [nodejs.org](https://nodejs.org) |
+| HyperFrames 0.9.19 | 浏览器帧捕捉与 MP4 编码 | 在 `tools/` 里 `npm install`（后台会自动发现），或 `npx --yes hyperframes@0.9.19`（首次需要网络），或用 `VIDEO_HYPERFRAMES_CLI` 指向 `hyperframes.mjs` |
+| Chromium | 渲染 composition | `npx hyperframes browser ensure` |
+| FFmpeg / FFprobe | 编码与探测 | 加入 `PATH`，或设置 `VIDEO_FFMPEG_DIR`；仓库本地的 `tools/ffmpeg/bin` 会被自动发现 |
+
+后台页面顶部的「生成环境」会逐项列出 Node.js、HyperFrames、FFmpeg、FFprobe 是否找到；缺什么就按提示补什么。
+
+### 配置
+
+| 变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `ADMIN_TOKEN` | 空 | 后台管理密码。**部署到公网前必须设置**；留空时后台不设防 |
+| `VIDEO_OUTPUT_DIR` | `data/videos` | 视频与元数据目录，不进 Git |
+| `VIDEO_WORK_DIR` | `data/videos/.work` | 渲染临时目录 |
+| `VIDEO_QUALITY` | `looks` | `draft` / `looks` / `delivery` |
+| `VIDEO_RENDER_TIMEOUT_SECONDS` | `7200` | 单次渲染超时 |
+| `VIDEO_HYPERFRAMES_CLI` | 空 | 自定义 HyperFrames CLI 路径 |
+| `VIDEO_HYPERFRAMES_VERSION` | `0.9.19` | npx 兜底时使用的版本 |
+| `VIDEO_NODE_BIN` / `VIDEO_NPX_BIN` | `node` / `npx` | Node 与 npx 路径 |
+| `VIDEO_FFMPEG_DIR` | 空 | 存放 `ffmpeg` / `ffprobe` 的目录 |
+
+### 安全与容量
+
+- 后台默认没有密码，只适合本机或内网。公网部署请设置 `ADMIN_TOKEN`，并最好再套一层反向代理的访问控制。
+- 渲染是重活：一次 20 分钟课程在本机可能跑几十分钟，并占用 Chrome 和 FFmpeg 的 CPU。同一时间只跑一个任务。
+- `data/videos/` 会随视频数量增长。视频可随时删除，删掉后重新生成即可；它不参与构建，也不影响网页播放。
+
 ## 添加一门课程
 
 目标：只动 `courses/<slug>/`，不改站点代码。
@@ -254,8 +301,10 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 ## 项目状态
 
 - **v0.1**：README、架构设计、课程契约、Agent 开发方案。
-- **v0.2（当前）**：FastAPI 站点、课程契约与解析器、构建流水线、SQLite + Alembic 匿名进度、课程外壳（封面/切屏/控制条/讲义/完成页/错误页）、第一门课「AI 第一次看懂世界」、Playwright 独立部署验收。
+- **v0.2**：FastAPI 站点、课程契约与解析器、构建流水线、SQLite + Alembic 匿名进度、课程外壳（封面/切屏/控制条/讲义/完成页/错误页）、第一门课「AI 第一次看懂世界」、Playwright 独立部署验收。
 - **v0.3**：CI（契约/外部资源/独立部署）、Docker 与部署、课程脚手架脚本、更多系列课程。
+- **v0.4**：长视频课程按新版导演脚本重做，22 屏 / 21:42，旁白驱动、连续播放。
+- **v0.5（当前）**：后台设置页 `/admin`，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
 - **v1.0**：课程库规模化、质量门、账号与跨设备进度。
 
 没有日期承诺。先把结构做对，再往上加课程。

@@ -1,0 +1,332 @@
+/* Admin settings page. Same paper system as the rest of the site: this is a
+ * registration ledger, not a dashboard. Only design tokens may be used here. */
+
+.site-footer__admin {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.site-footer__admin::before {
+  content: "·";
+  margin-inline: 8px;
+  color: var(--ink-faint);
+}
+
+.site-footer__admin:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.admin-notice {
+  margin-bottom: 28px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius-mini);
+  background: var(--paper-raised);
+}
+
+.admin-notice p {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.admin-notice--warn {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--paper-raised));
+}
+
+.admin-env {
+  margin-bottom: clamp(32px, 5vw, 56px);
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--paper-raised);
+}
+
+.admin-env__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-bottom: 22px;
+}
+
+.admin-env h2 {
+  font-size: clamp(20px, 2.2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.admin-env__quality {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.admin-env__checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px 28px;
+  margin: 0;
+}
+
+.admin-env__check dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.admin-env__check dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.admin-env__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-inline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.admin-env__check dd.is-ok .admin-env__mark {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.admin-env__check dd.is-missing .admin-env__mark {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.admin-env__meta {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.admin-env__meta.is-missing {
+  color: var(--accent-text);
+}
+
+.admin-env__hint {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--accent-text);
+}
+
+.admin-list h2 {
+  margin-bottom: 8px;
+  font-size: clamp(24px, 2.8vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.admin-course {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: start;
+  padding-block: 26px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-course:last-of-type {
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-course__kicker {
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.admin-course__title {
+  font-size: clamp(20px, 2.2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.admin-course__meta {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.admin-course__note {
+  margin-top: 8px;
+  max-width: 42em;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.admin-course[data-admin-state="failed"] .admin-course__note,
+.admin-course[data-admin-state="ready"] .admin-course__note {
+  color: var(--accent-text);
+}
+
+.admin-course__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 250px;
+  text-align: right;
+}
+
+.admin-course__status {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-course__status--missing {
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.admin-course__status--running,
+.admin-course__status--failed {
+  color: var(--accent-text);
+}
+
+.admin-course__file {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+.admin-course__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.admin-course__actions form {
+  margin: 0;
+}
+
+.admin-course__actions .button {
+  min-height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+.admin-course__actions .button:disabled {
+  opacity: 0.5;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.admin-course__hint {
+  max-width: 30em;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.admin-footnote {
+  margin-top: clamp(24px, 4vw, 40px);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.admin-login {
+  max-width: 34em;
+  padding-block: clamp(64px, 10vw, 140px) clamp(48px, 8vw, 96px);
+}
+
+.admin-login h1 {
+  margin-bottom: 16px;
+  font-size: clamp(36px, 5vw, 56px);
+  letter-spacing: -0.04em;
+}
+
+.admin-login .lede {
+  margin-bottom: 28px;
+}
+
+.admin-login__form {
+  display: grid;
+  gap: 14px;
+  max-width: 26em;
+}
+
+.admin-login__form label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.admin-login__form input {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-mini);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font: inherit;
+}
+
+.admin-login__form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.admin-login__form .button {
+  justify-self: start;
+}
+
+@media (max-width: 680px) {
+  .site-footer__admin::before {
+    content: none;
+  }
+
+  .admin-env__checks {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-course {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .admin-course__side {
+    align-items: flex-start;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .admin-course__actions {
+    justify-content: flex-start;
+  }
+
+  .admin-course__hint {
+    max-width: none;
+  }
+}

@@ -13,6 +13,7 @@
 
 - 课程必须能作为独立静态包部署；没有 API、数据库或登录态也能完整播放。
 - 主链路不输出 MP4，不使用 SPA 框架。
+- 视频仍不是主链路；后台设置页可以按需生成课程视频，产物留在服务器 `data/videos/`，不进 Git、不进构建产物。
 - 课程内容放在文件里；用户、会话和进度放在 SQLite。数据库属于站点，不属于课程包。
 - 运行时不引用 CDN；player、runtime、GSAP、字体全部本地。
 - 一门课一个 HyperFrames composition，一屏一个 scene。
@@ -78,9 +79,10 @@
 
 ## 当前状态
 
-v0.4：第一门长视频课程按新版导演脚本（22 镜头）重做，整门课浅色纸面，可连续播放，也可导出 MP4。
+v0.5：新增后台设置页，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
 
 - 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、控制条、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
+- 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `大纲/AI-Agent-入门课/02-逐页脚本.md` 的 22 个镜头落地，共 22 屏 / 21:42；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
 - 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程控制条第一个按钮是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。

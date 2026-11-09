@@ -26,7 +26,7 @@ SITE_DESCRIPTION = (
 )
 
 
-def _site(settings: Settings) -> dict[str, str]:
+def site_context(settings: Settings) -> dict[str, str]:
     return {
         "title": settings.site_title,
         "url": settings.site_url.rstrip("/"),
@@ -58,7 +58,7 @@ def _render(
         request=request,
         name=template,
         context={
-            "site": _site(settings),
+            "site": site_context(settings),
             "canonical": canonical,
             "page": page,
             "levels": LEVELS,
@@ -157,4 +157,9 @@ def sitemap(request: Request) -> Response:
 def robots(request: Request) -> PlainTextResponse:
     settings: Settings = request.app.state.settings
     base = settings.site_url.rstrip("/")
-    return PlainTextResponse(f"User-agent: *\nAllow: /\nSitemap: {base}/sitemap.xml\n")
+    return PlainTextResponse(
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )

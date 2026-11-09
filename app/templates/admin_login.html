@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}后台设置 · {{ site.title }}{% endblock %}
+{% block description %}输入管理密码进入后台设置。{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/static/admin.css" />
+{% endblock %}
+
+{% block content %}
+<section class="admin-login">
+  <p class="eyebrow">后台</p>
+  <h1>输入管理密码</h1>
+  <p class="lede">这个页面只给课程维护者使用。密码来自服务器上的 <code>ADMIN_TOKEN</code>。</p>
+  {% if error %}
+    <p class="admin-notice admin-notice--warn" role="alert">{{ error }}</p>
+  {% endif %}
+  <form class="admin-login__form" method="post" action="/admin/login">
+    <label for="admin-token">管理密码</label>
+    <input id="admin-token" name="token" type="password" autocomplete="current-password" required />
+    <button class="button button--primary" type="submit">进入后台</button>
+  </form>
+</section>
+{% endblock %}

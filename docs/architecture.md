@@ -11,6 +11,7 @@
 - 构建期合并 `course.json` 和 composition 时间；Web 进程只读 `dist/` 里的解析后清单。
 - 课程内容用文件，用户/会话/进度用 SQLite；课程包不依赖数据库也能播放。
 - 没有 SPA、没有 MP4 主链路、没有运行时 CDN。
+- MP4 仍不是主链路；后台设置页可以按需渲染并下载视频，产物留在服务器的 `data/videos/`，不进 Git、不进构建产物。
 - 手机竖屏以讲义阅读为主，不承诺完整 16:9 动画体验。
 
 下面的章节解释这些决定、边界和代价。
@@ -98,6 +99,7 @@
 | D11 | 长视频课程以旁白为时钟：一个 S 一页、旁白音频驱动时间、底部旁白条烧进画面、`playback: "continuous"` 整条根时间轴当视频播 | 用户要把课程直接导出成视频；按页拆分会把连续叙事切成碎片。旁白同时是字幕和时长依据，导出 MP4 时字幕与声音都在画面里 | 时间由生成脚本决定，作者不能手改；每页要比短课长（30–80 秒），一页讲完一个 S | 大纲改成短课拆分，或播放器/渲染器不再支持连续播放 |
 | D12 | 长视频课程统一浅色纸面；四幕只换强调色，「黑屋」等比喻用暖灯、墨色剪影和牛皮纸笔记本画在纸面上（仅 `playback: "continuous"` + `audio: true` 的课程） | 用户明确要求整门课不要深色背景：上一版深墨/黑屋页与前后浅色页割裂。叙事靠道具、光影和运动表达，不靠页面底色；D12 取代原「纸面/深墨/黑屋三种底色」方案 | 少了一种用底色切换幕的强标记，需要靠编号、强调色和道具维持节奏 | 用户要求恢复深色叙事场景，或大纲改版 |
 | D13 | 旁白课程的播放器提供暂停、字幕开关、配音开关，偏好存 localStorage | 用户要求能停、能取消字幕、能取消配音。字幕开关隐藏画面底部旁白条，不打断时间轴；配音开关静音但不暂停时间轴。根 composition 通过 HyperFrames 的父级 control 消息接收字幕偏好 | 多两个控制条按钮和一条消息通道；偏好只在本机保存 | 播放器契约变化，或需要账号级偏好同步 |
+| D14 | MP4 不是主链路，但后台设置页可以在服务器上按需渲染课程视频：从 `dist/courses/<slug>/composition/` 复制到临时工作目录，调用固定版本 HyperFrames CLI，输出到 `data/videos/`，同一时间只跑一个任务 | 用户不想把视频提交进 Git，也不希望部署产物内置视频；按需生成让视频只存在于服务器数据目录，可重建、可删除。渲染源用构建产物，和网页播放的是同一份 composition | 生产机需要 Node、Chromium、FFmpeg 等创作期依赖；一次渲染耗时接近视频时长；后台写接口需要访问控制（`ADMIN_TOKEN`） | 视频成为主要分发形态，或需要多机并发渲染（改为独立渲染服务/任务队列） |
 
 ### 3.1 三个需要展开的决定
 
@@ -413,7 +415,7 @@ dist/courses/<slug>/
 └─ LICENSES/
 ```
 
-不进入产物的东西：`node_modules/`、`.hyperframes/`、`renders/`、`*.mp4`、`STORYBOARD.md`、`package.json`、`hyperframes.json`、`shell.html.j2`、开发脚本、源地图、编辑器配置。产物只保留运行所需文件，避免把课程包变成垃圾桶。
+不进入产物的东西：`node_modules/`、`.hyperframes/`、`renders/`、`*.mp4`、`STORYBOARD.md`、`package.json`、`hyperframes.json`、`shell.html.j2`、开发脚本、源地图、编辑器配置。产物只保留运行所需文件，避免把课程包变成垃圾桶。后台按需生成的视频同样不进产物，见 7.11。
 
 ### 6.4 一屏一个 scene 的约定
 
@@ -577,6 +579,11 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 | GET | `/courses/` | 重定向到 `/courses`，避免和静态目录冲突 |
 | GET | `/about` | 方法论、课程制作方式、致谢 |
 | GET | `/courses/<slug>/` | 静态课程页（由 `StaticFiles(html=True)` 提供） |
+| GET | `/admin` | 后台设置：课程列表、视频状态、生成/下载入口 |
+| POST | `/admin/login` | 校验 `ADMIN_TOKEN`，写后台会话 Cookie（未配置密码时不启用） |
+| POST | `/admin/videos/<slug>/render` | 在服务器上开始渲染该课程视频（单任务） |
+| GET | `/admin/videos/<slug>/download` | 下载已生成的课程视频 |
+| GET | `/admin/status` | 后台轮询用的视频状态 JSON |
 | GET | `/api/courses` | 已发布课程摘要列表 |
 | GET | `/api/courses/<slug>` | 单门课的解析后清单 |
 | GET | `/healthz` | 进程健康检查 |
@@ -618,6 +625,15 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 | `INCLUDE_DRAFTS` | `dev` 为 1，`prod` 为 0 | 是否在站点显示构建进去的草稿 |
 | `VERIFY_COURSE_BUNDLES` | `1` | 是否检查本地课程包文件；分离部署设为 `0` |
 | `SESSION_COOKIE_SECURE` | `prod` 为 1，`dev` 为 0 | 会话 Cookie 是否只走 HTTPS |
+| `ADMIN_TOKEN` | 空（不设防） | 后台管理密码；设置后 `/admin` 及其写接口要求登录 |
+| `VIDEO_OUTPUT_DIR` | `data/videos` | 在线生成的视频和元数据目录 |
+| `VIDEO_WORK_DIR` | `data/videos/.work` | 渲染临时工作目录（复制 composition、日志） |
+| `VIDEO_QUALITY` | `looks` | HyperFrames 渲染质量：`draft` / `looks` / `delivery` |
+| `VIDEO_RENDER_TIMEOUT_SECONDS` | `7200` | 单次渲染超时，防止进程永久占用 |
+| `VIDEO_HYPERFRAMES_CLI` | 空（自动发现） | `hyperframes.mjs` 的路径；空时依次尝试仓库 `tools/`、PATH、npx |
+| `VIDEO_HYPERFRAMES_VERSION` | `0.9.19` | npx 兜底时固定使用的版本 |
+| `VIDEO_NODE_BIN` / `VIDEO_NPX_BIN` | `node` / `npx` | Node 与 npx 可执行文件 |
+| `VIDEO_FFMPEG_DIR` | 空（自动发现） | 存放 `ffmpeg` / `ffprobe` 的目录；空时依次尝试仓库 `tools/ffmpeg/bin` 和 PATH |
 
 配置用 `pydantic-settings`，从环境变量和 `.env` 读取。不要在生产环境读取仓库相对路径以外的用户输入。
 
@@ -727,6 +743,20 @@ SQLite 的限制也要写清楚：
 - 恢复演练：把备份复制到临时目录，跑一次 `alembic current` 和关键查询。
 - `data/` 不进 Git；Docker 用 volume；文件权限只给运行用户。
 - `/healthz` 只检查进程；`/readyz` 检查数据库连接和 schema version；`/api/health` 返回目录、DB、迁移版本。
+
+### 7.11 在线视频生成（后台）
+
+主链路不变：网页仍是课程主形态，MP4 只是后台按需导出的附属产物。
+
+- **入口。** `/admin` 后台设置页列出全部课程、屏数、时长、视频是否已生成，以及生成和下载按钮。页脚有一个「后台设置」文字入口。
+- **渲染源。** `dist/courses/<slug>/composition/`，也就是站点播放的同一份构建产物。Web 进程仍然不读 `courses/` 源，也不需要创作期的 `package.json` 或 `hyperframes.json`。
+- **渲染器。** 固定版本 HyperFrames CLI。发现顺序：`VIDEO_HYPERFRAMES_CLI` → 仓库内 `tools/node_modules/hyperframes/bin/hyperframes.mjs` → PATH 上的 `hyperframes` → `npx --yes hyperframes@<版本>`。需要 Node 22+、Chromium（`npx hyperframes browser ensure`）和 FFmpeg/FFprobe。
+- **任务模型。** 进程内单任务：同一时间只渲染一个视频，重复请求返回「已有视频正在生成」。渲染前把 composition 复制到 `VIDEO_WORK_DIR` 下的临时目录，避免污染 `dist/`（它可能是只读挂载）并隔离并发；结束后清理工作目录。
+- **产物。** `data/videos/<slug>.mp4` 与元数据 `data/videos/<slug>.json`（生成时间、大小、时长、质量档、内容哈希、上次尝试结果）。失败时保留 `data/videos/<slug>.render.log` 供运维排查，页面只给可执行的说明。`data/` 不进 Git，视频不进构建产物。
+- **一致性。** 元数据记录构建时的 `course.build.contentHash`；课程重新构建后，页面提示「课程已更新」并允许重新生成。生成失败不会删掉上一版视频，仍可下载旧版本。
+- **重启与超时。** 启动时把遗留的 `running` 记录标记为中断并清理工作目录，不自动续跑。渲染超过 `VIDEO_RENDER_TIMEOUT_SECONDS`（默认 2 小时）会被终止。
+- **访问控制。** 默认无鉴权，只适合本机或内网。设置 `ADMIN_TOKEN` 后，`/admin` 与生成、下载、状态接口都要求后台 Cookie 或 `X-Admin-Token`；渲染 POST 还检查同源 `Origin`，避免任意站点触发重任务。生产环境应同时放在反向代理的访问控制之后。
+- **分离部署。** `VERIFY_COURSE_BUNDLES=0` 时本机没有课程包，后台只显示课程、不提供生成；这是预期行为，视频应在那台持有课程包和渲染环境的机器上生成。
 
 ---
 

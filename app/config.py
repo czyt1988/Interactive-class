@@ -43,10 +43,59 @@ class Settings(BaseSettings):
     session_cookie_days: int = 180
     progress_max_body_bytes: int = 4096
 
-    @field_validator("courses_src_dir", "courses_dist_dir", "runtime_dir", "design_dir")
+    # Admin page and on-demand video rendering. The site still serves courses
+    # without any of this; rendering only runs when someone asks for it.
+    admin_token: str | None = None
+    video_output_dir: Path = Field(default=BASE_DIR / "data" / "videos")
+    video_work_dir: Path = Field(default=BASE_DIR / "data" / "videos" / ".work")
+    video_quality: Literal["draft", "looks", "delivery"] = "looks"
+    video_render_timeout_seconds: int = Field(default=7200, ge=60, le=86400)
+    video_hyperframes_cli: Path | None = None
+    video_hyperframes_version: str = Field(default="0.9.19", pattern=r"^\d+\.\d+\.\d+$")
+    video_node_bin: str = "node"
+    video_npx_bin: str = "npx"
+    video_ffmpeg_dir: Path | None = None
+
+    # Course import page (authoring convenience, dev-only by default). Importing
+    # copies an external course folder into ``courses/``, builds it and records
+    # provenance in SQLite; the catalog still reads only ``dist/``.
+    courses_inbox_dir: Path = Field(default=BASE_DIR / "course-inbox")
+    course_import_enabled: bool | None = None
+
+    @field_validator(
+        "courses_src_dir",
+        "courses_dist_dir",
+        "runtime_dir",
+        "design_dir",
+        "video_output_dir",
+        "video_work_dir",
+        "courses_inbox_dir",
+    )
     @classmethod
     def _absolute_path(cls, value: Path) -> Path:
         return value if value.is_absolute() else (BASE_DIR / value).resolve()
+
+    @field_validator("video_hyperframes_cli", "video_ffmpeg_dir", mode="before")
+    @classmethod
+    def _optional_path(cls, value: object) -> Path | None:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        if isinstance(value, Path):
+            return value if value.is_absolute() else (BASE_DIR / value).resolve()
+        if isinstance(value, str):
+            path = Path(value.strip())
+            return path if path.is_absolute() else (BASE_DIR / path).resolve()
+        raise ValueError("路径必须是字符串或 Path")
+
+    @field_validator("admin_token", mode="before")
+    @classmethod
+    def _blank_token_is_none(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            stripped = value.strip()
+            return stripped or None
+        raise ValueError("ADMIN_TOKEN 必须是字符串")
 
     @model_validator(mode="after")
     def _environment_defaults(self) -> Settings:
@@ -57,6 +106,8 @@ class Settings(BaseSettings):
             self.include_drafts = not prod
         if self.session_cookie_secure is None:
             self.session_cookie_secure = prod
+        if self.course_import_enabled is None:
+            self.course_import_enabled = not prod
         if self.database_url.startswith("sqlite:///./"):
             relative = self.database_url.removeprefix("sqlite:///./")
             self.database_url = f"sqlite:///{(BASE_DIR / relative).as_posix()}"
