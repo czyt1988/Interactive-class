@@ -98,3 +98,26 @@ def test_backup_copy_is_readable(alembic_config: Config, tmp_path: Path) -> None
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
     assert {"users", "sessions", "course_progress", "screen_progress", "course_imports"} <= tables
+
+
+def test_upgrade_creates_a_missing_database_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A fresh checkout has no data/ directory; the first migration must still work."""
+
+    db_path = tmp_path / "data" / "nested" / "app.db"
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path.as_posix()}")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    try:
+        config = Config(str(ROOT / "alembic.ini"))
+        config.set_main_option("script_location", str(ROOT / "migrations"))
+        command.upgrade(config, "head")
+    finally:
+        get_settings.cache_clear()
+
+    assert db_path.is_file()
+    with sqlite3.connect(db_path) as connection:
+        version = connection.execute("SELECT version_num FROM alembic_version").fetchone()
+    assert version == ("0002_course_imports",)

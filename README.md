@@ -188,6 +188,8 @@ ai-learning/
 │  ├─ build_courses.py           # 校验 + 构建课程包
 │  ├─ new_course.py              # 从课程模板生成新课程脚手架
 │  ├─ import_course.py           # 导入外部课程文件夹
+│  ├─ bootstrap.py               # 双击启动器的环境准备：.venv、依赖、资源、构建、迁移
+│  ├─ env.cmd                    # star.cmd / restart.cmd 调用的环境检查（GBK）
 │  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
 │  └─ launcher.py                # star / restart / stop 的实现
 ├─ tests/
@@ -218,15 +220,28 @@ alembic upgrade head                   # 建 SQLite 表
 uvicorn app.main:app --reload          # http://127.0.0.1:8000
 ```
 
+Windows 上不想敲这些命令也没关系：直接双击 `star.cmd`，它会把上面的准备自动做完再启动（见下面「Windows 双击启动」）。
+
 ### Windows 双击启动
 
 仓库根目录下的三个脚本面向双击使用（文件以 GBK 保存，匹配中文 Windows 控制台；编辑时请保持 GBK/ANSI 编码，不要另存为 UTF-8）：
 
 | 脚本 | 作用 |
 | --- | --- |
-| `star.cmd` | 启动站点，默认监听 `0.0.0.0:8081` |
+| `star.cmd` | 启动站点，默认监听 `0.0.0.0:8081`；第一次双击会自动准备环境 |
 | `restart.cmd` | 先停掉正在运行的实例，再按 `star.cmd` 的配置重启 |
 | `stop.cmd` | 停止服务 |
+
+**第一次使用只需要双击 `star.cmd`。** 它会先调用 `scripts\env.cmd` 检查环境，缺什么补什么，再交给 `scripts\launcher.py` 启动：
+
+1. 找到本机的 Python 3.11+（找不到时打印下载地址）；
+2. 创建 `.venv` 虚拟环境；
+3. 安装项目依赖（`pip install -e ".[dev]"`）；
+4. 下载固定版本的播放器资源并同步（`npm install` + `python scripts/sync_runtime.py --skip-fonts`）；
+5. 构建课程包到 `dist/`；
+6. 建好或升级 SQLite 表结构（`alembic upgrade head`）。
+
+这一步要联网，第一次通常几分钟；之后每次双击只做几秒钟的检查，已经就绪的步骤会跳过。开始之前需要 Python 3.11+，第 4 步还需要 Node.js 22+（只在第一次下载播放器资源时用到，之后就绪后启动不再需要 Node）。任何一步失败都会用中文说明原因和下一步怎么做，窗口不会立刻关掉，可以照着提示处理后重新双击。
 
 端口和绑定地址写在 `star.cmd` 开头，改这两行后保存即可：
 
@@ -235,7 +250,7 @@ set "APP_PORT=8081"
 set "APP_HOST=0.0.0.0"
 ```
 
-`0.0.0.0` 表示本机和局域网都能访问；只想本机访问就改成 `127.0.0.1`。启动后直接访问 <http://127.0.0.1:8081>。重启会先读取 `.run/service.json` 里记录的当前实例，再按 `star.cmd` 的配置启动新实例；日志直接输出在脚本窗口里。首次使用前仍需完成上面的环境准备（虚拟环境、课程构建、数据库迁移）。
+`0.0.0.0` 表示本机和局域网都能访问；只想本机访问就改成 `127.0.0.1`。启动后直接访问 <http://127.0.0.1:8081>。重启会先读取 `.run/service.json` 里记录的当前实例，再按 `star.cmd` 的配置启动新实例；日志直接输出在脚本窗口里。也可以单独运行 `python scripts\bootstrap.py` 只做环境准备（或加 `--quiet` 检查一遍），准备完再双击 `star.cmd` 启动。
 
 验收命令：
 

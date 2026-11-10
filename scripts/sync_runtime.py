@@ -206,6 +206,29 @@ def sync_tokens() -> dict[str, str]:
     return hashes
 
 
+def previous_fonts(root: Path = ROOT) -> dict[str, str]:
+    """Font hashes recorded by the last full sync.
+
+    ``--skip-fonts`` is used by the double-click bootstrap, which only needs the
+    vendor files on machines that already have the committed font subsets.
+    Keeping the recorded hashes here means the generated ``VERSION.json`` does
+    not silently claim that no fonts were shipped.
+    """
+
+    try:
+        payload = json.loads((root / "runtime" / "VERSION.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    fonts = payload.get("fonts")
+    if not isinstance(fonts, dict):
+        return {}
+    return {
+        str(name): str(digest)
+        for name, digest in fonts.items()
+        if (root / str(name)).is_file()
+    }
+
+
 def write_version(vendor: dict[str, dict[str, str]], fonts: dict[str, str], tokens: dict[str, str]) -> None:
     tools_package = json.loads((ROOT / "tools" / "package.json").read_text(encoding="utf-8"))
     versions = tools_package["dependencies"]
@@ -220,20 +243,28 @@ def write_version(vendor: dict[str, dict[str, str]], fonts: dict[str, str], toke
         "tokens": tokens,
         "files": vendor,
     }
+    # Pin LF so Windows checkouts do not rewrite this generated file with CRLF
+    # and leave the working tree falsely dirty.
     (RUNTIME / "VERSION.json").write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="同步播放器运行时、GSAP、字体和设计令牌")
-    parser.add_argument("--skip-fonts", action="store_true", help="跳过字体子集（较慢）")
+    parser.add_argument(
+        "--skip-fonts",
+        action="store_true",
+        help="跳过字体子集（沿用上次记录的字体哈希，用于只补运行时文件的机器）",
+    )
     args = parser.parse_args(argv)
 
     try:
         vendor = sync_vendor()
         tokens = sync_tokens()
-        fonts = {} if args.skip_fonts else sync_fonts()
+        fonts = previous_fonts() if args.skip_fonts else sync_fonts()
     except SyncError as exc:
         print(f"同步失败：{exc}", file=sys.stderr)
         return 1

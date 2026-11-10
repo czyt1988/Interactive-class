@@ -103,6 +103,7 @@
 | D15 | 课程模板抽成仓库根的独立包 `course-template/`：两屏可构建骨架 + 给 AI 的 `AGENTS.md` + 作者版 `COURSE-CONTRACT.md`/`STYLE.md`；平台内用 `scripts/new_course.py` 复制它生成脚手架 | 多人协作时，外部作者不需要克隆平台仓库；把整个文件夹交给 AI 当工作目录，规则自包含。模板移出 `courses/` 后不会被构建或课程扫描误当成课程，也让「平台代码」和「课程结构」的边界更清楚 | 模板文档与平台课程契约有重复，需要靠测试和同一任务内的同步更新防漂移；模板里的字体/GSAP 仍由 `sync_runtime.py` 统一生成 | 出现第二套模板（例如长视频课专用）且无法用同一骨架覆盖时 |
 | D16 | 外部课程通过导入流水线进入平台：`scripts/import_course.py` 或开发环境 `/import` 页面校验 → 在隐藏 staging 目录构建 → 原子替换 `courses/<slug>/` 与 `dist/courses/<slug>/`；成功后只在 SQLite 的 `course_imports` 表登记来源 | 用户希望「把生成好的文件夹直接放进软件配置的目录，选中导入」就能加入课程库。导入把校验和构建放在落盘之前，失败不会留下半个课程；数据库登记来源方便多人协作时追溯，但课程内容仍然只存在于文件和 `dist/`，不破坏 D5 | 导入需要 `scripts/` 作者工具（生产镜像没有），因此页面默认只在 dev 开放；来源路径是本地信息，换机器后只能作为历史记录 | 需要多人在线提交课程（那时应做上传/审核后台，而不是本地目录导入） |
 | D17 | 课程播放页全视口：舞台区占满控制条以上高度，16:9 画布在可用区域等比最大化，控制条在画布外通栏；当前屏进度可拖动，并提供「跳到最后」（`End`） | 用户需要快速看到最终画面，也要像视频一样拖动定位。16:9 画布嵌在阅读列里太小，两侧留白浪费空间；控制条与画布分离后，画布可以吃满屏幕高度 | 控制条不再与画布同宽，16:9 两侧出现纸色留边；末帧成为必须可读的验收项（拖动、跳到最后都会直接停在那里）；封面、完成页与播放页的高度策略不同 | 出现逐帧编辑、分支互动，或需要移动端竖屏专门版式时重新考虑 |
+| D18 | 本机双击启动器自带环境准备：`scripts\env.cmd` 找系统 Python，`scripts\bootstrap.py` 创建 `.venv`、`pip install -e ".[dev]"`、`npm install` + `sync_runtime.py --skip-fonts` 同步播放器资源、构建 `dist/`、`alembic upgrade head`，然后交给 `scripts/launcher.py` 起服务 | 用户是新手，第一次双击 `star.cmd` 只看到「没有找到虚拟环境」，照着 README 逐条敲命令不现实。把准备做成幂等的检查，缺什么补什么，双击一个文件就能从空仓库跑到可访问的站点；准备逻辑放在 Python 里可以测试，批处理只做引导 | 启动器第一次接触网络和 Node.js（之后不需要）；仓库多一层需要随依赖、构建步骤同步维护的准备逻辑；`--skip-fonts` 意味着字体子集仍由作者改动后手动重建 | 出现安装包 / 桌面 app 形态，或需要完全离线的一次性分发时，把准备逻辑换成安装器 |
 
 ### 3.1 三个需要展开的决定
 
@@ -1034,6 +1035,36 @@ HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程
 
 如果契约测试失败，不要改课程外壳去适配；先在适配层做兼容，或者停留在旧版本。升级不是例行公事，是一次有回归风险的依赖变更。
 
+### 9.9 本机一键启动
+
+双击脚本是第一次接触这个仓库的人唯一会用的入口，所以它不能停在「没有找到虚拟环境」。三层各管一件事：
+
+```text
+star.cmd / restart.cmd            GBK 编码的批处理，只负责：
+  └─ call scripts\env.cmd           1. 找系统 Python 3.11+（py -3.13 / -3.12 / -3.11 / python / python3）
+                                    2. 调 bootstrap.py：没有 .venv 时用系统 Python，有 .venv 时用虚拟环境 Python
+  └─ .venv\Scripts\python.exe
+       └─ scripts\launcher.py       端口、进程、运行记录；准备环境必须在它之前完成
+```
+
+`scripts/env.cmd` 只管「找到能跑 Python 的解释器」；`scripts/bootstrap.py` 用标准库实现全部检查，每一步先看产物是否就绪，再决定是否执行：
+
+| 步骤 | 就绪判据 | 缺失时执行 |
+| --- | --- | --- |
+| 虚拟环境 | `.venv\Scripts\python.exe` 存在且版本不低于 3.11 | `python -m venv .venv` |
+| 项目依赖 | 在 `.venv` 里能 import 运行期模块 | `pip install -e ".[dev]"` |
+| 播放器资源 | `runtime/vendor/` 两个文件 + `runtime/VERSION.json` + 每门课的 `assets/vendor/gsap.min.js` | `npm install`（缺 `tools/node_modules` 时）+ `sync_runtime.py --skip-fonts` |
+| 课程产物 | `dist/courses/` 与 `dist/build.json` | `build_courses.py --all` |
+| 数据库 | `alembic upgrade head` 幂等，直接执行 | 同左 |
+
+约定：
+
+- 准备逻辑只用标准库，因为第一次运行时 `.venv` 和依赖都还不存在，只能由系统 Python 执行。
+- 已在 `.venv` 里运行时不再探测解释器版本（直接读 `sys.version_info`），模块检查走 `importlib.util.find_spec`，就绪机器上整轮检查只有一次 `alembic` 子进程。
+- `--skip-fonts` 沿用 `runtime/VERSION.json` 里已记录的字体哈希：双击启动不是创作流程，字体子集仍由作者改完文案后手动跑 `sync_runtime.py` 重建。
+- 本机迁移只属于双击启动器；生产仍然在部署时执行 `alembic upgrade head`，不在应用启动时迁移（见 12.3）。
+- 失败一律以「原因 + 一条下一步」的中文提示收尾，批处理让窗口停住，不闪退。
+
 ---
 
 ## 10. 数据模型与 API
@@ -1149,6 +1180,7 @@ course_imports（导入来源登记，与用户/进度无关）
 11. `test_import` / `test_new_course`：外部课程文件夹校验、staging 构建、原子落盘、失败回滚；占位 slug / 保留 slug / 目标已存在 / 覆盖导入 / 原地重建；`course_imports` upsert；从 `course-template/` 生成可构建脚手架。
 12. `test_course_template`：模板包结构齐全、无外部资源、复制并改 slug 后可解析与构建、作者文档指引齐全。
 13. `test_import_web`：`/import` 的 GET/POST、收件箱候选与校验状态、路径逃逸拒绝、prod/未启用时 404、导入后目录与数据库记录。
+14. `test_bootstrap`：就绪机器只跑一次迁移、不重复安装；缺 `.venv` / 依赖 / 播放器资源 / `dist/` 时分别补齐；缺 Python 3.11+ 或 Node.js 22+ 时给出带下载地址的中文提示；`star.cmd` / `restart.cmd` / `stop.cmd` 保持 GBK 并走同一套环境准备。
 
 ### 11.3 测试数据
 

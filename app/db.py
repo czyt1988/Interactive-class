@@ -19,7 +19,14 @@ class Base(DeclarativeBase):
     pass
 
 
-def _ensure_sqlite_parent(database_url: str) -> None:
+def ensure_sqlite_parent(database_url: str) -> None:
+    """Create the directory a file-backed SQLite database lives in.
+
+    SQLite creates the database file on first connect but cannot create its
+    parent directory, so a fresh checkout without ``data/`` fails both the app's
+    first write and ``alembic upgrade head``.
+    """
+
     if not database_url.startswith("sqlite:///"):
         return
     raw_path = database_url.removeprefix("sqlite:///")
@@ -40,7 +47,7 @@ def _set_sqlite_pragmas(dbapi_connection, _connection_record) -> None:  # type: 
 
 
 def create_db_engine(database_url: str) -> Engine:
-    _ensure_sqlite_parent(database_url)
+    ensure_sqlite_parent(database_url)
     kwargs: dict[str, object] = {"pool_pre_ping": True}
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
