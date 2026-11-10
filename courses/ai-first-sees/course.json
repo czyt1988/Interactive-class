@@ -252,7 +252,7 @@
       "kicker": "第四幕 · 群雄",
       "title": "国内 Agent：紧跟，也有自己的做法",
       "summary": "国内 Agent 和模型跟得很紧，也在长出自己的做法；DSH 的差异化是「连循环都是插件」。",
-      "transcript": "国内也不缺 Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。这些我大多用过一段时间；我的体验是：国内团队在 Agent 上和国外跟得很紧。\n\nDeepSeek 也开发了自己的 Agent，DeepSeek Harness。它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连「循环」本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。",
+      "transcript": "国内也不缺 Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧。\n\nDeepSeek 也开发了自己的 Agent，DeepSeek Harness。它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连「循环」本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。",
       "autoAdvance": true,
       "keywords": [
         "Trae",
