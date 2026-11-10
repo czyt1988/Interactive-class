@@ -2,7 +2,7 @@
   <style>
     /* S15 · foreign-agents
        2023 → 2025 的横向时间线，四个产品节点：Logo + 名称 + 一句话形态 + 真实截图小证据卡；
-       下方一条形态轴：IDE / 终端 / 云端 / 开源；最后并排成「第一梯队」。 */
+       下方一条形态轴：IDE / 终端 / 云端 / 开源；最后并排，只标形态，不排名次。 */
 
     .s-foreign-axis { position: absolute; left: 100px; top: 226px; width: 1480px; height: 2px; background: var(--line-strong); }
     .s-foreign-axis-head { position: absolute; left: 1580px; top: 219px; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid var(--line-strong); opacity: 0; }
@@ -146,29 +146,6 @@
     .s-foreign-form--3 { left: 1030px; }
     .s-foreign-form--4 { left: 1440px; }
 
-    .s-foreign-bracket { position: absolute; left: 60px; top: 26px; width: 1540px; height: 2px; background: var(--accent); }
-    .s-foreign-bracket-tick { position: absolute; top: 18px; width: 2px; height: 22px; background: var(--accent); opacity: 0; }
-    .s-foreign-bracket-tick--l { left: 60px; }
-    .s-foreign-bracket-tick--r { left: 1598px; }
-    .s-foreign-bracket-label {
-      position: absolute;
-      left: 706px;
-      top: 4px;
-      width: 248px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
-      border-radius: 999px;
-      background: #faf6ee;
-      color: var(--accent-text);
-      font-size: 30px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      opacity: 0;
-    }
-
     .s-foreign-big { position: absolute; left: 480px; top: 530px; width: 704px; text-align: center; font-size: 62px; line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); opacity: 0; }
     .s-foreign-sub { position: absolute; left: 400px; top: 606px; width: 864px; text-align: center; font-size: 28px; color: var(--ink-soft); opacity: 0; }
     .s-foreign-spark { position: absolute; left: 100px; top: 223px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0; }
@@ -257,12 +234,6 @@
         <span class="s-foreign-form s-foreign-form--3" id="s-foreign-form3">云端</span>
         <span class="s-foreign-form s-foreign-form--4" id="s-foreign-form4">开源</span>
 
-        <!-- 第一梯队 -->
-        <span class="s-foreign-bracket" id="s-foreign-bracket"></span>
-        <span class="s-foreign-bracket-tick s-foreign-bracket-tick--l" id="s-foreign-bracket-tick-l"></span>
-        <span class="s-foreign-bracket-tick s-foreign-bracket-tick--r" id="s-foreign-bracket-tick-r"></span>
-        <span class="s-foreign-bracket-label" id="s-foreign-bracket-label">第一梯队</span>
-
         <!-- 收尾 -->
         <p class="s-foreign-big" id="s-foreign-big">谁最强？</p>
         <p class="s-foreign-sub" id="s-foreign-sub">排名每个月都在变</p>
@@ -295,7 +266,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S15","id":"foreign-agents","index":0,"start":0,"duration":52.22,"audioStart":0.6000000000000227,"audioDuration":50.016,"cues":[{"i":0,"t":0.7,"d":1.645,"text":"先看国外。","sent":"先看国外。"},{"i":1,"t":2.345,"d":6.414,"text":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":2,"t":8.799,"d":5.616,"text":"核心是补全；到 2024 年 11 月，它有了 Agent 模式，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":3,"t":14.456,"d":3.192,"text":"开始自己改多个文件、跑命令。","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":4,"t":17.688,"d":5.469,"text":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":5,"t":23.197,"d":5.157,"text":"5 月正式发布，它把「在终端里干活」做成了完整体验。","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":6,"t":28.394,"d":4.327,"text":"同一年 5 月，OpenAI 发布 Codex。","sent":"同一年 5 月，OpenAI 发布 Codex。"},{"i":7,"t":32.761,"d":6.681,"text":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。","sent":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。"},{"i":8,"t":39.482,"d":5.283,"text":"它们有些是 IDE，有些是只有终端，有些是桌面端。","sent":"它们有些是 IDE，有些是只有终端，有些是桌面端。"},{"i":9,"t":44.805,"d":1.843,"text":"谁最强？","sent":"谁最强？"},{"i":10,"t":46.688,"d":3.827,"text":"这个问题每个月都可能换答案。","sent":"这个问题每个月都可能换答案。"}]};
+    const N = {"code":"S15","id":"foreign-agents","index":0,"start":0,"duration":52.22,"audioStart":0.599999999999909,"audioDuration":50.016,"cues":[{"i":0,"t":0.7,"d":1.645,"text":"先看国外。","sent":"先看国外。"},{"i":1,"t":2.345,"d":6.414,"text":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":2,"t":8.799,"d":5.616,"text":"核心是补全；到 2024 年 11 月，它有了 Agent 模式，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":3,"t":14.456,"d":3.192,"text":"开始自己改多个文件、跑命令。","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":4,"t":17.688,"d":5.469,"text":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":5,"t":23.197,"d":5.157,"text":"5 月正式发布，它把「在终端里干活」做成了完整体验。","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":6,"t":28.394,"d":4.327,"text":"同一年 5 月，OpenAI 发布 Codex。","sent":"同一年 5 月，OpenAI 发布 Codex。"},{"i":7,"t":32.761,"d":6.681,"text":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。","sent":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。"},{"i":8,"t":39.482,"d":5.283,"text":"它们有些是 IDE，有些是只有终端，有些是桌面端。","sent":"它们有些是 IDE，有些是只有终端，有些是桌面端。"},{"i":9,"t":44.805,"d":1.843,"text":"谁最强？","sent":"谁最强？"},{"i":10,"t":46.688,"d":3.827,"text":"这个问题每个月都可能换答案。","sent":"这个问题每个月都可能换答案。"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -313,7 +284,6 @@
 
     // 快照会直接 seek：先显式压掉初始缩放，避免提前露出来。
     gsap.set("#s-foreign-axis", { scaleX: 0, transformOrigin: "left center" });
-    gsap.set("#s-foreign-bracket", { scaleX: 0, transformOrigin: "left center" });
     gsap.set(["#s-foreign-node1", "#s-foreign-node2", "#s-foreign-node3", "#s-foreign-node4"], { scale: 0.4 });
     gsap.set("#s-foreign-spark", { x: 0 });
 
@@ -372,12 +342,8 @@
     // cue9 · 谁最强？
     tl.fromTo("#s-foreign-big", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[9] + 0.15);
 
-    // cue10 · 排名每个月都可能变，但他们是一个梯队
+    // cue10 · 排名每个月都可能变，产品之间不排名次
     tl.fromTo("#s-foreign-sub", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[10] + 0.1);
-    tl.fromTo("#s-foreign-bracket", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, T[10] + 0.45);
-    tl.fromTo("#s-foreign-bracket-tick-l", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[10] + 0.5);
-    tl.fromTo("#s-foreign-bracket-tick-r", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: q }, T[10] + 0.5);
-    tl.fromTo("#s-foreign-bracket-label", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, T[10] + 0.85);
     // MOTION:END
 
     window.__timelines["s-foreign-agents"] = tl;

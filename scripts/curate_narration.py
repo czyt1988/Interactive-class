@@ -59,7 +59,7 @@ META: dict[str, tuple[str, str, str, str, list[str]]] = {
     "S13": ("tools-skills-mcp", "make", "第三幕 · 做", "都是喂给模型的文字", ["工具", "Skill", "MCP", "上下文"]),
     "S14": ("timeline-landscape", "crowd", "第四幕 · 群雄", "从 demo 到日用", ["AutoGPT", "Devin", "Claude Code", "OpenClaw"]),
     "S15": ("foreign-agents", "crowd", "第四幕 · 群雄", "国外 Agent：四条路线", ["Cursor", "Claude Code", "Codex", "OpenCode"]),
-    "S16": ("china-agents", "crowd", "第四幕 · 群雄", "国内 Agent：模型在左，Harness 在右", ["Trae", "Qwen Code", "ZCode", "Kimi Code", "DSH"]),
+    "S16": ("china-agents", "crowd", "第四幕 · 群雄", "国内 Agent：紧跟，也有自己的做法", ["Trae", "Qwen Code", "ZCode", "Kimi Code", "DSH"]),
     "S17": ("stateless-notebook", "use", "第五幕 · 用", "只认笔记本的专家", ["无状态", "笔记本", "上下文"]),
     "S18": ("long-session", "use", "第五幕 · 用", "长会话不是免费的记忆", ["token", "重放", "成本"]),
     "S19": ("compact", "use", "第五幕 · 用", "写满的笔记本", ["上下文窗口", "压缩", "compaction"]),

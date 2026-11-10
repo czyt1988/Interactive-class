@@ -188,24 +188,24 @@
     "时长": "95s",
     "一句话论题": "国外这几款不是同时出现的，也不是一夜长成的；它们代表 IDE、终端、云端、开源四条路线。",
     "屏幕文字": "2023.03 Cursor / 2025.02 Claude Code / 2025.05 Codex / 2025 OpenCode；IDE / 终端 / 云端 / 开源",
-    "画面": "一条横向时间线，从左到右 2023 → 2025；四个产品节点：Cursor、Claude Code、Codex、OpenCode。每个节点由三部分组成：Logo + 名称 + 一句话形态；节点下方挂一张真实界面截图缩略：Cursor IDE、Claude Code 终端、Codex 任务界面、OpenCode 终端。时间线下方一条“形态”轴：IDE / 终端 / 云端 / 开源。最后四个节点并排，出现“第一梯队”标签，不是奖杯。",
-    "动画": "时间线生长；节点依次亮起，每个节点先出 Logo，再出截图缩略，再出一句话；最后四个节点并排，“第一梯队”标签淡入；截图缩略做轻微景深，不抢时间线。",
-    "事实/口径": "Cursor 2023-03-14 上线；Agent 模式 2024-11-24；Claude Code 2025-02-24 研究预览、2025-05-22 正式；Codex 2025-05-16（云端）；OpenCode 是开源编码 Agent，2025 年出现，支持多家模型；不要说“Claude Code 永远最强”。",
-    "素材": "时间线；`./素材/logo/cursor.png`、`./素材/logo/claude.png`、`./素材/logo/codex.png`、`./素材/logo/opencode.png`；`./素材/screenshot/cursor-agent-mode.png`、`./素材/screenshot/claude-code-terminal.png`、`./素材/screenshot/codex-cloud.png`、`./素材/screenshot/opencode-tui.png`；“第一梯队”标签。",
+    "画面": "一条横向时间线，从左到右 2023 → 2025；四个产品节点：Cursor、Claude Code、Codex、OpenCode。每个节点由三部分组成：Logo + 名称 + 一句话形态；节点下方挂一张真实界面截图缩略：Cursor IDE、Claude Code 终端、Codex 任务界面、OpenCode 终端。时间线下方一条“形态”轴：IDE / 终端 / 云端 / 开源。最后四个节点并排，只标形态，不排名次。",
+    "动画": "时间线生长；节点依次亮起，每个节点先出 Logo，再出截图缩略，再出一句话；最后四个节点并排，形态轴亮起；截图缩略做轻微景深，不抢时间线。",
+    "事实/口径": "Cursor 2023-03-14 上线；Agent 模式 2024-11-24；Claude Code 2025-02-24 研究预览、2025-05-22 正式；Codex 2025-05-16（云端）；OpenCode 是开源编码 Agent，2025 年出现，支持多家模型；不要说“Claude Code 永远最强”，也不要给这几款产品排“第一梯队”。",
+    "素材": "时间线；`./素材/logo/cursor.png`、`./素材/logo/claude.png`、`./素材/logo/codex.png`、`./素材/logo/opencode.png`；`./素材/screenshot/cursor-agent-mode.png`、`./素材/screenshot/claude-code-terminal.png`、`./素材/screenshot/codex-cloud.png`、`./素材/screenshot/opencode-tui.png`。",
     "narration": "先看国外。2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把“在终端里干活”做成了完整体验。同一年 5 月，OpenAI 发布 Codex。还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。它们有些是IDE，有些是只有终端，有些是桌面端。谁最强？这个问题每个月都可能换答案。"
   },
   {
     "code": "S16",
     "id": "china-agents",
-    "heading": "国内 Agent：模型在左，Harness 在右",
+    "heading": "国内 Agent：紧跟，也有自己的做法",
     "时长": "130s",
-    "一句话论题": "模型和 Harness 要分开看；国内团队在工程层完全有能力做好；DSH 的差异化是“连循环都是插件”。",
+    "一句话论题": "国内 Agent 和模型跟得很紧，也在长出自己的做法；DSH 的差异化是“连循环都是插件”。",
     "屏幕文字": "2025.03 Trae / 2025.07 Qwen Code / 2025 ZCode / 2026.01 Kimi Code / 2026.03 WorkBuddy / 2026.08 DSH；模型 ≠ Harness；工程，不是科研",
     "画面": "上半屏一条国内时间线（2025 → 2026），节点依次是：Trae（IDE）、Qwen Code（CLI）、ZCode（长任务 ADE）、Kimi Code（终端/IDE）、CodeBuddy（IDE）、WorkBuddy（办公 Agent）、DSH（Harness）。每个节点：Logo + 一句话 + 一张界面截图缩略。下半屏一条分界线：左边“模型”（Kimi、Qwen、GLM、DeepSeek），右边“Harness”（Kimi Code、Qwen Code、ZCode、Trae、CodeBuddy、WorkBuddy、DSH），中间写“模型是大脑，Harness 是挽具”。最后镜头推到 DSH 节点：插件树小图从节点里长出来，节点上写“连 Agent Loop 都是插件”；旁边嵌入 DSH 插件页截图，官方插件列表里“Agent 循环”本身就是一个可开关的插件。",
     "动画": "时间线生长，节点依次落下；分界线从中间展开，模型/Harness 分列；DSH 节点放大，插件树长出，插件页截图从节点里展开；最后定格在“模型是大脑，Harness 是挽具”。",
-    "事实/口径": "Trae 国内版 2025-03-03；Qwen Code 2025-07-23；ZCode 官方文档未标注具体日期，走长任务 ADE 路线；Kimi Code 2026-01（来源 C，讲课前复核）；CodeBuddy/WorkBuddy 腾讯，WorkBuddy 2026-03-10 上线；DSH v0.1 2026-08-13、桌面端 2026-09-29、截至 2026-11-04 DAU 154 万（官方 API 口径）；DSH 运行时 Cordis，Agent Loop 是插件；“国内不输”是主讲人的体验，不是评测结论；避免把“模型发布”写成“Harness 发布”。",
+    "事实/口径": "Trae 国内版 2025-03-03；Qwen Code 2025-07-23；ZCode 官方文档未标注具体日期，走长任务 ADE 路线；Kimi Code 2026-01（来源 C，讲课前复核）；CodeBuddy/WorkBuddy 腾讯，WorkBuddy 2026-03-10 上线；DSH v0.1 2026-08-13、桌面端 2026-09-29、截至 2026-11-04 DAU 154 万（官方 API 口径）；DSH 运行时 Cordis，Agent Loop 是插件；“跟得很紧”是主讲人的体验，不是评测结论；避免把“模型发布”写成“Harness 发布”。",
     "素材": "时间线；模型/Harness 分界线；插件树；`./素材/logo/trae.png`、`./素材/logo/qwen.png`、`./素材/logo/kimi.png`、`./素材/logo/zcode.png`、`./素材/logo/codebuddy.png`、`./素材/logo/workbuddy.png`、`./素材/logo/deepseek.png`、`./素材/logo/dsh.png`；`./素材/screenshot/trae-ide.png`、`./素材/screenshot/qwen-code-terminal.png`、`./素材/screenshot/kimi-code.png`、`./素材/screenshot/zcode.png`、`./素材/screenshot/workbuddy.png`、`./素材/screenshot/dsh-desktop.png`、`./素材/screenshot/dsh-plugins.png`。",
-    "narration": "国内也不缺Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。这些我大多用过一段时间；我的体验是：国内团队在Agent上和国外完全不输。\n\nDeepSeek也开发了自己的Agent, DeepSeek Harness。它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它最特别的地方不是模型，是架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连“循环”本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种全新的软件设计范畴。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。"
+    "narration": "国内也不缺 Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。这些我大多用过一段时间；我的体验是：国内团队在 Agent 上和国外跟得很紧。\n\nDeepSeek 也开发了自己的 Agent，DeepSeek Harness。它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连“循环”本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。"
   },
   {
     "code": "S17",

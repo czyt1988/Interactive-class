@@ -101,7 +101,7 @@ npx --yes hyperframes@0.9.19 snapshot --composition s-<id> --frames 5 --out .sna
 | 13 | S13 | tools-skills-mcp | `compositions/13-tools-skills-mcp.html` | 70.2s | 都是喂给模型的文字 | 15 |
 | 14 | S14 | timeline-landscape | `compositions/14-timeline-landscape.html` | 34.0s | 从 demo 到日用 | 6 |
 | 15 | S15 | foreign-agents | `compositions/15-foreign-agents.html` | 52.2s | 国外 Agent：三条路线 | 11 |
-| 16 | S16 | china-agents | `compositions/16-china-agents.html` | 91.5s | 国内 Agent：模型在左，Harness 在右 | 19 |
+| 16 | S16 | china-agents | `compositions/16-china-agents.html` | 91.5s | 国内 Agent：紧跟，也有自己的做法 | 19 |
 | 17 | S17 | stateless-notebook | `compositions/17-stateless-notebook.html` | 110.7s | 只认笔记本的专家 | 22 |
 | 18 | S18 | long-session | `compositions/18-long-session.html` | 66.5s | 长会话不是免费的记忆 | 12 |
 | 19 | S19 | compact | `compositions/19-compact.html` | 80.2s | 写满的笔记本 | 17 |
