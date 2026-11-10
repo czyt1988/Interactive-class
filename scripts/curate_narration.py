@@ -57,7 +57,7 @@ META: dict[str, tuple[str, str, str, str, list[str]]] = {
     "S11": ("two-generations", "make", "第三幕 · 做", "两代智能体", ["提示词型", "Harness 型"]),
     "S12": ("harness-anatomy", "make", "第三幕 · 做", "一个完整能力的办公工位", ["工具", "Skill", "MCP", "行动循环"]),
     "S13": ("tools-skills-mcp", "make", "第三幕 · 做", "都是喂给模型的文字", ["工具", "Skill", "MCP", "上下文"]),
-    "S14": ("timeline-landscape", "make", "第三幕 · 做", "从 demo 到日用", ["AutoGPT", "Devin", "Claude Code", "OpenClaw"]),
+    "S14": ("timeline-landscape", "crowd", "第四幕 · 群雄", "从 demo 到日用", ["AutoGPT", "Devin", "Claude Code", "OpenClaw"]),
     "S15": ("foreign-agents", "crowd", "第四幕 · 群雄", "国外 Agent：四条路线", ["Cursor", "Claude Code", "Codex", "OpenCode"]),
     "S16": ("china-agents", "crowd", "第四幕 · 群雄", "国内 Agent：模型在左，Harness 在右", ["Trae", "Qwen Code", "ZCode", "Kimi Code", "DSH"]),
     "S17": ("stateless-notebook", "use", "第五幕 · 用", "只认笔记本的专家", ["无状态", "笔记本", "上下文"]),

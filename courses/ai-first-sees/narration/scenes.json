@@ -98,10 +98,10 @@
       "accent": "#2FB68A",
       "title": "机器第一次赢在「直觉」",
       "thesis": "AlphaGo 赢的不是算力，是「看棋形 + 推演 + 自练」的组合。",
-      "screenText": "2016.03 / 首尔 / AlphaGo 4:1 李世石 / DeepMind",
-      "visual": "棋盘俯视，黑白子逐渐填满；镜头推到一角，棋子变成发光的“棋形”；旁边浮出三个小标签：看、想、练；右下角放 DeepMind Logo，旁边是当年的现场照片。",
-      "animation": "先落子（每 0.4s 一子），再推近；三个标签依次亮起；“4:1”从记分牌翻出，同时现场照片淡入。",
-      "facts": "DeepMind 2014 年被谷歌收购；2016-03-09 至 03-15，AlphaGo 4:1；AlphaGo 使用 CNN 策略/价值网络 + MCTS + 监督学习/强化学习。不要讲成“纯 CNN”。",
+      "screenText": "2016.03 / 首尔 / AlphaGo 4:1 李世石 / 五番棋 = 五局定胜负 / DeepMind",
+      "visual": "棋盘俯视，黑白子逐渐填满；镜头推到一角，棋子变成发光的“棋形”；旁边浮出三个小标签：看、想、练；右侧记分牌写清“AlphaGo 4 : 1 李世石”，记分牌下方补一行“五番棋 = 五局定胜负；李世石赢下第 4 局”；右下角放 DeepMind Logo，旁边是当年的现场照片。",
+      "animation": "先落子（每 0.4s 一子），再推近；三个标签依次亮起；“4:1”从记分牌翻出，同时现场照片淡入，随后补出五番棋说明。",
+      "facts": "DeepMind 2014 年被谷歌收购；2016-03-09 至 03-15，五番棋（五局定胜负），AlphaGo 4:1 李世石，李世石赢下第 4 局；不要写成“李世石 4:1”。AlphaGo 使用 CNN 策略/价值网络 + MCTS + 监督学习/强化学习。不要讲成“纯 CNN”。",
       "materials": "19×19 棋盘 SVG；棋子用黑白圆点；`./素材/photo/alphago-lee-sedol.webp`；`./素材/logo/deepmind.png`。",
       "keywords": [
         "AlphaGo",
@@ -274,13 +274,13 @@
       "screenText": "提示词型 / Harness 型；人设 + 知识 + 工具 / 循环 + 工具 + 上下文 + 权限 + 沙箱",
       "visual": "左右两栏。左边一个“角色卡片”，写着“你是一个资深客服”；右边一张“工程图”，有循环、工具、权限、沙箱。中间一匹马，先没有挽具，再套上挽具。",
       "animation": "左栏卡片翻开；右栏工程图逐层展开；中间的马从“空跑”到“拉车”。",
-      "facts": "这是简化二分法；要加一句“不是提示词型没用，而是它们不是同一个物种”。",
+      "facts": "这是简化二分法；要加一句“不是提示词型没用，而是它和 Harness 型本质上已经不能算同一类东西”。画面上的“天花板”标签要写成“低天花板”。",
       "materials": "角色卡片、工程图、马 + 挽具线稿；挽具结构参考 `./素材/reference/horse-harness.jpg`（马车挽具图版，仅参考，不直接上屏）。",
       "keywords": [
         "提示词型",
         "Harness 型"
       ],
-      "narration": "目前 AI 应用到今天，产生过两代智能体。第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。它不弱，但天花板很低。第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。不是提示词型没用，而是它和 Harness 型不是同一个物种。"
+      "narration": "目前 AI 应用到今天，产生过两代智能体。第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。它不弱，但天花板很低。第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。不是提示词型没用，而是它和 Harness 型本质上已经不能算同一类东西。"
     },
     {
       "code": "S12",
@@ -329,10 +329,10 @@
     {
       "code": "S14",
       "id": "timeline-landscape",
-      "act": "make",
-      "actLabel": "第三幕 · 做",
+      "act": "crowd",
+      "actLabel": "第四幕 · 群雄",
       "theme": "paper",
-      "accent": "#4C7DFF",
+      "accent": "#7B6CFF",
       "title": "从 demo 到日用",
       "thesis": "概念早就出现，真正「好用、出圈」是 2025–2026。",
       "screenText": "2023 AutoGPT / 2024 Devin·Cursor Agent / 2025 Claude Code·Codex / 2026 OpenClaw·WorkBuddy·DSH",
@@ -346,7 +346,7 @@
         "Claude Code",
         "OpenClaw"
       ],
-      "narration": "把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"
+      "narration": "Harness 拆完了，现在把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。"
     },
     {
       "code": "S15",

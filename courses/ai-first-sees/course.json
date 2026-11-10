@@ -184,7 +184,7 @@
       "kicker": "第三幕 · 做",
       "title": "两代智能体",
       "summary": "两代智能体，第一代卖「人设」，第二代卖「工程」。",
-      "transcript": "目前 AI 应用到今天，产生过两代智能体。第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。它不弱，但天花板很低。第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。不是提示词型没用，而是它和 Harness 型不是同一个物种。",
+      "transcript": "目前 AI 应用到今天，产生过两代智能体。第一代，是提示词型：给它一个人设、一段知识、几个工具，让它在预设范围内干活。很多厂家宣传「我做了几百个智能体，几千个智能体」，其实是这个。它不弱，但天花板很低。第二代，是 Harness 型：行动循环、工具执行、上下文管理、权限、沙箱、子 Agent，一整套工程。不是提示词型没用，而是它和 Harness 型本质上已经不能算同一类东西。",
       "autoAdvance": true,
       "keywords": [
         "提示词型",
@@ -221,10 +221,10 @@
     },
     {
       "id": "timeline-landscape",
-      "kicker": "第三幕 · 做",
+      "kicker": "第四幕 · 群雄",
       "title": "从 demo 到日用",
       "summary": "概念早就出现，真正「好用、出圈」是 2025–2026。",
-      "transcript": "把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。",
+      "transcript": "Harness 拆完了，现在把时间线拉直：2023 年，AutoGPT 让所有人第一次看到「AI 自己循环」，但更像 demo；2024 年，Devin 和 Cursor Agent 把「自动干活」带进真实工作；2025 年，Claude Code 和 Codex 把长任务、终端、云端做成了产品；2026 年，OpenClaw 在春节前后出圈；今年 3 月，WorkBuddy 把办公 Agent 推向大众。",
       "autoAdvance": true,
       "keywords": [
         "AutoGPT",

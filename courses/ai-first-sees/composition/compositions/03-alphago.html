@@ -139,6 +139,17 @@
   color: var(--ink-soft);
 }
 
+.s-ago-scorenote {
+  position: absolute;
+  left: 670px;
+  top: 282px;
+  width: 340px;
+  text-align: center;
+  font-size: 24px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
 .s-ago-photo {
   position: absolute;
   left: 1040px;
@@ -261,6 +272,7 @@
 .s-ago-boardnote,
 .s-ago-where,
 .s-ago-score,
+.s-ago-scorenote,
 .s-ago-photo,
 .s-ago-logo,
 .s-ago-find,
@@ -406,8 +418,10 @@
 <div id="s-ago-score" class="s-ago-score">
   <span class="s-ago-scorewho">AlphaGo</span>
   <span class="s-ago-scoreline"><span>4</span><em>:</em><span>1</span></span>
-  <span class="s-ago-scorevs">李世石 · 五番棋</span>
+  <span class="s-ago-scorevs">李世石</span>
 </div>
+
+<p id="s-ago-scorenote" class="s-ago-scorenote">五番棋：五局定胜负<br />李世石赢下第 4 局</p>
 
 <figure id="s-ago-photo" class="s-ago-photo">
   <div class="photo">
@@ -500,6 +514,7 @@ tl.fromTo(
 );
 tl.fromTo("#s-ago-score", { opacity: 0, scaleY: 0.3, y: -12 }, { opacity: 1, scaleY: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.0);
 tl.fromTo("#s-ago-photo", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 4.2);
+tl.fromTo("#s-ago-scorenote", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 4.6);
 tl.fromTo("#s-ago-logo", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 4.35);
 
 // c2 (8.1) 为什么震动：棋盘被很快填满，19 x 19 的坐标标出来。
