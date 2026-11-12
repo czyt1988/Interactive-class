@@ -19,13 +19,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-
-from app.catalog.assets import scan_composition
-from app.catalog.models import CatalogError, ResolvedCourse
-from app.catalog.resolver import CourseResolutionError, resolve_course
-
 ROOT = Path(__file__).resolve().parent.parent
+# 把仓库根放进 sys.path：同一个 .venv 可能被多个 git worktree 共享
+# （见 scripts/worktree.py），否则 `python scripts/build_courses.py` 在
+# 工作树里会经由 editable install 导入主工作树的 app。
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
+
+from app.catalog.assets import scan_composition  # noqa: E402
+from app.catalog.models import CatalogError, ResolvedCourse  # noqa: E402
+from app.catalog.resolver import CourseResolutionError, resolve_course  # noqa: E402
+
 DEFAULT_SOURCE = ROOT / "courses"
 DEFAULT_OUT = ROOT / "dist" / "courses"
 DEFAULT_RUNTIME = ROOT / "runtime"
