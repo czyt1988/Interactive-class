@@ -22,6 +22,7 @@ committed, so playback never needs them).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -40,6 +41,7 @@ NARRATION_DIR = COURSE / "narration"
 COMPOSITION = COURSE / "composition"
 SCENES_SRC = NARRATION_DIR / "scenes.json"
 CACHE = NARRATION_DIR / "cache"
+CACHE_MANIFEST = CACHE / "manifest.json"
 AUDIO_DIR = COMPOSITION / "assets" / "audio"
 SCENE_DIR = COMPOSITION / "compositions"
 
@@ -255,28 +257,90 @@ def clock(seconds: float) -> str:
     return f"{total // 60:02d}:{total % 60:02d}"
 
 
-def run_tts(scene: Scene, voice: str, rate: str) -> tuple[Path, Path]:
+def normalize_rate(value: str) -> str:
+    """edge-tts wants a signed prosody rate: "-15%" works, bare "0%" is invalid."""
+    text = value.strip()
+    if text.endswith("%"):
+        number = text[:-1].strip()
+        try:
+            int(number)
+        except ValueError:
+            number = ""
+        if number:
+            if number[0] not in "+-":
+                number = "+" + number
+            return f"{number}%"
+    raise argparse.ArgumentTypeError(
+        f'语速要写成带符号的百分比，例如 "-15%" 或 "+0%"，收到 {value!r}'
+    )
+
+
+def cache_paths(scene: Scene) -> tuple[Path, Path]:
+    return (
+        CACHE / f"{scene.code.lower()}-{scene.id}.mp3",
+        CACHE / f"{scene.code.lower()}-{scene.id}.srt",
+    )
+
+
+def text_fingerprint(text: str) -> str:
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
+
+
+def cache_entry(scene: Scene, voice: str, rate: str) -> dict:
+    """What a cached TTS pair depends on: the voice, the rate and the text itself."""
+    return {"voice": voice, "rate": rate, "text": text_fingerprint(scene.narration)}
+
+
+def load_cache_manifest() -> dict[str, dict]:
+    try:
+        payload = json.loads(CACHE_MANIFEST.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    items = payload.get("items")
+    return items if isinstance(items, dict) else {}
+
+
+def cache_is_fresh(scene: Scene, voice: str, rate: str) -> bool:
+    mp3, srt = cache_paths(scene)
+    if not (mp3.is_file() and srt.is_file() and mp3.stat().st_size > 1000):
+        return False
+    key = f"{scene.code.lower()}-{scene.id}"
+    return load_cache_manifest().get(key) == cache_entry(scene, voice, rate)
+
+
+def write_cache_manifest(scenes: list[Scene], voice: str, rate: str) -> None:
     CACHE.mkdir(parents=True, exist_ok=True)
-    mp3 = CACHE / f"{scene.code.lower()}-{scene.id}.mp3"
-    srt = CACHE / f"{scene.code.lower()}-{scene.id}.srt"
-    if mp3.is_file() and srt.is_file() and mp3.stat().st_size > 1000:
-        return mp3, srt
-    if not (mp3.is_file() and srt.is_file()):
-        command = [
-            sys.executable,
-            "-m",
-            "edge_tts",
-            "--voice",
-            voice,
-            f"--rate={rate}",
-            "--text",
-            scene.narration,
-            "--write-media",
-            str(mp3),
-            "--write-subtitles",
-            str(srt),
-        ]
-        subprocess.run(command, check=True, capture_output=True, text=True, encoding="utf-8")
+    payload = {
+        "voice": voice,
+        "rate": rate,
+        "items": {
+            f"{scene.code.lower()}-{scene.id}": cache_entry(scene, voice, rate)
+            for scene in scenes
+        },
+    }
+    CACHE_MANIFEST.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def run_tts(scene: Scene, voice: str, rate: str) -> tuple[Path, Path]:
+    mp3, srt = cache_paths(scene)
+    CACHE.mkdir(parents=True, exist_ok=True)
+    command = [
+        sys.executable,
+        "-m",
+        "edge_tts",
+        "--voice",
+        voice,
+        f"--rate={rate}",
+        "--text",
+        scene.narration,
+        "--write-media",
+        str(mp3),
+        "--write-subtitles",
+        str(srt),
+    ]
+    subprocess.run(command, check=True, capture_output=True, text=True, encoding="utf-8")
     return mp3, srt
 
 
@@ -570,8 +634,13 @@ def patch_scene_captions(scenes: list[Scene]) -> None:
         path.write_text(head + CAPTION_BEGIN + band + CAPTION_END + tail, encoding="utf-8")
 
 
-def write_storyboard(scenes: list[Scene], total: float) -> None:
+def write_storyboard(
+    scenes: list[Scene], total: float, voice: str, rate: str, lead: float, tail: float
+) -> None:
     rows = []
+    audio_seconds = sum(scene.audio_duration for scene in scenes)
+    narrated_chars = sum(len(clean_text(scene.narration)) for scene in scenes)
+    chars_per_second = narrated_chars / audio_seconds if audio_seconds else 0.0
     for i, scene in enumerate(scenes):
         rows.append(
             f"| {i + 1} | {scene.code} | {scene.id} | {scene.title} | {scene.thesis} | "
@@ -605,8 +674,8 @@ def write_storyboard(scenes: list[Scene], total: float) -> None:
 
 ## 进度节奏
 
-- 旁白语速：edge-tts `zh-CN-YunxiNeural`，rate -15%，约 5 字/秒。
-- 每页：0.6 秒入场，旁白，结束留 1.6 秒收尾；下一页从上一页结束处无缝接上。
+- 旁白语速：edge-tts `{voice}`，rate {rate}，约 {chars_per_second:.1f} 字/秒。
+- 每页：{lead:g} 秒入场，旁白，结束留 {tail:g} 秒收尾；下一页从上一页结束处无缝接上。
 - 所有动效由 `N.cues[i].t`（旁白句子时间）驱动，不按固定间隔自行播放。
 
 ## 参考
@@ -622,11 +691,15 @@ def write_storyboard(scenes: list[Scene], total: float) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build narration audio, timings and course scaffolding")
     parser.add_argument("--voice", default="zh-CN-YunxiNeural")
-    parser.add_argument("--rate", default="-15%")
+    parser.add_argument("--rate", type=normalize_rate, default="+0%", help='语速，如 "-15%"、"+0%"')
     parser.add_argument("--lead", type=float, default=0.6, help="seconds before narration starts")
     parser.add_argument("--tail", type=float, default=1.6, help="seconds held after narration")
     parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--no-tts", action="store_true", help="reuse cached mp3/srt, no network")
+    parser.add_argument(
+        "--no-tts",
+        action="store_true",
+        help="reuse narration/cache only when it matches the current voice, rate and text",
+    )
     parser.add_argument("--force-scaffold", action="store_true", help="overwrite generated scene skeletons")
     parser.add_argument("--skip-opus", action="store_true", help="keep existing ogg files")
     args = parser.parse_args(argv)
@@ -636,13 +709,24 @@ def main(argv: list[str] | None = None) -> int:
     scenes = [Scene(**scene) for scene in payload["scenes"]]
     total_count = len(scenes)
     print(f"course: {meta['title']} / {total_count} scenes")
+    print(f"voice: {args.voice}  rate: {args.rate}")
+
+    if args.no_tts:
+        stale = [scene for scene in scenes if not cache_is_fresh(scene, args.voice, args.rate)]
+        if stale:
+            for scene in stale:
+                print(
+                    f"cache 缺失，或与当前 voice/rate/文本不一致：{scene.code} {scene.id}",
+                    file=sys.stderr,
+                )
+            print("去掉 --no-tts 重新合成，或先清空 narration/cache/。", file=sys.stderr)
+            return 1
 
     def prepare(scene: Scene) -> None:
-        mp3 = CACHE / f"{scene.code.lower()}-{scene.id}.mp3"
-        srt = CACHE / f"{scene.code.lower()}-{scene.id}.srt"
-        if args.no_tts or (mp3.is_file() and srt.is_file()):
-            pass
-        else:
+        mp3, srt = cache_paths(scene)
+        if not args.no_tts and not cache_is_fresh(scene, args.voice, args.rate):
+            mp3.unlink(missing_ok=True)
+            srt.unlink(missing_ok=True)
             run_tts(scene, args.voice, args.rate)
         scene.audio_file = f"{scene.code.lower()}-{scene.id}.ogg"
         ogg = AUDIO_DIR / scene.audio_file
@@ -657,6 +741,8 @@ def main(argv: list[str] | None = None) -> int:
 
     with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
         list(pool.map(prepare, scenes))
+
+    write_cache_manifest(scenes, args.voice, args.rate)
 
     cursor = 0.0
     for scene in scenes:
@@ -702,7 +788,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(authored, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
-    write_storyboard(scenes, total)
+    write_storyboard(scenes, total, args.voice, args.rate, args.lead, args.tail)
     print(f"total duration: {clock(total)} ({total:.2f}s)")
     print(f"audio: {len(scenes)} tracks -> {AUDIO_DIR}")
     for scene in scenes:
