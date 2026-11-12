@@ -268,7 +268,7 @@
 | --- | --- | --- |
 | 首屏内容依次升起 | 首页 hero | 层级：先标题后 CTA |
 | 幻灯片叠自转 + hover 摊开 + 指针倾斜 | 首页 hero | 叙事：让「一叠会停的幻灯片」成为可感知的物件 |
-| section 进入视口淡入上移 | 首页 format/shelf | 叙事：按阅读顺序展开 |
+| section 进入视口上移 | 首页 format/shelf | 叙事：按阅读顺序展开；只做位移不做淡入，整页渲染时内容始终可见 |
 | 卡片/按钮 hover 抬升、active 下沉 | 全站 | 反馈：可点击、可按下 |
 | 切屏过渡遮罩 | 课程外壳 | 状态变化：上一屏到下一屏 |
 | 播放/暂停图标切换 | 课程外壳 | 状态反馈 |
@@ -278,6 +278,7 @@
 - 只动 `transform` 与 `opacity`；不动 `top/left/width/height`。
 - 时长：hover 150-320ms；入场 600-820ms；课程切屏 180-600ms。
 - **禁止** `window.addEventListener('scroll')`；滚动显现用 CSS `animation-timeline: view()`，并提供 reduced-motion 与 print 的关闭规则。
+- 滚动显现不要用 `opacity` 从 0 起加上 backwards fill：没有发生滚动的渲染路径（整页截图、预览、导出）会把首屏以下内容画成空白。用 `transform` 位移，内容任何时刻都可见。
 - 所有自动循环/视差/倾斜在 `prefers-reduced-motion: reduce` 下变静态；hover 类效果在触屏上不能是唯一信息来源。
 - 不做无理由的无限循环动效（印章不转、海报不呼吸、文字不闪烁）。
 - 一页最多一个 marquee（当前没有）。

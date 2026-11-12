@@ -388,7 +388,7 @@ courses/<slug>/
 - 不允许外部**资源加载**：`script[src]`、会加载资源的 `link[href]`、`img/source/video/audio[src]`、`poster`、CSS `url()`、`@import` 都不能指向课程包外部。普通 `<a href>` 外链可以用于引用/致谢，但要加 `rel="noopener noreferrer"`，且不能自动加载。
 - GSAP 必须放在 `assets/vendor/gsap.min.js`，在根 `index.html` 里本地引用。
 - 字体必须本地：`@font-face` 的 `src` 指向 `assets/fonts/...`。不能用 Google Fonts 或系统字体作为唯一方案。
-- 课程外壳的字体是可选的：构建时如果 `composition/assets/fonts/` 里有 `.woff2`，课程页会自动注入一份同名 `@font-face`，让封面、控制条、讲义和动画用同一套字体；没有字体文件时回退到系统字体，构建不报错。
+- 课程外壳的字体是可选的：构建时如果 `composition/assets/fonts/` 里有 `.woff2`，课程页会自动注入一份 `@font-face`，让封面、控制条、讲义和动画用同一套字体；优先用 `NotoSansSC-VF.woff2`，没有时才取目录里任意一个，都没有就回退到系统字体，构建不报错。
 - 中文正文使用自托管的 Noto Sans SC 子集；拉丁标签/数字可以用一套几何无衬线；等宽标签用 `ui-monospace` 或本地字体。
 - 图片 WebP/AVIF；音频 AAC/MP3/Opus；视频只在必要屏幕使用，且必须本地、压缩、带 `muted` 或 `data-has-audio="true"`。
 - 第三方库（Three.js、Lottie、anime.js 等）放在 `assets/vendor/`，带 LICENSE，并在 `STORYBOARD.md` 里记录版本。

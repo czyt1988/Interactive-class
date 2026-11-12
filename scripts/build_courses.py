@@ -51,6 +51,35 @@ MAX_HTML_BYTES = 200 * 1024
 MAX_IMAGE_BYTES = 500 * 1024
 MAX_COVER_BYTES = 300 * 1024
 
+# ``runtime/shell.html.j2`` declares one face, "Noto Sans SC", so the shell has
+# to register the same file the composition uses. The font folder also holds
+# faces such as JetBrains Mono; taking the alphabetically first ``.woff2``
+# would register a mono subset under the Noto name and push the whole cover,
+# control bar and transcript into system-font fallback.
+SHELL_FONT_NAME = "NotoSansSC-VF.woff2"
+
+LEVEL_LABELS = {"beginner": "入门", "intermediate": "进阶", "advanced": "高级"}
+
+
+def level_label(level: str) -> str:
+    return LEVEL_LABELS.get(level, level)
+
+
+def shell_font_url(composition_dir: Path) -> str | None:
+    """Font file the shell injects, relative to the built course page.
+
+    Prefer the Noto subset the contract names; fall back to any ``.woff2`` so a
+    course that ships a differently named face still gets a local font.
+    """
+
+    font_dir = composition_dir / "assets" / "fonts"
+    if not font_dir.is_dir():
+        return None
+    preferred = font_dir / SHELL_FONT_NAME
+    chosen = preferred if preferred.is_file() else next(iter(sorted(font_dir.glob("*.woff2"))), None)
+    return f"./composition/assets/fonts/{chosen.name}" if chosen else None
+
+
 
 def _skip_composition_name(name: str) -> bool:
     return name in SKIP_COMPOSITION or name.startswith(SKIP_COMPOSITION_PREFIXES)
@@ -273,6 +302,7 @@ def _render_shell(
         return f"{total // 60}:{total % 60:02d}"
 
     env.globals["mmss"] = mmss
+    env.globals["level_label"] = level_label
     template = env.get_template("shell.html.j2")
 
     course_data = course.model_dump()
@@ -359,9 +389,7 @@ def build_course(
     target = out_root / slug
     try:
         _copy_composition(course_dir / "composition", staging / "composition")
-        font_dir = staging / "composition" / "assets" / "fonts"
-        font_file = next(iter(sorted(font_dir.glob("*.woff2"))), None) if font_dir.is_dir() else None
-        font_url = f"./composition/assets/fonts/{font_file.name}" if font_file else None
+        font_url = shell_font_url(staging / "composition")
         _copy_runtime(runtime_dir, staging / "runtime")
         if course.cover:
             shutil.copy2(course_dir / course.cover, staging / course.cover)

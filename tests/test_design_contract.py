@@ -124,6 +124,22 @@ def test_homepage_respects_the_eyebrow_budget() -> None:
     assert home.count('class="eyebrow"') <= 1, "homepage allows at most one eyebrow (DESIGN.md 4.2)"
 
 
+def test_scroll_reveal_keeps_content_visible() -> None:
+    """The homepage reveal must not hide content in renders that never scroll.
+
+    A full-page capture, a preview panel or an export paints the document at
+    scroll position 0; fading in from opacity 0 with a backwards fill turned
+    everything below the hero into blank paper there (DESIGN.md 6.2).
+    """
+
+    home_css = _read(ROOT / "app" / "static" / "home.css")
+    start = home_css.index("@supports (animation-timeline: view())")
+    block = home_css[start:]
+    assert "animation: slide-up linear;" in block
+    assert "rise-in" not in block, "滚动显现在用淡入关键帧，会让未滚动到的内容不可见"
+    assert "both" not in block, "滚动显现不能带 backwards fill"
+
+
 def test_design_decisions_are_recorded() -> None:
     design = _read(ROOT / "DESIGN.md")
     for section in ("## 0. 设计阅读", "## 3. 令牌", "## 4. 版式系统", "## 13. 交付前自检", "## 14. 决策记录"):

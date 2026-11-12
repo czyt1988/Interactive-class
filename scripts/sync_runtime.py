@@ -11,6 +11,7 @@ Run with: ``python scripts/sync_runtime.py``
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import shutil
@@ -21,10 +22,16 @@ ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools" / "node_modules"
 RUNTIME = ROOT / "runtime"
 DESIGN = ROOT / "design"
-APP_STATIC = ROOT / "app" / "static"
+APP = ROOT / "app"
+APP_STATIC = APP / "static"
+APP_TEMPLATES = APP / "templates"
 TEMPLATE_ROOT = ROOT / "course-template"
 TEMPLATE_ASSETS = TEMPLATE_ROOT / "composition" / "assets"
 COURSE_ROOT = ROOT / "courses"
+
+# Copy drawn by the course shell (cover, control bar, transcript drawer). The
+# shell shares one font with the composition, so its copy belongs in the subset.
+SHELL_COPY_FILES = ("shell.html.j2", "course-deck.js")
 
 # Subset covering common Chinese text plus punctuation and latin/digits.
 # Kept as a literal so the subset is reproducible without external lists.
@@ -53,7 +60,7 @@ PLAYER_FILES = ("hyperframes-player.global.js", "hyperframe.runtime.iife.js")
 
 # The deck shell (course-deck.js/.css, shell.html.j2) is versioned separately from
 # the pinned vendor runtime. Bump this whenever the shell or its CSS changes.
-DECK_VERSION = "1.4.0"
+DECK_VERSION = "1.4.1"
 
 
 class SyncError(Exception):
@@ -91,6 +98,58 @@ def course_text(course_dir: Path) -> str:
         for path in sorted(composition.rglob("*")):
             if path.is_file() and path.suffix.lower() in {".html", ".htm", ".json"}:
                 parts.append(path.read_text(encoding="utf-8", errors="ignore"))
+    return "".join(parts)
+
+
+def python_copy(root: Path) -> str:
+    """String literals of the app package: copy that templates cannot hold."""
+    parts: list[str] = []
+    for path in sorted(root.rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError):
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                parts.append(node.value)
+    return "\n".join(parts)
+
+
+def shell_text() -> str:
+    """Copy drawn by the course shell, which shares the course's font file.
+
+    The shell (cover, control bar, transcript, complete page) is rendered from
+    ``runtime/`` and reuses the composition font, so the subset has to cover
+    this copy as well; otherwise labels fall back to a system font.
+    """
+
+    parts: list[str] = []
+    for name in SHELL_COPY_FILES:
+        path = RUNTIME / name
+        if path.is_file():
+            parts.append(path.read_text(encoding="utf-8"))
+    return "".join(parts)
+
+
+def site_text() -> str:
+    """Every string the site itself can render.
+
+    The app font is a subset. It must cover the templates, the static scripts,
+    the Python string literals that reach a page, and the course metadata the
+    catalog pages print; a subset that misses common copy characters swaps
+    individual glyphs to a system font in the middle of a heading.
+    """
+
+    parts = [path.read_text(encoding="utf-8") for path in sorted(APP_TEMPLATES.rglob("*.html"))]
+    parts += [path.read_text(encoding="utf-8") for path in sorted(APP_STATIC.rglob("*.js"))]
+    parts.append(python_copy(APP))
+    for course_dir in sorted(COURSE_ROOT.iterdir()) if COURSE_ROOT.is_dir() else []:
+        if not course_dir.is_dir() or course_dir.name.startswith((".", "_")):
+            continue
+        if (course_dir / "course.json").is_file():
+            parts.append(course_text(course_dir))
     return "".join(parts)
 
 
@@ -174,16 +233,18 @@ def sync_vendor() -> dict[str, dict[str, str]]:
 def sync_fonts() -> dict[str, str]:
     source = require(DESIGN / "fonts" / "NotoSansSC-VF.ttf", "见 design/README.md 的字体下载步骤")
     hashes: dict[str, str] = {}
+    shell_copy = shell_text()
 
     # The template ships visible copy of its own, so its font subset must cover it
     # exactly like a real course does. It is no longer under COURSE_ROOT, so it
     # needs this explicit pass.
     template_font = TEMPLATE_ASSETS / "fonts" / "NotoSansSC-VF.woff2"
-    subset_font(source, template_font, extra_text=course_text(TEMPLATE_ROOT))
+    subset_font(source, template_font, extra_text=course_text(TEMPLATE_ROOT) + shell_copy)
     hashes[template_font.relative_to(ROOT).as_posix()] = sha256(template_font)
 
+    # The site font serves every page plus the course metadata printed on them.
     app_font = APP_STATIC / "fonts" / "NotoSansSC-VF.woff2"
-    subset_font(source, app_font)
+    subset_font(source, app_font, extra_text=site_text())
     hashes[app_font.relative_to(ROOT).as_posix()] = sha256(app_font)
 
     for course_dir in sorted(COURSE_ROOT.iterdir()) if COURSE_ROOT.is_dir() else []:
@@ -192,7 +253,7 @@ def sync_fonts() -> dict[str, str]:
         assets = course_dir / "composition" / "assets"
         if (assets / "course.css").is_file():
             target = assets / "fonts" / "NotoSansSC-VF.woff2"
-            subset_font(source, target, extra_text=course_text(course_dir))
+            subset_font(source, target, extra_text=course_text(course_dir) + shell_copy)
             hashes[target.relative_to(ROOT).as_posix()] = sha256(target)
     return hashes
 

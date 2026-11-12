@@ -63,7 +63,7 @@
           <div class="cover__main">
             <p class="cover__eyebrow">
               {{ course.credits.updatedAt or "" }}{% if course.credits.updatedAt %} · {% endif %}{{
-                course.level | replace("beginner", "入门") | replace("intermediate", "进阶") | replace("advanced", "高级")
+                level_label(course.level)
               }}
             </p>
             <h1 id="cover-title" class="cover__title">{{ course.title }}</h1>
@@ -97,7 +97,7 @@
             <dl class="cover__meta">
               <div><dt>屏数</dt><dd>{{ course.stats.screenCount }} 屏</dd></div>
               <div><dt>时长</dt><dd>{{ mmss(course.stats.durationSeconds) }}</dd></div>
-              <div><dt>级别</dt><dd>{{ course.level }}</dd></div>
+              <div><dt>级别</dt><dd>{{ level_label(course.level) }}</dd></div>
               <div><dt>语言</dt><dd>{{ course.language }}</dd></div>
             </dl>
           </div>
