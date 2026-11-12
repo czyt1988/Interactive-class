@@ -61,32 +61,35 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 
 1. **复用依赖，不重新下载**：`.venv`（Python 依赖）、`tools/node_modules`（HyperFrames / GSAP）、`tools/ffmpeg` 以目录联接（Windows junction / POSIX 软链接）挂进工作树；`courses/*/narration/cache/` 的旁白缓存也直接共享。新工作树几秒内就能跑 `pytest` / `ruff` / 构建课程，不联网、不 `pip install`、不 `npm install`。
 2. **复制会被写坏的生成物**：`runtime/vendor` 和 `.env` 复制一份。工作树里重跑 `sync_runtime.py` 或改本地配置，不会污染主工作树。
-3. **安全拆除**：Windows 下递归删除目录联接会清空主工作树的目标目录。`remove` 先拆联接再删工作树，并拒绝递归删除仍含联接的目录。
+3. **安全拆除**：Windows 目录联接在不同工具/版本里的递归删除行为不一致，可能跟随到目标目录（主工作树的 `.venv`、`node_modules`）。`remove` 先拆联接再删工作树，拒绝递归删除仍含联接的目录；工作树有未提交改动时拒绝删除（`--force` 才丢弃）。
 
 创建工作树时会顺手预构建 `dist/`（`--no-build` 跳过），新工作树直接双击 `star.cmd` 就能起站点。
 
 ### 共享的代价（必须守的纪律）
 
-- **不要在 worktree 里 `pip install` / `npm install`**：写的是共享的 `.venv` / `tools/node_modules`，会波及主工作树和并行会话。需要装依赖时在主工作树装，工作树自动可见。
-- **升级 `tools/package.json` 里的固定版本**是串行步骤：在主工作树 `npm install` + `python scripts/sync_runtime.py`，再在工作树里重跑同步（或 `link`）让复制出来的 `runtime/vendor` 跟上。
-- **不要手工 `rm -rf .worktree/<名字>`**：Windows 下会跟着目录联接清空主工作树的目标目录；删除一律用 `remove`。
+- **不要在 worktree 里 `pip install` / `npm install`**：写的是共享的 `.venv` / `tools/node_modules`，会波及主工作树和并行会话（`bootstrap.py` 检测到共享联接是否就直接拒绝重装）。需要装依赖时在主工作树装，工作树自动可见。
+- **升级 `tools/package.json` 里的固定版本**是串行步骤：在主工作树 `npm install` + `python scripts/sync_runtime.py`，再在工作树里 `link` 刷新复制出来的 `runtime/vendor`（`link` 会重拷内容有变化的副本）。
+- **重做旁白也是串行步骤**：`build_narration.py` 会写共享的 `courses/*/narration/cache/`，不要多个工作树同时重建同一门课的旁白。
+- **不要手工 `rm -rf .worktree/<名字>`**：Windows 下可能跟着目录联接删到主工作树的目标目录；删除一律用 `remove`（有未提交改动会拒绝，确认丢弃才 `--force`）。
 - **工作树里起站点换端口**：主工作树默认 8081，工作树用 `$env:APP_PORT=8082`（PowerShell）或 `set APP_PORT=8082`（CMD），避免抢端口。
 - `dist/`、`data/`、`.pytest_cache/` 等产物都是工作树私有的，不共享，也不要复制回主工作树。
 
 ### 在工作树里干活
 
 - 命令与主工作树一致：`pytest -q && ruff check .`、`python scripts/build_courses.py --all`、`python scripts/sync_runtime.py`。
-- 仓库根已由根 `conftest.py` 和脚本自身放进 `sys.path`：测试与构建脚本导入的是**当前检出**的 `app`，不会因为共享 `.venv` 的 editable install 跑到主工作树。自己写的一次性脚本若要 `import app`，从仓库根用 `python -m` 或先 `set PYTHONPATH=%CD%`。
+- 仓库根已由根 `conftest.py` 和构建脚本放进 `sys.path`：测试与构建脚本导入的是**当前检出**的 `app`，不会因为共享 `.venv` 的 editable install 跑到主工作树。自己写的一次性脚本若要 `import app`，从仓库根用 `python -m` 或先 `set PYTHONPATH=%CD%`。
+- 起站点用 `python -m uvicorn app.main:app`（`uvicorn` 控制台脚本不会把当前目录放进 `sys.path`，会导入主工作树；双击 `star.cmd` 的 launcher 已处理这一点）。
 - 提交规则不变：验收通过后在工作树里提交（Conventional Commits），WIP 提交在任务结束前整理干净。
 
 ### 合并回 `main`
 
 - 动手前先 `git -C <工作树> merge main`（收尾前再合一次），让冲突提前暴露，而不是攒到合并那一刻。
 - `python scripts/worktree.py merge feat/course-xyz --remove`：
-  1. 默认先在工作树里跑 `pytest -q` + `ruff check .` 作为合并门禁（`--no-verify` 跳过）；
-  2. 再以 `--ff-only` 合并回 `main`（只有 `main` 检出在工作树且工作区干净时才会动手）；
-  3. 成功后删除工作树与分支。
+  1. 默认先在工作树里跑 `pytest -q` + `ruff check .` 作为合并门禁（分支没有工作树时会拒绝；确实已自行验证过才加 `--no-verify`）；
+  2. 再以 `--ff-only` 合并回 `main`（`main` 检出在工作树且工作区干净时在该树合并；没有检出时用临时工作树；有在途改动则拒绝）；
+  3. 成功后删除工作树与分支；分支若正检出在主工作树，先切回 `main` 再加 `--remove`。
 - 无法快进说明 `main` 已经前进：先在工作树里 `git merge main`、解决冲突并提交，再重跑 `merge`；或加 `--merge` 生成合并提交（之后要在主工作树重跑验收）。
+- `--merge` 遇到冲突会自动 `git merge --abort` 回滚，主工作树不会被留在冲突状态；修好冲突再重试。
 - 合并后主工作树 `git status` 应该干净，**任务完成 = 已合并回 `main` 并清理工作树与分支**，不要把冲突、分叉或“没合并”的状态留给下一个任务。
 - 站点正在主工作树运行时，合并后重建 `dist/` 并重启再看效果；是否 `git push` 按「提交规则 → 提交之后」执行。
 

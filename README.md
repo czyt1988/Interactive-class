@@ -219,7 +219,7 @@ python scripts/sync_runtime.py         # 把 player/runtime/GSAP/字体布置到
 
 python scripts/build_courses.py --all  # 生成 dist/courses/<slug>/
 alembic upgrade head                   # 建 SQLite 表
-uvicorn app.main:app --reload          # http://127.0.0.1:8000
+python -m uvicorn app.main:app --reload          # http://127.0.0.1:8000
 ```
 
 Windows 上不想敲这些命令也没关系：直接双击 `star.cmd`，它会把上面的准备自动做完再启动（见下面「Windows 双击启动」）。
@@ -276,7 +276,7 @@ python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回
 
 创建工作树时会共享主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`（Windows 目录联接 / POSIX 软链接），并复制 `runtime/vendor` 与 `.env`，所以不需要重新联网安装依赖，新工作树几秒内就能跑测试、构建课程、双击 `star.cmd` 起站点。旁白 TTS 缓存也直接共享，重做旁白不用重新合成已有片段。
 
-共享的代价是依赖目录属于主工作树：**不要在 worktree 里 `pip install` / `npm install`**；删除工作树请用 `remove`，不要手工删目录（Windows 下递归删除目录联接会清空主工作树的目标目录）。
+共享的代价是依赖目录属于主工作树：**不要在 worktree 里 `pip install` / `npm install`**（启动器检测到共享环境会拒绝重装）；重做旁白也是串行步骤，不要多个工作树同时重建同一门课的旁白。依赖或本地配置变化后，`python scripts/worktree.py link` 会补齐缺失项并刷新 `runtime/vendor`、`.env` 副本。删除工作树请用 `remove`，不要手工删目录；工作树有未提交改动时 `remove` 会拒绝，确认丢弃才加 `--force`。`merge` 默认要求分支有工作树才能跑合并前验证，冲突时会自动回滚主工作树。
 
 ## 在线生成课程视频
 
