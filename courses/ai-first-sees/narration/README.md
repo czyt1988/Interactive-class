@@ -29,9 +29,21 @@
 python scripts\prepare_course_media.py
 ```
 
+### 改语速或音色
+
+```powershell
+# 语速必须是带符号的百分比（edge-tts 拒收不带符号的 "0%"）
+.\.venv\Scripts\python.exe scripts\build_narration.py --rate "+0%"
+
+# 也可以换音色；普通话候选见 edge-tts --list-voices
+.\.venv\Scripts\python.exe scripts\build_narration.py --voice zh-CN-YunyangNeural --rate "+0%"
+```
+
+当前配置：`zh-CN-YunxiNeural`、`rate +0%`（约 5.6 字/秒，全片 18:38）。`narration/cache/` 的复用键包含 voice、rate 和旁白文本指纹，任意一项变了都会自动重新合成，只有完全一致才复用（`--no-tts` 也只接受完全匹配的缓存）。改完记得跑 `python scripts/build_courses.py --all` 重建 `dist/`。
+
 产物：
 
-- `composition/assets/audio/s<NN>-<id>.ogg`：一页一条旁白（OGG/Opus，约 5 MB / 21.7 分钟）。这是本地静态文件，播放时不需要网络，也不调用任何线上 TTS。
+- `composition/assets/audio/s<NN>-<id>.ogg`：一页一条旁白（OGG/Opus，约 4.3 MB / 18.6 分钟）。这是本地静态文件，播放时不需要网络，也不调用任何线上 TTS。
 - `composition/assets/fonts/NotoSansSC-VF.woff2`：由 `scripts/sync_runtime.py` 按本课实际用字重新子集化。
 - `composition/index.html`：根 composition，含每页 scene host 和每页一条 `<audio>`。
 - `course.json`：每页 `transcript`、`autoAdvance`、`playback: "continuous"`。

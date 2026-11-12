@@ -33,8 +33,9 @@ def test_long_form_contract(resolved) -> None:
     assert resolved.audio is True
     assert resolved.playback == "continuous"
     assert len(resolved.screens) == SCENE_COUNT
-    assert resolved.composition.duration > 20 * 60
-    assert resolved.stats.estimatedMinutes >= 20
+    # 旁白语速从 -15% 调到 +0% 后全片约 18:38；这里只确认它仍是长课，不是短课。
+    assert resolved.composition.duration > 15 * 60
+    assert resolved.stats.estimatedMinutes >= 16
     for screen in resolved.screens:
         assert screen.transcript, f"{screen.id} 缺少旁白文本"
         assert screen.autoAdvance is True, f"{screen.id} 必须自动接续"

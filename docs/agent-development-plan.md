@@ -74,7 +74,7 @@
 | 3a 播放器适配层 | ✅ 完成 | `runtime/course-deck.js` 的 `createPlayerAdapter`；`tests/e2e/test_standalone.py` 验证 range 终点 `ended` |
 | 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
 | 4 站点外壳 | ✅ 完成 | 首页、课程库（含 level/tag 过滤）、关于、404、sitemap、robots |
-| 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 21:42，整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 0 error |
+| 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 18:38（旁白 `rate +0%`），整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 0 error |
 | 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
 | 7 发布 | ⬜ 未开始 | 无 Dockerfile、无反代配置、无生产 URL |
 | 8 课程规模化 | ✅ 完成 | 独立模板包 `course-template/`、`scripts/new_course.py`、`scripts/import_course.py`、开发环境 `/import` 导入页、`course_imports` 来源记录 |
