@@ -1,3 +1,6 @@
+# git 工作树（scripts/worktree.py 创建，不进版本库）
+/.worktree/
+
 # Python 虚拟环境与缓存
 .venv*/
 __pycache__/
