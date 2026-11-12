@@ -16,13 +16,16 @@
 
 2. **复制"应该各写各的"生成物**
    ``runtime/vendor``（由 ``sync_runtime.py`` 生成）和 ``.env`` 复制而不是共享：
-   在工作树里重跑同步脚本不会改到主工作树；本地配置也可以各用各的。``大纲/``
-   与 ``courses/*/narration/cache/``（TTS 缓存）只读复用，避免重新联网合成。
+   在工作树里重跑同步脚本不会改到主工作树；本地配置也可以各用各的。
+   ``courses/*/narration/cache/``（TTS 缓存）只读复用，避免重新联网合成；
+   它和 ``pip install`` / ``npm install`` 一样属于"串行步骤"，不要并行重建旁白。
 
 3. **安全创建与拆除**
-   Windows 下对目录联接做递归删除会删掉目标目录（也就是主工作树的 ``.venv``、
-   ``node_modules``）。``remove`` 先拆联接、再删工作树，并且绝不递归删除仍含
-   联接的目录。不要手工 ``rm -rf .worktree/<名字>``，用 ``remove``。
+   Windows 的目录联接在不同工具/版本里的递归删除行为不一致，可能跟随到目标
+   目录（也就是主工作树的 ``.venv``、``node_modules``）。``remove`` 先拆联接、
+   再删工作树，并且绝不递归删除仍含联接的目录；工作树有未提交改动时拒绝删除
+   （``--force`` 才丢弃）。``merge`` 冲突失败会 ``git merge --abort``，不让主
+   工作树停在冲突状态。不要手工 ``rm -rf .worktree/<名字>``，用 ``remove``。
 
 用法
 ----
@@ -31,8 +34,9 @@
     python scripts/worktree.py add feat/course-xyz        # 从 main 切出工作树
     python scripts/worktree.py add fix/player-crash --base main
     python scripts/worktree.py list                       # 列出工作树与共享状态
-    python scripts/worktree.py link                       # 补齐/修复共享目录
+    python scripts/worktree.py link                       # 补齐/修复共享目录（刷新副本）
     python scripts/worktree.py remove feat-course-xyz     # 删除工作树（保留分支）
+    python scripts/worktree.py remove feat-course-xyz --force   # 丢弃未提交改动后删除
     python scripts/worktree.py merge feat/course-xyz --remove
                                                           # 验证 + 快进合并回 main + 清理
 
@@ -45,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import filecmp
 import os
 import shutil
 import stat
@@ -368,22 +373,78 @@ def _copy_path(source: Path, destination: Path) -> None:
         shutil.copy2(source, destination)
 
 
-def apply_shares(repo: Repo, worktree: Path) -> tuple[list[str], list[str]]:
-    """Copy/link every available share into ``worktree``. Idempotent."""
+def _copy_matches(source: Path, destination: Path) -> bool:
+    """True when a copied share (``runtime/vendor``、``.env``) is already current."""
+
+    if source.is_dir() != destination.is_dir():
+        return False
+    if source.is_file():
+        return filecmp.cmp(source, destination, shallow=False)
+    comparison = filecmp.dircmp(source, destination)
+    if comparison.left_only or comparison.right_only or comparison.funny_files:
+        return False
+    _match, mismatch, errors = filecmp.cmpfiles(
+        source, destination, comparison.common_files, shallow=False
+    )
+    if mismatch or errors:
+        return False
+    return all(_copy_matches(source / name, destination / name) for name in comparison.common_dirs)
+
+
+def _share_candidates(root: Path, share: Share) -> list[Path]:
+    """Existing paths in ``root`` matching a share pattern (dangling links included)."""
+
+    if "*" in share.relative:
+        return sorted(root.glob(share.relative))
+    candidate = root / share.relative
+    return [candidate] if (candidate.exists() or is_link(candidate)) else []
+
+
+def apply_shares(
+    repo: Repo, worktree: Path, *, refresh: bool = False
+) -> tuple[list[str], list[str]]:
+    """Copy/link every available share into ``worktree``. Idempotent.
+
+    ``refresh=True`` re-copies snapshot shares whose content changed in the main
+    worktree, so ``link`` really repairs ``runtime/vendor`` and ``.env``.
+    """
 
     done: list[str] = []
     problems: list[str] = []
+
+    # 悬空的共享联接（目标被移走/改名）会让同步悄悄失效。先清掉再按主工作树
+    # 当前状态重建；没有源可重建时明确报错，而不是静默“已就绪”。
+    for share in SHARES:
+        if share.mode != "link":
+            continue
+        for path in _share_candidates(worktree, share):
+            if is_link(path) and not path.exists():
+                remove_link(path)
+                problems.append(
+                    f"{path.relative_to(worktree).as_posix()} 的共享联接已失效"
+                    "（目标不存在），已清理；确认主工作树环境完好后重新运行 link"
+                )
+
     for share, source, relative in _share_sources(repo):
         destination = worktree / relative
         try:
             if share.mode == "copy":
                 if destination.exists():
+                    if refresh and not _copy_matches(source, destination):
+                        if destination.is_dir():
+                            shutil.rmtree(destination)
+                        else:
+                            destination.unlink()
+                        _copy_path(source, destination)
+                        done.append(f"刷新  {relative.as_posix():<24} {share.note}")
                     continue
                 _copy_path(source, destination)
                 done.append(f"复制  {relative.as_posix():<24} {share.note}")
                 continue
             if is_link(destination):
-                continue
+                if destination.exists():
+                    continue
+                remove_link(destination)
             if destination.exists():
                 problems.append(
                     f"{relative.as_posix()} 已存在真实目录，未共享；确认内容无用后可删掉它再运行 link"
@@ -397,13 +458,25 @@ def apply_shares(repo: Repo, worktree: Path) -> tuple[list[str], list[str]]:
 
 
 def missing_shares(repo: Repo, worktree: Path) -> list[str]:
-    missing: list[str] = []
-    for _share, _source, relative in _share_sources(repo):
-        destination = worktree / relative
-        if destination.exists() or is_link(destination):
-            continue
-        missing.append(relative.as_posix())
-    return missing
+    """Share paths that are absent, dangling or stale in ``worktree``."""
+
+    missing: set[str] = set()
+    expected = {relative.as_posix() for _share, _source, relative in _share_sources(repo)}
+
+    for share in SHARES:
+        for path in _share_candidates(worktree, share):
+            relative = path.relative_to(worktree).as_posix()
+            if not path.exists():  # 悬空联接
+                missing.add(relative)
+            elif share.mode == "copy" and "*" not in share.relative:
+                source = repo.main / relative
+                if source.exists() and not _copy_matches(source, path):
+                    missing.add(relative)
+
+    for relative in expected:
+        if not (worktree / relative).exists():
+            missing.add(relative)
+    return sorted(missing)
 
 
 def _unlink_known_shares(worktree: Path) -> list[str]:
@@ -493,8 +566,15 @@ def cmd_add(repo: Repo, args: argparse.Namespace) -> int:
     directory = branch.replace("/", "-")
     worktree = repo.wt_root / directory
     if worktree.exists() or is_link(worktree):
+        existing = find_worktree(repo, path=worktree)
+        if existing is not None and existing.branch:
+            raise WorktreeError(
+                f"工作树目录已存在: {worktree}（对应分支 {existing.branch}）；"
+                f"先合并/删除它（remove {directory}），或换一个分支名"
+            )
         raise WorktreeError(
-            f"工作树目录已存在: {worktree}（删除用: python scripts/worktree.py remove {directory}）"
+            f"工作树目录已存在: {worktree}（未在 git 注册，可能是上次删除的残留；"
+            f"可运行 remove {directory} 清理）"
         )
 
     repo.wt_root.mkdir(parents=True, exist_ok=True)
@@ -517,15 +597,17 @@ def cmd_add(repo: Repo, args: argparse.Namespace) -> int:
             f"请把它加进 .gitignore（或本仓库尚未合并该改动）"
         )
 
+    share_problems = False
     if args.share:
         _note("=== 复用主工作树的依赖与本地配置 ===")
-        done, problems = apply_shares(repo, worktree)
+        done, problems = apply_shares(repo, worktree, refresh=False)
         for line in done:
             _note(f"  {line}")
         if not done:
             _note("  没有需要共享的目录（可能已就绪）")
         for problem in problems:
             _warn(problem)
+        share_problems = bool(problems)
         _report_venv(worktree)
         _warn_missing(repo, worktree)
     else:
@@ -535,6 +617,12 @@ def cmd_add(repo: Repo, args: argparse.Namespace) -> int:
         _prepare_build(worktree)
 
     _print_next_steps(branch, worktree, base)
+    if share_problems:
+        _warn(
+            "工作树已创建，但共享依赖没有全部就绪；按上面的提示修复后运行 "
+            "python scripts/worktree.py link，失败前不要把它当成可用环境"
+        )
+        return 1
     return 0
 
 
@@ -609,10 +697,11 @@ def _print_next_steps(branch: str, worktree: Path, base: str) -> None:
         "  1. 不要在 worktree 里 pip install / npm install：依赖目录是共享的，会波及主工作树和其它会话"
     )
     _note("  2. 删除工作树用 python scripts/worktree.py remove，不要手工删目录")
-    _note("     （Windows 目录联接被递归删除会清空主工作树的目标目录）")
-    _note("  3. 工作树里启动站点请换端口，避免和主工作树抢 8081：")
+    _note("     （目录联接被递归删除时可能跟随到主工作树的目标目录）")
+    _note("  3. 有未提交改动时 remove 会拒绝；确认要丢弃才加 --force")
+    _note("  4. 工作树里启动站点请换端口，避免和主工作树抢 8081：")
     _note("     PowerShell: $env:APP_PORT=8082    CMD: set APP_PORT=8082")
-    _note("  4. 构建/测试产物（dist/、data/、缓存）都是工作树私有的，不会影响主工作树")
+    _note("  5. 构建/测试产物（dist/、data/、缓存）都是工作树私有的，不会影响主工作树")
 
 
 # ---------------------------------------------------------------------------
@@ -638,6 +727,18 @@ def cmd_list(repo: Repo, _args: argparse.Namespace) -> int:
                 if missing:
                     detail.append("共享缺失: " + ", ".join(missing))
         _note("       " + " · ".join(detail))
+
+    registered = {entry.path for entry in repo.worktrees}
+    if repo.wt_root.is_dir():
+        leftovers = [
+            candidate
+            for candidate in sorted(repo.wt_root.iterdir())
+            if candidate.is_dir() and not any(_same_path(candidate, known) for known in registered)
+        ]
+        for candidate in leftovers:
+            _note(f"  [残留] {candidate}")
+            _note("       未在 git 注册（上次删除可能中断）；可运行 remove 清理")
+
     _note("")
     _note(
         "新增: python scripts/worktree.py add <分支>    删除: python scripts/worktree.py remove <名字>"
@@ -685,23 +786,26 @@ def cmd_link(repo: Repo, args: argparse.Namespace) -> int:
     else:
         targets = [_resolve_registered(repo, args.name)]
 
+    failed = False
     for entry in targets:
         _note(f"=== 补齐共享: {entry.path} ===")
         if not entry.path.is_dir():
             _warn(f"工作树目录不存在: {entry.path}")
+            failed = True
             continue
         if repo.is_main(entry.path):
             _note("  这是主工作树，不需要共享")
             continue
-        done, problems = apply_shares(repo, entry.path)
+        done, problems = apply_shares(repo, entry.path, refresh=True)
         for line in done:
             _note(f"  {line}")
         for problem in problems:
             _warn(problem)
         if not done and not problems:
             _note("  已就绪，无需改动")
+        failed = failed or bool(problems)
         _report_venv(entry.path)
-    return 0
+    return 1 if failed else 0
 
 
 # ---------------------------------------------------------------------------
@@ -715,12 +819,31 @@ def _registered_now(repo: Repo, path: Path) -> bool:
     return any(_same_path(entry.path, path) for entry in entries)
 
 
-def _remove_worktree(repo: Repo, entry: WorktreeEntry, *, delete_branch: bool) -> None:
+def _remove_worktree(
+    repo: Repo,
+    entry: WorktreeEntry,
+    *,
+    delete_branch: bool,
+    force: bool = True,
+    merged_into: str | None = None,
+) -> bool:
+    """Delete one worktree; return False when requested cleanup could not finish."""
+
     path = entry.path
     if repo.is_main(path):
-        raise WorktreeError("拒绝删除主工作树")
+        raise WorktreeError(
+            "拒绝删除主工作树；如果这个分支正检出在主工作树，先把它切回集成分支再操作"
+        )
     if _same_path(path, repo.current):
         raise WorktreeError("当前 shell 正停留在要删除的工作树里；请先 cd 到主工作树再执行 remove")
+
+    if path.exists() and not force:
+        changes = dirty_files(path)
+        if changes:
+            preview = "\n".join(f"    {line}" for line in changes[:10])
+            raise WorktreeError(
+                f"工作树有未提交改动，拒绝删除（先提交/清理，或加 --force 丢弃）: {path}\n{preview}"
+            )
 
     _note("=== 删除工作树 ===")
     if not path.exists():
@@ -733,7 +856,8 @@ def _remove_worktree(repo: Repo, entry: WorktreeEntry, *, delete_branch: bool) -
         if leftovers:
             detail = "\n".join(f"    {item}" for item in leftovers)
             raise WorktreeError(
-                "目录里仍有未识别的目录联接/软链接，拒绝递归删除（会清空目标目录）。\n"
+                "目录里仍有未识别的目录联接/软链接，拒绝递归删除"
+                "（不同工具可能跟随联接删到目标目录）。\n"
                 f"请先确认并手工拆除，再重试:\n{detail}"
             )
         completed = _run(["git", "worktree", "remove", "--force", str(path)], cwd=repo.main)
@@ -752,13 +876,17 @@ def _remove_worktree(repo: Repo, entry: WorktreeEntry, *, delete_branch: bool) -
         run_git("worktree", "prune", cwd=repo.main)
         _note(f"  已删除: {path}")
 
+    branch_ok = True
     if delete_branch:
         branch = entry.branch
         if not branch:
             _warn("这是 detached HEAD 工作树，没有分支可删除")
+        elif merged_into:
+            branch_ok = _delete_branch_if_merged(repo, branch, merged_into)
         else:
             completed = _run(["git", "branch", "-d", branch], cwd=repo.main)
             if completed.returncode != 0:
+                branch_ok = False
                 _warn(
                     f"分支 {branch} 未删除（可能仍未合并）；确认后可用 git branch -D {branch}\n"
                     + _tail(completed.stderr or completed.stdout)
@@ -767,6 +895,7 @@ def _remove_worktree(repo: Repo, entry: WorktreeEntry, *, delete_branch: bool) -
                 _note(f"  已删除分支: {branch}")
     elif entry.branch:
         _note(f"  分支 {entry.branch} 保留；合并后可用 git branch -d {entry.branch} 删除")
+    return branch_ok
 
 
 def _rmtree_with_retries(path: Path) -> None:
@@ -782,37 +911,105 @@ def _rmtree_with_retries(path: Path) -> None:
             time.sleep(1)
 
 
-def _resolve_removable(repo: Repo, name: str) -> WorktreeEntry:
-    candidate = Path(name)
-    if candidate.is_absolute() or (candidate.parent != Path(".") and candidate.exists()):
-        entry = find_worktree(repo, path=candidate)
-        if entry is not None:
-            return entry
+def _is_under(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+@dataclass
+class RemovalTarget:
+    """What ``remove`` was asked to delete: a registered worktree or a leftover dir."""
+
+    path: Path
+    entry: WorktreeEntry | None = None
+    branch: str | None = None
+
+
+def _delete_branch_if_merged(repo: Repo, branch: str, into: str) -> bool:
+    merged = git_ok("merge-base", "--is-ancestor", branch, into, cwd=repo.main) is not None
+    if not merged:
+        _warn(f"分支 {branch} 还没有完全合并进 {into}，未删除；确认后可用 git branch -D {branch}")
+        return False
+    completed = _run(["git", "branch", "-D", branch], cwd=repo.main)
+    if completed.returncode == 0:
+        _note(f"  已删除分支: {branch}")
+        return True
+    _warn(f"分支 {branch} 删除失败；确认后可用 git branch -D {branch}")
+    return False
+
+
+def _cleanup_orphan(repo: Repo, path: Path) -> None:
+    """Remove a directory under ``.worktree/`` that git no longer registers.
+
+    This is the state left behind when a previous ``remove`` was interrupted by a
+    file lock: git dropped the registration but the directory (and its links)
+    survived. Only touched after the same link-safety checks as a normal remove.
+    """
+
+    if repo.is_main(path) or _same_path(path, repo.current):
+        raise WorktreeError("拒绝删除主工作树或当前工作树")
+    if not _is_under(path, repo.wt_root):
+        raise WorktreeError(f"{path} 不在 {repo.wt_root} 下，拒绝删除")
+    if not (path.exists() or is_link(path)):
+        raise WorktreeError(f"找不到工作树目录: {path}")
+
+    _note("=== 清理未注册的残留目录 ===")
+    for relative in _unlink_known_shares(path):
+        _note(f"  已拆除共享: {relative}")
+    leftovers = find_reparse_points(path)
+    if leftovers:
+        detail = "\n".join(f"    {item}" for item in leftovers)
         raise WorktreeError(
-            f"{candidate} 不是 git 注册的工作树（为避免误删普通目录，脚本只删除已注册的工作树）"
+            f"残留目录里仍有未识别的目录联接/软链接，拒绝递归删除；请先确认并手工拆除:\n{detail}"
         )
-    directory = name.replace("/", "-")
-    entry = find_worktree(repo, path=repo.wt_root / directory)
-    if entry is not None:
-        return entry
-    entry = find_worktree(repo, path=repo.wt_root / name)
-    if entry is not None:
-        return entry
+    _rmtree_with_retries(path)
+    _note(f"  已清理: {path}（git 已不再登记它）")
+
+
+def _resolve_removable(repo: Repo, name: str) -> RemovalTarget:
+    candidate = Path(name)
+    if candidate.is_absolute() or candidate.parent != Path("."):
+        path = candidate if candidate.is_absolute() else Path.cwd() / candidate
+        entry = find_worktree(repo, path=path)
+        if entry is not None:
+            return RemovalTarget(entry.path, entry, entry.branch)
+        if path.exists() or is_link(path):
+            if not _is_under(path, repo.wt_root):
+                raise WorktreeError(f"{path} 不在 {repo.wt_root} 下，拒绝删除")
+            return RemovalTarget(path)
+        raise WorktreeError(f"找不到工作树目录: {path}")
+
+    # 分支名优先：feat/a-b 与 feat/a/b 都会映射到 feat-a-b，先按分支找。
     entry = find_worktree(repo, branch=name)
     if entry is not None:
-        return entry
-    if (repo.wt_root / directory).exists() or (repo.wt_root / name).exists():
-        raise WorktreeError(
-            f"{repo.wt_root / directory} 不是 git 注册的工作树"
-            "（为避免误删普通目录，脚本只删除已注册的工作树）"
-        )
+        return RemovalTarget(entry.path, entry, entry.branch)
+
+    # 目录名按原样匹配，不做 "/" 到 "-" 的模糊映射：否则 remove feat/a/b
+    # 可能删掉分支 feat/a-b 的工作树。目录名（feat-a-b）始终可用。
+    path = repo.wt_root / name
+    entry = find_worktree(repo, path=path)
+    if entry is not None:
+        return RemovalTarget(entry.path, entry, entry.branch)
+    if path.exists() or is_link(path):
+        return RemovalTarget(path)
     raise WorktreeError(f"找不到工作树: {name}（用 list 查看；目录名是分支名把 / 换成 -）")
 
 
 def cmd_remove(repo: Repo, args: argparse.Namespace) -> int:
-    entry = _resolve_removable(repo, args.name)
-    _remove_worktree(repo, entry, delete_branch=args.delete_branch)
-    return 0
+    target = _resolve_removable(repo, args.name)
+    if target.entry is None:
+        _cleanup_orphan(repo, target.path)
+        return 0
+    removed = _remove_worktree(
+        repo,
+        target.entry,
+        delete_branch=args.delete_branch,
+        force=args.force,
+    )
+    return 0 if removed else 1
 
 
 def _find_ruff(repo: Repo, worktree: Path) -> str | None:
@@ -871,6 +1068,23 @@ def _remove_temp_worktree(repo: Repo, path: Path) -> None:
     run_git("worktree", "prune", cwd=repo.main)
 
 
+def _abort_merge_if_in_progress(merge_cwd: Path) -> str:
+    """Roll back a conflicted merge; return a human readable outcome."""
+
+    merge_head = run_git("rev-parse", "--git-path", "MERGE_HEAD", cwd=merge_cwd).strip()
+    merge_head_path = Path(merge_head)
+    if not merge_head_path.is_absolute():
+        merge_head_path = merge_cwd / merge_head_path
+    if not merge_head_path.exists():
+        return ""
+    completed = _run(["git", "merge", "--abort"], cwd=merge_cwd)
+    if completed.returncode == 0:
+        return f"已在 {merge_cwd} 自动执行 git merge --abort，没有留下冲突状态。"
+    return f"自动 git merge --abort 失败，请到 {merge_cwd} 手工执行 git merge --abort：\n" + _tail(
+        completed.stdout + completed.stderr
+    )
+
+
 def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
     branch: str = args.branch
     base: str = args.base
@@ -893,6 +1107,11 @@ def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
     if args.remove and branch_entry is not None and _same_path(branch_entry.path, repo.current):
         raise WorktreeError(
             "当前 shell 正停留在要删除的工作树里；请先 cd 到主工作树，再执行 merge --remove"
+        )
+    if args.remove and branch_entry is not None and repo.is_main(branch_entry.path):
+        raise WorktreeError(
+            f"分支 {branch} 正检出在主工作树里，合并后无法删除它。"
+            f"先在主工作树切回 {base}（git checkout {base}）再重试，或去掉 --remove"
         )
 
     merge_cwd: Path | None = None
@@ -918,9 +1137,9 @@ def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
                     f"验证过程修改了工作树，先确认并处理再合并: {branch_entry.path}\n{preview}"
                 )
         else:
-            _warn(
-                "分支没有检出到工作树，跳过合并前验证；"
-                "请先在主工作树自行运行 pytest -q 与 ruff check ."
+            raise WorktreeError(
+                "分支没有检出到工作树，无法执行默认的合并前验证。\n"
+                "  先为它开工作树（add）再合并；确实已经验证过，才加 --no-verify 跳过"
             )
 
     ahead_text = run_git("rev-list", "--count", f"{base}..{branch}", cwd=repo.main).strip()
@@ -956,9 +1175,12 @@ def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
                 cwd=merge_cwd,
             )
             if completed.returncode != 0:
+                rollback = _abort_merge_if_in_progress(merge_cwd)
                 raise WorktreeError(
-                    "合并提交失败，先在工作树里解决冲突再重试:\n"
-                    + _tail(completed.stdout + completed.stderr)
+                    "合并提交失败（冲突），已尝试回滚。"
+                    + (f"\n{rollback}" if rollback else "")
+                    + f"\n先在工作树里 git merge {base} 并解决冲突、提交后再重试，"
+                    "或确认 --merge 是否必要：\n" + _tail(completed.stdout + completed.stderr)
                 )
             non_ff = True
         _note(f"  {branch} -> {base}（{ahead} 个提交）")
@@ -966,15 +1188,18 @@ def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
         if temp_path is not None:
             _remove_temp_worktree(repo, temp_path)
 
+    cleanup_ok = True
     if args.remove:
         if branch_entry is not None:
-            _remove_worktree(repo, branch_entry, delete_branch=True)
+            cleanup_ok = _remove_worktree(
+                repo,
+                branch_entry,
+                delete_branch=True,
+                force=True,
+                merged_into=base,
+            )
         else:
-            completed = _run(["git", "branch", "-d", branch], cwd=repo.main)
-            if completed.returncode == 0:
-                _note(f"  已删除分支: {branch}")
-            else:
-                _warn(f"分支 {branch} 未删除（可能仍未合并）；确认后可用 git branch -d {branch}")
+            cleanup_ok = _delete_branch_if_merged(repo, branch, base)
 
     head_info = git_ok("log", "--oneline", "-1", base, cwd=repo.main) or ""
     _note("")
@@ -986,6 +1211,9 @@ def cmd_merge(repo: Repo, args: argparse.Namespace) -> int:
             "请在主工作树再跑一遍 python -m pytest -q 与 ruff check ."
         )
     _note("  主工作树现在包含这些改动；若站点正在运行，重建 dist/ 并重启后再看效果。")
+    if not cleanup_ok:
+        _warn("合并已完成，但工作树/分支清理没有全部完成；按上面的提示处理后收尾")
+        return 1
     return 0
 
 
@@ -1020,17 +1248,22 @@ def build_parser() -> argparse.ArgumentParser:
     listing = sub.add_parser("list", help="列出工作树与共享状态")
     listing.set_defaults(func=cmd_list)
 
-    link = sub.add_parser("link", help="补齐/修复工作树的共享依赖")
+    link = sub.add_parser("link", help="补齐/修复工作树的共享依赖（刷新复制类共享）")
     link.add_argument("name", nargs="?", help="工作树名字或分支名（默认当前工作树）")
     link.add_argument("--all", action="store_true", help="处理所有工作树")
     link.set_defaults(func=cmd_link)
 
-    remove = sub.add_parser("remove", help="删除工作树（默认保留分支）")
+    remove = sub.add_parser("remove", help="删除工作树（默认保留分支；有未提交改动会拒绝）")
     remove.add_argument("name", help="工作树目录名（如 feat-x）、分支名（feat/x）或路径")
     remove.add_argument("--delete-branch", action="store_true", help="同时删除已合并的分支")
+    remove.add_argument(
+        "--force",
+        action="store_true",
+        help="丢弃工作树里未提交的改动，强制删除",
+    )
     remove.set_defaults(func=cmd_remove)
 
-    merge = sub.add_parser("merge", help="验证并合并回集成分支")
+    merge = sub.add_parser("merge", help="验证并合并回集成分支（需要分支有工作树）")
     merge.add_argument("branch", help="要合并的工作分支")
     merge.add_argument("--base", default=BASE_BRANCH, help=f"集成分支（默认 {BASE_BRANCH}）")
     merge.add_argument(
