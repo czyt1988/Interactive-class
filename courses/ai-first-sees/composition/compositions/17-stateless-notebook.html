@@ -374,114 +374,24 @@
     }
 
     /* ------------------------------------------------- 拍2：纸雕小屋 */
-    .s17-corridor {
+    /* 屋子背景：墙、地、门、窗用同一个斜等轴测画出来（深度向量约 +0.87,-0.5，
+     * 与桌上那本厚本子一致）；墙向观察者斜出，传递窗是墙上的真实开口。 */
+    .s17-room-svg {
       position: absolute;
       left: 0;
       top: 0;
-      width: 470px;
-      height: 592px;
-      background: #ece3d3;
-    }
-
-    .s17-corridor::before,
-    .s17-corridor::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: rgba(81, 75, 64, 0.12);
-    }
-
-    .s17-corridor::before { top: 258px; }
-    .s17-corridor::after { top: 424px; }
-
-    .s17-outdoor {
-      position: absolute;
-      left: 10px;
-      top: 186px;
-      width: 132px;
-      height: 406px;
-      border: 3px solid var(--line-strong);
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      background: #ece3d3;
-    }
-
-    .s17-outdoor::before {
-      content: "";
-      position: absolute;
-      left: 12px;
-      top: 12px;
-      bottom: 0;
-      width: 16px;
-      background: var(--panel-2);
-      border: 2px solid var(--line-strong);
-    }
-
-    .s17-divider {
-      position: absolute;
-      left: 470px;
-      top: 0;
-      width: 60px;
-      height: 592px;
-      background: var(--panel-2);
-      border-left: 2px solid var(--line-strong);
-      border-right: 2px solid var(--line-strong);
-      z-index: 3;
-    }
-
-    .s17-roomwall {
-      position: absolute;
-      left: 530px;
-      top: 0;
-      width: 1134px;
-      height: 592px;
-      background: var(--panel);
-      border-top: 3px solid var(--line-strong);
-    }
-
-    .s17-roomwall::before,
-    .s17-roomwall::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: rgba(81, 75, 64, 0.1);
-    }
-
-    .s17-roomwall::before { top: 198px; }
-    .s17-roomwall::after { top: 372px; }
-
-    .s17-floor {
-      position: absolute;
-      left: 0;
-      top: 592px;
       width: 1664px;
-      height: 72px;
-      background: #ece3d3;
-      border-top: 3px solid var(--line-strong);
+      height: 664px;
+      z-index: 1;
+      pointer-events: none;
     }
-
-    .s17-floor::before,
-    .s17-floor::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: rgba(81, 75, 64, 0.14);
-    }
-
-    .s17-floor::before { top: 22px; }
-    .s17-floor::after { top: 48px; }
 
     .s17-glow {
       left: 792px;
       top: -60px;
       width: 600px;
       height: 600px;
+      z-index: 2;
     }
 
     .s17-lamp {
@@ -491,62 +401,32 @@
       z-index: 6;
     }
 
+    /* 传递窗：一块斜等轴测的墙，开口有墙厚、有窗台，透过它看得到走廊里的队伍 */
     .s17-hatchwrap {
       position: absolute;
-      inset: 0;
+      left: 476px;
+      top: 280px;
+      width: 400px;
+      height: 300px;
       z-index: 5;
     }
 
-    .s17-hatch {
-      position: absolute;
-      left: 418px;
-      top: 300px;
-      width: 164px;
-      height: 130px;
-      border: 9px solid #b98a3c;
-      border-radius: 6px;
-      background: #f8f2e7;
-      box-shadow: inset 0 0 0 2px #e3d5b8, 0 18px 30px -26px rgba(22, 20, 15, 0.55);
-    }
-
-    .s17-hatch::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(135deg, rgba(185, 138, 60, 0.2) 0 2px, transparent 2px 14px);
-    }
-
-    .s17-hatch::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: -6px;
-      bottom: -6px;
-      width: 3px;
-      margin-left: -1px;
-      background: rgba(138, 100, 40, 0.5);
-    }
-
-    .s17-hatch-ledge {
-      position: absolute;
-      left: 386px;
-      top: 424px;
-      width: 228px;
-      height: 14px;
-      background: #e8cf9b;
-      border: 2px solid #8a6428;
-      border-radius: 4px;
+    .s17-hatch-svg {
+      display: block;
+      width: 400px;
+      height: 300px;
+      overflow: visible;
     }
 
     .s17-hatch-label {
       position: absolute;
-      left: 598px;
-      top: 400px;
-      width: 240px;
+      left: 164px;
+      top: 104px;
       font-family: var(--font-mono);
       font-size: 23px;
       letter-spacing: 0.14em;
-      color: #3a352d;
+      color: var(--ink-faint);
+      white-space: nowrap;
     }
 
     .s17-outdoor-label {
@@ -1899,13 +1779,83 @@
 
         <!-- 拍2：纸面小屋。暖灯、桌子、黄铜传递窗、墨色专家剪影、门外长队 -->
         <div id="s-stateless-notebook-room" class="s17-layer">
-          <div class="s17-corridor"></div>
-          <div class="s17-roomwall"></div>
-          <div class="s17-floor"></div>
-          <div class="s17-outdoor"></div>
+          <!-- 墙、地、门共用一个斜等轴测：墙沿与地板缝都顺着 (+156,+90) 的深度方向 -->
+          <svg class="s17-room-svg" viewBox="0 0 1664 664" aria-hidden="true">
+            <defs>
+              <!-- 左墙的纸面从近到远逐渐变亮：让这面墙看起来是斜着退进去，而不是一块平板 -->
+              <linearGradient id="s17-wallshade" x1="464" y1="0" x2="620" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#e5d7bd" />
+                <stop offset="1" stop-color="#f3ebdb" />
+              </linearGradient>
+            </defs>
+            <!-- 门外走廊：和后墙同一张纸，门开在左端 -->
+            <rect x="0" y="0" width="620" height="592" fill="#ece3d3" />
+            <line x1="0" y1="198" x2="620" y2="198" stroke="rgba(81,75,64,0.1)" stroke-width="1" />
+            <line x1="0" y1="372" x2="620" y2="372" stroke="rgba(81,75,64,0.1)" stroke-width="1" />
+            <rect x="0" y="564" width="464" height="28" fill="#e6dbc8" />
+            <line x1="0" y1="564" x2="464" y2="564" stroke="#b9ad99" stroke-width="2" />
+
+            <!-- 门：门框有厚度，门缝里漏出一条暖光 -->
+            <g>
+              <rect x="20" y="170" width="152" height="422" rx="3" fill="#f0e8da" stroke="#514b40" stroke-width="3" />
+              <rect x="38" y="188" width="116" height="386" rx="2" fill="#e4d5bd" stroke="#8a6428" stroke-width="2" />
+              <rect x="54" y="210" width="84" height="128" rx="2" fill="#f2e8d8" stroke="#8a6428" stroke-width="2" />
+              <rect x="54" y="362" width="84" height="180" rx="2" fill="#f2e8d8" stroke="#8a6428" stroke-width="2" />
+              <circle cx="140" cy="388" r="6" fill="#b98a3c" stroke="#8a6428" stroke-width="2" />
+              <rect x="166" y="188" width="6" height="386" fill="#f6e7ae" opacity="0.55" />
+            </g>
+
+            <!-- 地面：横线是等深线，斜线顺着深度方向铺出去 -->
+            <rect x="0" y="592" width="1664" height="72" fill="#ece3d3" />
+            <polygon points="26,592 148,592 58,664 0,664" fill="rgba(232,178,58,0.14)" />
+            <g stroke="#d9cfbf" stroke-width="1" opacity="0.9">
+              <line x1="20" y1="664" x2="146" y2="592" />
+              <line x1="140" y1="664" x2="266" y2="592" />
+              <line x1="260" y1="664" x2="386" y2="592" />
+              <line x1="380" y1="664" x2="506" y2="592" />
+              <line x1="500" y1="664" x2="626" y2="592" />
+              <line x1="620" y1="664" x2="746" y2="592" />
+              <line x1="740" y1="664" x2="866" y2="592" />
+              <line x1="860" y1="664" x2="986" y2="592" />
+              <line x1="980" y1="664" x2="1106" y2="592" />
+              <line x1="1100" y1="664" x2="1226" y2="592" />
+              <line x1="1220" y1="664" x2="1346" y2="592" />
+              <line x1="1340" y1="664" x2="1466" y2="592" />
+              <line x1="1460" y1="664" x2="1586" y2="592" />
+              <line x1="1580" y1="664" x2="1706" y2="592" />
+            </g>
+            <g stroke="rgba(81,75,64,0.12)" stroke-width="1">
+              <line x1="0" y1="618" x2="1664" y2="618" />
+              <line x1="0" y1="646" x2="1664" y2="646" />
+            </g>
+            <line x1="0" y1="592" x2="1664" y2="592" stroke="#b9ad99" stroke-width="3" />
+
+            <!-- 屋内后墙 -->
+            <rect x="620" y="0" width="1044" height="592" fill="#faf6ee" />
+            <line x1="620" y1="198" x2="1664" y2="198" stroke="rgba(81,75,64,0.1)" stroke-width="1" />
+            <line x1="620" y1="372" x2="1664" y2="372" stroke="rgba(81,75,64,0.1)" stroke-width="1" />
+            <line x1="620" y1="1.5" x2="1664" y2="1.5" stroke="#b9ad99" stroke-width="3" />
+            <!-- 后墙落地处的浅影，让墙和地面接住 -->
+            <rect x="620" y="592" width="1044" height="10" fill="rgba(22,20,15,0.045)" />
+
+            <!-- 左墙：墙面向观察者斜出 156px、抬高 90px，和桌上厚本子的深度方向一致；
+                 墙一直跑出画框上沿，近端露出纸的厚度，像纸雕里剖开的一刀。 -->
+            <polygon points="620,-160 464,-70 464,682 620,592" fill="url(#s17-wallshade)" stroke="#b9ad99" stroke-width="3" stroke-linejoin="round" />
+            <!-- 后墙的横向接缝绕过墙角，顺着左墙的深度方向斜下去：两面墙是同一个房间 -->
+            <g stroke="rgba(81,75,64,0.12)" stroke-width="1">
+              <line x1="620" y1="198" x2="464" y2="288" />
+              <line x1="620" y1="372" x2="464" y2="462" />
+            </g>
+            <polygon points="464,-70 452,-70 452,682 464,682" fill="#d7c6a6" stroke="#b9ad99" stroke-width="2.5" stroke-linejoin="round" />
+            <!-- 墙裙：一条顺着墙沿斜下去的踢脚线 -->
+            <polygon points="464,652 620,562 620,592 464,682" fill="#ece3d3" />
+            <line x1="464" y1="652" x2="620" y2="562" stroke="#b9ad99" stroke-width="2" />
+            <!-- 墙根落在纸面上的软影 -->
+            <polygon points="464,682 620,592 620,604 464,694" fill="rgba(22,20,15,0.05)" />
+          </svg>
+
           <p class="s17-outdoor-label">门外 · 队伍还很长</p>
           <div id="s-stateless-notebook-glow" class="lamp-glow s17-glow"></div>
-          <div class="s17-divider"></div>
 
           <div id="s-stateless-notebook-lamp" class="s17-lamp">
             <svg width="180" height="130" viewBox="0 0 180 130" aria-hidden="true">
@@ -1915,9 +1865,57 @@
             </svg>
           </div>
 
+          <!-- 传递窗：同一斜等轴测里的真实开口。外圈是墙厚，内圈才是洞；
+               窗台挑出来，透过洞口能看到走廊里排队的人。 -->
           <div id="s-stateless-notebook-hatchwrap" class="s17-hatchwrap">
-            <div class="s17-hatch"></div>
-            <div class="s17-hatch-ledge"></div>
+            <svg class="s17-hatch-svg" viewBox="0 0 400 300" aria-hidden="true">
+              <defs>
+                <clipPath id="s17-hatchview">
+                  <polygon points="130,30 34,85.4 34,241.4 130,186" />
+                </clipPath>
+              </defs>
+
+              <!-- 洞口里看到的走廊：地面顺着深度斜进去，队伍在窗前排着 -->
+              <g clip-path="url(#s17-hatchview)">
+                <rect x="0" y="0" width="400" height="300" fill="#cbb995" />
+                <line x1="0" y1="112" x2="190" y2="112" stroke="rgba(58,50,38,0.22)" stroke-width="1.5" />
+                <polygon points="34,217.4 130,162 130,186 34,241.4" fill="#b09c78" />
+                <line x1="34" y1="217.4" x2="130" y2="162" stroke="#8f7c5b" stroke-width="2" />
+
+                <!-- 远处两人，脚踩在走廊地面的斜线上 -->
+                <g stroke="#514b40" stroke-linejoin="round">
+                  <path d="M 100 175.9 L 101 146 Q 102 139 106 139 Q 110 139 111 146 L 112 175.9 Z" fill="#e9dfcc" stroke-width="2" />
+                  <circle cx="106" cy="132" r="6.5" fill="#f2e2c9" stroke-width="2" />
+                  <path d="M 101 129.5 Q 102 124 106 123.5 Q 110 124 111 129.5 Q 108 127 106 127 Q 104 127 101 129.5 Z" fill="#514b40" stroke="none" />
+                  <rect x="102" y="156" width="11" height="9" rx="1" fill="#c9a06a" stroke="#8a6428" stroke-width="1.5" />
+                  <line x1="104" y1="159" x2="110" y2="159" stroke="#fffdf8" stroke-width="1.6" />
+                </g>
+                <g stroke="#514b40" stroke-linejoin="round">
+                  <path d="M 63 195.5 L 64 161 Q 65 153 72 153 Q 79 153 80 161 L 81 195.5 Z" fill="#efe3ce" stroke-width="2.2" />
+                  <circle cx="72" cy="145" r="8.5" fill="#f2e2c9" stroke-width="2.2" />
+                  <path d="M 64 141.5 Q 65 133.5 72 133 Q 79 133.5 80 141.5 Q 76 138 72 138 Q 68 138 64 141.5 Z" fill="#514b40" stroke="none" />
+                  <rect x="66" y="172" width="14" height="12" rx="1" fill="#c9a06a" stroke="#8a6428" stroke-width="1.6" />
+                  <line x1="69" y1="176" x2="77" y2="176" stroke="#fffdf8" stroke-width="1.6" />
+                  <line x1="69" y1="180" x2="75" y2="180" stroke="#fffdf8" stroke-width="1.6" />
+                </g>
+              </g>
+
+              <!-- 墙厚：洞口内壁。上沿压在阴影里，近侧次之，远侧只留一条窄边 -->
+              <polygon points="132,10 12,79.23 34,85.4 130,30" fill="#a8936e" />
+              <polygon points="12,79.23 12,275.23 34,241.4 34,85.4" fill="#b7a27b" />
+              <polygon points="130,30 132,10 132,206 130,186" fill="#c9b794" />
+              <polygon points="132,10 12,79.23 12,275.23 132,206" fill="none" stroke="#8a6428" stroke-width="2.5" stroke-linejoin="round" />
+
+              <!-- 窗台投在墙上的影子 -->
+              <polygon points="158,216 38,285.23 38,293 158,224" fill="rgba(22,20,15,0.07)" />
+
+              <!-- 窗台：一块挑出来的厚板 -->
+              <polygon points="132,206 12,275.23 38,275.23 158,206" fill="#e8cf9b" stroke="#8a6428" stroke-width="2.5" stroke-linejoin="round" />
+              <polygon points="158,206 158,216 38,285.23 38,275.23" fill="#d9b986" stroke="#8a6428" stroke-width="2.5" stroke-linejoin="round" />
+
+              <!-- 标签引线 -->
+              <line x1="160" y1="122" x2="136" y2="200" stroke="#b9ad99" stroke-width="2" stroke-dasharray="5 6" />
+            </svg>
             <p class="s17-hatch-label">传递窗</p>
           </div>
 

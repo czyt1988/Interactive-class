@@ -237,28 +237,29 @@
       "id": "foreign-agents",
       "kicker": "第四幕 · 群雄",
       "title": "国外 Agent：四条路线",
-      "summary": "国外这几款不是同时出现的，也不是一夜长成的；它们代表 IDE、终端、云端、开源四条路线。",
-      "transcript": "先看国外。2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。同一年 5 月，OpenAI 发布 Codex。还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。它们有些是 IDE，有些是只有终端，有些是桌面端。谁最强？这个问题每个月都可能换答案。",
+      "summary": "国外这几款不是同时出现的，也不是一夜长成的；它们从 IDE、终端、云端、开源四个入口起家，后来都在往对方的入口长。",
+      "transcript": "先看国外。2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它从终端起步，把「在终端里干活」做成了完整体验。同一年 5 月，OpenAI 发布 Codex，它最早是云端任务，但也有开源的 CLI 和 IDE 插件。还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。这四款不是四种互斥的形态：它们从不同入口起家，后来都在往对方的入口长。谁最强？这个问题每个月都可能换答案。",
       "autoAdvance": true,
       "keywords": [
         "Cursor",
         "Claude Code",
         "Codex",
-        "OpenCode"
+        "OpenCode",
+        "Harness"
       ]
     },
     {
       "id": "china-agents",
       "kicker": "第四幕 · 群雄",
       "title": "国内 Agent：紧跟，也有自己的做法",
-      "summary": "国内 Agent 和模型跟得很紧，也在长出自己的做法；DSH 的差异化是「连循环都是插件」。",
-      "transcript": "国内也不缺 Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧。\n\nDeepSeek 也开发了自己的 Agent，DeepSeek Harness。它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连「循环」本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。",
+      "summary": "国内 Agent 和模型跟得很紧，也在长出自己的做法；2026 年大厂开始把多入口收成一个，DSH 的差异化是「连循环都是插件」。",
+      "transcript": "国内也不缺 Agent。2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧，而且今年开始把入口收成一个。DeepSeek Harness 在 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。连「循环」本身都可以被替换。这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。它是一套可以自己生长的 Harness。群雄看完了，接下来最实际的问题：这些 Agent 到底该怎么用？",
       "autoAdvance": true,
       "keywords": [
         "Trae",
         "Qwen Code",
-        "ZCode",
-        "Kimi Code",
+        "Qoder",
+        "WorkBuddy",
         "DSH"
       ]
     },

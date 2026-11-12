@@ -1,12 +1,13 @@
 <template>
   <style>
     /* S15 · foreign-agents
-       2023 → 2025 的横向时间线，四个产品节点：Logo + 名称 + 一句话形态 + 真实截图小证据卡；
-       下方一条形态轴：IDE / 终端 / 云端 / 开源；最后并排，只标形态，不排名次。 */
+       2023 → 2025 的横向时间线，四个产品节点：Logo + 名称 + 一句话形态 + 真实界面截图；
+       截图先放大给足阅读时间，讲到「起点」时收小，让出下方空间；
+       下方一条起点轴：IDE / 终端 / 云端 / 开源；最后并排，只标起点，不排名次。 */
 
     .s-foreign-axis { position: absolute; left: 100px; top: 226px; width: 1480px; height: 2px; background: var(--line-strong); }
     .s-foreign-axis-head { position: absolute; left: 1580px; top: 219px; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid var(--line-strong); opacity: 0; }
-    .s-foreign-year { position: absolute; top: 236px; font-family: var(--font-mono); font-size: 26px; letter-spacing: 0.06em; color: var(--ink-faint); opacity: 0; }
+    .s-foreign-year { position: absolute; top: 214px; padding: 0 8px; background: var(--bg); font-family: var(--font-mono); font-size: 26px; line-height: 1.15; letter-spacing: 0.06em; color: var(--ink-faint); opacity: 0; }
     .s-foreign-year--1 { left: 100px; }
     .s-foreign-year--2 { left: 1470px; width: 110px; text-align: right; }
 
@@ -68,7 +69,7 @@
 
     .s-foreign-tags {
       position: absolute;
-      top: 182px;
+      top: 176px;
       width: 400px;
       margin-left: -200px;
       display: flex;
@@ -95,14 +96,14 @@
       opacity: 0;
     }
 
-    .s-foreign-shot { position: absolute; top: 266px; width: 280px; margin-left: -140px; opacity: 0; }
+    .s-foreign-shot { position: absolute; top: 246px; width: 380px; margin-left: -190px; opacity: 0; }
     .s-foreign-shot--1 { left: 210px; }
     .s-foreign-shot--2 { left: 620px; }
     .s-foreign-shot--3 { left: 1030px; }
     .s-foreign-shot--4 { left: 1440px; }
     .s-foreign-shot .media { width: 100%; margin: 0; }
-    .s-foreign-shot .media img { width: 100%; height: 128px; object-fit: cover; object-position: top center; }
-    .s-foreign-shot .media__label { font-size: 20px; }
+    .s-foreign-shot .media img { width: 100%; height: 240px; object-fit: cover; object-position: top center; }
+    .s-foreign-shot .media__label { font-size: 21px; }
     .s-foreign-shot .media__label span { white-space: nowrap; }
     .s-foreign-shot-badge {
       position: absolute;
@@ -126,8 +127,8 @@
     .s-foreign-form {
       position: absolute;
       top: 462px;
-      width: 128px;
-      margin-left: -64px;
+      width: 172px;
+      margin-left: -86px;
       height: 44px;
       display: flex;
       align-items: center;
@@ -137,7 +138,7 @@
       background: #fffdf8;
       box-shadow: var(--shadow);
       font-family: var(--font-mono);
-      font-size: 28px;
+      font-size: 25px;
       color: var(--ink);
       opacity: 0;
     }
@@ -205,33 +206,38 @@
           <span id="s-foreign-tag2b">05 正式发布</span>
         </div>
         <div class="s-foreign-shot s-foreign-shot--2" id="s-foreign-shot2">
-          <figure class="media"><img src="assets/media/shot/claude-code-terminal.webp" alt="Claude Code 终端界面截图" width="264" height="128" /><figcaption class="media__label"><span>Claude 终端</span></figcaption></figure>
+          <figure class="media"><img src="assets/media/shot/claude-code-terminal.webp" alt="Claude Code 终端界面截图" width="264" height="128" /><figcaption class="media__label"><span>Claude Code 终端</span></figcaption></figure>
         </div>
 
         <!-- Codex -->
         <p class="s-foreign-date s-foreign-date--3" id="s-foreign-date3">2025.05</p>
         <div class="s-foreign-name s-foreign-name--3" id="s-foreign-name3"><img src="assets/media/logo/codex.png" alt="Codex 标志" width="44" height="44" /><b>Codex</b></div>
-        <p class="s-foreign-line s-foreign-line--3" id="s-foreign-line3">云端任务</p>
-        <div class="s-foreign-tags s-foreign-tags--3"></div>
+        <p class="s-foreign-line s-foreign-line--3" id="s-foreign-line3">CLI · IDE · 云端</p>
+        <div class="s-foreign-tags s-foreign-tags--3">
+          <span id="s-foreign-tag3a">CLI 开源</span>
+          <span id="s-foreign-tag3b">IDE 插件</span>
+        </div>
         <div class="s-foreign-shot s-foreign-shot--3" id="s-foreign-shot3">
-          <figure class="media"><img src="assets/media/shot/codex-cloud.webp" alt="Codex 云端任务界面截图" width="264" height="128" /><figcaption class="media__label"><span>Codex 云端</span></figcaption></figure>
+          <figure class="media"><img src="assets/media/shot/codex-cloud.webp" alt="Codex 云端任务界面截图" width="264" height="128" /><figcaption class="media__label"><span>Codex 云端任务</span></figcaption></figure>
         </div>
 
         <!-- OpenCode -->
         <p class="s-foreign-date s-foreign-date--4" id="s-foreign-date4">2025</p>
         <div class="s-foreign-name s-foreign-name--4" id="s-foreign-name4"><img src="assets/media/logo/opencode.png" alt="OpenCode 标志" width="44" height="44" /><b>OpenCode</b></div>
         <p class="s-foreign-line s-foreign-line--4" id="s-foreign-line4">开源 · 跨模型</p>
-        <div class="s-foreign-tags s-foreign-tags--4"></div>
+        <div class="s-foreign-tags s-foreign-tags--4">
+          <span id="s-foreign-tag4a">MIT</span>
+        </div>
         <div class="s-foreign-shot s-foreign-shot--4" id="s-foreign-shot4">
           <figure class="media"><img src="assets/media/shot/opencode-tui.webp" alt="OpenCode 终端界面截图" width="264" height="128" /><figcaption class="media__label"><span>OpenCode 终端</span></figcaption></figure>
         </div>
 
         <!-- 形态轴 -->
         <span class="s-foreign-form-axis" id="s-foreign-form-axis"></span>
-        <span class="s-foreign-form-label" id="s-foreign-form-label">形态</span>
-        <span class="s-foreign-form s-foreign-form--1" id="s-foreign-form1">IDE</span>
-        <span class="s-foreign-form s-foreign-form--2" id="s-foreign-form2">终端</span>
-        <span class="s-foreign-form s-foreign-form--3" id="s-foreign-form3">云端</span>
+        <span class="s-foreign-form-label" id="s-foreign-form-label">起点</span>
+        <span class="s-foreign-form s-foreign-form--1" id="s-foreign-form1">IDE 起家</span>
+        <span class="s-foreign-form s-foreign-form--2" id="s-foreign-form2">终端起家</span>
+        <span class="s-foreign-form s-foreign-form--3" id="s-foreign-form3">云端起家</span>
         <span class="s-foreign-form s-foreign-form--4" id="s-foreign-form4">开源</span>
 
         <!-- 收尾 -->
@@ -247,18 +253,20 @@
         <p id="s-foreign-agents-cap-1" class="cap-line clip" data-start="2.085" data-duration="5.445">2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，</p>
         <p id="s-foreign-agents-cap-2" class="cap-line clip" data-start="7.57" data-duration="4.768">核心是补全；到 2024 年 11 月，它有了 Agent 模式，</p>
         <p id="s-foreign-agents-cap-3" class="cap-line clip" data-start="12.378" data-duration="2.707">开始自己改多个文件、跑命令。</p>
-        <p id="s-foreign-agents-cap-4" class="cap-line clip" data-start="15.125" data-duration="4.643">2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，</p>
-        <p id="s-foreign-agents-cap-5" class="cap-line clip" data-start="19.808" data-duration="4.377">5 月正式发布，它把「在终端里干活」做成了完整体验。</p>
-        <p id="s-foreign-agents-cap-6" class="cap-line clip" data-start="24.225" data-duration="3.672">同一年 5 月，OpenAI 发布 Codex。</p>
-        <p id="s-foreign-agents-cap-7" class="cap-line clip" data-start="27.937" data-duration="5.673">还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。</p>
-        <p id="s-foreign-agents-cap-8" class="cap-line clip" data-start="33.65" data-duration="4.485">它们有些是 IDE，有些是只有终端，有些是桌面端。</p>
-        <p id="s-foreign-agents-cap-9" class="cap-line clip" data-start="38.175" data-duration="1.56">谁最强？</p>
-        <p id="s-foreign-agents-cap-10" class="cap-line clip" data-start="39.775" data-duration="3.247">这个问题每个月都可能换答案。</p>
+        <p id="s-foreign-agents-cap-4" class="cap-line clip" data-start="15.125" data-duration="4.776">2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，</p>
+        <p id="s-foreign-agents-cap-5" class="cap-line clip" data-start="19.941" data-duration="5.594">5 月正式发布，它从终端起步，把「在终端里干活」做成了完整体验。</p>
+        <p id="s-foreign-agents-cap-6" class="cap-line clip" data-start="25.575" data-duration="4.929">同一年 5 月，OpenAI 发布 Codex，它最早是云端任务，</p>
+        <p id="s-foreign-agents-cap-7" class="cap-line clip" data-start="30.544" data-duration="2.941">但也有开源的 CLI 和 IDE 插件。</p>
+        <p id="s-foreign-agents-cap-8" class="cap-line clip" data-start="33.525" data-duration="5.672">还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。</p>
+        <p id="s-foreign-agents-cap-9" class="cap-line clip" data-start="39.237" data-duration="4.33">这四款不是四种互斥的形态：它们从不同入口起家，</p>
+        <p id="s-foreign-agents-cap-10" class="cap-line clip" data-start="43.607" data-duration="2.24">后来都在往对方的入口长。</p>
+        <p id="s-foreign-agents-cap-11" class="cap-line clip" data-start="45.887" data-duration="1.56">谁最强？</p>
+        <p id="s-foreign-agents-cap-12" class="cap-line clip" data-start="47.487" data-duration="3.248">这个问题每个月都可能换答案。</p>
       </div>
       <div class="cap-foot">
         <span class="cap-code">S15</span>
         <span class="cap-progress" aria-hidden="true"><i id="s-foreign-agents-progress"></i></span>
-        <span class="cap-clock">00:45</span>
+        <span class="cap-clock">00:52</span>
       </div>
     </footer>
     <!-- CAPTIONS:END -->
@@ -266,7 +274,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S15","id":"foreign-agents","index":0,"start":0,"duration":44.73,"audioStart":0.6000000000000227,"audioDuration":42.528,"cues":[{"i":0,"t":0.7,"d":1.385,"text":"先看国外。","sent":"先看国外。"},{"i":1,"t":2.085,"d":5.445,"text":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":2,"t":7.57,"d":4.768,"text":"核心是补全；到 2024 年 11 月，它有了 Agent 模式，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":3,"t":12.378,"d":2.707,"text":"开始自己改多个文件、跑命令。","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":4,"t":15.125,"d":4.643,"text":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":5,"t":19.808,"d":4.377,"text":"5 月正式发布，它把「在终端里干活」做成了完整体验。","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它把「在终端里干活」做成了完整体验。"},{"i":6,"t":24.225,"d":3.672,"text":"同一年 5 月，OpenAI 发布 Codex。","sent":"同一年 5 月，OpenAI 发布 Codex。"},{"i":7,"t":27.937,"d":5.673,"text":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。","sent":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。"},{"i":8,"t":33.65,"d":4.485,"text":"它们有些是 IDE，有些是只有终端，有些是桌面端。","sent":"它们有些是 IDE，有些是只有终端，有些是桌面端。"},{"i":9,"t":38.175,"d":1.56,"text":"谁最强？","sent":"谁最强？"},{"i":10,"t":39.775,"d":3.247,"text":"这个问题每个月都可能换答案。","sent":"这个问题每个月都可能换答案。"}]};
+    const N = {"code":"S15","id":"foreign-agents","index":0,"start":0,"duration":52.44,"audioStart":0.6000000000000227,"audioDuration":50.232,"cues":[{"i":0,"t":0.7,"d":1.385,"text":"先看国外。","sent":"先看国外。"},{"i":1,"t":2.085,"d":5.445,"text":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":2,"t":7.57,"d":4.768,"text":"核心是补全；到 2024 年 11 月，它有了 Agent 模式，","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":3,"t":12.378,"d":2.707,"text":"开始自己改多个文件、跑命令。","sent":"2023 年 3 月，Cursor 上线，一开始它只是更好用的 AI IDE，核心是补全；到 2024 年 11 月，它有了 Agent 模式，开始自己改多个文件、跑命令。"},{"i":4,"t":15.125,"d":4.776,"text":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它从终端起步，把「在终端里干活」做成了完整体验。"},{"i":5,"t":19.941,"d":5.594,"text":"5 月正式发布，它从终端起步，把「在终端里干活」做成了完整体验。","sent":"2025 年 2 月，Anthropic 放出 Claude Code 的研究预览，5 月正式发布，它从终端起步，把「在终端里干活」做成了完整体验。"},{"i":6,"t":25.575,"d":4.929,"text":"同一年 5 月，OpenAI 发布 Codex，它最早是云端任务，","sent":"同一年 5 月，OpenAI 发布 Codex，它最早是云端任务，但也有开源的 CLI 和 IDE 插件。"},{"i":7,"t":30.544,"d":2.941,"text":"但也有开源的 CLI 和 IDE 插件。","sent":"同一年 5 月，OpenAI 发布 Codex，它最早是云端任务，但也有开源的 CLI 和 IDE 插件。"},{"i":8,"t":33.525,"d":5.672,"text":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。","sent":"还有 OpenCode，开源、跨模型，适合想自己掌控工具链的人。"},{"i":9,"t":39.237,"d":4.33,"text":"这四款不是四种互斥的形态：它们从不同入口起家，","sent":"这四款不是四种互斥的形态：它们从不同入口起家，后来都在往对方的入口长。"},{"i":10,"t":43.607,"d":2.24,"text":"后来都在往对方的入口长。","sent":"这四款不是四种互斥的形态：它们从不同入口起家，后来都在往对方的入口长。"},{"i":11,"t":45.887,"d":1.56,"text":"谁最强？","sent":"谁最强？"},{"i":12,"t":47.487,"d":3.248,"text":"这个问题每个月都可能换答案。","sent":"这个问题每个月都可能换答案。"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -277,7 +285,7 @@
     tl.fromTo("#s-foreign-agents-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
 
     // MOTION:BEGIN
-    // 时间线生长，节点依次亮起：先 Logo，再截图，再一句话。
+    // 时间线生长，节点依次亮起：先 Logo，再大截图，再一句话；讲到起点时截图收小。
     const T = N.cues.map((c) => c.t);
     const ease = "power3.out";
     const q = "power2.out";
@@ -320,30 +328,39 @@
     // cue5 · 5 月正式发布，终端里的完整体验
     tl.fromTo("#s-foreign-tag2b", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[5] + 0.1);
 
-    // cue6 · 同一年 5 月，OpenAI 发布 Codex
+    // cue6 · 同一年 5 月，OpenAI 发布 Codex：云端起家，也有 CLI 和 IDE 插件
     tl.fromTo("#s-foreign-node3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[6] + 0.05);
     tl.fromTo("#s-foreign-date3", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 0.1);
     tl.fromTo("#s-foreign-name3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[6] + 0.35);
     tl.fromTo("#s-foreign-line3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 0.7);
     tl.fromTo("#s-foreign-shot3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[6] + 1.15);
+    tl.fromTo("#s-foreign-tag3a", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[7] + 0.05);
+    tl.fromTo("#s-foreign-tag3b", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[7] + 0.35);
 
-    // cue7 · OpenCode：开源、跨模型
-    tl.fromTo("#s-foreign-node4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[7] + 0.05);
-    tl.fromTo("#s-foreign-date4", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[7] + 0.1);
-    tl.fromTo("#s-foreign-name4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[7] + 0.35);
-    tl.fromTo("#s-foreign-line4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[7] + 0.75);
-    tl.fromTo("#s-foreign-shot4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[7] + 1.15);
+    // cue8 · OpenCode：开源、跨模型
+    tl.fromTo("#s-foreign-node4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[8] + 0.05);
+    tl.fromTo("#s-foreign-date4", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[8] + 0.1);
+    tl.fromTo("#s-foreign-name4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[8] + 0.35);
+    tl.fromTo("#s-foreign-line4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[8] + 0.75);
+    tl.fromTo("#s-foreign-shot4", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[8] + 1.15);
+    tl.fromTo("#s-foreign-tag4a", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[8] + 0.8);
 
-    // cue8 · 形态轴：IDE / 终端 / 云端 / 开源
-    tl.fromTo("#s-foreign-form-axis", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.1);
-    tl.fromTo("#s-foreign-form-label", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.2);
-    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-foreign-form" + n, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[8] + 0.3 + i * 0.28));
+    // cue9 · 不是互斥形态：截图收小，让出起点轴
+    tl.fromTo(
+      ["#s-foreign-shot1", "#s-foreign-shot2", "#s-foreign-shot3", "#s-foreign-shot4"],
+      { scale: 1 },
+      { scale: 0.6, duration: 0.8, ease: "power2.inOut", transformOrigin: "center top", immediateRender: false },
+      T[9] + 0.05
+    );
+    tl.fromTo("#s-foreign-form-axis", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[9] + 0.45);
+    tl.fromTo("#s-foreign-form-label", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[9] + 0.55);
+    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-foreign-form" + n, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[9] + 0.65 + i * 0.26));
 
-    // cue9 · 谁最强？
-    tl.fromTo("#s-foreign-big", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[9] + 0.15);
+    // cue11 · 谁最强？
+    tl.fromTo("#s-foreign-big", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[11] + 0.15);
 
-    // cue10 · 排名每个月都可能变，产品之间不排名次
-    tl.fromTo("#s-foreign-sub", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[10] + 0.1);
+    // cue12 · 排名每个月都可能变，产品之间不排名次
+    tl.fromTo("#s-foreign-sub", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[12] + 0.1);
     // MOTION:END
 
     window.__timelines["s-foreign-agents"] = tl;

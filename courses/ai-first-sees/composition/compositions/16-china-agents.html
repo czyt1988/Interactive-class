@@ -1,80 +1,129 @@
 <template>
   <style>
     /* S16 · china-agents
-       上半屏：2025 → 2026 国内时间线，七个节点（Logo + 一句话 + 真实截图小卡）。
-       下半屏：模型与 Harness 分列，中间「模型是大脑，Harness 是挽具」。
-       后半段镜头推到 DSH：Cordis 插件树 + 插件页截图 + 「连 Agent Loop 都是插件」。 */
+       前半屏：2025 → 2026 国内 Agent 蛇形时间线。第一行 2025 从左到右，到右端折下来，
+       第二行 2026 从右到左。每张卡给足 324px 宽的截图阅读时间；讲到体验时整条时间线
+       缩成顶部小横轴，让出下半屏的「模型 / Harness」对照。
+       后半段镜头推到 DSH：Cordis 插件树 + 插件页截图 + 「连 Agent Loop 都是插件」。
+       页尾用「第五幕 · 用」过渡卡接下一屏。 */
 
     .s-china-phasea { position: absolute; inset: 0; }
     .s-china-phaseb { position: absolute; inset: 0; opacity: 0; }
 
-    /* ---- 上半屏时间线 ---- */
-    .s-china-axis { position: absolute; left: 60px; top: 306px; width: 1540px; height: 2px; background: var(--line); }
-    .s-china-spark { position: absolute; left: 60px; top: 303px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0; }
+    /* ---- 前半屏：放大的蛇形时间线 ---- */
+    .s-china-expanded { position: absolute; inset: 0; }
 
-    .s-china-node { position: absolute; top: 0; width: 210px; height: 306px; opacity: 0; }
-    .s-china-node--1 { left: 45px; }
-    .s-china-node--2 { left: 275px; }
-    .s-china-node--3 { left: 505px; }
-    .s-china-node--4 { left: 735px; }
-    .s-china-node--5 { left: 965px; }
-    .s-china-node--6 { left: 1195px; }
-    .s-china-node--7 { left: 1425px; }
+    .s-china-thread { position: absolute; inset: 0; width: 1664px; height: 664px; overflow: visible; opacity: 0; }
 
-    .s-china-date { position: absolute; left: 0; top: 2px; width: 100%; text-align: center; font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.06em; color: var(--ink-faint); }
-    .s-china-logo {
+    .s-china-year {
       position: absolute;
-      left: 74px;
-      top: 28px;
-      width: 62px;
-      height: 62px;
+      padding: 0 8px;
+      background: var(--bg);
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+    .s-china-year--1 { left: 42px; top: 312px; }
+    .s-china-year--2 { left: 42px; top: 626px; }
+
+    .s-china-node { position: absolute; width: 340px; height: 280px; opacity: 0; }
+    .s-china-node--1 { left: 40px; top: 12px; }
+    .s-china-node--2 { left: 420px; top: 12px; }
+    .s-china-node--3 { left: 800px; top: 12px; }
+    .s-china-node--4 { left: 1180px; top: 12px; }
+    .s-china-node--5 { left: 1180px; top: 326px; }
+    .s-china-node--6 { left: 800px; top: 326px; }
+    .s-china-node--7 { left: 420px; top: 326px; }
+
+    .s-china-node-head { display: flex; align-items: center; gap: 12px; height: 48px; }
+    .s-china-logo {
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 46px;
+      height: 46px;
+      flex: none;
       border: 1.5px solid var(--line-strong);
-      border-radius: 12px;
+      border-radius: 10px;
       background: #fffdf8;
       box-shadow: var(--shadow);
     }
-    .s-china-logo img { display: block; width: 42px; height: 42px; object-fit: contain; }
-    .s-china-name { position: absolute; left: 0; top: 98px; width: 100%; text-align: center; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
-    .s-china-form { position: absolute; left: 0; top: 132px; width: 100%; text-align: center; font-size: 22px; color: var(--ink-soft); }
+    .s-china-logo img { display: block; width: 30px; height: 30px; object-fit: contain; }
+    .s-china-name { font-size: 25px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
 
-    .s-china-shot { position: absolute; left: 15px; top: 160px; width: 180px; }
+    .s-china-shot { position: absolute; left: 0; top: 58px; width: 340px; }
     .s-china-shot .media { width: 100%; margin: 0; }
-    .s-china-shot .media img { width: 100%; height: 90px; object-fit: cover; object-position: top center; }
+    .s-china-shot .media img { width: 100%; height: 180px; object-fit: cover; object-position: top center; }
     .s-china-shot .media__label { font-size: 19px; }
     .s-china-shot .media__label span { white-space: nowrap; }
-    .s-china-nocard {
-      position: absolute;
-      left: 15px;
-      top: 160px;
-      width: 180px;
-      height: 118px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border: 1.5px dashed var(--line-strong);
-      border-radius: 8px;
-      background: rgba(250, 246, 238, 0.6);
-      font-family: var(--font-mono);
-      font-size: 20px;
-      color: var(--ink-faint);
-    }
-    .s-china-nocard b { font-size: 26px; color: var(--ink-soft); font-weight: 700; }
 
-    .s-china-bracket { position: absolute; top: 318px; height: 22px; border-bottom: 2px solid var(--line-strong); opacity: 0; }
-    .s-china-bracket--1 { left: 100px; width: 650px; }
-    .s-china-bracket--2 { left: 780px; width: 800px; }
-    .s-china-bracket-label { position: absolute; top: 320px; font-family: var(--font-mono); font-size: 24px; letter-spacing: 0.1em; color: var(--ink-faint); opacity: 0; }
-    .s-china-bracket-label--1 { left: 100px; }
-    .s-china-bracket-label--2 { left: 780px; }
+    .s-china-form {
+      display: inline-flex;
+      flex: none;
+      margin-left: auto;
+      white-space: nowrap;
+      align-items: center;
+      height: 30px;
+      padding: 0 11px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: #faf6ee;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      color: var(--ink);
+    }
+    .s-china-open {
+      display: inline-flex;
+      flex: none;
+      margin-left: 2px;
+      white-space: nowrap;
+      align-items: center;
+      height: 24px;
+      padding: 0 8px;
+      border: 1.5px solid var(--accent);
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-text);
+    }
+
+    /* ---- 收小后的顶部横轴：只留缩略图和名字 ---- */
+    .s-china-compact { position: absolute; inset: 0; opacity: 0; }
+    .s-china-mini-axis { position: absolute; left: 30px; top: 196px; width: 1600px; height: 2px; background: var(--line-strong); }
+    .s-china-mini { position: absolute; top: 2px; width: 200px; height: 186px; }
+    .s-china-mini--1 { left: 34px; }
+    .s-china-mini--2 { left: 262px; }
+    .s-china-mini--3 { left: 490px; }
+    .s-china-mini--4 { left: 718px; }
+    .s-china-mini--5 { left: 946px; }
+    .s-china-mini--6 { left: 1174px; }
+    .s-china-mini--7 { left: 1402px; }
+    .s-china-mini-head { display: flex; align-items: center; gap: 8px; height: 32px; }
+    .s-china-mini-head img { width: 24px; height: 24px; object-fit: contain; }
+    .s-china-mini-head b { font-size: 19px; font-weight: 700; white-space: nowrap; }
+    .s-china-mini .media { width: 100%; margin: 0; padding: 5px; }
+    .s-china-mini .media img { width: 100%; height: 104px; object-fit: cover; object-position: top center; }
+    .s-china-mini-date { margin-top: 4px; font-family: var(--font-mono); font-size: 17px; color: var(--ink-faint); }
+    .s-china-mini-open {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      margin-left: 4px;
+      padding: 0 7px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent-text);
+    }
 
     /* ---- 下半屏：模型 / Harness ---- */
-    .s-china-divider { position: absolute; left: 60px; top: 352px; width: 1540px; height: 1.5px; background: var(--line-strong); opacity: 0; }
-    .s-china-half-label { position: absolute; top: 366px; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; opacity: 0; }
+    .s-china-divider { position: absolute; left: 60px; top: 258px; width: 1540px; height: 1.5px; background: var(--line-strong); opacity: 0; }
+    .s-china-half-label { position: absolute; top: 272px; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; opacity: 0; }
     .s-china-half-label--1 { left: 64px; }
     .s-china-half-label--2 { left: 1040px; }
 
@@ -83,54 +132,72 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 260px;
-      height: 48px;
-      padding: 0 16px;
+      width: 244px;
+      height: 44px;
+      padding: 0 15px;
       border: 1.5px solid var(--line-strong);
       border-radius: 999px;
       background: #fffdf8;
       box-shadow: var(--shadow);
-      font-size: 26px;
+      font-size: 24px;
       color: var(--ink);
       opacity: 0;
     }
-    .s-china-model img { display: block; width: 26px; height: 26px; object-fit: contain; }
-    .s-china-model--1 { left: 64px; top: 414px; }
-    .s-china-model--2 { left: 336px; top: 414px; }
-    .s-china-model--3 { left: 64px; top: 478px; }
-    .s-china-model--4 { left: 336px; top: 478px; }
+    .s-china-model img { display: block; width: 24px; height: 24px; object-fit: contain; }
+    .s-china-model--1 { left: 64px; top: 318px; }
+    .s-china-model--2 { left: 326px; top: 318px; }
+    .s-china-model--3 { left: 64px; top: 378px; }
+    .s-china-model--4 { left: 326px; top: 378px; }
 
     .s-china-harness {
       position: absolute;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 46px;
-      padding: 0 14px;
+      height: 42px;
+      padding: 0 13px;
       border: 1.5px solid var(--line-strong);
       border-radius: 999px;
       background: #fffdf8;
       box-shadow: var(--shadow);
       font-family: var(--font-mono);
-      font-size: 23px;
+      font-size: 21px;
       color: var(--ink);
       white-space: nowrap;
       opacity: 0;
     }
-    .s-china-harness--1 { left: 1040px; top: 414px; }
-    .s-china-harness--2 { left: 1230px; top: 414px; }
-    .s-china-harness--3 { left: 1420px; top: 414px; }
-    .s-china-harness--4 { left: 1040px; top: 472px; }
-    .s-china-harness--5 { left: 1230px; top: 472px; }
-    .s-china-harness--6 { left: 1420px; top: 472px; }
-    .s-china-harness--7 { left: 1280px; top: 536px; width: 260px; }
+    .s-china-harness--1 { left: 1040px; top: 318px; }
+    .s-china-harness--2 { left: 1222px; top: 318px; }
+    .s-china-harness--3 { left: 1404px; top: 318px; }
+    .s-china-harness--4 { left: 1040px; top: 374px; }
+    .s-china-harness--5 { left: 1222px; top: 374px; }
+    .s-china-harness--6 { left: 1404px; top: 374px; }
+    .s-china-harness--7 { left: 1280px; top: 432px; width: 250px; }
 
     .s-china-vline { position: absolute; left: 820px; width: 2px; background: var(--line-strong); opacity: 0; }
-    .s-china-vline--1 { top: 360px; height: 56px; }
-    .s-china-vline--2 { top: 560px; height: 96px; }
-    .s-china-brain { position: absolute; left: 610px; top: 426px; width: 420px; text-align: center; font-size: 40px; line-height: 1.35; font-weight: 700; letter-spacing: -0.02em; opacity: 0; }
+    .s-china-vline--1 { top: 264px; height: 54px; }
+    .s-china-vline--2 { top: 432px; height: 90px; }
+    .s-china-brain { position: absolute; left: 600px; top: 326px; width: 420px; text-align: center; font-size: 37px; line-height: 1.35; font-weight: 700; letter-spacing: -0.02em; opacity: 0; }
     .s-china-brain em { font-style: normal; color: var(--accent-text); }
-    .s-china-footnote { position: absolute; left: 64px; top: 614px; width: 1536px; text-align: center; font-family: var(--font-mono); font-size: 28px; color: var(--ink-soft); opacity: 0; }
+    .s-china-footnote { position: absolute; left: 64px; top: 516px; width: 1536px; text-align: center; font-family: var(--font-mono); font-size: 26px; color: var(--ink-soft); opacity: 0; }
+    .s-china-consolidate { position: absolute; left: 64px; top: 552px; width: 1536px; text-align: center; font-family: var(--font-mono); font-size: 21px; letter-spacing: 0.02em; color: var(--ink-faint); opacity: 0; }
+
+    /* ---- 页尾转场：第五幕 · 用 ---- */
+    .s-china-bridge {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+    }
+    .s-china-bridge-kicker { font-family: var(--font-mono); font-size: 28px; letter-spacing: 0.14em; color: var(--accent-text); }
+    .s-china-bridge-title { font-size: 92px; line-height: 1.08; font-weight: 700; letter-spacing: -0.045em; text-align: center; color: var(--ink); }
+    .s-china-bridge-sub { font-size: 30px; color: var(--ink-soft); }
+
 
     /* ---- 后半段：DSH 与插件树 ---- */
     .s-china-dsh-logo {
@@ -259,6 +326,29 @@
     }
     .s-china-ring--loop { left: 1352px; top: 142px; width: 142px; height: 74px; }
     .s-china-ring--ui { left: 1499px; top: 142px; width: 142px; height: 74px; }
+
+    /* 快照会直接 seek：晚出现的元素先在 CSS 里隐藏。 */
+    #s-china-dsh-logo,
+    #s-china-dsh-name,
+    #s-china-dsh-tag,
+    #s-china-fact1,
+    #s-china-fact2,
+    #s-china-fact3,
+    #s-china-stamp,
+    #s-china-dsh-note,
+    #s-china-root,
+    #s-china-trunk,
+    #s-china-bus,
+    .s-china-drop,
+    .s-china-plug,
+    .s-china-ring,
+    #s-china-plug-allnote,
+    #s-china-plug-more,
+    #s-china-plugin-shot,
+    .s-china-line,
+    #s-china-grow {
+      opacity: 0;
+    }
   </style>
 
   <div
@@ -281,102 +371,121 @@
       </header>
 
       <section id="s-china-agents-stage" class="stage">
-        <!-- ===== 第一段：国内时间线 ===== -->
+        <!-- ===== 前半屏：蛇形时间线 ===== -->
         <div class="s-china-phasea" id="s-china-phasea">
-          <span class="s-china-axis" id="s-china-axis"></span>
-          <span class="s-china-spark" id="s-china-spark"></span>
+          <div class="s-china-expanded" id="s-china-expanded">
+            <svg class="s-china-thread" id="s-china-thread" viewBox="0 0 1664 664" aria-hidden="true">
+              <path d="M 40 308 L 1540 308 Q 1560 308 1560 328 L 1560 602 Q 1560 622 1540 622 L 40 622" fill="none" stroke="#b9ad99" stroke-width="2.5" />
+              <path d="M 40 622 L 64 612 L 64 632 Z" fill="#b9ad99" />
+            </svg>
+            <span class="s-china-year s-china-year--1" id="s-china-year1">2025</span>
+            <span class="s-china-year s-china-year--2" id="s-china-year2">2026</span>
 
-          <div class="s-china-node s-china-node--1" id="s-china-node1">
-            <p class="s-china-date">2025.03</p>
-            <div class="s-china-logo"><img src="assets/media/logo/trae.png" alt="Trae 标志" width="42" height="42" /></div>
-            <p class="s-china-name">Trae</p>
-            <p class="s-china-form">IDE</p>
-            <div class="s-china-shot" id="s-china-shot1">
-              <figure class="media"><img src="assets/media/shot/trae-ide.webp" alt="Trae 界面截图" width="164" height="94" /><figcaption class="media__label"><span>Trae 界面</span></figcaption></figure>
+            <div class="s-china-node s-china-node--1" id="s-china-node1">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/trae.png" alt="Trae 标志" width="30" height="30" /></span><span class="s-china-name">Trae</span><span class="s-china-form">IDE</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/trae-ide.webp" alt="Trae 界面截图" width="324" height="180" /><figcaption class="media__label"><span>Trae 界面</span><span>2025.03</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--2" id="s-china-node2">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/qwen.png" alt="Qwen 标志" width="30" height="30" /></span><span class="s-china-name">Qwen Code</span><span class="s-china-open">开源</span><span class="s-china-form">CLI</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/qwen-code-terminal.webp" alt="Qwen Code 终端截图" width="324" height="180" /><figcaption class="media__label"><span>Qwen Code 终端</span><span>2025.07</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--3" id="s-china-node3">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/qoder.png" alt="Qoder 标志" width="30" height="30" /></span><span class="s-china-name">Qoder</span><span class="s-china-form">Agentic IDE</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/qoder.webp" alt="Qoder 工作台截图" width="324" height="180" /><figcaption class="media__label"><span>Qoder 工作台</span><span>2025.08</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--4" id="s-china-node4">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/zcode.png" alt="ZCode 标志" width="30" height="30" /></span><span class="s-china-name">ZCode</span><span class="s-china-form">长任务 ADE</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/zcode.webp" alt="ZCode 界面截图" width="324" height="180" /><figcaption class="media__label"><span>ZCode 长任务</span><span>2025</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--5" id="s-china-node5">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/workbuddy.png" alt="WorkBuddy 标志" width="30" height="30" /></span><span class="s-china-name">WorkBuddy</span><span class="s-china-form">办公 + 编程</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/workbuddy.webp" alt="WorkBuddy 界面截图" width="324" height="180" /><figcaption class="media__label"><span>WorkBuddy</span><span>2026.03</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--6" id="s-china-node6">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/kimi.png" alt="Kimi 标志" width="30" height="30" /></span><span class="s-china-name">Kimi Code</span><span class="s-china-open">开源</span><span class="s-china-form">CLI / 桌面</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/kimi-code.webp" alt="Kimi Code 界面截图" width="324" height="180" /><figcaption class="media__label"><span>Kimi Code</span><span>2026.05</span></figcaption></figure>
+                </div>
+            </div>
+
+            <div class="s-china-node s-china-node--7" id="s-china-node7">
+              <div class="s-china-node-head"><span class="s-china-logo"><img src="assets/media/logo/dsh.png" alt="DeepSeek Harness 标志" width="30" height="30" /></span><span class="s-china-name">DSH</span><span class="s-china-form">Harness</span></div>
+              <div class="s-china-shot">
+                <figure class="media"><img src="assets/media/shot/dsh-desktop.webp" alt="DSH 桌面端截图" width="324" height="180" /><figcaption class="media__label"><span>DSH 桌面端</span><span>2026.08</span></figcaption></figure>
+                </div>
             </div>
           </div>
 
-          <div class="s-china-node s-china-node--2" id="s-china-node2">
-            <p class="s-china-date">2025.07</p>
-            <div class="s-china-logo"><img src="assets/media/logo/qwen.png" alt="Qwen 标志" width="42" height="42" /></div>
-            <p class="s-china-name">Qwen Code</p>
-            <p class="s-china-form">CLI · 开源</p>
-            <div class="s-china-shot" id="s-china-shot2">
-              <figure class="media"><img src="assets/media/shot/qwen-code-terminal.webp" alt="Qwen Code 终端截图" width="164" height="94" /><figcaption class="media__label"><span>Qwen Code 终端</span></figcaption></figure>
+          <!-- 收小后的顶部横轴 -->
+          <div class="s-china-compact" id="s-china-compact">
+            <span class="s-china-mini-axis" id="s-china-mini-axis"></span>
+            <div class="s-china-mini s-china-mini--1">
+              <div class="s-china-mini-head"><img src="assets/media/logo/trae.png" alt="Trae 标志" width="24" height="24" /><b>Trae</b></div>
+              <figure class="media"><img src="assets/media/shot/trae-ide.webp" alt="Trae 界面截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2025.03</p>
+            </div>
+            <div class="s-china-mini s-china-mini--2">
+              <div class="s-china-mini-head"><img src="assets/media/logo/qwen.png" alt="Qwen 标志" width="24" height="24" /><b>Qwen Code</b><span class="s-china-mini-open">开源</span></div>
+              <figure class="media"><img src="assets/media/shot/qwen-code-terminal.webp" alt="Qwen Code 终端截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2025.07</p>
+            </div>
+            <div class="s-china-mini s-china-mini--3">
+              <div class="s-china-mini-head"><img src="assets/media/logo/qoder.png" alt="Qoder 标志" width="24" height="24" /><b>Qoder</b></div>
+              <figure class="media"><img src="assets/media/shot/qoder.webp" alt="Qoder 工作台截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2025.08</p>
+            </div>
+            <div class="s-china-mini s-china-mini--4">
+              <div class="s-china-mini-head"><img src="assets/media/logo/zcode.png" alt="ZCode 标志" width="24" height="24" /><b>ZCode</b></div>
+              <figure class="media"><img src="assets/media/shot/zcode.webp" alt="ZCode 界面截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2025</p>
+            </div>
+            <div class="s-china-mini s-china-mini--5">
+              <div class="s-china-mini-head"><img src="assets/media/logo/workbuddy.png" alt="WorkBuddy 标志" width="24" height="24" /><b>WorkBuddy</b></div>
+              <figure class="media"><img src="assets/media/shot/workbuddy.webp" alt="WorkBuddy 界面截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2026.03</p>
+            </div>
+            <div class="s-china-mini s-china-mini--6">
+              <div class="s-china-mini-head"><img src="assets/media/logo/kimi.png" alt="Kimi 标志" width="24" height="24" /><b>Kimi Code</b><span class="s-china-mini-open">开源</span></div>
+              <figure class="media"><img src="assets/media/shot/kimi-code.webp" alt="Kimi Code 界面截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2026.05</p>
+            </div>
+            <div class="s-china-mini s-china-mini--7">
+              <div class="s-china-mini-head"><img src="assets/media/logo/dsh.png" alt="DeepSeek Harness 标志" width="24" height="24" /><b>DSH</b></div>
+              <figure class="media"><img src="assets/media/shot/dsh-desktop.webp" alt="DSH 桌面端截图" width="190" height="104" /></figure>
+              <p class="s-china-mini-date">2026.08</p>
             </div>
           </div>
-
-          <div class="s-china-node s-china-node--3" id="s-china-node3">
-            <p class="s-china-date">2025</p>
-            <div class="s-china-logo"><img src="assets/media/logo/zcode.png" alt="ZCode 标志" width="42" height="42" /></div>
-            <p class="s-china-name">ZCode</p>
-            <p class="s-china-form">长任务</p>
-            <div class="s-china-shot" id="s-china-shot3">
-              <figure class="media"><img src="assets/media/shot/zcode.webp" alt="ZCode 界面截图" width="164" height="94" /><figcaption class="media__label"><span>ZCode 长任务</span></figcaption></figure>
-            </div>
-          </div>
-
-          <div class="s-china-node s-china-node--4" id="s-china-node4">
-            <p class="s-china-date">2026.01</p>
-            <div class="s-china-logo"><img src="assets/media/logo/kimi.png" alt="Kimi 标志" width="42" height="42" /></div>
-            <p class="s-china-name">Kimi Code</p>
-            <p class="s-china-form">终端 / IDE</p>
-            <div class="s-china-shot" id="s-china-shot4">
-              <figure class="media"><img src="assets/media/shot/kimi-code.webp" alt="Kimi Code 界面截图" width="164" height="94" /><figcaption class="media__label"><span>Kimi Code</span></figcaption></figure>
-            </div>
-          </div>
-
-          <div class="s-china-node s-china-node--5" id="s-china-node5">
-            <p class="s-china-date">腾讯</p>
-            <div class="s-china-logo"><img src="assets/media/logo/codebuddy.png" alt="CodeBuddy 标志" width="42" height="42" /></div>
-            <p class="s-china-name">CodeBuddy</p>
-            <p class="s-china-form">IDE</p>
-            <div class="s-china-nocard" id="s-china-nocard">
-              <b>IDE</b>
-              <span>腾讯的产品</span>
-            </div>
-          </div>
-
-          <div class="s-china-node s-china-node--6" id="s-china-node6">
-            <p class="s-china-date">2026.03</p>
-            <div class="s-china-logo"><img src="assets/media/logo/workbuddy.png" alt="WorkBuddy 标志" width="42" height="42" /></div>
-            <p class="s-china-name">WorkBuddy</p>
-            <p class="s-china-form">办公 Agent</p>
-            <div class="s-china-shot" id="s-china-shot6">
-              <figure class="media"><img src="assets/media/shot/workbuddy.webp" alt="WorkBuddy 界面截图" width="164" height="94" /><figcaption class="media__label"><span>WorkBuddy</span></figcaption></figure>
-            </div>
-          </div>
-
-          <div class="s-china-node s-china-node--7" id="s-china-node7">
-            <p class="s-china-date">2026.08</p>
-            <div class="s-china-logo"><img src="assets/media/logo/dsh.png" alt="DeepSeek Harness 标志" width="42" height="42" /></div>
-            <p class="s-china-name">DSH</p>
-            <p class="s-china-form">Harness</p>
-            <div class="s-china-shot" id="s-china-shot7">
-              <figure class="media"><img src="assets/media/shot/dsh-desktop.webp" alt="DSH 桌面端截图" width="164" height="94" /><figcaption class="media__label"><span>DSH 桌面端</span></figcaption></figure>
-            </div>
-          </div>
-
-          <span class="s-china-bracket s-china-bracket--1" id="s-china-bracket1"></span>
-          <span class="s-china-bracket s-china-bracket--2" id="s-china-bracket2"></span>
-          <span class="s-china-bracket-label s-china-bracket-label--1" id="s-china-bracket-label1">2025</span>
-          <span class="s-china-bracket-label s-china-bracket-label--2" id="s-china-bracket-label2">2026</span>
 
           <!-- 下半屏：模型与 Harness 分列 -->
           <span class="s-china-divider" id="s-china-divider"></span>
           <p class="s-china-half-label s-china-half-label--1" id="s-china-half-label1">模型</p>
           <p class="s-china-half-label s-china-half-label--2" id="s-china-half-label2">Harness</p>
 
-          <div class="s-china-model s-china-model--1" id="s-china-model1"><img src="assets/media/logo/kimi.png" alt="Kimi 标志" width="26" height="26" />Kimi</div>
-          <div class="s-china-model s-china-model--2" id="s-china-model2"><img src="assets/media/logo/qwen.png" alt="Qwen 标志" width="26" height="26" />Qwen</div>
+          <div class="s-china-model s-china-model--1" id="s-china-model1"><img src="assets/media/logo/kimi.png" alt="Kimi 标志" width="24" height="24" />Kimi</div>
+          <div class="s-china-model s-china-model--2" id="s-china-model2"><img src="assets/media/logo/qwen.png" alt="Qwen 标志" width="24" height="24" />Qwen</div>
           <div class="s-china-model s-china-model--3" id="s-china-model3">GLM</div>
-          <div class="s-china-model s-china-model--4" id="s-china-model4"><img src="assets/media/logo/deepseek.png" alt="DeepSeek 标志" width="26" height="26" />DeepSeek</div>
+          <div class="s-china-model s-china-model--4" id="s-china-model4"><img src="assets/media/logo/deepseek.png" alt="DeepSeek 标志" width="24" height="24" />DeepSeek</div>
 
           <div class="s-china-harness s-china-harness--1" id="s-china-harness1">Kimi Code</div>
           <div class="s-china-harness s-china-harness--2" id="s-china-harness2">Qwen Code</div>
           <div class="s-china-harness s-china-harness--3" id="s-china-harness3">ZCode</div>
           <div class="s-china-harness s-china-harness--4" id="s-china-harness4">Trae</div>
-          <div class="s-china-harness s-china-harness--5" id="s-china-harness5">CodeBuddy</div>
+          <div class="s-china-harness s-china-harness--5" id="s-china-harness5">Qoder</div>
           <div class="s-china-harness s-china-harness--6" id="s-china-harness6">WorkBuddy</div>
           <div class="s-china-harness s-china-harness--7" id="s-china-harness7">DSH</div>
 
@@ -384,6 +493,7 @@
           <span class="s-china-vline s-china-vline--2" id="s-china-vline2"></span>
           <p class="s-china-brain" id="s-china-brain"><em>模型</em>是大脑，<br /><em>Harness</em> 是挽具</p>
           <p class="s-china-footnote" id="s-china-footnote">模型 ≠ Harness · 工程，不是科研</p>
+          <p class="s-china-consolidate" id="s-china-consolidate">2026 收口：QClaw → WorkBuddy · 文心快码 → 百度搭子 · QoderWork → 千问办公 · TRAE → 豆包工作</p>
         </div>
 
         <!-- ===== 第二段：镜头推到 DSH ===== -->
@@ -432,6 +542,12 @@
           <p class="s-china-line s-china-line--4" id="s-china-line4">改成<em>你想要的样子</em></p>
           <span class="s-china-grow" id="s-china-grow">自己生长</span>
         </div>
+
+        <div class="s-china-bridge" id="s-china-bridge">
+          <p class="s-china-bridge-kicker">第五幕 · 用</p>
+          <p class="s-china-bridge-title">这些 Agent，<br />到底该怎么用？</p>
+          <p class="s-china-bridge-sub">群雄看完了，回到最实际的问题</p>
+        </div>
       </section>
     </div>
 
@@ -439,29 +555,33 @@
     <footer class="cap-band">
       <div class="cap-lines">
                 <p id="s-china-agents-cap-0" class="cap-line clip" data-start="0.7" data-duration="2.11">国内也不缺 Agent。</p>
-        <p id="s-china-agents-cap-1" class="cap-line clip" data-start="2.81" data-duration="4.744">2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；</p>
-        <p id="s-china-agents-cap-2" class="cap-line clip" data-start="7.594" data-duration="4.66">7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；</p>
-        <p id="s-china-agents-cap-3" class="cap-line clip" data-start="12.294" data-duration="2.498">智谱的 ZCode 走长任务路线；</p>
-        <p id="s-china-agents-cap-4" class="cap-line clip" data-start="14.833" data-duration="3.814">2026 年 1 月，月之暗面的 Kimi Code 推出；</p>
-        <p id="s-china-agents-cap-5" class="cap-line clip" data-start="18.687" data-duration="4.848">腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。</p>
-        <p id="s-china-agents-cap-6" class="cap-line clip" data-start="23.575" data-duration="2.253">这些我大多用过一段时间；</p>
-        <p id="s-china-agents-cap-7" class="cap-line clip" data-start="25.868" data-duration="4.642">我的体验是：国内团队在模型和 Agent 上都跟得很紧。</p>
-        <p id="s-china-agents-cap-8" class="cap-line clip" data-start="30.55" data-duration="4.322">DeepSeek 也开发了自己的 Agent，DeepSeek Harness。</p>
-        <p id="s-china-agents-cap-9" class="cap-line clip" data-start="34.912" data-duration="6.923">它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。</p>
-        <p id="s-china-agents-cap-10" class="cap-line clip" data-start="41.875" data-duration="5.973">它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，</p>
-        <p id="s-china-agents-cap-11" class="cap-line clip" data-start="47.888" data-duration="5.472">模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。</p>
-        <p id="s-china-agents-cap-12" class="cap-line clip" data-start="53.4" data-duration="2.747">连「循环」本身都可以被替换。</p>
-        <p id="s-china-agents-cap-13" class="cap-line clip" data-start="56.187" data-duration="3.767">这意味着，你可以让 Harness 改变自己的功能，</p>
-        <p id="s-china-agents-cap-14" class="cap-line clip" data-start="59.994" data-duration="2.616">这是一种比较新的软件设计思路。</p>
-        <p id="s-china-agents-cap-15" class="cap-line clip" data-start="62.65" data-duration="3.308">软件的界面想要怎样，是由你说了算，</p>
-        <p id="s-china-agents-cap-16" class="cap-line clip" data-start="65.998" data-duration="3.505">而不是官方给你设计好你就继续这样用，</p>
-        <p id="s-china-agents-cap-17" class="cap-line clip" data-start="69.542" data-duration="3.505">你完全可以让它自己改成你想要的样子。</p>
-        <p id="s-china-agents-cap-18" class="cap-line clip" data-start="73.087" data-duration="3.498">它是一套可以自己生长的 Harness。</p>
+        <p id="s-china-agents-cap-1" class="cap-line clip" data-start="2.81" data-duration="4.526">2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；</p>
+        <p id="s-china-agents-cap-2" class="cap-line clip" data-start="7.376" data-duration="4.446">7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；</p>
+        <p id="s-china-agents-cap-3" class="cap-line clip" data-start="11.862" data-duration="4.267">8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；</p>
+        <p id="s-china-agents-cap-4" class="cap-line clip" data-start="16.168" data-duration="2.382">智谱的 ZCode 走长任务路线；</p>
+        <p id="s-china-agents-cap-5" class="cap-line clip" data-start="18.591" data-duration="3.818">2026 年 3 月，腾讯把 CodeBuddy 和办公能力，</p>
+        <p id="s-china-agents-cap-6" class="cap-line clip" data-start="22.449" data-duration="5.702">一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；</p>
+        <p id="s-china-agents-cap-7" class="cap-line clip" data-start="28.191" data-duration="3.369">8 月，DeepSeek 发布 DeepSeek Harness。</p>
+        <p id="s-china-agents-cap-8" class="cap-line clip" data-start="31.6" data-duration="2.283">这些我大多用过一段时间；</p>
+        <p id="s-china-agents-cap-9" class="cap-line clip" data-start="33.923" data-duration="4.702">我的体验是：国内团队在模型和 Agent 上都跟得很紧，</p>
+        <p id="s-china-agents-cap-10" class="cap-line clip" data-start="38.665" data-duration="2.67">而且今年开始把入口收成一个。</p>
+        <p id="s-china-agents-cap-11" class="cap-line clip" data-start="41.375" data-duration="4.451">DeepSeek Harness 在 2026 年 8 月发布 v0.1，</p>
+        <p id="s-china-agents-cap-12" class="cap-line clip" data-start="45.866" data-duration="3.719">9 月底出桌面端，11 月初日活 154 万。</p>
+        <p id="s-china-agents-cap-13" class="cap-line clip" data-start="49.625" data-duration="5.973">它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，</p>
+        <p id="s-china-agents-cap-14" class="cap-line clip" data-start="55.638" data-duration="5.472">模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。</p>
+        <p id="s-china-agents-cap-15" class="cap-line clip" data-start="61.15" data-duration="2.747">连「循环」本身都可以被替换。</p>
+        <p id="s-china-agents-cap-16" class="cap-line clip" data-start="63.937" data-duration="3.767">这意味着，你可以让 Harness 改变自己的功能，</p>
+        <p id="s-china-agents-cap-17" class="cap-line clip" data-start="67.744" data-duration="2.616">这是一种比较新的软件设计思路。</p>
+        <p id="s-china-agents-cap-18" class="cap-line clip" data-start="70.4" data-duration="3.308">软件的界面想要怎样，是由你说了算，</p>
+        <p id="s-china-agents-cap-19" class="cap-line clip" data-start="73.748" data-duration="3.505">而不是官方给你设计好你就继续这样用，</p>
+        <p id="s-china-agents-cap-20" class="cap-line clip" data-start="77.292" data-duration="3.505">你完全可以让它自己改成你想要的样子。</p>
+        <p id="s-china-agents-cap-21" class="cap-line clip" data-start="80.837" data-duration="3.198">它是一套可以自己生长的 Harness。</p>
+        <p id="s-china-agents-cap-22" class="cap-line clip" data-start="84.075" data-duration="5.572">群雄看完了，接下来最实际的问题：这些 Agent 到底该怎么用？</p>
       </div>
       <div class="cap-foot">
         <span class="cap-code">S16</span>
         <span class="cap-progress" aria-hidden="true"><i id="s-china-agents-progress"></i></span>
-        <span class="cap-clock">01:18</span>
+        <span class="cap-clock">01:31</span>
       </div>
     </footer>
     <!-- CAPTIONS:END -->
@@ -469,7 +589,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S16","id":"china-agents","index":0,"start":0,"duration":78.28,"audioStart":0.599999999999909,"audioDuration":76.08,"cues":[{"i":0,"t":0.7,"d":2.11,"text":"国内也不缺 Agent。","sent":"国内也不缺 Agent。"},{"i":1,"t":2.81,"d":4.744,"text":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。"},{"i":2,"t":7.594,"d":4.66,"text":"7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。"},{"i":3,"t":12.294,"d":2.498,"text":"智谱的 ZCode 走长任务路线；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。"},{"i":4,"t":14.833,"d":3.814,"text":"2026 年 1 月，月之暗面的 Kimi Code 推出；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。"},{"i":5,"t":18.687,"d":4.848,"text":"腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；智谱的 ZCode 走长任务路线；2026 年 1 月，月之暗面的 Kimi Code 推出；腾讯这边，CodeBuddy 做 IDE，WorkBuddy 做办公 Agent。"},{"i":6,"t":23.575,"d":2.253,"text":"这些我大多用过一段时间；","sent":"这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧。"},{"i":7,"t":25.868,"d":4.642,"text":"我的体验是：国内团队在模型和 Agent 上都跟得很紧。","sent":"这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧。"},{"i":8,"t":30.55,"d":4.322,"text":"DeepSeek 也开发了自己的 Agent，DeepSeek Harness。","sent":"DeepSeek 也开发了自己的 Agent，DeepSeek Harness。"},{"i":9,"t":34.912,"d":6.923,"text":"它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。","sent":"它 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。"},{"i":10,"t":41.875,"d":5.973,"text":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，","sent":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。"},{"i":11,"t":47.888,"d":5.472,"text":"模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。","sent":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。"},{"i":12,"t":53.4,"d":2.747,"text":"连「循环」本身都可以被替换。","sent":"连「循环」本身都可以被替换。"},{"i":13,"t":56.187,"d":3.767,"text":"这意味着，你可以让 Harness 改变自己的功能，","sent":"这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。"},{"i":14,"t":59.994,"d":2.616,"text":"这是一种比较新的软件设计思路。","sent":"这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。"},{"i":15,"t":62.65,"d":3.308,"text":"软件的界面想要怎样，是由你说了算，","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":16,"t":65.998,"d":3.505,"text":"而不是官方给你设计好你就继续这样用，","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":17,"t":69.542,"d":3.505,"text":"你完全可以让它自己改成你想要的样子。","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":18,"t":73.087,"d":3.498,"text":"它是一套可以自己生长的 Harness。","sent":"它是一套可以自己生长的 Harness。"}]};
+    const N = {"code":"S16","id":"china-agents","index":0,"start":0,"duration":91.34,"audioStart":0.6000000000000227,"audioDuration":89.136,"cues":[{"i":0,"t":0.7,"d":2.11,"text":"国内也不缺 Agent。","sent":"国内也不缺 Agent。"},{"i":1,"t":2.81,"d":4.526,"text":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":2,"t":7.376,"d":4.446,"text":"7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":3,"t":11.862,"d":4.267,"text":"8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":4,"t":16.168,"d":2.382,"text":"智谱的 ZCode 走长任务路线；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":5,"t":18.591,"d":3.818,"text":"2026 年 3 月，腾讯把 CodeBuddy 和办公能力，","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":6,"t":22.449,"d":5.702,"text":"一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":7,"t":28.191,"d":3.369,"text":"8 月，DeepSeek 发布 DeepSeek Harness。","sent":"2025 年 3 月，字节的 Trae 发布国内版，走 IDE 路线；7 月，阿里的 Qwen Code 跟着 Qwen3-Coder 一起开源；8 月，阿里又发布 Qoder，一个独立的 Agentic IDE；智谱的 ZCode 走长任务路线；2026 年 3 月，腾讯把 CodeBuddy 和办公能力，一起收进 WorkBuddy 一个主入口；5 月，月之暗面的 Kimi Code 开源；8 月，DeepSeek 发布 DeepSeek Harness。"},{"i":8,"t":31.6,"d":2.283,"text":"这些我大多用过一段时间；","sent":"这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧，而且今年开始把入口收成一个。"},{"i":9,"t":33.923,"d":4.702,"text":"我的体验是：国内团队在模型和 Agent 上都跟得很紧，","sent":"这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧，而且今年开始把入口收成一个。"},{"i":10,"t":38.665,"d":2.67,"text":"而且今年开始把入口收成一个。","sent":"这些我大多用过一段时间；我的体验是：国内团队在模型和 Agent 上都跟得很紧，而且今年开始把入口收成一个。"},{"i":11,"t":41.375,"d":4.451,"text":"DeepSeek Harness 在 2026 年 8 月发布 v0.1，","sent":"DeepSeek Harness 在 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。"},{"i":12,"t":45.866,"d":3.719,"text":"9 月底出桌面端，11 月初日活 154 万。","sent":"DeepSeek Harness 在 2026 年 8 月发布 v0.1，9 月底出桌面端，11 月初日活 154 万。"},{"i":13,"t":49.625,"d":5.973,"text":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，","sent":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。"},{"i":14,"t":55.638,"d":5.472,"text":"模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。","sent":"它比较特别的地方不在模型，而在架构：基于 Cordis 插件运行时，模型、工具、Skill、会话、沙箱、Agent Loop，全都是插件。"},{"i":15,"t":61.15,"d":2.747,"text":"连「循环」本身都可以被替换。","sent":"连「循环」本身都可以被替换。"},{"i":16,"t":63.937,"d":3.767,"text":"这意味着，你可以让 Harness 改变自己的功能，","sent":"这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。"},{"i":17,"t":67.744,"d":2.616,"text":"这是一种比较新的软件设计思路。","sent":"这意味着，你可以让 Harness 改变自己的功能，这是一种比较新的软件设计思路。"},{"i":18,"t":70.4,"d":3.308,"text":"软件的界面想要怎样，是由你说了算，","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":19,"t":73.748,"d":3.505,"text":"而不是官方给你设计好你就继续这样用，","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":20,"t":77.292,"d":3.505,"text":"你完全可以让它自己改成你想要的样子。","sent":"软件的界面想要怎样，是由你说了算，而不是官方给你设计好你就继续这样用，你完全可以让它自己改成你想要的样子。"},{"i":21,"t":80.837,"d":3.198,"text":"它是一套可以自己生长的 Harness。","sent":"它是一套可以自己生长的 Harness。"},{"i":22,"t":84.075,"d":5.572,"text":"群雄看完了，接下来最实际的问题：这些 Agent 到底该怎么用？","sent":"群雄看完了，接下来最实际的问题：这些 Agent 到底该怎么用？"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -480,111 +600,109 @@
     tl.fromTo("#s-china-agents-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
 
     // MOTION:BEGIN
-    // 旁白是时钟。前 41 秒建国内时间线与「模型 / Harness」分界，后半段镜头推到 DSH 的插件树。
+    // 旁白是时钟：前 31 秒建国内时间线，cue8 收成横轴，cue9-10 讲模型 / Harness，
+    // cue11 起推到 DSH，cue22 落「第五幕 · 用」过渡卡。
     const T = N.cues.map((c) => c.t);
     const ease = "power3.out";
     const q = "power2.out";
 
-    // 快照会直接 seek：先显式压掉会缩放的初始状态。
-    gsap.set("#s-china-axis", { scaleX: 0, transformOrigin: "left center" });
-    gsap.set("#s-china-spark", { x: 0 });
+    // 时间线：整条蛇形线先亮起，年份标签落位。
+    tl.fromTo("#s-china-thread", { opacity: 0 }, { opacity: 0.85, duration: 0.8, ease: q }, T[0] + 0.1);
+    tl.fromTo("#s-china-year1", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[0] + 0.7);
+    tl.fromTo("#s-china-year2", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[0] + 0.9);
 
-    // 次级运动：一颗小点沿时间轴缓慢右移。
-    tl.fromTo("#s-china-spark", { opacity: 0.6, x: 0 }, { opacity: 0.6, x: 1460, duration: 38, ease: "none" }, T[0] + 1.0);
-
-    // cue0 · 时间线与年份括号
-    tl.fromTo("#s-china-axis", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.inOut" }, T[0]);
-    tl.fromTo("#s-china-bracket1", { opacity: 0, scaleX: 0.6 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: q }, T[0] + 0.7);
-    tl.fromTo("#s-china-bracket2", { opacity: 0, scaleX: 0.6 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: q }, T[0] + 0.9);
-    tl.fromTo("#s-china-bracket-label1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 1.0);
-    tl.fromTo("#s-china-bracket-label2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 1.2);
-
-    // cue1 · Trae 发布国内版
-    tl.fromTo("#s-china-node1", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[1] + 0.1);
-    // cue2 · Qwen Code 开源
-    tl.fromTo("#s-china-node2", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[2] + 0.1);
-    // cue3 · ZCode 长任务
-    tl.fromTo("#s-china-node3", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[3] + 0.1);
-    // cue4 · Kimi Code
-    tl.fromTo("#s-china-node4", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[4] + 0.1);
-    // cue5 · CodeBuddy 与 WorkBuddy
-    tl.fromTo("#s-china-node5", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[5] + 0.1);
-    tl.fromTo("#s-china-node6", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[5] + 0.55);
-
-    // cue6 · 下半屏分界：模型与 Harness 分列
-    tl.fromTo("#s-china-divider", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[6] + 0.1);
-    tl.fromTo("#s-china-half-label1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[6] + 0.3);
-    tl.fromTo("#s-china-half-label2", { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[6] + 0.45);
-    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-china-model" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[6] + 0.7 + i * 0.22));
-    [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => tl.fromTo("#s-china-harness" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.42, ease }, T[6] + 1.0 + i * 0.16));
-    tl.fromTo("#s-china-vline1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 1.2);
-    tl.fromTo("#s-china-vline2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 1.2);
-    tl.fromTo("#s-china-brain", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[6] + 1.5);
-
-    // cue7 · 国内团队跟得很紧
-    tl.fromTo("#s-china-footnote", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[7] + 0.2);
-    tl.fromTo("#s-china-brain", { scale: 1 }, { scale: 1.03, duration: 0.4, ease: "power1.out", immediateRender: false }, T[7] + 1.4);
-    tl.fromTo("#s-china-brain", { scale: 1.03 }, { scale: 1, duration: 0.5, ease: "power1.inOut", immediateRender: false }, T[7] + 1.8);
-
-    // cue8 · DSH 进入时间线
-    tl.fromTo("#s-china-node7", { opacity: 0, y: 18, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.5)" }, T[8] + 0.1);
-
-    // cue9 · 镜头推到 DSH：第一段画面推近淡出，第二段进场
-    tl.fromTo("#s-china-phasea", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.07, duration: 0.7, ease: "power2.in", immediateRender: false }, T[9] + 0.05);
-    tl.fromTo("#s-china-phaseb", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.8, ease }, T[9] + 0.1);
-    tl.fromTo("#s-china-dsh-logo", { opacity: 0, y: 16, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease }, T[9] + 0.55);
-    tl.fromTo("#s-china-dsh-name", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[9] + 0.8);
-    tl.fromTo("#s-china-dsh-tag", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[9] + 1.05);
-    tl.fromTo("#s-china-fact1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[9] + 1.3);
-    tl.fromTo("#s-china-fact2", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[9] + 1.9);
-    tl.fromTo("#s-china-fact3", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[9] + 2.5);
-
-    // cue10 · 不是模型，是架构：Cordis 插件运行时
-    tl.fromTo("#s-china-dsh-note", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[10] + 0.2);
-    tl.fromTo("#s-china-root", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[10] + 0.3);
-    tl.fromTo("#s-china-trunk", { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.4, ease: q, transformOrigin: "center top" }, T[10] + 0.7);
-    tl.fromTo("#s-china-root", { scale: 1 }, { scale: 1.02, duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: 2, immediateRender: false }, T[10] + 1.6);
-
-    // cue11 · 模型、工具、Skill、会话、沙箱、Agent Loop、UI 全是插件
-    tl.fromTo("#s-china-bus", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.inOut", transformOrigin: "left center" }, T[11] + 0.1);
+    // 七个节点：cue1 → cue7 依次落下。
     [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => {
-      tl.fromTo("#s-china-drop" + n, { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.25, ease: q, transformOrigin: "center top" }, T[11] + 0.35 + i * 0.09);
-      tl.fromTo("#s-china-plug" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease }, T[11] + 0.45 + i * 0.13);
-    });
-    tl.fromTo("#s-china-bus", { scaleY: 1 }, { scaleY: 1.6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false, transformOrigin: "center center" }, T[11] + 3.0);
-
-    // cue12 · 连循环本身都可以被替换
-    tl.fromTo("#s-china-ring-loop", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T[12] + 0.3);
-    tl.fromTo("#s-china-plug6", { scale: 1 }, { scale: 1.08, duration: 0.25, ease: "power1.out", immediateRender: false }, T[12] + 0.3);
-    tl.fromTo("#s-china-plug6", { scale: 1.08 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[12] + 0.55);
-    tl.fromTo("#s-china-stamp", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.5)" }, T[12] + 0.7);
-    tl.fromTo("#s-china-plugin-shot", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[12] + 1.1);
-
-    // cue13 · 功能可以改：每个插件都可替换
-    tl.fromTo("#s-china-plug-allnote", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[13] + 0.2);
-    [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => {
-      tl.fromTo("#s-china-plug" + n, { scale: 1 }, { scale: 1.07, duration: 0.16, ease: "power1.out", immediateRender: false }, T[13] + 0.5 + i * 0.16);
-      tl.fromTo("#s-china-plug" + n, { scale: 1.07 }, { scale: 1, duration: 0.24, ease: "power1.inOut", immediateRender: false }, T[13] + 0.66 + i * 0.16);
+      tl.fromTo("#s-china-node" + n, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[i + 1] + 0.1);
     });
 
-    // cue14 · 一种比较新的软件设计思路
-    tl.fromTo("#s-china-line1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[14] + 0.2);
+    // cue8 · 这些我大多用过一段时间：整条大时间线缩小退场，顶部横轴亮起。
+    tl.fromTo(
+      "#s-china-expanded",
+      { opacity: 1, scale: 1 },
+      { opacity: 0, scale: 0.7, duration: 0.65, ease: "power2.inOut", transformOrigin: "50% 22%", immediateRender: false },
+      T[8] + 0.05
+    );
+    tl.fromTo("#s-china-compact", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease }, T[8] + 0.35);
+    tl.fromTo("#s-china-mini-axis", { opacity: 0, scaleX: 0.7 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: q, transformOrigin: "left center" }, T[8] + 0.35);
 
-    // cue15 · 界面想要怎样，由你说了算
-    tl.fromTo("#s-china-line2", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[15] + 0.2);
-    tl.fromTo("#s-china-ring-ui", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T[15] + 0.45);
-    tl.fromTo("#s-china-plug7", { scale: 1 }, { scale: 1.1, duration: 0.25, ease: "power1.out", immediateRender: false }, T[15] + 0.45);
-    tl.fromTo("#s-china-plug7", { scale: 1.1 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[15] + 0.7);
+    // cue9 · 我的体验：下半屏分界，模型 / Harness 分列。
+    tl.fromTo("#s-china-divider", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.85);
+    tl.fromTo("#s-china-half-label1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[8] + 1.0);
+    tl.fromTo("#s-china-half-label2", { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[8] + 1.1);
+    [1, 2, 3, 4].forEach((n, i) => tl.fromTo("#s-china-model" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease }, T[9] + 0.2 + i * 0.18));
+    [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => tl.fromTo("#s-china-harness" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.42, ease }, T[9] + 0.45 + i * 0.14));
+    tl.fromTo("#s-china-vline1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[9] + 0.7);
+    tl.fromTo("#s-china-vline2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[9] + 0.7);
+    tl.fromTo("#s-china-brain", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[9] + 1.0);
 
-    // cue16 · 不是官方设计好你就这样用
-    tl.fromTo("#s-china-line3", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[16] + 0.2);
+    // cue10 · 今年开始把入口收成一个：脚注与 2026 收口小注。
+    tl.fromTo("#s-china-footnote", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[10] + 0.1);
+    tl.fromTo("#s-china-consolidate", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[10] + 0.35);
 
-    // cue17 · 完全可以让它改成你想要的样子
-    tl.fromTo("#s-china-line4", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[17] + 0.2);
+    // cue11 · 镜头推到 DSH：第一段画面推近淡出，第二段进场。
+    tl.fromTo("#s-china-phasea", { opacity: 1, scale: 1 }, { opacity: 0, scale: 1.05, duration: 0.7, ease: "power2.in", immediateRender: false }, T[11] + 0.05);
+    tl.fromTo("#s-china-phaseb", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.8, ease }, T[11] + 0.1);
+    tl.fromTo("#s-china-dsh-logo", { opacity: 0, y: 16, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease }, T[11] + 0.55);
+    tl.fromTo("#s-china-dsh-name", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[11] + 0.8);
+    tl.fromTo("#s-china-dsh-tag", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[11] + 1.05);
+    tl.fromTo("#s-china-fact1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[11] + 1.25);
+    tl.fromTo("#s-china-fact2", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[12] + 0.1);
+    tl.fromTo("#s-china-fact3", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease }, T[12] + 0.55);
 
-    // cue18 · 一套可以自己生长的 Harness
-    tl.fromTo("#s-china-plug-more", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[18] + 0.1);
-    tl.fromTo("#s-china-grow", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, T[18] + 0.45);
+    // cue13 · 不是模型，是架构：Cordis 插件运行时
+    tl.fromTo("#s-china-dsh-note", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[13] + 0.2);
+    tl.fromTo("#s-china-root", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.5, ease }, T[13] + 0.3);
+    tl.fromTo("#s-china-trunk", { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.4, ease: q, transformOrigin: "center top" }, T[13] + 0.7);
+    tl.fromTo("#s-china-root", { scale: 1 }, { scale: 1.02, duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: 2, immediateRender: false }, T[13] + 1.6);
+
+    // cue14 · 模型、工具、Skill、会话、沙箱、Agent Loop、UI 全是插件
+    tl.fromTo("#s-china-bus", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.inOut", transformOrigin: "left center" }, T[14] + 0.1);
+    [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => {
+      tl.fromTo("#s-china-drop" + n, { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.25, ease: q, transformOrigin: "center top" }, T[14] + 0.35 + i * 0.09);
+      tl.fromTo("#s-china-plug" + n, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease }, T[14] + 0.45 + i * 0.13);
+    });
+    tl.fromTo("#s-china-bus", { scaleY: 1 }, { scaleY: 1.6, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false, transformOrigin: "center center" }, T[14] + 2.6);
+
+    // cue15 · 连循环本身都可以被替换
+    tl.fromTo("#s-china-ring-loop", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T[15] + 0.3);
+    tl.fromTo("#s-china-plug6", { scale: 1 }, { scale: 1.08, duration: 0.25, ease: "power1.out", immediateRender: false }, T[15] + 0.3);
+    tl.fromTo("#s-china-plug6", { scale: 1.08 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[15] + 0.55);
+    tl.fromTo("#s-china-stamp", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.5)" }, T[15] + 0.7);
+    tl.fromTo("#s-china-plugin-shot", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[15] + 1.1);
+
+    // cue16 · 功能可以改：每个插件都可替换
+    tl.fromTo("#s-china-plug-allnote", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[16] + 0.2);
+    [1, 2, 3, 4, 5, 6, 7].forEach((n, i) => {
+      tl.fromTo("#s-china-plug" + n, { scale: 1 }, { scale: 1.07, duration: 0.16, ease: "power1.out", immediateRender: false }, T[16] + 0.5 + i * 0.16);
+      tl.fromTo("#s-china-plug" + n, { scale: 1.07 }, { scale: 1, duration: 0.24, ease: "power1.inOut", immediateRender: false }, T[16] + 0.66 + i * 0.16);
+    });
+
+    // cue17 · 一种比较新的软件设计思路
+    tl.fromTo("#s-china-line1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[17] + 0.2);
+
+    // cue18 · 界面想要怎样，由你说了算
+    tl.fromTo("#s-china-line2", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[18] + 0.2);
+    tl.fromTo("#s-china-ring-ui", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T[18] + 0.45);
+    tl.fromTo("#s-china-plug7", { scale: 1 }, { scale: 1.1, duration: 0.25, ease: "power1.out", immediateRender: false }, T[18] + 0.45);
+    tl.fromTo("#s-china-plug7", { scale: 1.1 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[18] + 0.7);
+
+    // cue19 · 不是官方设计好你就这样用
+    tl.fromTo("#s-china-line3", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[19] + 0.2);
+
+    // cue20 · 完全可以让它改成你想要的样子
+    tl.fromTo("#s-china-line4", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, T[20] + 0.2);
+
+    // cue21 · 一套可以自己生长的 Harness
+    tl.fromTo("#s-china-plug-more", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[21] + 0.1);
+    tl.fromTo("#s-china-grow", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, T[21] + 0.45);
+
+    // cue22 · 群雄看完了，下一幕：怎么用
+    tl.fromTo("#s-china-phaseb", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power1.inOut", immediateRender: false }, T[22] + 0.05);
+    tl.fromTo("#s-china-bridge", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[22] + 0.25);
+    tl.fromTo(".s-china-bridge-kicker", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[22] + 0.45);
+    tl.fromTo(".s-china-bridge-title", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease }, T[22] + 0.55);
+    tl.fromTo(".s-china-bridge-sub", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[22] + 0.85);
     // MOTION:END
 
     window.__timelines["s-china-agents"] = tl;

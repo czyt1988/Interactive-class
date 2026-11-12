@@ -7,8 +7,8 @@
   "deckVersion": "1.5.0",
   "fonts": {
     "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "697536dc42f624be3e967b1536026ffb9e61786366c93ce4e1e9db0c2e9f4456",
-    "app/static/fonts/NotoSansSC-VF.woff2": "967b7f70006fe001cef76b98fddd95409af688ebc15a4ed9cfee398ca271b302",
-    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "2c99eea53e75e76421083a3d8f8f14dd4e67f6669ad9b456a6f7df5586800f32"
+    "app/static/fonts/NotoSansSC-VF.woff2": "dd405b818e2c97ec7d3dbeb8aaefef4b0f51ac59977af223be243eea67a95464",
+    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "1b165af78f7fbd36ac0b9e30c9f005058012825edcdabf27927a8817e4599251"
   },
   "tokens": {
     "runtime/tokens.css": "f3dc7933f2289b3a61beff6acc8e65cb74ac673796db7dd53dc6c055ea16a4f5",
