@@ -8,6 +8,7 @@ so these tests pass on any machine.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import time
 from collections.abc import Iterator
@@ -313,7 +314,10 @@ def test_watermark_page_renders_form(source_site: Site) -> None:
     assert 'name="corner_top_left_text"' in page.text
     assert 'name="repeat_text"' in page.text
     assert f'action="/admin/courses/{SLUG}/watermark"' in page.text
-    assert f"courses/{SLUG}/course.json" in page.text
+    assert "自定义目录/" in page.text and f"{SLUG}/course.json" in page.text
+    # The server-rendered preview must already cover the densest grid setting;
+    # JavaScript only mirrors edits and does not add tiles.
+    assert page.text.count("data-wm-tile") == watermark_edit.PREVIEW_TILES
 
 
 def test_save_watermark_writes_source_and_redirects(
@@ -380,11 +384,70 @@ def test_clear_watermark_removes_the_key(
     assert fake_rebuild == [SLUG, SLUG]
 
 
+def test_blank_save_clears_the_watermark_and_says_cleared(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
+    )
+    assert "watermark" in _source_manifest(source_site)
+
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data={"action": "save", "enabled": "1"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"].endswith("?notice=cleared")
+    assert "watermark" not in _source_manifest(source_site)
+
+
+def test_watermark_rejects_non_form_posts(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
+    )
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        json={"action": "save"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 415
+    assert "只接受表单提交" in response.text
+    assert "watermark" in _source_manifest(source_site)
+
+
+def test_watermark_rejects_unknown_or_missing_action(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
+    )
+    unknown_fields = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data={"foo": "bar"},
+        follow_redirects=False,
+    )
+    assert unknown_fields.status_code == 400
+    assert "字段无法识别" in unknown_fields.text
+
+    missing_action = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(action=""),
+        follow_redirects=False,
+    )
+    assert missing_action.status_code == 400
+    assert "动作无法识别" in missing_action.text
+    assert "watermark" in _source_manifest(source_site)
+
+
 def test_watermark_page_is_read_only_without_source(site: Site) -> None:
     page = site.client.get(f"/admin/courses/{SLUG}/watermark")
     assert page.status_code == 200
     assert "没有" in page.text and "course.json" in page.text
-    assert "disabled" in page.text
+    assert re.search(r'<button[^>]*value="save"[^>]*disabled', page.text)
+    assert re.search(r'<button[^>]*value="clear"[^>]*disabled', page.text)
 
     response = site.client.post(
         f"/admin/courses/{SLUG}/watermark",
@@ -394,6 +457,25 @@ def test_watermark_page_is_read_only_without_source(site: Site) -> None:
     assert response.status_code == 409
     assert "没有保存成功" in response.text
     assert not (Path(site.settings.courses_src_dir) / SLUG).exists()
+
+
+def test_unreadable_source_is_read_only(source_site: Site) -> None:
+    manifest = Path(source_site.settings.courses_src_dir) / SLUG / "course.json"
+    manifest.write_text("{broken json", encoding="utf-8")
+
+    page = source_site.client.get(f"/admin/courses/{SLUG}/watermark")
+    assert page.status_code == 200
+    assert "页面暂时只读" in page.text
+    assert re.search(r'<button[^>]*value="save"[^>]*disabled', page.text)
+
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 409
+    assert "水印没有改动" in response.text
+    assert manifest.read_text(encoding="utf-8") == "{broken json"
 
 
 def test_watermark_rebuild_failure_is_reported(

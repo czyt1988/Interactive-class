@@ -171,6 +171,12 @@
                   >{{ mark.text | e }}</span>
                 {% endfor %}
               </div>
+              {% if course.watermark.corners %}
+                {# Corner marks can carry attribution (author/company). The visual
+                   layer is aria-hidden as a whole, so expose that copy once,
+                   without repeating the screenshot-deterrent text. #}
+                <p class="visually-hidden" data-watermark-attribution>课程水印：{% for mark in course.watermark.corners %}{{ mark.text | e }}{% if not loop.last %}；{% endif %}{% endfor %}</p>
+              {% endif %}
             {% endif %}
           </div>
         </div>

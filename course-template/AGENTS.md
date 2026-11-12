@@ -152,7 +152,7 @@
 - [ ] `status` 已改成 `published`。
 - [ ] 每屏一个论题，`screens[]` 与 `STORYBOARD.md` 一致。
 - [ ] 讲义和屏幕文字一致；事实都有来源。
-- [ ] 如果写了 `watermark`：颜色是 `#RRGGBB`、字号/间距/透明度在 `COURSE-CONTRACT.md` 4.7 的范围内、每个角最多一条。
+- [ ] 如果写了 `watermark`：颜色是 `#RRGGBB`、字号/步长/透明度在 `COURSE-CONTRACT.md` 4.7 的范围内、每个角最多一条。
 
 **composition 与资源**
 

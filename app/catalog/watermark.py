@@ -68,8 +68,10 @@ REPEAT_DEFAULTS: dict[str, Any] = {
     "rotate": -24,
 }
 
-# The admin form preview only needs enough tiles to cover a 16:9 box.
-PREVIEW_TILES = 160
+# The admin preview renders a fixed number of tiles once, server-side. It must
+# cover the densest allowed setting (gapX=120, gapY=80 needs ceil(1920/120) *
+# ceil(1080/80) = 224 cells); 255 is the build's over-provisioned tile count.
+PREVIEW_TILES = 255
 
 _WRITE_LOCK = threading.Lock()
 
@@ -110,27 +112,72 @@ def form_values(watermark: WatermarkConfig | None) -> dict[str, Any]:
 
 
 def form_values_from_request(fields: Mapping[str, Any]) -> dict[str, Any]:
-    """Submitted values, kept for re-rendering the form after an error."""
+    """Submitted values, kept for re-rendering the form after an error.
+
+    Numeric/colour fields are sanitised for the preview's inline style
+    attributes: a crafted or mistyped value must never be able to add extra CSS
+    declarations, and a value outside the contract bounds would render a
+    misleading preview anyway.
+    """
 
     corners: dict[str, dict[str, Any]] = {}
     for position, key in POSITION_FIELD_KEYS.items():
         corners[position] = {
             "text": _field(fields, f"corner_{key}_text"),
-            "fontSize": _field(fields, f"corner_{key}_fontSize") or CORNER_DEFAULTS["fontSize"],
-            "color": _field(fields, f"corner_{key}_color") or CORNER_DEFAULTS["color"],
-            "opacity": _field(fields, f"corner_{key}_opacity") or CORNER_DEFAULTS["opacity"],
+            "fontSize": _safe_int(
+                _field(fields, f"corner_{key}_fontSize"),
+                int(CORNER_DEFAULTS["fontSize"]),
+                minimum=10,
+                maximum=96,
+            ),
+            "color": _safe_color(
+                _field(fields, f"corner_{key}_color"), str(CORNER_DEFAULTS["color"])
+            ),
+            "opacity": _safe_float(
+                _field(fields, f"corner_{key}_opacity"),
+                float(CORNER_DEFAULTS["opacity"]),
+                minimum=0,
+                maximum=1,
+            ),
         }
     return {
         "enabled": _checked(fields, "enabled", default=False),
         "corners": corners,
         "repeating": {
             "text": _field(fields, "repeat_text"),
-            "fontSize": _field(fields, "repeat_fontSize") or REPEAT_DEFAULTS["fontSize"],
-            "color": _field(fields, "repeat_color") or REPEAT_DEFAULTS["color"],
-            "opacity": _field(fields, "repeat_opacity") or REPEAT_DEFAULTS["opacity"],
-            "gapX": _field(fields, "repeat_gapX") or REPEAT_DEFAULTS["gapX"],
-            "gapY": _field(fields, "repeat_gapY") or REPEAT_DEFAULTS["gapY"],
-            "rotate": _field(fields, "repeat_rotate") or REPEAT_DEFAULTS["rotate"],
+            "fontSize": _safe_int(
+                _field(fields, "repeat_fontSize"),
+                int(REPEAT_DEFAULTS["fontSize"]),
+                minimum=10,
+                maximum=96,
+            ),
+            "color": _safe_color(
+                _field(fields, "repeat_color"), str(REPEAT_DEFAULTS["color"])
+            ),
+            "opacity": _safe_float(
+                _field(fields, "repeat_opacity"),
+                float(REPEAT_DEFAULTS["opacity"]),
+                minimum=0,
+                maximum=1,
+            ),
+            "gapX": _safe_int(
+                _field(fields, "repeat_gapX"),
+                int(REPEAT_DEFAULTS["gapX"]),
+                minimum=120,
+                maximum=960,
+            ),
+            "gapY": _safe_int(
+                _field(fields, "repeat_gapY"),
+                int(REPEAT_DEFAULTS["gapY"]),
+                minimum=80,
+                maximum=600,
+            ),
+            "rotate": _safe_int(
+                _field(fields, "repeat_rotate"),
+                int(REPEAT_DEFAULTS["rotate"]),
+                minimum=-90,
+                maximum=90,
+            ),
         },
     }
 
@@ -387,6 +434,28 @@ def _first(value: Any) -> str:
 
 def _field(fields: Mapping[str, Any], key: str) -> str:
     return _first(fields.get(key)).strip()
+
+
+def _safe_int(raw: str, default: int, *, minimum: int, maximum: int) -> int:
+    """Value for the preview inputs, clamped to the contract when malformed."""
+
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if minimum <= value <= maximum else default
+
+
+def _safe_float(raw: str, default: float, *, minimum: float, maximum: float) -> float:
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    return value if minimum <= value <= maximum else default
+
+
+def _safe_color(raw: str, default: str) -> str:
+    return raw if ACCENT_PATTERN.fullmatch(raw) else default
 
 
 def _checked(fields: Mapping[str, Any], key: str, *, default: bool) -> bool:

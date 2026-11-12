@@ -10,7 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.build_courses import build_all, build_course, discover_courses
+from scripts.build_courses import (
+    _replace_directory,
+    build_all,
+    build_course,
+    discover_courses,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "courses"
 SLUG = "valid-two-screen"
@@ -146,6 +151,29 @@ def test_discover_skips_private_dirs(tmp_path: Path, source_dir: Path) -> None:
     (source_dir / ".hidden").mkdir()
     names = [path.name for path in discover_courses(source_dir)]
     assert names == [SLUG]
+
+
+def test_failed_swap_restores_the_previous_bundle(tmp_path: Path, monkeypatch) -> None:
+    target = tmp_path / "dist" / SLUG
+    target.mkdir(parents=True)
+    (target / "old.txt").write_text("old", encoding="utf-8")
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    (staging / "new.txt").write_text("new", encoding="utf-8")
+
+    original_rename = Path.rename
+
+    def failing_rename(self: Path, destination: Path) -> Path:
+        if self == staging:
+            raise OSError("bundle is locked by a running server")
+        return original_rename(self, destination)
+
+    monkeypatch.setattr(Path, "rename", failing_rename)
+    with pytest.raises(OSError):
+        _replace_directory(staging, target)
+
+    assert (target / "old.txt").read_text(encoding="utf-8") == "old"
+    assert staging.is_dir()
 
 
 def test_bundle_is_served_by_a_plain_static_server(tmp_path: Path, source_dir: Path) -> None:

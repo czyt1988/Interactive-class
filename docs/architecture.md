@@ -794,7 +794,7 @@ SQLite 的限制也要写清楚：
 
 - **入口。** `/admin` 每门课的登记行有「水印配置」链接；页面是 `/admin/courses/<slug>/watermark`，复用后台「登记表」版式，带 16:9 预览。
 - **读取。** 优先读源 `courses/<slug>/course.json`；源不存在时读 `dist/courses/<slug>/course.json`，页面只读并提示在持有课程源的机器上配置。
-- **写入。** 表单提交后 `app/catalog/watermark.py` 校验字段、原子替换源 `course.json`（保留其他字段），然后延迟导入 `scripts.build_courses.build_course` 重建这一门课；同一进程内用模块级锁串行化保存，避免并发写同一份清单。构建失败时页面列出 `code / file / field` 级别的错误，源文件保留已写入的配置，`dist/` 仍是上一版。
+- **写入。** 表单提交后 `app/catalog/watermark.py` 校验字段、原子替换源 `course.json`（保留其他字段），然后延迟导入 `scripts.build_courses.build_course` 重建这一门课；同一进程内用模块级锁串行化保存，避免并发写同一份清单。构建失败时页面列出 `code / file / field` 级别的错误，源文件保留已写入的配置；构建用 rename 换入新包，失败会恢复旧包，所以 `dist/` 仍是上一版。
 - **为什么不用数据库。** 水印属于课程的展示配置，应该随课程版本化、可评审、可回滚；独立部署的课程包不能依赖站点 API。代价是生产镜像只装 `app/` 和 `dist/` 时配置页只读。
 - **为什么同步重建。** 单门课重建是复制文件 + 渲染 Jinja，耗时在秒级；和 `/import` 一样用同步表单，省掉任务队列与轮询状态。渲染超过这个量级（大素材或视频）时再抽任务系统。
 - **安全。** 与后台其他写接口一致：`ADMIN_TOKEN`、后台 Cookie 或 `X-Admin-Token`、同源 `Origin` 检查、`no-store`、`noindex`；slug 必须是合法课程且只允许写 `courses/<slug>/course.json`。

@@ -7,7 +7,9 @@ doc (9.5): if it fails, the course cannot ship.
 from __future__ import annotations
 
 import functools
+import json
 import re
+import shutil
 import socket
 import threading
 from collections.abc import Iterator
@@ -370,4 +372,172 @@ def test_playing_page_fills_the_viewport_without_scrolling(page: Page) -> None:
     assert layout["canvas"]["height"] > viewport["height"] * 0.5
     assert layout["seek"]["width"] > 200
     assert layout["skip"]["width"] > 0
+
+
+# -- watermark layer -------------------------------------------------------
+
+WATERMARK = {
+    "enabled": True,
+    "corners": [
+        {
+            "position": "top-left",
+            "text": "作者：测试作者",
+            "fontSize": 30,
+            "color": "#16140f",
+            "opacity": 0.6,
+        },
+        {
+            "position": "bottom-right",
+            "text": "示例公司",
+            "fontSize": 24,
+            "color": "#b8452b",
+            "opacity": 0.5,
+        },
+    ],
+    "repeating": {
+        "text": "内部资料，请勿外传",
+        "fontSize": 28,
+        "color": "#16140f",
+        "opacity": 0.12,
+        "gapX": 320,
+        "gapY": 200,
+        "rotate": -24,
+    },
+}
+
+
+@pytest.fixture(scope="module")
+def watermark_bundle(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    source = tmp_path_factory.mktemp("watermark-source")
+    shutil.copytree(FIXTURES / SLUG, source / SLUG)
+    manifest_path = source / SLUG / "course.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["watermark"] = WATERMARK
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    out = tmp_path_factory.mktemp("watermark-dist")
+    results = build_all(source_root=source, out_root=out, courses=[SLUG])
+    assert results[0].ok, results[0].errors
+    return out
+
+
+@pytest.fixture(scope="module")
+def watermark_server(watermark_bundle: Path) -> Iterator[tuple[str, int]]:
+    port = _free_port()
+    handler = functools.partial(
+        CourseRequestHandler, directory=str(watermark_bundle / SLUG)
+    )
+    httpd = ReusableTCPServer(("127.0.0.1", port), handler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield "127.0.0.1", port
+    finally:
+        httpd.shutdown()
+
+
+@pytest.fixture
+def watermark_page(
+    browser: Browser, watermark_server: tuple[str, int]
+) -> Iterator[Page]:
+    host, port = watermark_server
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    page = context.new_page()
+    page.console_errors = []  # type: ignore[attr-defined]
+    page.external_requests = []  # type: ignore[attr-defined]
+    page.on(
+        "console",
+        lambda message: page.console_errors.append(message.text)  # type: ignore[attr-defined]
+        if message.type == "error"
+        else None,
+    )
+    page.on(
+        "request",
+        lambda request: page.external_requests.append(request.url)  # type: ignore[attr-defined]
+        if not request.url.startswith(f"http://{host}:{port}")
+        and not request.url.startswith("data:")
+        else None,
+    )
+    page.goto(f"http://{host}:{port}/", wait_until="load")
+    page.wait_for_function("document.body.dataset.deckReady === 'true'", timeout=25_000)
+    yield page
+    context.close()
+
+
+def test_plain_bundle_has_no_watermark_layer(page: Page) -> None:
+    assert page.locator(".watermark").count() == 0
+
+
+def test_watermark_layer_covers_the_canvas_without_blocking_the_player(
+    watermark_page: Page,
+) -> None:
+    _start_playing(watermark_page)
+    info = watermark_page.evaluate(
+        """
+        () => {
+          const layer = document.querySelector('.watermark');
+          const canvas = document.querySelector('.stage__canvas');
+          const tile = document.querySelector('.watermark__tile');
+          const canvasRect = canvas.getBoundingClientRect();
+          const layerRect = layer.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            canvasRect.x + canvasRect.width / 2,
+            canvasRect.y + canvasRect.height / 2,
+          );
+          return {
+            exists: Boolean(layer),
+            parentClass: layer.parentElement.className,
+            insideCanvas: layer.closest('.stage__canvas') === canvas,
+            pointerEvents: getComputedStyle(layer).pointerEvents,
+            corners: [...document.querySelectorAll('.watermark__corner')].map(
+              (el) => el.textContent,
+            ),
+            tileCount: document.querySelectorAll('.watermark__tile').length,
+            tileText: tile ? tile.textContent : null,
+            fillsCanvas:
+              layerRect.width >= canvasRect.width - 1 &&
+              layerRect.height >= canvasRect.height - 1,
+            hitIsOnPlayer: Boolean(hit && hit.closest('#hf-player')),
+          };
+        }
+        """
+    )
+    assert info["exists"] is True
+    assert info["parentClass"] == "stage__canvas"
+    assert info["insideCanvas"] is True
+    assert info["pointerEvents"] == "none"
+    assert info["corners"] == ["作者：测试作者", "示例公司"]
+    assert info["tileCount"] == 49
+    assert info["tileText"] == "内部资料，请勿外传"
+    assert info["fillsCanvas"] is True
+    assert info["hitIsOnPlayer"] is True
+    assert watermark_page.external_requests == []  # type: ignore[attr-defined]
+    assert watermark_page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_watermark_layer_survives_fullscreen(watermark_page: Page) -> None:
+    _start_playing(watermark_page)
+    watermark_page.click("#btn-fullscreen")
+    watermark_page.wait_for_function(
+        "() => document.fullscreenElement?.id === 'stage-wrap'", timeout=10_000
+    )
+    state = watermark_page.evaluate(
+        """
+        () => {
+          const layer = document.querySelector('.watermark');
+          const fullscreen = document.fullscreenElement;
+          const rect = layer.getBoundingClientRect();
+          return {
+            inFullscreenTree: Boolean(fullscreen && fullscreen.contains(layer)),
+            width: rect.width,
+            height: rect.height,
+          };
+        }
+        """
+    )
+    assert state["inFullscreenTree"] is True
+    assert state["width"] > 0
+    assert state["height"] > 0
+    watermark_page.keyboard.press("Escape")
 

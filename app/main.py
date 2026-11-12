@@ -1,8 +1,9 @@
 """FastAPI application factory.
 
 The site has two jobs: render the catalog pages and serve the built course
-bundles. It does not parse course sources, run Node, or render course content
-at request time.
+bundles. It does not parse course sources at request time, except the
+authenticated watermark editor, which writes one course's source manifest and
+rebuilds that bundle.
 """
 
 from __future__ import annotations

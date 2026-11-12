@@ -428,12 +428,19 @@
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, calc(var(--wm-gap-x, 320) * 100cqw / 1920));
-  grid-auto-rows: calc(var(--wm-gap-y, 200) * 100cqw / 1920);
+  grid-template-columns: repeat(auto-fill, calc(var(--wm-gap-x, 320) * 1px));
+  grid-auto-rows: calc(var(--wm-gap-y, 200) * 1px);
   place-items: center;
   justify-content: start;
   align-content: start;
   overflow: hidden;
+}
+
+@supports (width: 1cqw) {
+  .wm-preview__repeat {
+    grid-template-columns: repeat(auto-fill, calc(var(--wm-gap-x, 320) * 100cqw / 1920));
+    grid-auto-rows: calc(var(--wm-gap-y, 200) * 100cqw / 1920);
+  }
 }
 
 .wm-preview__repeat[hidden],

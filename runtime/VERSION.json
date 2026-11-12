@@ -6,8 +6,8 @@
   "runtime": "hyperframe.runtime.iife.js",
   "deckVersion": "1.5.0",
   "fonts": {
-    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "1320a8090298b7fbd3d7026407c1e507f3c26270dcc2ac80ff37caa562e545c7",
-    "app/static/fonts/NotoSansSC-VF.woff2": "65add19d618a28e0f2e13d9b6bf489a173e936ebb24975b3dbb61defd45a708f",
+    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "697536dc42f624be3e967b1536026ffb9e61786366c93ce4e1e9db0c2e9f4456",
+    "app/static/fonts/NotoSansSC-VF.woff2": "967b7f70006fe001cef76b98fddd95409af688ebc15a4ed9cfee398ca271b302",
     "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "2c99eea53e75e76421083a3d8f8f14dd4e67f6669ad9b456a6f7df5586800f32"
   },
   "tokens": {

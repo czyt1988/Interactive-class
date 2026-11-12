@@ -23,6 +23,7 @@ from fastapi.responses import (
     Response,
 )
 from pydantic import ValidationError
+from starlette.concurrency import run_in_threadpool
 
 from app.catalog import watermark as watermark_edit
 from app.catalog.models import Catalog, ResolvedCourse
@@ -60,6 +61,24 @@ WATERMARK_NOTICES = {
 WATERMARK_SOURCE_HINT = (
     "这台机器上没有课程源文件 {path}。水印配置只写入课程源文件并重新构建课程包，"
     "请在持有课程源的机器上配置，或手工编辑 course.json 的 watermark 字段。"
+)
+WATERMARK_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded"
+WATERMARK_FORM_FIELDS = (
+    {"action", "enabled"}
+    | {
+        f"corner_{key}_{field}"
+        for key in POSITION_FIELD_KEYS.values()
+        for field in ("text", "fontSize", "color", "opacity")
+    }
+    | {
+        "repeat_text",
+        "repeat_fontSize",
+        "repeat_color",
+        "repeat_opacity",
+        "repeat_gapX",
+        "repeat_gapY",
+        "repeat_rotate",
+    }
 )
 
 
@@ -325,6 +344,32 @@ def _source_manifest(settings: Settings, slug: str) -> Path:
     return watermark_edit.manifest_path(settings, slug)
 
 
+def _source_label(settings: Settings, slug: str) -> str:
+    source = _source_manifest(settings, slug)
+    try:
+        return source.relative_to(BASE_DIR).as_posix()
+    except ValueError:
+        return f"自定义目录/{slug}/course.json"
+
+
+def _read_source_watermark(
+    settings: Settings, slug: str
+) -> tuple[str, dict[str, Any] | None, str | None]:
+    """Return ``(state, manifest, error)`` for the source course.json.
+
+    ``state`` is ``missing`` (no source on this machine), ``unreadable`` (the file
+    exists but is not valid JSON) or ``ok``. Only ``ok`` may be written to.
+    """
+
+    source = _source_manifest(settings, slug)
+    if not source.is_file():
+        return "missing", None, None
+    try:
+        return "ok", watermark_edit.read_manifest(source), None
+    except (OSError, ValueError) as exc:
+        return "unreadable", None, str(exc)
+
+
 def _decode_form(body: bytes) -> dict[str, list[str]]:
     return parse_qs(body.decode("utf-8", errors="replace"))
 
@@ -338,23 +383,23 @@ def _watermark_page(
     status_code: int = 200,
 ) -> Response:
     settings = _settings(request)
-    source = _source_manifest(settings, course.slug)
-    source_available = source.is_file()
+    state, manifest, read_error = _read_source_watermark(settings, course.slug)
+    source_available = state == "ok"
     problems = list(errors or [])
 
     if values is None:
-        if source_available:
+        current = course.watermark
+        if state == "ok" and manifest is not None:
             try:
-                current = watermark_edit.watermark_from_manifest(
-                    watermark_edit.read_manifest(source)
-                )
-            except (OSError, ValueError, ValidationError) as exc:
-                current = course.watermark
+                current = watermark_edit.watermark_from_manifest(manifest)
+            except ValidationError as exc:
                 problems.append(
-                    f"读取课程源文件里的水印配置失败，下面显示的是已构建版本：{exc}"
+                    f"源文件里的水印配置不合法，下面显示已构建版本：{exc}"
                 )
-        else:
-            current = course.watermark
+        elif state == "unreadable":
+            problems.append(
+                f"读取 {_source_label(settings, course.slug)} 失败，页面暂时只读：{read_error}"
+            )
         values = watermark_edit.form_values(current)
 
     context = {
@@ -376,7 +421,9 @@ def _watermark_page(
         "errors": problems,
         "notice": WATERMARK_NOTICES.get(request.query_params.get("notice") or ""),
         "source_available": source_available,
-        "source_label": f"courses/{course.slug}/course.json",
+        "source_state": state,
+        "source_error": read_error,
+        "source_label": _source_label(settings, course.slug),
         "posted_url": _watermark_url(course.slug),
     }
     response = _templates(request).TemplateResponse(
@@ -409,23 +456,71 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
         return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
 
     settings = _settings(request)
-    source = _source_manifest(settings, slug)
-    if not source.is_file():
+    state, _manifest, read_error = _read_source_watermark(settings, slug)
+    if state == "missing":
         return _watermark_page(
             request,
             course,
             values=watermark_edit.form_values(course.watermark),
             errors=[
-                WATERMARK_SOURCE_HINT.format(path=f"courses/{slug}/course.json")
+                WATERMARK_SOURCE_HINT.format(path=_source_label(settings, slug))
             ],
             status_code=409,
         )
+    if state == "unreadable":
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(course.watermark),
+            errors=[
+                f"读取 {_source_label(settings, slug)} 失败，水印没有改动：{read_error}"
+            ],
+            status_code=409,
+        )
+
+    content_type = (
+        request.headers.get("content-type", "").split(";")[0].strip().lower()
+    )
+    if content_type != WATERMARK_FORM_CONTENT_TYPE:
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(course.watermark),
+            errors=["水印配置只接受表单提交，水印没有改动。"],
+            status_code=415,
+        )
+
+    declared = request.headers.get("content-length")
+    if declared is not None:
+        try:
+            declared_length = int(declared)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Content-Length 不合法") from exc
+        if declared_length > MAX_WATERMARK_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="请求体过大")
 
     body = await request.body()
     if len(body) > MAX_WATERMARK_BODY_BYTES:
         raise HTTPException(status_code=413, detail="请求体过大")
     fields = _decode_form(body)
-    action = (fields.get("action") or ["save"])[0].strip()
+    if not set(fields) & WATERMARK_FORM_FIELDS:
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(course.watermark),
+            errors=["表单内容为空或字段无法识别，水印没有改动。"],
+            status_code=400,
+        )
+
+    action = (fields.get("action") or [""])[0].strip()
+    if action not in {"save", "clear"}:
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values_from_request(fields),
+            errors=["表单动作无法识别，水印没有改动。"],
+            status_code=400,
+        )
 
     if action == "clear":
         watermark = None
@@ -441,7 +536,9 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
             )
 
     try:
-        _path, result = watermark_edit.apply_watermark(settings, slug, watermark)
+        _path, result = await run_in_threadpool(
+            watermark_edit.apply_watermark, settings, slug, watermark
+        )
     except Exception as exc:  # noqa: BLE001 - report the failure on the page
         return _watermark_page(
             request,
@@ -477,7 +574,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
             status_code=422,
         )
 
-    notice = "cleared" if action == "clear" else "saved"
+    notice = "cleared" if action == "clear" or watermark is None else "saved"
     return _no_store(
         RedirectResponse(f"{_watermark_url(slug)}?notice={notice}", status_code=303)
     )

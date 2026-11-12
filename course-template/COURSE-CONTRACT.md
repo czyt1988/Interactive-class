@@ -175,8 +175,8 @@
 | `repeating.fontSize` | 否 | int | 10–96，默认 `28` |
 | `repeating.color` | 否 | string | `#RRGGBB`，默认 `#16140f` |
 | `repeating.opacity` | 否 | number | 0–1，默认 `0.12` |
-| `repeating.gapX` | 否 | int | 120–960，默认 `320`；平铺网格横向间距 |
-| `repeating.gapY` | 否 | int | 80–600，默认 `200`；纵向间距 |
+| `repeating.gapX` | 否 | int | 120–960，默认 `320`；平铺网格的横向步长（相邻水印的格宽） |
+| `repeating.gapY` | 否 | int | 80–600，默认 `200`；纵向步长（格高） |
 | `repeating.rotate` | 否 | int | -90 到 90，默认 `-24`；每块水印的倾斜角 |
 
 水印只覆盖播放画布，不遮控制条、不拦截点击，进入全屏仍可见。它是署名和降低截图外传可读性的展示配置，不是访问控制。手工改完仍需重新构建课程包才会生效。

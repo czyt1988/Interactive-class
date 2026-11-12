@@ -270,6 +270,32 @@ def _copy_runtime(runtime_dir: Path, target: Path) -> None:
     shutil.copytree(runtime_dir, target, ignore=ignore)
 
 
+def _replace_directory(staging: Path, target: Path) -> None:
+    """Swap a finished build into ``target`` without losing the previous bundle.
+
+    Windows refuses to delete files that a learner currently has open while the
+    site streams a course asset, so deleting ``target`` before renaming would
+    leave the course half missing. Rename is the swap step: move the old bundle
+    aside, move the new one in, and restore the old bundle if the swap fails.
+    """
+
+    if not target.exists():
+        staging.rename(target)
+        return
+
+    backup = Path(tempfile.mkdtemp(prefix=f".old-{target.name}-", dir=str(target.parent)))
+    backup.rmdir()
+    target.rename(backup)
+    try:
+        staging.rename(target)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            if not target.exists() and backup.exists():
+                backup.rename(target)
+        raise
+    shutil.rmtree(backup, ignore_errors=True)
+
+
 def _site_origin(site_url: str) -> str:
     parts = urlsplit(site_url)
     if not parts.scheme or not parts.netloc:
@@ -429,9 +455,7 @@ def build_course(
             runtime_version=runtime_version,
             font_url=font_url,
         )
-        if target.exists():
-            shutil.rmtree(target)
-        staging.rename(target)
+        _replace_directory(staging, target)
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise

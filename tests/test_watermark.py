@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import shutil
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from pydantic import ValidationError
 
 from app.catalog.models import WatermarkConfig
 from app.catalog.watermark import (
+    PREVIEW_TILES,
     form_values,
     form_values_from_request,
     parse_form,
@@ -229,8 +232,33 @@ def test_form_values_from_request_keeps_submitted_values() -> None:
     )
     assert values["enabled"] is True
     assert values["corners"]["top-left"]["text"] == "草稿"
-    assert values["corners"]["top-left"]["fontSize"] == "44"
+    assert values["corners"]["top-left"]["fontSize"] == 44
     assert values["corners"]["bottom-left"]["text"] == ""
+
+
+def test_form_values_from_request_sanitises_preview_style_values() -> None:
+    values = form_values_from_request(
+        {
+            "enabled": ["1"],
+            "corner_top_left_color": ["#fff; background: url(x)"],
+            "corner_top_left_fontSize": ["999; color: red"],
+            "corner_top_left_opacity": ["2"],
+            "repeat_gapX": ["10"],
+            "repeat_rotate": ["not-a-number"],
+        }
+    )
+    corner = values["corners"]["top-left"]
+    assert corner["color"] == "#16140f"
+    assert corner["fontSize"] == 30
+    assert corner["opacity"] == 0.6
+    assert values["repeating"]["gapX"] == 320
+    assert values["repeating"]["rotate"] == -24
+
+
+def test_preview_tiles_cover_the_densest_setting() -> None:
+    # The preview cannot add tiles from JavaScript, so the server-rendered count
+    # must cover the smallest allowed grid spacing.
+    assert math.ceil(1920 / 120) * math.ceil(1080 / 80) <= PREVIEW_TILES
 
 
 def test_tile_count_covers_the_canvas() -> None:
@@ -348,6 +376,12 @@ def test_watermark_text_is_html_escaped(tmp_path: Path) -> None:
     html, _ = _build_with(payload, tmp_path / "escaped")
     assert "&lt;b&gt;作者&lt;/b&gt;" in html
     assert "<b>作者</b>" not in html
+    match = re.search(
+        r'<span[^>]*watermark__corner--top-left[^>]*>(.*?)</span>', html, re.S
+    )
+    assert match, "corner watermark span not found"
+    assert "&lt;b&gt;作者&lt;/b&gt;" in match.group(1)
+    assert "<b>" not in match.group(1)
 
 
 def test_invalid_watermark_fails_the_build(tmp_path: Path) -> None:
