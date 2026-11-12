@@ -175,8 +175,40 @@ def _python_version(python: Path) -> tuple[int, int] | None:
         return None
 
 
+def _is_shared_venv_link(root: Path) -> bool:
+    """True when ``.venv`` is a worktree share link/junction (see scripts/worktree.py).
+
+    Worktrees reuse the main worktree's ``.venv`` instead of installing a second
+    copy, so this module must not create, delete or reinstall that environment
+    from a worktree: it belongs to the main checkout and to every parallel
+    session.
+    """
+
+    path = root / ".venv"
+    if os.path.islink(path):
+        return True
+    is_junction = getattr(os.path, "isjunction", None)
+    if is_junction is not None and is_junction(path):
+        return True
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return False
+    return bool(getattr(info, "st_reparse_tag", 0))
+
+
 def ensure_venv(reporter: _Reporter, root: Path = ROOT) -> Path:
     target = venv_python(root)
+    if _is_shared_venv_link(root):
+        if target.is_file():
+            reporter.info("  复用主工作树的共享虚拟环境 .venv")
+            return target
+        raise SetupError(
+            "当前工作树的共享虚拟环境联接已失效（目标不存在）。",
+            "在仓库根运行：python scripts/worktree.py link；"
+            "如果主工作树的环境也坏了，先到主工作树修复 .venv，再回到工作树重试。",
+        )
+
     if target.is_file():
         version = sys.version_info[:2] if _same_interpreter(target) else _python_version(target)
         if version is None or version < MIN_PYTHON:
@@ -227,6 +259,13 @@ def ensure_dependencies(reporter: _Reporter, root: Path = ROOT) -> bool:
 
 
 def _pip_install(root: Path, python: Path) -> None:
+    if _is_shared_venv_link(root):
+        raise SetupError(
+            "依赖缺失，但当前工作树复用主工作树的 .venv。",
+            "请到主工作树安装依赖（双击主工作树的 star.cmd，或执行 "
+            'pip install -e ".[dev]"）；工作树里的 .venv 是共享联接，'
+            "在这里重装会改写所有并行会话的环境。",
+        )
     result = _run(
         [
             str(python),

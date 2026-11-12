@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 from pathlib import Path
 
 import pytest
 
-from scripts import bootstrap, launcher, sync_runtime
+from scripts import bootstrap, launcher, sync_runtime, worktree
 
 
 def _venv(root: Path) -> Path:
@@ -246,6 +248,57 @@ def test_skip_fonts_keeps_hashes_of_fonts_that_still_exist(tmp_path: Path) -> No
 
 def test_skip_fonts_tolerates_missing_or_broken_version_file(tmp_path: Path) -> None:
     assert sync_runtime.previous_fonts(tmp_path) == {}
+
+
+def _link_shared_venv(root: Path, target: Path) -> None:
+    """Simulate a worktree's shared ``.venv`` (junction / symlink to main)."""
+
+    python = target / "Scripts" / "python.exe" if os.name == "nt" else target / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("", encoding="utf-8")
+    worktree.create_dir_link(target, root / ".venv")
+
+
+def test_shared_venv_link_is_reused_without_creating_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _link_shared_venv(tmp_path, tmp_path / "shared-venv")
+    runner = Runner(tmp_path, modules_ok=False)
+    monkeypatch.setattr(bootstrap, "_run", runner)
+
+    target = bootstrap.ensure_venv(bootstrap._Reporter(False), tmp_path)
+
+    assert target == bootstrap.venv_python(tmp_path)
+    assert runner.calls == [], "共享的 .venv 不能被重新创建或校验重建"
+
+
+def test_shared_venv_refuses_to_run_pip_install(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _link_shared_venv(tmp_path, tmp_path / "shared-venv")
+    runner = Runner(tmp_path, modules_ok=False)
+    monkeypatch.setattr(bootstrap, "_run", runner)
+
+    with pytest.raises(bootstrap.SetupError) as caught:
+        bootstrap.ensure_dependencies(bootstrap._Reporter(False), tmp_path)
+
+    assert "主工作树" in caught.value.message
+    assert "主工作树" in caught.value.hint
+    assert runner.calls_matching("pip install") == []
+
+
+def test_dangling_shared_venv_gets_actionable_hint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shared = tmp_path / "shared-venv"
+    _link_shared_venv(tmp_path, shared)
+    shutil.rmtree(shared)
+    monkeypatch.setattr(bootstrap, "_run", Runner(tmp_path))
+
+    with pytest.raises(bootstrap.SetupError) as caught:
+        bootstrap.ensure_venv(bootstrap._Reporter(False), tmp_path)
+
+    assert "worktree.py link" in caught.value.hint
 
     runtime = tmp_path / "runtime"
     runtime.mkdir()
