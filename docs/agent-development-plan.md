@@ -74,7 +74,7 @@
 | 3a 播放器适配层 | ✅ 完成 | `runtime/course-deck.js` 的 `createPlayerAdapter`；`tests/e2e/test_standalone.py` 验证 range 终点 `ended` |
 | 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
 | 4 站点外壳 | ✅ 完成 | 首页、课程库（含 level/tag 过滤）、关于、404、sitemap、robots |
-| 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 18:38（旁白 `rate +0%`），整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 0 error |
+| 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头）完整落地：22 屏 / 18:38（旁白 `rate +0%`），整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 没有 craft error，layout 的 6 条 `content_overlap` 见 3.2 |
 | 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
 | 7 发布 | ⬜ 未开始 | 无 Dockerfile、无反代配置、无生产 URL |
 | 8 课程规模化 | ✅ 完成 | 独立模板包 `course-template/`、`scripts/new_course.py`、`scripts/import_course.py`、开发环境 `/import` 导入页、`course_imports` 来源记录 |
@@ -90,7 +90,8 @@
 
 - 没有在 Safari / Firefox 上跑过；`tests/e2e` 目前只用 Chromium。长视频课程的旁白连续播放与 OGG/Opus 解码已在 Chromium 验证，Safari 的自动播放策略尚未验证。
 - 没有真机移动端验收；只做了窄视口截图。
-- `hyperframes check` 还剩 5 条 `line_unread` 警告：个别短句的字幕停留时间低于 check 按逐词朗读估算的下限，按实际语速没有问题；`dead_stretch` 已由每页的旁白进度条消除。
+- `hyperframes check`（本地把 `tools/ffmpeg/bin` 加进 PATH）：craft 0 error；50 条 craft warning 是 28 条 `line_unread` + 22 条 `text_below_floor`（字幕停留时间和装饰性小字，既有）。layout 还有 6 条 `content_overlap` error（S17 / S19 的场景文字排版，既有，未在进度条任务里修）。
+- 2026-11 按产品要求移除画布内的旁白进度条（它在 iframe 里拖不动，和播放器底部的 seek 条重复）。代价是 13 段纯静止约 3.8 秒的旁白段会重新触发 `dead_stretch` 警告；没有用 `data-hold` 去掩盖——旁白驱动场景里「字幕在走、画面暂时不动」是真实的静止。
 - 全片 MP4 已用 ffmpeg 校验：1920×1080 / 30fps / H.264 + AAC，21m33.5s，有声音；没有在电视和低端手机上做码率/兼容性实测。
 - 课程导入在 TestClient、真实构建流水线和 Playwright 自检（1440px / 390px、真实点击导入、CSP、同源 Origin）中验证过；没有在 TLS 终止的反向代理后验证同源 Origin，也没有在 Safari / Firefox 上打开过 `/import`。
 - 播放页全视口布局与逐屏进度是 2026-11 这轮改的：浏览器验收范围是 Chromium 下 1920×1080 / 1600×900 / 1366×768 / 390×844，用真实鼠标拖动当前屏进度、跳到最后、`End`、确认播放页无滚动；未验证 Safari / Firefox 和真机触摸。

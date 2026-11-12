@@ -216,24 +216,9 @@ html[data-captions="off"] .cap-band {
   display: none;
 }
 
-.cap-progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 3px;
-  background: color-mix(in srgb, var(--cap-ink) 10%, transparent);
-  overflow: hidden;
-}
-
-.cap-progress > i {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left center;
-}
+/* The burned-in caption band carries only the scene code and total duration.
+ * Per-scene progress belongs to the deck's seek bar below the stage: an
+ * in-canvas look-alike reads as a second, un-draggable progress bar. */
 
 .cap-lines {
   position: absolute;

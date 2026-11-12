@@ -539,7 +539,7 @@ courses/<slug>/
 - **一屏 = 大纲里的一个 S。** 不要把 40–100 秒的 S 再拆成 2–4 页；一页内用连续动画讲完。
 - **旁白是时钟。** 每屏一条旁白音频；`data-start` / `data-duration` 从音频时长推导，不由作者手写。旁白念完后留 1–2 秒收尾，再进入下一屏。
 - **音频放根 composition。** 每屏一个 `<audio id="nar-s-<id>" class="clip" data-start data-duration src="assets/audio/...">`；音频 id 必须存在，文件必须本地。
-- **字幕在画布内。** 每屏底部是旁白条（约 180px），字幕按句切开，用 `.clip` 的 `data-start` / `data-duration` 控制；导出的 MP4 自带烧录字幕。
+- **字幕在画布内。** 每屏底部是旁白条（约 180px），字幕按句切开，用 `.clip` 的 `data-start` / `data-duration` 控制；导出的 MP4 自带烧录字幕。旁白条内不放进度条：当前屏进度由课程外壳控制条的 seek 条承担，画布在 iframe 里拖不动，画进去只会和 seek 条重复。
 - **文案一致。** `course.json` 的 `screens[].transcript` 必须和旁白文本一致；`screens[].autoAdvance` 在长视频课程里全部为 `true`。
 - **连续播放。** `playback: "continuous"` 时，上一屏/下一屏只是 seek；播放器不重新加载，屏幕之间没有转场遮罩。
 - **生成工具。** 旁白、时间、根 composition、`course.json` 和字幕由 `scripts/build_narration.py` 生成；作者只写画面和动效，不手改时间。

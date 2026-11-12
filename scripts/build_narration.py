@@ -81,7 +81,6 @@ SCENE_TEMPLATE = """<template>
       </div>
       <div class="cap-foot">
         <span class="cap-code">{code}</span>
-        <span class="cap-progress" aria-hidden="true"><i id="s-{id}-progress"></i></span>
         <span class="cap-clock">{duration_clock}</span>
       </div>
     </footer>
@@ -96,9 +95,6 @@ SCENE_TEMPLATE = """<template>
 
     // 入场：从场景底色淡入，切到下一页时像视频一样接上。
     tl.fromTo(".scene-in", {{ opacity: 0 }}, {{ opacity: 1, duration: 0.35, ease: "power2.out" }}, 0);
-
-    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
-    tl.fromTo("#s-{id}-progress", {{ scaleX: 0 }}, {{ scaleX: 1, duration: N.duration, ease: "none" }}, 0);
 
     // MOTION:BEGIN
     // 用 N.cues[i].t 把每一个动效钉在旁白的句子上：
@@ -122,7 +118,6 @@ CAPTION_BAND = """<footer class="cap-band">
       </div>
       <div class="cap-foot">
         <span class="cap-code">{code}</span>
-        <span class="cap-progress" aria-hidden="true"><i id="s-{id}-progress"></i></span>
         <span class="cap-clock">{duration_clock}</span>
       </div>
     </footer>"""

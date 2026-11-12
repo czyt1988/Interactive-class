@@ -605,7 +605,6 @@
       </div>
       <div class="cap-foot">
         <span class="cap-code">S20</span>
-        <span class="cap-progress" aria-hidden="true"><i id="s-agents-md-progress"></i></span>
         <span class="cap-clock">01:07</span>
       </div>
     </footer>
@@ -620,9 +619,6 @@
 
     // 入场：从场景底色淡入，切到下一页时像视频一样接上。
     tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
-
-    // 旁白进度：整段匀速，永远有慢动作，不会「一段一段地蹦」。
-    tl.fromTo("#s-agents-md-progress", { scaleX: 0 }, { scaleX: 1, duration: N.duration, ease: "none" }, 0);
 
     // MOTION:BEGIN
     // S20 · 每一拍钉在 N.cues[i].t 上；一次只把一栏推到焦点。
