@@ -90,6 +90,30 @@ def test_captions_are_inside_the_canvas() -> None:
         assert 'window.__timelines["s-' in source
 
 
+def test_progress_bar_lives_only_in_the_deck() -> None:
+    """The 16:9 canvas must not contain a second, un-draggable progress bar.
+
+    The deck below the stage owns the seek slider; an in-canvas look-alike was
+    removed because it duplicated that slider and could not be dragged (the
+    player iframe ignores pointer events).
+    """
+
+    for scene in sorted((COMPOSITION / "compositions").glob("*.html")):
+        source = scene.read_text(encoding="utf-8")
+        assert "cap-progress" not in source, f"{scene.name} 仍有画布内进度条"
+        assert '-progress"' not in source, f"{scene.name} 仍在给画布内进度条做动画"
+
+    css = (COMPOSITION / "assets" / "course.css").read_text(encoding="utf-8")
+    assert ".cap-progress" not in css
+
+    # The generator must keep producing scenes without it.
+    from scripts import build_narration as narration
+
+    assert "cap-progress" not in narration.SCENE_TEMPLATE
+    assert "cap-progress" not in narration.CAPTION_BAND
+    assert '-progress"' not in narration.SCENE_TEMPLATE
+
+
 def test_audio_budget() -> None:
     audio_dir = COMPOSITION / "assets" / "audio"
     total = sum(path.stat().st_size for path in audio_dir.glob("*.ogg"))
