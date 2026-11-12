@@ -93,6 +93,7 @@
 | `playback` | 否 | enum | `screens`（默认）/ `continuous` |
 | `composition` | 否 | object | 建议显式填写；省略时用 4.3 的默认值 |
 | `screens` | 是 | array | 至少 1 项，`id` 唯一 |
+| `watermark` | 否 | object | 课程水印；见 4.7，不需要就省略或写 `null` |
 | `site` | 否 | object | 见 4.5 |
 | `credits` | 否 | object | 见 4.6 |
 
@@ -138,6 +139,47 @@
 | `author` | 否 | string | 作者/团队 |
 | `updatedAt` | 否 | string | `YYYY-MM-DD`，必须是合法日期 |
 | `sources` | 否 | string[] | 参考资料链接或说明；只用于展示，运行时不会请求 |
+
+### 4.7 `watermark`（可选）
+
+课程水印会在构建时进入课程包，独立部署也保留；不需要就省略这个字段，或写成 `null`。平台后台有可视化配置页 `/admin/courses/<slug>/watermark`，外部作者也可以手工写。
+
+```json
+"watermark": {
+  "enabled": true,
+  "corners": [
+    { "position": "top-left", "text": "作者：张三", "fontSize": 30, "color": "#16140f", "opacity": 0.6 },
+    { "position": "bottom-right", "text": "示例公司", "fontSize": 24, "color": "#b8452b", "opacity": 0.5 }
+  ],
+  "repeating": {
+    "text": "内部资料，请勿外传",
+    "fontSize": 28,
+    "color": "#16140f",
+    "opacity": 0.12,
+    "gapX": 320,
+    "gapY": 200,
+    "rotate": -24
+  }
+}
+```
+
+| 字段 | 必须 | 类型 | 规则 |
+| --- | --- | --- | --- |
+| `enabled` | 否 | bool | 默认 `true`；`false` 时保留配置但不渲染 |
+| `corners[].position` | 是 | enum | `top-left` / `top-right` / `bottom-left` / `bottom-right`，每个角最多一条 |
+| `corners[].text` | 是 | string | 1–80 字符，纯文本 |
+| `corners[].fontSize` | 否 | int | 10–96，默认 `30`；按 1920×1080 画布的设计像素 |
+| `corners[].color` | 否 | string | `#RRGGBB`，默认 `#16140f` |
+| `corners[].opacity` | 否 | number | 0–1，默认 `0.6` |
+| `repeating.text` | 是 | string | 1–48 字符，纯文本 |
+| `repeating.fontSize` | 否 | int | 10–96，默认 `28` |
+| `repeating.color` | 否 | string | `#RRGGBB`，默认 `#16140f` |
+| `repeating.opacity` | 否 | number | 0–1，默认 `0.12` |
+| `repeating.gapX` | 否 | int | 120–960，默认 `320`；平铺网格横向间距 |
+| `repeating.gapY` | 否 | int | 80–600，默认 `200`；纵向间距 |
+| `repeating.rotate` | 否 | int | -90 到 90，默认 `-24`；每块水印的倾斜角 |
+
+水印只覆盖播放画布，不遮控制条、不拦截点击，进入全屏仍可见。它是署名和降低截图外传可读性的展示配置，不是访问控制。手工改完仍需重新构建课程包才会生效。
 
 ## 5. composition 根工程
 
@@ -349,7 +391,7 @@ scene 是片段，不是完整 HTML 页面。正确示例（就是本模板的�
 
 | 错误码 | 含义 | 修复 |
 | --- | --- | --- |
-| `manifest_invalid` | `course.json` 不是合法 JSON、字段类型/长度/枚举不对，或出现未知字段 | 看报错里的 `field`，按 4.2–4.6 的规则改；有音频却没写 `transcript` 也报这个 |
+| `manifest_invalid` | `course.json` 不是合法 JSON、字段类型/长度/枚举不对，或出现未知字段 | 看报错里的 `field`，按 4.2–4.7 的规则改；有音频却没写 `transcript` 也报这个 |
 | `slug_mismatch` | `slug` 和目录名不一致 | 平台导入会自动按 slug 建目录；只有直接把文件夹放进平台 `courses/` 时才需要两者一致 |
 | `slug_reserved` | `slug` 还是占位符或保留名 | 改成课程自己的小写连字符 slug |
 | `course_exists` | 平台里同 slug 课程已存在 | 换 slug，或导入时显式覆盖 |

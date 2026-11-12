@@ -62,6 +62,7 @@
 - **不要写 `start` / `duration` / `index`**，这些由平台从 composition 解析后生成。
 - `status` 开发期保持 `draft`，**交付前改成 `published`**（平台默认只构建 published）。
 - `credits.author` 写真实作者；`credits.sources` 写事实来源。
+- 需要课程水印时按 `COURSE-CONTRACT.md` 4.7 写 `watermark`；不需要就省略或写 `null`。水印是展示配置，不影响时间和 composition。
 
 ### 第 4 步：逐屏写 scene
 
@@ -151,6 +152,7 @@
 - [ ] `status` 已改成 `published`。
 - [ ] 每屏一个论题，`screens[]` 与 `STORYBOARD.md` 一致。
 - [ ] 讲义和屏幕文字一致；事实都有来源。
+- [ ] 如果写了 `watermark`：颜色是 `#RRGGBB`、字号/间距/透明度在 `COURSE-CONTRACT.md` 4.7 的范围内、每个角最多一条。
 
 **composition 与资源**
 

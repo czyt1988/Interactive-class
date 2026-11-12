@@ -7,14 +7,19 @@ so these tests pass on any machine.
 
 from __future__ import annotations
 
+import json
+import shutil
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.catalog.models import Catalog
+from app.catalog import watermark as watermark_edit
+from app.catalog.models import Catalog, CatalogError
 from app.config import Settings
 from app.db import Base
 from app.main import create_app
@@ -26,6 +31,7 @@ from app.web.admin import ADMIN_COOKIE
 
 SLUG = "valid-two-screen"
 FAKE_MP4 = b"\x00\x00\x00\x18ftypmp42fake-video"
+FIXTURE_COURSE = Path(__file__).parent / "fixtures" / "courses" / SLUG
 
 
 def _toolchain(ok: bool = True) -> Toolchain:
@@ -77,8 +83,11 @@ def _make_site(
     monkeypatch,
     *,
     toolchain: Toolchain | None = None,
+    with_source: bool = False,
 ) -> Site:
     write_course(settings.courses_dist_dir)
+    if with_source:
+        shutil.copytree(FIXTURE_COURSE, Path(settings.courses_src_dir) / SLUG)
     application = create_app(settings)
     Base.metadata.create_all(application.state.engine)
     manager = RenderManager(settings, runner=_fake_runner)
@@ -101,6 +110,13 @@ def _wait_idle(manager: RenderManager, timeout: float = 5.0) -> None:
 @pytest.fixture
 def site(settings: Settings, write_course, monkeypatch) -> Iterator[Site]:
     made = _make_site(settings, write_course, monkeypatch)
+    with made.client:
+        yield made
+
+
+@pytest.fixture
+def source_site(settings: Settings, write_course, monkeypatch) -> Iterator[Site]:
+    made = _make_site(settings, write_course, monkeypatch, with_source=True)
     with made.client:
         yield made
 
@@ -230,3 +246,232 @@ def test_robots_blocks_admin(site: Site) -> None:
     response = site.client.get("/robots.txt")
     assert response.status_code == 200
     assert "Disallow: /admin" in response.text
+
+
+# -- watermark config ------------------------------------------------------
+
+
+def _watermark_form(**overrides: str) -> dict[str, str]:
+    data = {
+        "action": "save",
+        "enabled": "1",
+        "corner_top_left_text": "作者：张三",
+        "corner_top_left_fontSize": "30",
+        "corner_top_left_color": "#16140f",
+        "corner_top_left_opacity": "0.6",
+        "corner_bottom_right_text": "示例公司",
+        "corner_bottom_right_fontSize": "24",
+        "corner_bottom_right_color": "#b8452b",
+        "corner_bottom_right_opacity": "0.5",
+        "repeat_text": "内部资料，请勿外传",
+        "repeat_fontSize": "28",
+        "repeat_color": "#16140f",
+        "repeat_opacity": "0.12",
+        "repeat_gapX": "320",
+        "repeat_gapY": "200",
+        "repeat_rotate": "-24",
+    }
+    data.update(overrides)
+    return data
+
+
+def _source_manifest(site: Site) -> dict:
+    return json.loads(
+        (Path(site.settings.courses_src_dir) / SLUG / "course.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+
+@pytest.fixture
+def fake_rebuild(monkeypatch) -> list[str]:
+    calls: list[str] = []
+
+    def _rebuild(_settings: Settings, slug: str):
+        calls.append(slug)
+        return SimpleNamespace(errors=[], skipped=False)
+
+    monkeypatch.setattr(watermark_edit, "rebuild_course", _rebuild)
+    return calls
+
+
+def test_admin_links_to_watermark_config(site: Site) -> None:
+    page = site.client.get("/admin")
+    assert page.status_code == 200
+    assert f"/admin/courses/{SLUG}/watermark" in page.text
+    assert "水印配置" in page.text
+    assert "未配置水印" in page.text
+
+
+def test_watermark_page_renders_form(source_site: Site) -> None:
+    page = source_site.client.get(f"/admin/courses/{SLUG}/watermark")
+    assert page.status_code == 200
+    assert page.headers["cache-control"] == "no-store"
+    assert "给《两屏测试课》加水印" in page.text
+    assert "角标水印" in page.text
+    assert "满屏平铺水印" in page.text
+    assert 'name="corner_top_left_text"' in page.text
+    assert 'name="repeat_text"' in page.text
+    assert f'action="/admin/courses/{SLUG}/watermark"' in page.text
+    assert f"courses/{SLUG}/course.json" in page.text
+
+
+def test_save_watermark_writes_source_and_redirects(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"].endswith("?notice=saved")
+    assert fake_rebuild == [SLUG]
+
+    manifest = _source_manifest(source_site)
+    assert manifest["title"] == "两屏测试课"
+    watermark = manifest["watermark"]
+    assert watermark["enabled"] is True
+    assert [corner["position"] for corner in watermark["corners"]] == [
+        "top-left",
+        "bottom-right",
+    ]
+    assert watermark["repeating"]["text"] == "内部资料，请勿外传"
+
+    page = source_site.client.get(
+        f"/admin/courses/{SLUG}/watermark?notice=saved"
+    )
+    assert "作者：张三" in page.text
+    assert "水印已保存" in page.text
+
+
+def test_invalid_watermark_is_reported_without_writing(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(corner_top_left_opacity="3"),
+        follow_redirects=False,
+    )
+    assert response.status_code == 422
+    assert "没有保存成功" in response.text
+    assert "左上角透明度必须在 0 到 1 之间" in response.text
+    assert "作者：张三" in response.text
+    assert "watermark" not in _source_manifest(source_site)
+    assert fake_rebuild == []
+
+
+def test_clear_watermark_removes_the_key(
+    source_site: Site, fake_rebuild: list[str]
+) -> None:
+    source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
+    )
+    assert "watermark" in _source_manifest(source_site)
+
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data={"action": "clear"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"].endswith("?notice=cleared")
+    assert "watermark" not in _source_manifest(source_site)
+    assert fake_rebuild == [SLUG, SLUG]
+
+
+def test_watermark_page_is_read_only_without_source(site: Site) -> None:
+    page = site.client.get(f"/admin/courses/{SLUG}/watermark")
+    assert page.status_code == 200
+    assert "没有" in page.text and "course.json" in page.text
+    assert "disabled" in page.text
+
+    response = site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 409
+    assert "没有保存成功" in response.text
+    assert not (Path(site.settings.courses_src_dir) / SLUG).exists()
+
+
+def test_watermark_rebuild_failure_is_reported(
+    source_site: Site, monkeypatch
+) -> None:
+    def _failing(_settings: Settings, _slug: str):
+        return SimpleNamespace(
+            errors=[
+                CatalogError(
+                    code="manifest_invalid",
+                    message="watermark.repeating.gapX 超出范围",
+                    slug=SLUG,
+                    field="watermark.repeating.gapX",
+                )
+            ],
+            skipped=False,
+        )
+
+    monkeypatch.setattr(watermark_edit, "rebuild_course", _failing)
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 422
+    assert "重新构建课程包失败" in response.text
+    assert "manifest_invalid" in response.text
+    assert "watermark" in _source_manifest(source_site)
+
+
+def test_watermark_post_rejects_cross_site_origin(source_site: Site) -> None:
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        headers={"Origin": "https://evil.example"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 403
+    assert "watermark" not in _source_manifest(source_site)
+
+
+def test_watermark_page_requires_admin_token(settings: Settings, write_course, monkeypatch) -> None:
+    protected = settings.model_copy(update={"admin_token": "s3cret"})
+    write_course(protected.courses_dist_dir)
+    shutil.copytree(FIXTURE_COURSE, Path(protected.courses_src_dir) / SLUG)
+    application = create_app(protected)
+    Base.metadata.create_all(application.state.engine)
+    monkeypatch.setattr(admin_module, "discover_toolchain", lambda _settings: _toolchain())
+
+    with TestClient(application) as client:
+        assert client.get(f"/admin/courses/{SLUG}/watermark").status_code == 401
+        blocked = client.post(
+            f"/admin/courses/{SLUG}/watermark",
+            data=_watermark_form(),
+            follow_redirects=False,
+        )
+        assert blocked.status_code == 303
+        assert "notice=auth" in blocked.headers["location"]
+        assert "watermark" not in json.loads(
+            (Path(protected.courses_src_dir) / SLUG / "course.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+
+def test_save_rebuilds_a_real_bundle(source_site: Site) -> None:
+    response = source_site.client.post(
+        f"/admin/courses/{SLUG}/watermark",
+        data=_watermark_form(),
+        follow_redirects=False,
+    )
+    assert response.status_code == 303, response.text
+    built = (
+        Path(source_site.settings.courses_dist_dir) / SLUG / "index.html"
+    ).read_text(encoding="utf-8")
+    assert "作者：张三" in built
+    assert "内部资料，请勿外传" in built
+    assert "watermark__corner--bottom-right" in built
+
+    admin_page = source_site.client.get("/admin")
+    assert "水印已配置" in admin_page.text

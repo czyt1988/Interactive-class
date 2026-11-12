@@ -28,6 +28,7 @@ HEX_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 Level = Literal["beginner", "intermediate", "advanced"]
 Status = Literal["draft", "published", "archived"]
 Playback = Literal["screens", "continuous"]
+CornerPosition = Literal["top-left", "top-right", "bottom-left", "bottom-right"]
 
 
 class StrictModel(BaseModel):
@@ -84,6 +85,78 @@ class CompositionInfo(StrictModel):
             raise ValueError("entry 必须是 composition/ 下的相对路径")
         if not value.startswith("composition/") or not value.endswith(".html"):
             raise ValueError("entry 必须指向 composition/ 下的 .html 文件")
+        return value
+
+
+class CornerWatermark(StrictModel):
+    """One attribution mark pinned to a corner of the playing canvas.
+
+    ``fontSize`` is expressed in design pixels of the 1920×1080 canvas; the
+    shell scales it with the canvas so it looks the same at every viewport size.
+    """
+
+    position: CornerPosition
+    text: str
+    fontSize: int = Field(default=30, ge=10, le=96)
+    color: str = "#16140f"
+    opacity: float = Field(default=0.6, ge=0, le=1)
+
+    @field_validator("text")
+    @classmethod
+    def _text(cls, value: str) -> str:
+        return _check_text(value, field="watermark.corners[].text", minimum=1, maximum=80)
+
+    @field_validator("color")
+    @classmethod
+    def _color(cls, value: str) -> str:
+        if not ACCENT_PATTERN.match(value):
+            raise ValueError("watermark 颜色必须是 #RRGGBB 格式")
+        return value
+
+
+class RepeatingWatermark(StrictModel):
+    """A text tile repeated across the whole canvas as a screenshot deterrent.
+
+    ``gapX`` / ``gapY`` are design pixels at 1920×1080 and become the grid cell
+    size in the shell, so the density stays the same on every screen.
+    """
+
+    text: str
+    fontSize: int = Field(default=28, ge=10, le=96)
+    color: str = "#16140f"
+    opacity: float = Field(default=0.12, ge=0, le=1)
+    gapX: int = Field(default=320, ge=120, le=960)
+    gapY: int = Field(default=200, ge=80, le=600)
+    rotate: int = Field(default=-24, ge=-90, le=90)
+
+    @field_validator("text")
+    @classmethod
+    def _text(cls, value: str) -> str:
+        return _check_text(value, field="watermark.repeating.text", minimum=1, maximum=48)
+
+    @field_validator("color")
+    @classmethod
+    def _color(cls, value: str) -> str:
+        if not ACCENT_PATTERN.match(value):
+            raise ValueError("watermark 颜色必须是 #RRGGBB 格式")
+        return value
+
+
+class WatermarkConfig(StrictModel):
+    """Optional per-course watermark: corner marks and/or a repeating layer."""
+
+    enabled: bool = True
+    corners: list[CornerWatermark] = Field(default_factory=list)
+    repeating: RepeatingWatermark | None = None
+
+    @field_validator("corners")
+    @classmethod
+    def _corners(cls, value: list[CornerWatermark]) -> list[CornerWatermark]:
+        seen: set[str] = set()
+        for mark in value:
+            if mark.position in seen:
+                raise ValueError(f"watermark.corners 角落重复：{mark.position}")
+            seen.add(mark.position)
         return value
 
 
@@ -145,6 +218,7 @@ class CourseSource(StrictModel):
     playback: Playback = "screens"
     composition: CompositionInfo = Field(default_factory=CompositionInfo)
     screens: list[ScreenMeta]
+    watermark: WatermarkConfig | None = None
     site: SiteInfo = Field(default_factory=SiteInfo)
     credits: CreditsInfo = Field(default_factory=CreditsInfo)
 

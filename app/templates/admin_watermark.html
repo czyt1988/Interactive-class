@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}水印配置 · {{ course.title }} · {{ site.title }}{% endblock %}
+{% block description %}给《{{ course.title }}》配置角标水印和满屏平铺水印。保存后写入课程源文件并重新构建课程包。{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/static/admin.css" />
+{% endblock %}
+
+{% block content %}
+<section class="page-head page-head--narrow">
+  <p class="eyebrow">后台 / 水印配置</p>
+  <h1>给《{{ course.title }}》加水印</h1>
+  <p class="lede">角标水印放在画面四角，适合放作者和公司信息；满屏平铺水印把同一句话重复铺满画面，用来降低截图外传的可读性。两种可以同时使用，保存后会重新构建这门课。</p>
+  <p class="admin-watermark__back"><a href="/admin">← 返回课程后台</a></p>
+</section>
+
+{% if notice %}
+  <div class="admin-notice" role="status">
+    <p>{{ notice }}</p>
+  </div>
+{% endif %}
+
+{% if errors %}
+  <div class="admin-notice admin-notice--warn" role="alert">
+    <p class="admin-watermark__error-label">没有保存成功</p>
+    <ul class="admin-watermark__errors">
+      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if not source_available %}
+  <div class="admin-notice admin-notice--warn" role="note">
+    <p>这台机器上没有 <code>{{ source_label }}</code>，下面显示的是已构建课程包里的设置。水印只能写在课程源文件里，请在持有课程源的机器上打开本页配置。</p>
+  </div>
+{% endif %}
+
+<section class="admin-watermark" aria-labelledby="watermark-preview-title">
+  <h2 id="watermark-preview-title">预览</h2>
+  <div class="wm-preview">
+    <div
+      class="wm-preview__canvas{% if not values.enabled %} is-off{% endif %}"
+      data-wm-canvas
+      aria-hidden="true"
+      style="--wm-gap-x: {{ values.repeating.gapX }}; --wm-gap-y: {{ values.repeating.gapY }}; --wm-rotate: {{ values.repeating.rotate }}deg; --wm-font-size: {{ values.repeating.fontSize }}; --wm-color: {{ values.repeating.color }}; --wm-opacity: {{ values.repeating.opacity }};"
+    >
+      <div class="wm-preview__repeat" data-wm-repeat{% if not values.repeating.text %} hidden{% endif %}>
+        {% for _tile in range(preview_tiles) %}<span class="wm-preview__tile" data-wm-tile>{{ values.repeating.text[:48] | e }}</span>{% endfor %}
+      </div>
+      {% for position in positions %}
+        {% set corner = values.corners[position["value"]] %}
+        <span
+          class="wm-preview__corner wm-preview__corner--{{ position["value"] }}"
+          data-wm-corner="{{ position["value"] }}"
+          style="--wm-font-size: {{ corner.fontSize }}; --wm-color: {{ corner.color }}; --wm-opacity: {{ corner.opacity }};"
+          {% if not corner.text %}hidden{% endif %}
+        >{{ corner.text[:80] | e }}</span>
+      {% endfor %}
+    </div>
+    <p class="wm-preview__hint">预览按 16:9 画布缩放。实际播放时，水印跟着画布等比缩放，进入全屏也保留。</p>
+  </div>
+</section>
+
+<form class="admin-watermark__form" method="post" action="{{ posted_url }}" data-wm-form autocomplete="off">
+  <section class="admin-wm-block" aria-labelledby="watermark-master-title">
+    <h2 id="watermark-master-title">总开关</h2>
+    <label class="admin-wm-check">
+      <input type="checkbox" name="enabled" value="1" data-wm-enabled{% if values.enabled %} checked{% endif %} />
+      <span>在课程播放画面显示水印</span>
+    </label>
+    <p class="admin-wm-help">关闭后保留下面的设置，只是构建时不再渲染。</p>
+  </section>
+
+  <section class="admin-wm-block" aria-labelledby="watermark-corners-title">
+    <h2 id="watermark-corners-title">角标水印</h2>
+    <p class="admin-wm-help">四个角各最多一条，文字留空表示这个角不显示。字号按 1920×1080 画布计算，播放时自动缩放。</p>
+    <div class="admin-wm-corners">
+      {% for position in positions %}
+        {% set key = position["key"] %}
+        {% set corner = values.corners[position["value"]] %}
+        <fieldset class="admin-wm-corner">
+          <legend>{{ position["label"] }}</legend>
+          <label class="admin-wm-field admin-wm-field--wide">
+            <span>文字</span>
+            <input
+              type="text"
+              name="corner_{{ key }}_text"
+              value="{{ corner.text }}"
+              maxlength="80"
+              placeholder="例如：作者：张三"
+              data-corner-text="{{ position["value"] }}"
+            />
+          </label>
+          <div class="admin-wm-field-row">
+            <label class="admin-wm-field">
+              <span>字号</span>
+              <input type="number" name="corner_{{ key }}_fontSize" value="{{ corner.fontSize }}" min="10" max="96" step="any" data-corner-font="{{ position["value"] }}" />
+            </label>
+            <label class="admin-wm-field">
+              <span>颜色</span>
+              <input type="color" name="corner_{{ key }}_color" value="{{ corner.color }}" data-corner-color="{{ position["value"] }}" />
+            </label>
+            <label class="admin-wm-field">
+              <span>透明度</span>
+              <input type="number" name="corner_{{ key }}_opacity" value="{{ corner.opacity }}" min="0" max="1" step="any" data-corner-opacity="{{ position["value"] }}" />
+            </label>
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-wm-block" aria-labelledby="watermark-repeat-title">
+    <h2 id="watermark-repeat-title">满屏平铺水印</h2>
+    <p class="admin-wm-help">同一句话从上到下、从左到右重复铺满画面，用来防止截图外传。文字留空表示关闭。间距越小越密；倾斜让水印更难被裁掉。</p>
+    <label class="admin-wm-field admin-wm-field--wide">
+      <span>文字</span>
+      <input type="text" name="repeat_text" value="{{ values.repeating.text }}" maxlength="48" placeholder="例如：内部资料，请勿外传" data-wm-repeat-text />
+    </label>
+    <div class="admin-wm-field-row">
+      <label class="admin-wm-field">
+        <span>字号</span>
+        <input type="number" name="repeat_fontSize" value="{{ values.repeating.fontSize }}" min="10" max="96" step="any" data-wm-repeat-font />
+      </label>
+      <label class="admin-wm-field">
+        <span>颜色</span>
+        <input type="color" name="repeat_color" value="{{ values.repeating.color }}" data-wm-repeat-color />
+      </label>
+      <label class="admin-wm-field">
+        <span>透明度</span>
+        <input type="number" name="repeat_opacity" value="{{ values.repeating.opacity }}" min="0" max="1" step="any" data-wm-repeat-opacity />
+      </label>
+    </div>
+    <div class="admin-wm-field-row">
+      <label class="admin-wm-field">
+        <span>横向间距</span>
+        <input type="number" name="repeat_gapX" value="{{ values.repeating.gapX }}" min="120" max="960" step="any" data-wm-repeat-gap-x />
+      </label>
+      <label class="admin-wm-field">
+        <span>纵向间距</span>
+        <input type="number" name="repeat_gapY" value="{{ values.repeating.gapY }}" min="80" max="600" step="any" data-wm-repeat-gap-y />
+      </label>
+      <label class="admin-wm-field">
+        <span>倾斜角度</span>
+        <input type="number" name="repeat_rotate" value="{{ values.repeating.rotate }}" min="-90" max="90" step="any" data-wm-repeat-rotate />
+      </label>
+    </div>
+  </section>
+
+  <div class="admin-wm-actions">
+    <button class="button button--primary" type="submit" name="action" value="save"{% if not source_available %} disabled{% endif %}>保存并重新构建</button>
+    <button class="button button--ghost" type="submit" name="action" value="clear"{% if not source_available %} disabled{% endif %}>清除水印</button>
+  </div>
+</form>
+
+<p class="admin-footnote">水印写在 <code>{{ source_label }}</code> 的 <code>watermark</code> 字段，构建后进入课程包，独立部署也保留。清除水印会从课程源文件里删掉这个字段。</p>
+<script src="/static/admin_watermark.js" defer></script>
+{% endblock %}

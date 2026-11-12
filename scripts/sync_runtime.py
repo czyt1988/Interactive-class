@@ -60,7 +60,7 @@ PLAYER_FILES = ("hyperframes-player.global.js", "hyperframe.runtime.iife.js")
 
 # The deck shell (course-deck.js/.css, shell.html.j2) is versioned separately from
 # the pinned vendor runtime. Bump this whenever the shell or its CSS changes.
-DECK_VERSION = "1.4.1"
+DECK_VERSION = "1.5.0"
 
 
 class SyncError(Exception):

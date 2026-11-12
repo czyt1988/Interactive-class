@@ -49,6 +49,7 @@
       "autoAdvance": false
     }
   ],
+  "watermark": null,
   "site": {
     "homeUrl": "/",
     "backLabel": "返回课程库"

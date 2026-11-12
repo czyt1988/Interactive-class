@@ -150,6 +150,7 @@ courses/<slug>/
 | `interactive` | 否 | bool | 默认 `false`；v1 不使用，保留给未来的练习屏 |
 | `composition` | 是 | object | 见 3.3 |
 | `screens` | 是 | array | 至少 1 项；见 3.4 |
+| `watermark` | 否 | object | 可选课程水印；见 3.7 |
 | `site` | 否 | object | 见 3.5 |
 | `credits` | 否 | object | 见 3.6 |
 
@@ -197,6 +198,79 @@ courses/<slug>/
 | `author` | 否 | string | 作者/团队 |
 | `updatedAt` | 否 | string | `YYYY-MM-DD` |
 | `sources` | 否 | string[] | 参考资料链接或说明；只用于展示，不会被运行时请求 |
+
+### 3.7 `watermark`
+
+可选。水印是课程内容的一部分：构建时渲染进课程页，独立部署的课程包也保留，不依赖站点、数据库或 API。两种水印可以同时使用。
+
+```json
+{
+  "watermark": {
+    "enabled": true,
+    "corners": [
+      {
+        "position": "top-left",
+        "text": "作者：张三",
+        "fontSize": 30,
+        "color": "#16140f",
+        "opacity": 0.6
+      },
+      {
+        "position": "bottom-right",
+        "text": "示例公司",
+        "fontSize": 24,
+        "color": "#b8452b",
+        "opacity": 0.5
+      }
+    ],
+    "repeating": {
+      "text": "内部资料，请勿外传",
+      "fontSize": 28,
+      "color": "#16140f",
+      "opacity": 0.12,
+      "gapX": 320,
+      "gapY": 200,
+      "rotate": -24
+    }
+  }
+}
+```
+
+| 字段 | 必须 | 类型 | 规则 |
+| --- | --- | --- | --- |
+| `enabled` | 否 | bool | 默认 `true`；为 `false` 时保留配置但不渲染 |
+| `corners` | 否 | object[] | 最多 4 条，每个角最多一条；见下 |
+| `repeating` | 否 | object \| null | 满屏平铺水印；`null` 或省略表示关闭 |
+
+`corners[]`：
+
+| 字段 | 必须 | 类型 | 规则 |
+| --- | --- | --- | --- |
+| `position` | 是 | enum | `top-left` / `top-right` / `bottom-left` / `bottom-right`，全课唯一 |
+| `text` | 是 | string | 1–80 字符；纯文本，构建时转义 |
+| `fontSize` | 否 | int | 默认 `30`；10–96，单位是 1920×1080 画布的设计像素 |
+| `color` | 否 | string | 默认 `#16140f`；必须是 `#RRGGBB` |
+| `opacity` | 否 | number | 默认 `0.6`；0–1 |
+
+`repeating`：
+
+| 字段 | 必须 | 类型 | 规则 |
+| --- | --- | --- | --- |
+| `text` | 是 | string | 1–48 字符；纯文本，构建时转义 |
+| `fontSize` | 否 | int | 默认 `28`；10–96，设计像素 |
+| `color` | 否 | string | 默认 `#16140f`；`#RRGGBB` |
+| `opacity` | 否 | number | 默认 `0.12`；0–1 |
+| `gapX` | 否 | int | 默认 `320`；120–960，平铺网格的横向间距，设计像素 |
+| `gapY` | 否 | int | 默认 `200`；80–600，纵向间距，设计像素 |
+| `rotate` | 否 | int | 默认 `-24`；-90 到 90，每块水印的倾斜角 |
+
+渲染约定：
+
+- 角标水印贴在画布四角，满屏平铺水印按 16:9 网格从上到下、从左到右重复。
+- 字号的“设计像素”按 1920×1080 画布计算；课程外壳按画布实际尺寸等比缩放，所以 1440p 屏幕和全屏下的观感一致。
+- 水印只覆盖播放画布，不遮控制条，`pointer-events: none`，不拦截播放器点击；纯 CSS，无动画、无网络请求。
+- 水印文字的字体与课程外壳共用；字体子集不包含的生僻字会回退到系统字体，不影响可读性。
+- 后台 `/admin/courses/<slug>/watermark` 可以可视化编辑并保存到源 `course.json`，保存后自动重新构建。手工改 `course.json` 后仍需运行构建。
 
 ## 4. composition 约定
 
@@ -567,6 +641,7 @@ courses/<slug>/
 - 封面：标题、副标题、目标、先修、章节大纲、时长/级别/屏数、开始按钮；
 - 舞台：`<hyperframes-player>`、加载遮罩、转场遮罩；播放态下页面占满视口（`100dvh`、无页面滚动），16:9 画布按可用区域等比最大化，控制条在画布外通栏；有封面时才设置 player 的 `poster`。
 - 控制条：退出课程（返回课程库）、上一屏、播放/暂停、下一屏、跳到最后（`End`）、重播、讲义、字幕（有音频时）、配音（有音频时）、全屏、当前屏进度；
+- 水印：可选，按 `course.json` 的 `watermark` 渲染角标和满屏平铺水印，只覆盖 16:9 画布，全屏可见；
 - 进度：课程总进度按全课时间连续增长；当前屏进度是可拖动的 range，拖动时暂停、松手恢复，拖到末端等同于「跳到最后」；
 - 章节信息：当前屏 kicker、标题、摘要；
 - 讲义抽屉：当前屏文本；
@@ -579,6 +654,7 @@ courses/<slug>/
 - `outcomes`、`prerequisites`、`takeaways`
 - `accent`、`cover`
 - `audio`、`interactive`
+- `watermark`（角标水印与满屏平铺水印，见 3.7；后台可视化编辑页在 `/admin/courses/<slug>/watermark`）
 - `site.homeUrl`、`site.backLabel`
 - `screens[].kicker/title/summary/transcript/autoAdvance`
 
@@ -716,6 +792,19 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 
 导入不替代人工验收：课程仍然要按第 8 节逐项检查。
 
+### 7.8 配置课程水印
+
+水印是课程的展示配置，不改变播放时间，也不写数据库。两种做法选一种：
+
+1. **后台配置页（推荐）**：打开 `/admin/courses/<slug>/watermark`（需要 `ADMIN_TOKEN`），在 16:9 预览里调四角水印和满屏平铺水印。保存会写回 `courses/<slug>/course.json` 的 `watermark` 字段并重新构建该课程包；构建失败时页面会列出错误。
+2. **手工编辑**：直接在 `course.json` 里加 `watermark`（见 3.7），然后运行 `python scripts/build_courses.py --course <slug>`。
+
+注意：
+
+- 水印只写课程源文件，`dist/` 是构建产物。改完不构建不会出现在课程页。
+- 生产环境如果只部署了 `dist/` 和 `app/`，没有 `courses/` 源文件，配置页会变成只读；此时在持有课程源的机器上配置，或随课程包一起发布。
+- 水印用于署名和降低截图外传的可读性，**不是访问控制**：它不阻止截图、下载或查看源码。需要权限控制时用登录和访问策略。
+
 ## 8. 验收清单
 
 ### 内容
@@ -736,6 +825,7 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - [ ] 封面存在时 ≤ 300KB；没有封面时接受排版封面。
 - [ ] `accent` 对比度足够，和课程内容气质一致。
 - [ ] `audio` 和实际音频一致；有音频的屏都有 transcript。
+- [ ] `watermark` 字段合法（颜色 `#RRGGBB`、字号和间距在范围内、每个角最多一条）；不需要水印时省略该字段。
 
 ### composition
 
@@ -767,6 +857,8 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - [ ] 当前屏进度可以拖动；拖动时暂停，松手后若原本在播放则继续；拖到末端等同于跳到最后。
 - [ ] 「跳到最后」和 `End` 停在当前屏的稳定末帧并标记本屏讲完。
 - [ ] 总进度条按全课时间连续增长。
+- [ ] 配置了水印时：四角水印和满屏平铺水印只出现在 16:9 画布内，不遮控制条；进入全屏仍可见；点击播放器、拖动进度、按钮操作都不受水印影响。
+- [ ] 水印文字过长时在画布内换行或被裁掉，不会撑破舞台；颜色和透明度可读但不盖住正文。
 - [ ] 下一屏/上一屏正常，能回到第一屏。
 - [ ] 暂停/继续/重播正常。
 - [ ] 讲义能打开、关闭，内容正确。

@@ -330,3 +330,278 @@
     max-width: none;
   }
 }
+
+/* ----------------------------------------------------- watermark config */
+/* Same registration-ledger family as the rest of the admin page. The preview
+ * canvas deliberately uses the course shell's cqw math so the admin sees the
+ * same proportions the learner gets. */
+
+.admin-watermark__back {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.admin-watermark__back a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.admin-watermark__back a:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.admin-watermark {
+  margin-bottom: clamp(32px, 5vw, 56px);
+}
+
+.admin-watermark h2,
+.admin-wm-block h2 {
+  font-size: clamp(20px, 2.2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.admin-watermark > h2 {
+  margin-bottom: 16px;
+}
+
+.wm-preview__canvas {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-stage);
+  background: var(--paper-deep);
+  box-shadow: var(--shadow-card);
+  container-type: inline-size;
+}
+
+.wm-preview__hint {
+  max-width: 58em;
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.wm-preview__corner {
+  position: absolute;
+  max-width: 46cqw;
+  font-family: var(--font-sans);
+  font-size: calc(var(--wm-font-size, 30) * 1px);
+  font-size: calc(var(--wm-font-size, 30) * 100cqw / 1920);
+  line-height: 1.35;
+  color: var(--wm-color, var(--ink));
+  opacity: var(--wm-opacity, 0.6);
+  overflow-wrap: anywhere;
+}
+
+.wm-preview__corner--top-left {
+  top: 2.4cqw;
+  left: 2.6cqw;
+  text-align: left;
+}
+
+.wm-preview__corner--top-right {
+  top: 2.4cqw;
+  right: 2.6cqw;
+  text-align: right;
+}
+
+.wm-preview__corner--bottom-left {
+  bottom: 2.4cqw;
+  left: 2.6cqw;
+  text-align: left;
+}
+
+.wm-preview__corner--bottom-right {
+  right: 2.6cqw;
+  bottom: 2.4cqw;
+  text-align: right;
+}
+
+.wm-preview__repeat {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, calc(var(--wm-gap-x, 320) * 100cqw / 1920));
+  grid-auto-rows: calc(var(--wm-gap-y, 200) * 100cqw / 1920);
+  place-items: center;
+  justify-content: start;
+  align-content: start;
+  overflow: hidden;
+}
+
+.wm-preview__repeat[hidden],
+.wm-preview__corner[hidden] {
+  display: none;
+}
+
+.wm-preview__canvas.is-off .wm-preview__corner,
+.wm-preview__canvas.is-off .wm-preview__repeat {
+  display: none;
+}
+
+.wm-preview__tile {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: calc(var(--wm-font-size, 28) * 1px);
+  font-size: calc(var(--wm-font-size, 28) * 100cqw / 1920);
+  line-height: 1.2;
+  color: var(--wm-color, var(--ink));
+  opacity: var(--wm-opacity, 0.12);
+  white-space: nowrap;
+  transform: rotate(var(--wm-rotate, -24deg));
+  transform-origin: center;
+}
+
+.admin-watermark__form {
+  display: grid;
+  gap: clamp(20px, 3vw, 32px);
+}
+
+.admin-wm-block {
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--paper-raised);
+}
+
+.admin-wm-block h2 {
+  margin-bottom: 12px;
+}
+
+.admin-wm-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.admin-wm-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.admin-wm-help {
+  max-width: 52em;
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.admin-wm-corners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.admin-wm-corner {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-mini);
+}
+
+.admin-wm-corner legend {
+  padding-inline: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.admin-wm-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-wm-field > span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.admin-wm-field input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-inline);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-wm-field input[type="color"] {
+  height: 40px;
+  padding: 4px;
+}
+
+.admin-wm-field input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.admin-wm-field--wide {
+  margin-bottom: 14px;
+}
+
+.admin-wm-field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.admin-wm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-wm-actions .button:disabled {
+  opacity: 0.5;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.admin-watermark__error-label {
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent-text);
+}
+
+.admin-watermark__errors {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 14px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .wm-preview__canvas {
+    max-width: none;
+  }
+
+  .admin-wm-field-row {
+    grid-template-columns: 1fr;
+  }
+}

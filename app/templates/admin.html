@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}后台设置 · {{ site.title }}{% endblock %}
-{% block description %}查看课程、生成课程视频并下载。视频保存在服务器上，不进入 Git。{% endblock %}
+{% block description %}查看课程、按需生成课程视频，并为每门课配置防截屏水印。视频保存在服务器上，不进入 Git。{% endblock %}
 
 {% block head_extra %}
   <meta name="robots" content="noindex" />
@@ -10,8 +10,8 @@
 {% block content %}
 <section class="page-head page-head--narrow">
   <p class="eyebrow">后台</p>
-  <h1>课程视频</h1>
-  <p class="lede">视频按需在服务器上生成，保存在本机数据目录里，不进入 Git。每门课一条，生成完成即可下载。</p>
+  <h1>课程后台</h1>
+  <p class="lede">查看课程、按需生成视频，并给每门课配置课程水印。视频留在服务器数据目录，水印写进课程源文件并重新构建课程包。</p>
   <dl class="page-head__stats">
     <div><dt>课程</dt><dd>{{ rows|length }} 门</dd></div>
     <div><dt>已生成</dt><dd>{{ generated_count }} 门</dd></div>
@@ -61,7 +61,7 @@
       <div class="admin-course__main">
         <p class="admin-course__kicker">{{ row.slug }}</p>
         <h3 class="admin-course__title">{{ row.title }}</h3>
-        <p class="admin-course__meta">{{ row.screen_count }} 屏，{{ row.duration_label }}</p>
+        <p class="admin-course__meta">{{ row.screen_count }} 屏，{{ row.duration_label }}，{{ row.watermark_label }}</p>
         {% if row.note %}<p class="admin-course__note">{{ row.note }}</p>{% endif %}
       </div>
       <div class="admin-course__side">
@@ -70,6 +70,7 @@
           <p class="admin-course__file">{{ row.size_label }}，{{ row.generated_label }}</p>
         {% endif %}
         <div class="admin-course__actions">
+          <a class="button button--ghost" href="{{ row.watermark_url }}">水印配置</a>
           <form method="post" action="{{ row.render_url }}">
             <button class="button button--primary" type="submit" data-admin-generate {% if not row.can_generate %}disabled{% endif %}>{{ row.render_label }}</button>
           </form>

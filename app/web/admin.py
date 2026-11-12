@@ -22,8 +22,16 @@ from fastapi.responses import (
     RedirectResponse,
     Response,
 )
+from pydantic import ValidationError
 
+from app.catalog import watermark as watermark_edit
 from app.catalog.models import Catalog, ResolvedCourse
+from app.catalog.watermark import (
+    POSITION_FIELD_KEYS,
+    POSITION_LABELS,
+    POSITIONS,
+    PREVIEW_TILES,
+)
 from app.config import BASE_DIR, Settings
 from app.formatting import format_bytes, format_duration, format_timestamp
 from app.videos.manager import RenderBusy, RenderManager, RenderUnavailable
@@ -35,6 +43,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 ADMIN_COOKIE = "al_admin"
 MAX_LOGIN_BODY_BYTES = 4096
+MAX_WATERMARK_BODY_BYTES = watermark_edit.MAX_FORM_BYTES
 QUALITY_LABELS = {"draft": "草稿", "looks": "标准", "delivery": "交付"}
 NOTICES = {
     "auth": "请先输入管理密码。",
@@ -44,6 +53,14 @@ NOTICES = {
     "unavailable": "这门课暂时不能生成视频，请检查服务器上的课程包。",
     "notfound": "没有找到这门课。",
 }
+WATERMARK_NOTICES = {
+    "saved": "水印已保存，课程包已重新构建，刷新课程页即可看到。",
+    "cleared": "水印已清除，课程包已重新构建。",
+}
+WATERMARK_SOURCE_HINT = (
+    "这台机器上没有课程源文件 {path}。水印配置只写入课程源文件并重新构建课程包，"
+    "请在持有课程源的机器上配置，或手工编辑 course.json 的 watermark 字段。"
+)
 
 
 # -- request helpers -------------------------------------------------------
@@ -100,11 +117,13 @@ def _no_store(response: Response) -> Response:
     return response
 
 
-def _base_context(request: Request, *, page: str = "admin") -> dict[str, Any]:
+def _base_context(
+    request: Request, *, page: str = "admin", canonical: str | None = None
+) -> dict[str, Any]:
     settings = _settings(request)
     return {
         "site": site_context(settings),
-        "canonical": f"{settings.site_url.rstrip('/')}/admin",
+        "canonical": canonical or f"{settings.site_url.rstrip('/')}/admin",
         "page": page,
     }
 
@@ -181,12 +200,20 @@ def _row(course: ResolvedCourse, status: VideoStatus, *, busy: bool, ready: bool
         notes.append("正在重新生成，当前可下载上一版视频。")
     if status.stale:
         notes.append("课程在上次构建后更新过，可以重新生成。")
+    if course.watermark is None:
+        watermark_label = "未配置水印"
+    elif course.watermark.enabled:
+        watermark_label = "水印已配置"
+    else:
+        watermark_label = "水印已关闭"
 
     return {
         "slug": course.slug,
         "title": course.title,
         "screen_count": course.stats.screenCount,
         "duration_label": format_duration(course.stats.durationSeconds),
+        "watermark_label": watermark_label,
+        "watermark_url": f"/admin/courses/{course.slug}/watermark",
         "status": status.state,
         "status_label": label,
         "elapsed_label": elapsed_label,
@@ -285,6 +312,175 @@ async def admin_login(request: Request) -> Response:
         path="/",
     )
     return _no_store(response)
+
+
+# -- watermark config ------------------------------------------------------
+
+
+def _watermark_url(slug: str) -> str:
+    return f"/admin/courses/{slug}/watermark"
+
+
+def _source_manifest(settings: Settings, slug: str) -> Path:
+    return watermark_edit.manifest_path(settings, slug)
+
+
+def _decode_form(body: bytes) -> dict[str, list[str]]:
+    return parse_qs(body.decode("utf-8", errors="replace"))
+
+
+def _watermark_page(
+    request: Request,
+    course: ResolvedCourse,
+    *,
+    values: dict[str, Any] | None = None,
+    errors: list[str] | None = None,
+    status_code: int = 200,
+) -> Response:
+    settings = _settings(request)
+    source = _source_manifest(settings, course.slug)
+    source_available = source.is_file()
+    problems = list(errors or [])
+
+    if values is None:
+        if source_available:
+            try:
+                current = watermark_edit.watermark_from_manifest(
+                    watermark_edit.read_manifest(source)
+                )
+            except (OSError, ValueError, ValidationError) as exc:
+                current = course.watermark
+                problems.append(
+                    f"读取课程源文件里的水印配置失败，下面显示的是已构建版本：{exc}"
+                )
+        else:
+            current = course.watermark
+        values = watermark_edit.form_values(current)
+
+    context = {
+        **_base_context(
+            request,
+            canonical=f"{settings.site_url.rstrip('/')}{_watermark_url(course.slug)}",
+        ),
+        "course": course,
+        "values": values,
+        "positions": [
+            {
+                "value": position,
+                "label": POSITION_LABELS[position],
+                "key": POSITION_FIELD_KEYS[position],
+            }
+            for position in POSITIONS
+        ],
+        "preview_tiles": PREVIEW_TILES,
+        "errors": problems,
+        "notice": WATERMARK_NOTICES.get(request.query_params.get("notice") or ""),
+        "source_available": source_available,
+        "source_label": f"courses/{course.slug}/course.json",
+        "posted_url": _watermark_url(course.slug),
+    }
+    response = _templates(request).TemplateResponse(
+        request=request,
+        name="admin_watermark.html",
+        context=context,
+        status_code=status_code,
+    )
+    return _no_store(response)
+
+
+@router.get("/courses/{slug}/watermark")
+def watermark_page(slug: str, request: Request) -> Response:
+    if not _authenticated(request):
+        return _login_page(request, error=None, status_code=401)
+    course = _catalog(request).by_slug(slug)
+    if course is None:
+        return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
+    return _watermark_page(request, course)
+
+
+@router.post("/courses/{slug}/watermark")
+async def save_watermark_page(slug: str, request: Request) -> Response:
+    if not _authenticated(request):
+        return _no_store(RedirectResponse("/admin?notice=auth", status_code=303))
+    _require_same_origin(request)
+
+    course = _catalog(request).by_slug(slug)
+    if course is None:
+        return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
+
+    settings = _settings(request)
+    source = _source_manifest(settings, slug)
+    if not source.is_file():
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(course.watermark),
+            errors=[
+                WATERMARK_SOURCE_HINT.format(path=f"courses/{slug}/course.json")
+            ],
+            status_code=409,
+        )
+
+    body = await request.body()
+    if len(body) > MAX_WATERMARK_BODY_BYTES:
+        raise HTTPException(status_code=413, detail="请求体过大")
+    fields = _decode_form(body)
+    action = (fields.get("action") or ["save"])[0].strip()
+
+    if action == "clear":
+        watermark = None
+    else:
+        watermark, errors = watermark_edit.parse_form(fields)
+        if errors:
+            return _watermark_page(
+                request,
+                course,
+                values=watermark_edit.form_values_from_request(fields),
+                errors=errors,
+                status_code=422,
+            )
+
+    try:
+        _path, result = watermark_edit.apply_watermark(settings, slug, watermark)
+    except Exception as exc:  # noqa: BLE001 - report the failure on the page
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(watermark),
+            errors=[f"保存或重新构建课程包时出现意外错误：{exc}"],
+            status_code=500,
+        )
+
+    request.app.state.catalog_loader.invalidate()
+
+    if getattr(result, "skipped", False):
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(watermark),
+            errors=[
+                "水印已写入 course.json，但课程是草稿，构建被跳过。"
+                "把 status 改成 published 后重新保存。"
+            ],
+            status_code=422,
+        )
+    build_errors = watermark_edit.build_error_messages(result)
+    if build_errors:
+        return _watermark_page(
+            request,
+            course,
+            values=watermark_edit.form_values(watermark),
+            errors=[
+                "水印已写入 course.json，但重新构建课程包失败，修好后重新保存：",
+                *build_errors,
+            ],
+            status_code=422,
+        )
+
+    notice = "cleared" if action == "clear" else "saved"
+    return _no_store(
+        RedirectResponse(f"{_watermark_url(slug)}?notice={notice}", status_code=303)
+    )
 
 
 # -- video actions ---------------------------------------------------------
