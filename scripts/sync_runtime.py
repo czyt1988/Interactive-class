@@ -185,6 +185,10 @@ def subset_font(
     subsetter.populate(text=unique)
     subsetter.subset(font)
     font.flavor = "woff2"
+    # fontTools stamps head.modified on save; keeping the source timestamp makes
+    # the subset byte-identical across runs. Otherwise a no-op sync rewrites
+    # every font file and changes the hashes in VERSION.json.
+    font.recalcTimestamp = False
     font.save(str(target))
 
     if target.stat().st_size > max_bytes:

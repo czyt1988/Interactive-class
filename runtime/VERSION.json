@@ -6,9 +6,9 @@
   "runtime": "hyperframe.runtime.iife.js",
   "deckVersion": "1.4.1",
   "fonts": {
-    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "b7b6c17ae33684bda0c954f1356eefac58fae2cc3c483cb0312690f53bb3e44a",
-    "app/static/fonts/NotoSansSC-VF.woff2": "fff6c64df0bb16403c3ee2c93933545e273ce034baaa9d03fd735dfd65c18388",
-    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "435191d419cca24cc88bde4de88ee56acced29cc3835583d61af679074637d5e"
+    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "1320a8090298b7fbd3d7026407c1e507f3c26270dcc2ac80ff37caa562e545c7",
+    "app/static/fonts/NotoSansSC-VF.woff2": "90e16ab0858149736342c16af4eaf3bb8193fa3ed57124789bfbe97d35fa813e",
+    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "2c99eea53e75e76421083a3d8f8f14dd4e67f6669ad9b456a6f7df5586800f32"
   },
   "tokens": {
     "runtime/tokens.css": "f3dc7933f2289b3a61beff6acc8e65cb74ac673796db7dd53dc6c055ea16a4f5",

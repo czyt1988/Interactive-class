@@ -76,3 +76,19 @@ def test_course_shell_localizes_the_level(tmp_path: Path) -> None:
     bundle = _build_fixture_with_decoy_font(tmp_path)
     html = (bundle / "index.html").read_text(encoding="utf-8")
     assert "<dt>级别</dt><dd>入门</dd>" in html
+
+
+def test_font_subsetting_is_reproducible(tmp_path: Path) -> None:
+    """Two identical syncs must produce identical bytes.
+
+    fontTools stamps ``head.modified`` on save; without pinning it every
+    ``python scripts/sync_runtime.py`` rewrote the committed fonts and changed
+    the hashes in VERSION.json, leaving a dirty tree for a no-op sync.
+    """
+
+    source = ROOT / "design" / "fonts" / "NotoSansSC-VF.ttf"
+    first = tmp_path / "first.woff2"
+    second = tmp_path / "second.woff2"
+    sync_runtime.subset_font(source, first, extra_text="首页文案")
+    sync_runtime.subset_font(source, second, extra_text="首页文案")
+    assert first.read_bytes() == second.read_bytes()
