@@ -1237,7 +1237,7 @@
       color: var(--ink);
     }
 
-    /* ------------------------------------- 拍5：上下文窗口的「厚度尺」 */
+    /* ------------------------------------- 拍5：上下文窗口 = 专家一次能读完的厚度 */
     .s17-detail {
       position: absolute;
       left: 300px;
@@ -1269,178 +1269,131 @@
       color: var(--accent-text);
     }
 
-    .s17-stack {
+    .s17-bookwrap {
       position: absolute;
-      left: 66px;
-      top: 220px;
-      width: 340px;
-      height: 260px;
-      border: 3px solid #8a6428;
-      border-radius: 5px;
-      background-color: #fffdf8;
-      background-image: repeating-linear-gradient(to bottom, #fffdf8 0 6px, rgba(138, 100, 40, 0.4) 6px 7px);
-      box-shadow: var(--shadow);
+      left: 16px;
+      top: 116px;
+      width: 640px;
+      height: 250px;
+      opacity: 0;
     }
 
-    .s17-stack::before,
-    .s17-stack::after {
-      content: "";
-      position: absolute;
-      left: -4px;
-      right: -4px;
-      height: 12px;
-      background: #c9a06a;
-      border: 2px solid #8a6428;
-      border-radius: 4px;
+    .s17-book-svg {
+      display: block;
+      width: 640px;
+      height: 247px;
+      overflow: visible;
     }
 
-    .s17-stack::before { top: -11px; }
-    .s17-stack::after { bottom: -11px; }
+    .s17-book-limit {
+      fill: none;
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+    }
 
-    .s17-stack-cap {
+    .s17-book-limit--100 { stroke: var(--accent); stroke-dasharray: 10 8; }
+    .s17-book-limit--21 { stroke: var(--stamp); }
+
+    .s17-book-cap {
       position: absolute;
-      left: 22px;
-      top: 262px;
-      width: 26px;
+      left: 24px;
+      top: 352px;
       font-family: var(--font-mono);
       font-size: 22px;
       letter-spacing: 0.1em;
       color: var(--ink-faint);
-      writing-mode: vertical-rl;
+      opacity: 0;
     }
 
-    .s17-capacity {
+    .s17-window {
       position: absolute;
-      left: 26px;
-      right: 40px;
-      top: 62px;
-      height: 4px;
-      background: var(--stamp);
-      transform: rotate(-1deg);
+      left: 666px;
+      top: 126px;
+      width: 340px;
+      opacity: 0;
     }
 
-    .s17-capacity::after {
-      content: "上限";
-      position: absolute;
-      right: -66px;
-      top: -12px;
+    .s17-window-title {
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s17-window-row { margin-top: 20px; opacity: 0; }
+
+    .s17-window-row > p:first-child {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .s17-window-row b {
       font-family: var(--font-mono);
-      font-size: 22px;
-      color: var(--stamp);
+      font-size: 27px;
+      font-weight: 700;
+      color: var(--ink);
     }
 
-    .s17-fold {
-      position: absolute;
-      top: 12px;
-      width: 84px;
-      height: 70px;
-      border: 2px solid var(--line-strong);
-      border-radius: 3px;
-      background: #fffdf8;
-      transform: rotate(-13deg);
-      box-shadow: 0 8px 16px -14px rgba(22, 20, 15, 0.6);
+    .s17-window-row span {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
     }
 
-    #s-stateless-notebook-fold-0 { left: 14px; }
-    #s-stateless-notebook-fold-1 { left: 100px; transform: rotate(9deg); }
-    #s-stateless-notebook-fold-2 { left: 186px; transform: rotate(-7deg); }
-    #s-stateless-notebook-fold-3 { left: 272px; transform: rotate(12deg); }
+    .s17-window-track {
+      height: 12px;
+      margin-top: 8px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
 
-    .s17-fold-tag {
-      position: absolute;
-      left: 66px;
-      top: 496px;
-      width: 430px;
-      font-size: 28px;
-      line-height: 1.35;
+    .s17-window-fill {
+      display: block;
+      height: 100%;
+      border-radius: 6px;
+    }
+
+    .s17-window-row--100 .s17-window-fill { width: 100%; background: var(--accent); }
+    .s17-window-row--21 .s17-window-fill { width: 21%; background: var(--stamp); }
+
+    .s17-window-note {
+      margin-top: 7px;
+      font-size: 21px;
       color: var(--ink-soft);
     }
 
-    .s17-slot {
-      position: absolute;
-      left: 660px;
-      top: 262px;
-      width: 230px;
-      height: 210px;
-      border: 10px solid #b98a3c;
-      border-radius: 6px;
-      background: #f8f2e7;
-      box-shadow: inset 0 0 0 2px #e3d5b8, var(--shadow);
-    }
-
-    .s17-slot::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(135deg, rgba(185, 138, 60, 0.2) 0 2px, transparent 2px 14px);
-    }
-
-    .s17-slot::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: -8px;
-      bottom: -8px;
-      width: 3px;
-      margin-left: -1px;
-      background: rgba(138, 100, 40, 0.5);
-    }
-
-    .s17-slot-label {
-      position: absolute;
-      left: 660px;
-      top: 486px;
-      width: 230px;
-      text-align: center;
+    .s17-window-foot {
+      margin-top: 24px;
       font-family: var(--font-mono);
       font-size: 22px;
-      letter-spacing: 0.1em;
-      color: var(--ink-faint);
+      line-height: 1.4;
+      color: var(--accent-text);
     }
 
-    .s17-ruler {
+    .s17-fold-tag {
       position: absolute;
-      left: 620px;
-      top: 168px;
-      width: 330px;
-      height: 90px;
-      border: 2px solid var(--ink-soft);
-      border-radius: 6px;
-      background: #fffdf8;
+      left: 24px;
+      top: 392px;
+      width: 600px;
+      font-size: 28px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+      opacity: 0;
     }
 
-    .s17-ruler::before {
-      content: "";
+    .s17-compress {
       position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 20px;
-      background-image: repeating-linear-gradient(90deg, var(--ink-soft) 0 2px, transparent 2px 16px);
-      opacity: 0.55;
-    }
-
-    .s17-ruler-marker {
-      position: absolute;
-      left: 240px;
-      top: -12px;
-      width: 4px;
-      height: 80px;
-      border-radius: 2px;
-      background: var(--stamp);
-    }
-
-    .s17-ruler-label {
-      position: absolute;
-      left: 4px;
-      right: 4px;
-      top: 58px;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 2px;
-      font-family: var(--font-mono);
-      font-size: 22px;
-      color: var(--ink-faint);
+      left: 24px;
+      top: 440px;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--stamp);
+      opacity: 0;
     }
 
     /* -------------------------------------------- 拍6：真实界面证据卡 */
@@ -1529,23 +1482,6 @@
     .s17-person--3 { left: 96px; top: 417px; width: 92px; height: 175px; z-index: 5; }
     .s17-person--4 { left: 30px; top: 436px; width: 82px; height: 156px; z-index: 4; }
 
-    .s17-folds {
-      position: absolute;
-      left: 66px;
-      top: 132px;
-      width: 400px;
-      height: 388px;
-    }
-
-    .s17-compress {
-      position: absolute;
-      left: 66px;
-      top: 544px;
-      font-size: 30px;
-      font-weight: 700;
-      color: var(--stamp);
-    }
-
     .s17-leader--1 { left: 111px; top: 150px; width: 421px; transform: rotate(-2deg); }
     .s17-leader--2 { left: 174px; top: 218px; width: 386px; transform: rotate(2deg); }
     .s17-leader--3 { left: 401px; top: 247px; width: 211px; transform: rotate(22deg); }
@@ -1577,8 +1513,6 @@
     .s17-ex,
     .s17-cost-total,
     .s17-detail,
-    .s17-ruler,
-    .s17-folds,
     .s17-fold-tag,
     .s17-compress,
     .s17-evidence,
@@ -2256,31 +2190,188 @@
           </div>
         </div>
 
-        <!-- 拍5：窗口上方的厚度尺，超出的页被折起、压缩 -->
+        <!-- 拍5：上下文窗口：专家一次能读完的厚度有限；不同模型窗口不同 -->
         <div id="s-stateless-notebook-detail" class="s17-detail">
-          <p class="s17-detail-title">窗口一次能塞进去的厚度有限</p>
+          <p class="s17-detail-title">每个专家一次能读的厚度有限</p>
           <p class="s17-detail-sub">这就是上下文窗口</p>
 
-          <p class="s17-stack-cap">一本会话的厚度</p>
-          <div id="s-stateless-notebook-stack" class="s17-stack">
-            <span id="s-stateless-notebook-capacity" class="s17-capacity"></span>
+          <div id="s-stateless-notebook-bookwrap" class="s17-bookwrap">
+            <svg id="s17-book-svg" class="s17-book-svg" viewBox="0 0 620 240" width="620" height="240" aria-hidden="true">
+              <defs>
+                <filter id="s17-book-shadow" x="-25%" y="-60%" width="150%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+              </defs>
+              <g filter="url(#s17-book-shadow)">
+                <path d="M 36 211 L 456 211 L 573 149 L 153 149 Z" fill="#332816" opacity="0.2"/>
+              </g>
+              <!-- 下封皮 -->
+              <path d="M 36 204 L 456 204 L 456 196 L 36 196 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 456 204 L 573 142 L 573 134 L 456 196 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M 36 196 L 456 196 L 573 134 L 153 134 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="1.6" stroke-linejoin="round"/>
+              <!-- 页块：20 个页片 -->
+                          <g class="s17-leaf">
+                          <path d="M 47.3 193.19 L 455.3 193.19 L 455.3 187.59 L 47.3 187.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 193.19 L 561.7 136.81 L 561.7 131.21 L 455.3 187.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="193.79" x2="455.3" y2="193.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="193.79" x2="561.7" y2="137.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 187.59 L 455.3 187.59 L 455.3 181.99 L 47.3 181.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 187.59 L 561.7 131.21 L 561.7 125.61 L 455.3 181.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="188.19" x2="455.3" y2="188.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="188.19" x2="561.7" y2="131.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 181.99 L 455.3 181.99 L 455.3 176.39 L 47.3 176.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 181.99 L 561.7 125.61 L 561.7 120.01 L 455.3 176.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="182.59" x2="455.3" y2="182.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="182.59" x2="561.7" y2="126.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 176.39 L 455.3 176.39 L 455.3 170.79 L 47.3 170.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 176.39 L 561.7 120.01 L 561.7 114.41 L 455.3 170.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="176.99" x2="455.3" y2="176.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="176.99" x2="561.7" y2="120.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 170.79 L 455.3 170.79 L 455.3 165.19 L 47.3 165.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 170.79 L 561.7 114.41 L 561.7 108.81 L 455.3 165.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="171.39" x2="455.3" y2="171.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="171.39" x2="561.7" y2="115.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 165.19 L 455.3 165.19 L 455.3 159.59 L 47.3 159.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 165.19 L 561.7 108.81 L 561.7 103.21 L 455.3 159.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="165.79" x2="455.3" y2="165.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="165.79" x2="561.7" y2="109.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 159.59 L 455.3 159.59 L 455.3 153.99 L 47.3 153.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 159.59 L 561.7 103.21 L 561.7 97.61 L 455.3 153.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="160.19" x2="455.3" y2="160.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="160.19" x2="561.7" y2="103.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 153.99 L 455.3 153.99 L 455.3 148.39 L 47.3 148.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 153.99 L 561.7 97.61 L 561.7 92.01 L 455.3 148.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="154.59" x2="455.3" y2="154.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="154.59" x2="561.7" y2="98.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 148.39 L 455.3 148.39 L 455.3 142.79 L 47.3 142.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 148.39 L 561.7 92.01 L 561.7 86.41 L 455.3 142.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="148.99" x2="455.3" y2="148.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="148.99" x2="561.7" y2="92.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 142.79 L 455.3 142.79 L 455.3 137.19 L 47.3 137.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 142.79 L 561.7 86.41 L 561.7 80.81 L 455.3 137.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="143.39" x2="455.3" y2="143.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="143.39" x2="561.7" y2="87.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 137.19 L 455.3 137.19 L 455.3 131.59 L 47.3 131.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 137.19 L 561.7 80.81 L 561.7 75.21 L 455.3 131.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="137.79" x2="455.3" y2="137.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="137.79" x2="561.7" y2="81.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 131.59 L 455.3 131.59 L 455.3 125.99 L 47.3 125.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 131.59 L 561.7 75.21 L 561.7 69.61 L 455.3 125.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="132.19" x2="455.3" y2="132.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="132.19" x2="561.7" y2="75.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 125.99 L 455.3 125.99 L 455.3 120.39 L 47.3 120.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 125.99 L 561.7 69.61 L 561.7 64.01 L 455.3 120.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="126.59" x2="455.3" y2="126.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="126.59" x2="561.7" y2="70.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 120.39 L 455.3 120.39 L 455.3 114.79 L 47.3 114.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 120.39 L 561.7 64.01 L 561.7 58.41 L 455.3 114.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="120.99" x2="455.3" y2="120.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="120.99" x2="561.7" y2="64.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 114.79 L 455.3 114.79 L 455.3 109.19 L 47.3 109.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 114.79 L 561.7 58.41 L 561.7 52.81 L 455.3 109.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="115.39" x2="455.3" y2="115.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="115.39" x2="561.7" y2="59.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 109.19 L 455.3 109.19 L 455.3 103.59 L 47.3 103.59 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 109.19 L 561.7 52.81 L 561.7 47.21 L 455.3 103.59 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="109.79" x2="455.3" y2="109.79" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="109.79" x2="561.7" y2="53.41" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 103.59 L 455.3 103.59 L 455.3 97.99 L 47.3 97.99 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 103.59 L 561.7 47.21 L 561.7 41.61 L 455.3 97.99 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="104.19" x2="455.3" y2="104.19" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="104.19" x2="561.7" y2="47.81" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 97.99 L 455.3 97.99 L 455.3 92.39 L 47.3 92.39 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 97.99 L 561.7 41.61 L 561.7 36.01 L 455.3 92.39 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="98.59" x2="455.3" y2="98.59" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="98.59" x2="561.7" y2="42.21" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 92.39 L 455.3 92.39 L 455.3 86.79 L 47.3 86.79 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 92.39 L 561.7 36.01 L 561.7 30.41 L 455.3 86.79 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="92.99" x2="455.3" y2="92.99" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="92.99" x2="561.7" y2="36.61" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+                          <g class="s17-leaf">
+                          <path d="M 47.3 86.79 L 455.3 86.79 L 455.3 81.19 L 47.3 81.19 Z" fill="#fffdf8"/>
+                          <path d="M 455.3 86.79 L 561.7 30.41 L 561.7 24.81 L 455.3 81.19 Z" fill="#f2eadc"/>
+                          <line x1="47.3" y1="87.39" x2="455.3" y2="87.39" stroke="#d9cfbf" stroke-width="1" stroke-linecap="round"/>
+                          <line x1="455.3" y1="87.39" x2="561.7" y2="31.01" stroke="#cbbfa9" stroke-width="1" stroke-linecap="round"/>
+                          </g>
+
+              <g id="s17-book-limit-21" class="s17-book-limit s17-book-limit--21">
+                <path d="M 47.3 169 L 455.3 169 L 561.7 112.6" />
+                <path d="M 47.3 162.5 L 47.3 175.5" />
+              </g>
+              <g id="s17-book-limit-100" class="s17-book-limit s17-book-limit--100">
+                <path d="M 47.3 92 L 455.3 92 L 561.7 35.6" />
+                <path d="M 47.3 85.5 L 47.3 98.5" />
+              </g>
+
+              <g id="s17-cover" transform="translate(0,-112)">
+                <path d="M 36 196 L 456 196 L 456 186 L 36 186 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 456 196 L 573 134 L 573 124 L 456 186 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M 36 186 L 456 186 L 573 124 L 153 124 Z" fill="#c9a06a" stroke="#8a6428" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M 153 124 L 573 124 L 557.1 132.43 L 137.1 132.43 Z" fill="#a97a44" stroke="#8a6428" stroke-width="1.2" stroke-linejoin="round"/>
+                <line x1="137.1" y1="132.43" x2="557.1" y2="132.43" stroke="#dcb980" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/>
+                <path d="M 81.21 174.76 L 453.21 174.76 L 527.79 135.24 L 155.79 135.24 Z" fill="none" stroke="rgba(122, 84, 34, 0.42)" stroke-width="1.4" stroke-linejoin="round"/>
+                <line x1="37" y1="183.6" x2="455" y2="183.6" stroke="#dcb980" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+                <path d="M 47.3 196 L 455.3 196 L 455.3 199.4 L 47.3 199.4 Z" fill="rgba(60, 45, 25, 0.10)"/>
+                <g id="s17-ribbon">
+                  <path d="M 373.7 199 L 383.7 199 L 383.7 225 L 373.7 225 Z" fill="#b8874f" stroke="#8a6428" stroke-width="1.3" stroke-linejoin="round"/>
+                  <line x1="378.7" y1="202" x2="378.7" y2="222" stroke="#8a6428" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+                </g>
+              </g></svg>
           </div>
-          <div id="s-stateless-notebook-folds" class="s17-folds">
-            <span id="s-stateless-notebook-fold-0" class="s17-fold"></span>
-            <span id="s-stateless-notebook-fold-1" class="s17-fold"></span>
-            <span id="s-stateless-notebook-fold-2" class="s17-fold"></span>
-            <span id="s-stateless-notebook-fold-3" class="s17-fold"></span>
+          <p id="s-stateless-notebook-bookcap" class="s17-book-cap">这本本子的全部内容</p>
+
+          <div id="s-stateless-notebook-window" class="s17-window">
+            <p class="s17-window-title">同一个本子，不同专家</p>
+            <div class="s17-window-row s17-window-row--100">
+              <p><b>100 万 token</b><span>上下文窗口</span></p>
+              <div class="s17-window-track"><i class="s17-window-fill"></i></div>
+              <p class="s17-window-note">能读到更厚的位置</p>
+            </div>
+            <div class="s17-window-row s17-window-row--21">
+              <p><b>21 万 token</b><span>上下文窗口</span></p>
+              <div class="s17-window-track"><i class="s17-window-fill"></i></div>
+              <p class="s17-window-note">只能读到这儿</p>
+            </div>
+            <p class="s17-window-foot">能读的厚度，就是上下文窗口</p>
           </div>
 
-          <p id="s-stateless-notebook-foldtag" class="s17-fold-tag">超出的页，专家读不到。</p>
+          <p id="s-stateless-notebook-foldtag" class="s17-fold-tag">超过能读厚度的页，专家读不到。</p>
           <p id="s-stateless-notebook-compress" class="s17-compress">→ 压缩成摘要，丢掉</p>
-
-          <div id="s-stateless-notebook-ruler" class="s17-ruler">
-            <span class="s17-ruler-marker"></span>
-            <span class="s17-ruler-label"><span>0</span><span>50%</span><span>100%</span></span>
-          </div>
-          <div class="s17-slot"></div>
-          <p class="s17-slot-label">传递窗 · 上下文窗口</p>
         </div>
 
         <!-- 拍6：真实截图证据：上下文是 Harness 拼出来的 -->
@@ -2327,14 +2418,15 @@
         <p id="s-stateless-notebook-cap-16" class="cap-line clip" data-start="66.5" data-duration="4.272">断网，就是笔记本一直在你手里，重新递进去就行；</p>
         <p id="s-stateless-notebook-cap-17" class="cap-line clip" data-start="70.812" data-duration="2.21">那为什么长对话越来越贵？</p>
         <p id="s-stateless-notebook-cap-18" class="cap-line clip" data-start="73.062" data-duration="3.735">因为每问一次，专家都要把整本从头读一遍。</p>
-        <p id="s-stateless-notebook-cap-19" class="cap-line clip" data-start="76.837" data-duration="5.585">而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。</p>
-        <p id="s-stateless-notebook-cap-20" class="cap-line clip" data-start="82.462" data-duration="4.31">本子太厚，前面的内容就得压缩、丢掉。</p>
-        <p id="s-stateless-notebook-cap-21" class="cap-line clip" data-start="86.812" data-duration="5.948">所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。</p>
+        <p id="s-stateless-notebook-cap-19" class="cap-line clip" data-start="76.837" data-duration="3.98">而且，每个专家一次能读完、记住的厚度是有限的，</p>
+        <p id="s-stateless-notebook-cap-20" class="cap-line clip" data-start="80.857" data-duration="5.29">这就是上下文窗口，有的模型能读 100 万 token，有的只有 21 万。</p>
+        <p id="s-stateless-notebook-cap-21" class="cap-line clip" data-start="86.187" data-duration="4.31">本子太厚，前面的内容就得压缩、丢掉。</p>
+        <p id="s-stateless-notebook-cap-22" class="cap-line clip" data-start="90.537" data-duration="5.948">所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。</p>
       </div>
       <div class="cap-foot">
         <span class="cap-code">S17</span>
         <span class="cap-progress" aria-hidden="true"><i id="s-stateless-notebook-progress"></i></span>
-        <span class="cap-clock">01:34</span>
+        <span class="cap-clock">01:38</span>
       </div>
     </footer>
     <!-- CAPTIONS:END -->
@@ -2342,7 +2434,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S17","id":"stateless-notebook","index":0,"start":0,"duration":94.46,"audioStart":0.6000000000000227,"audioDuration":92.256,"cues":[{"i":0,"t":0.7,"d":5.52,"text":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":1,"t":6.26,"d":5.137,"text":"网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":2,"t":11.397,"d":3.113,"text":"可大模型的 API，默认是「不记得你」的。","sent":"可大模型的 API，默认是「不记得你」的。"},{"i":3,"t":14.55,"d":2.835,"text":"那这些记忆，到底存在哪？","sent":"那这些记忆，到底存在哪？"},{"i":4,"t":17.425,"d":3.447,"text":"你可以把大模型想成一个黑屋里的专家。","sent":"你可以把大模型想成一个黑屋里的专家。"},{"i":5,"t":20.912,"d":4.66,"text":"屋子很小，只有一张桌子、一盏灯、一个窗口。","sent":"屋子很小，只有一张桌子、一盏灯、一个窗口。"},{"i":6,"t":25.612,"d":4.148,"text":"专家非常聪明，但他不认人，只认笔记本。","sent":"专家非常聪明，但他不认人，只认笔记本。"},{"i":7,"t":29.8,"d":4.047,"text":"门外排着成千上万的人，每人手里一本笔记本。","sent":"门外排着成千上万的人，每人手里一本笔记本。"},{"i":8,"t":33.887,"d":2.948,"text":"每一本笔记本，就是一次会话。","sent":"每一本笔记本，就是一次会话。"},{"i":9,"t":36.875,"d":6.147,"text":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。","sent":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。"},{"i":10,"t":43.062,"d":4.81,"text":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。","sent":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。"},{"i":11,"t":47.912,"d":5.24,"text":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":12,"t":53.192,"d":3.48,"text":"然后在下一页写下答案，合上，递出去。","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":13,"t":56.712,"d":3.173,"text":"下一个本子进来，他又是从头开始。","sent":"下一个本子进来，他又是从头开始。"},{"i":14,"t":59.925,"d":2.41,"text":"现在你就能解释那三件事了。","sent":"现在你就能解释那三件事了。"},{"i":15,"t":62.375,"d":4.085,"text":"换模型，就是把同一本笔记本，递给另一个专家；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":16,"t":66.5,"d":4.272,"text":"断网，就是笔记本一直在你手里，重新递进去就行；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":17,"t":70.812,"d":2.21,"text":"那为什么长对话越来越贵？","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":18,"t":73.062,"d":3.735,"text":"因为每问一次，专家都要把整本从头读一遍。","sent":"因为每问一次，专家都要把整本从头读一遍。"},{"i":19,"t":76.837,"d":5.585,"text":"而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。","sent":"而且这个窗口一次能塞进去的厚度是有限的，这就是上下文窗口。"},{"i":20,"t":82.462,"d":4.31,"text":"本子太厚，前面的内容就得压缩、丢掉。","sent":"本子太厚，前面的内容就得压缩、丢掉。"},{"i":21,"t":86.812,"d":5.948,"text":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。","sent":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。"}]};
+    const N = {"code":"S17","id":"stateless-notebook","index":0,"start":0,"duration":98.18,"audioStart":0.6000000000000227,"audioDuration":95.976,"cues":[{"i":0,"t":0.7,"d":5.52,"text":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":1,"t":6.26,"d":5.137,"text":"网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。","sent":"先问一个你肯定遇到过的问题：你换一个模型，对话还能接着聊；网断了重连，记录还在；第二天打开，它还记得昨天聊到哪。"},{"i":2,"t":11.397,"d":3.113,"text":"可大模型的 API，默认是「不记得你」的。","sent":"可大模型的 API，默认是「不记得你」的。"},{"i":3,"t":14.55,"d":2.835,"text":"那这些记忆，到底存在哪？","sent":"那这些记忆，到底存在哪？"},{"i":4,"t":17.425,"d":3.447,"text":"你可以把大模型想成一个黑屋里的专家。","sent":"你可以把大模型想成一个黑屋里的专家。"},{"i":5,"t":20.912,"d":4.66,"text":"屋子很小，只有一张桌子、一盏灯、一个窗口。","sent":"屋子很小，只有一张桌子、一盏灯、一个窗口。"},{"i":6,"t":25.612,"d":4.148,"text":"专家非常聪明，但他不认人，只认笔记本。","sent":"专家非常聪明，但他不认人，只认笔记本。"},{"i":7,"t":29.8,"d":4.047,"text":"门外排着成千上万的人，每人手里一本笔记本。","sent":"门外排着成千上万的人，每人手里一本笔记本。"},{"i":8,"t":33.887,"d":2.948,"text":"每一本笔记本，就是一次会话。","sent":"每一本笔记本，就是一次会话。"},{"i":9,"t":36.875,"d":6.147,"text":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。","sent":"第一页是 Harness 写的系统提示词：你是谁、能做什么、不能做什么。"},{"i":10,"t":43.062,"d":4.81,"text":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。","sent":"后面是你们聊过的每一句话，中间还夹着工具返回的结果。"},{"i":11,"t":47.912,"d":5.24,"text":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":12,"t":53.192,"d":3.48,"text":"然后在下一页写下答案，合上，递出去。","sent":"专家每次拿到本子，都从第一页开始读，一直读到最后一页，然后在下一页写下答案，合上，递出去。"},{"i":13,"t":56.712,"d":3.173,"text":"下一个本子进来，他又是从头开始。","sent":"下一个本子进来，他又是从头开始。"},{"i":14,"t":59.925,"d":2.41,"text":"现在你就能解释那三件事了。","sent":"现在你就能解释那三件事了。"},{"i":15,"t":62.375,"d":4.085,"text":"换模型，就是把同一本笔记本，递给另一个专家；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":16,"t":66.5,"d":4.272,"text":"断网，就是笔记本一直在你手里，重新递进去就行；","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":17,"t":70.812,"d":2.21,"text":"那为什么长对话越来越贵？","sent":"换模型，就是把同一本笔记本，递给另一个专家；断网，就是笔记本一直在你手里，重新递进去就行；那为什么长对话越来越贵？"},{"i":18,"t":73.062,"d":3.735,"text":"因为每问一次，专家都要把整本从头读一遍。","sent":"因为每问一次，专家都要把整本从头读一遍。"},{"i":19,"t":76.837,"d":3.98,"text":"而且，每个专家一次能读完、记住的厚度是有限的，","sent":"而且，每个专家一次能读完、记住的厚度是有限的，这就是上下文窗口，有的模型能读 100 万 token，有的只有 21 万。"},{"i":20,"t":80.857,"d":5.29,"text":"这就是上下文窗口，有的模型能读 100 万 token，有的只有 21 万。","sent":"而且，每个专家一次能读完、记住的厚度是有限的，这就是上下文窗口，有的模型能读 100 万 token，有的只有 21 万。"},{"i":21,"t":86.187,"d":4.31,"text":"本子太厚，前面的内容就得压缩、丢掉。","sent":"本子太厚，前面的内容就得压缩、丢掉。"},{"i":22,"t":90.537,"d":5.948,"text":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。","sent":"所以真正的记忆不在模型里，在 Harness 帮你整理的这本笔记本里。"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -2533,34 +2625,36 @@
     tl.fromTo("#s-stateless-notebook-ex-1 .s17-ex-in", { opacity: 1 }, { opacity: 0.32, duration: 0.4, immediateRender: false }, C[17].t + 0.2);
     tl.fromTo("#s-stateless-notebook-costtotal", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[18].t + 0.2);
 
-    // 拍5：窗口上的厚度尺，超出的页被折起、压缩（90-100s）
+    // 拍5：上下文窗口 = 专家一次能读完的厚度（C19-C21）
     tl.fromTo("#s-stateless-notebook-explain", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.out", immediateRender: false }, C[19].t + 0.1);
     tl.fromTo("#s-stateless-notebook-room", { opacity: 0.14 }, { opacity: 0.2, duration: 0.5, immediateRender: false }, C[19].t + 0.15);
     tl.fromTo("#s-stateless-notebook-detail", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, C[19].t + 0.25);
-    tl.fromTo("#s-stateless-notebook-ruler", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[19].t + 0.9);
-    tl.fromTo("#s-stateless-notebook-folds", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[19].t + 1.5);
-    tl.fromTo("#s-stateless-notebook-foldtag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[19].t + 2.2);
-    // 「本子太厚，前面的内容就得压缩、丢掉」
-    tl.fromTo("#s-stateless-notebook-compress", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[20].t + 0.3);
-    tl.fromTo(
-      "#s-stateless-notebook-folds",
-      { y: 0, scaleY: 1, opacity: 1 },
-      { y: 96, scaleY: 0.24, opacity: 0.4, duration: 0.9, ease: "power2.inOut", immediateRender: false },
-      C[20].t + 0.5
-    );
+    tl.fromTo("#s-stateless-notebook-bookwrap", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, C[19].t + 0.8);
+    tl.fromTo("#s-stateless-notebook-bookcap", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, C[19].t + 1.0);
+    tl.fromTo("#s17-book-limit-21", { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.55, ease: "power2.out", transformOrigin: "left center" }, C[19].t + 1.8);
 
-    // 拍6：真实截图证据 + 回到纸面小屋定格（102s-）
-    tl.fromTo("#s-stateless-notebook-detail", { opacity: 1, y: 0 }, { opacity: 0, y: 14, duration: 0.45, ease: "power1.out", immediateRender: false }, C[21].t + 0.1);
-    tl.fromTo("#s-stateless-notebook-room", { opacity: 0.2 }, { opacity: 1, duration: 0.6, ease: "power2.out", immediateRender: false }, C[21].t + 0.2);
-    tl.fromTo("#s-stateless-notebook-queue", { opacity: 1 }, { opacity: 0.15, duration: 0.5, immediateRender: false }, C[21].t + 0.2);
-    tl.fromTo("#s-stateless-notebook-evidence", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, C[21].t + 0.35);
-    tl.fromTo("#s-stateless-notebook-media", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[21].t + 0.45);
-    tl.fromTo(".s17-leader", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.15 }, C[21].t + 1.1);
-    tl.fromTo(".s17-callout", { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.16 }, C[21].t + 1.2);
-    tl.fromTo("#s-stateless-notebook-final", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[21].t + 1.8);
-    tl.fromTo("#s-stateless-notebook-finalrule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, C[21].t + 4.0);
+    // C20：有的模型能读 100 万，有的只有 21 万：两档容量条 + 第二条容量线
+    tl.fromTo("#s-stateless-notebook-window", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, C[20].t + 0.15);
+    tl.fromTo(".s17-window-row--100", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[20].t + 0.3);
+    tl.fromTo(".s17-window-row--21", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[20].t + 0.5);
+    tl.fromTo("#s17-book-limit-100", { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.55, ease: "power2.out", transformOrigin: "left center" }, C[20].t + 0.55);
+    tl.fromTo("#s-stateless-notebook-foldtag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[20].t + 1.4);
+
+    // C21：本子太厚，超过能读厚度的页压缩、丢掉
+    tl.fromTo("#s-stateless-notebook-compress", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[21].t + 0.2);
+
+    // 拍6：真实截图证据 + 回到纸面小屋定格（C22-）
+    tl.fromTo("#s-stateless-notebook-detail", { opacity: 1, y: 0 }, { opacity: 0, y: 14, duration: 0.45, ease: "power1.out", immediateRender: false }, C[22].t + 0.1);
+    tl.fromTo("#s-stateless-notebook-room", { opacity: 0.2 }, { opacity: 1, duration: 0.6, ease: "power2.out", immediateRender: false }, C[22].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-queue", { opacity: 1 }, { opacity: 0.15, duration: 0.5, immediateRender: false }, C[22].t + 0.2);
+    tl.fromTo("#s-stateless-notebook-evidence", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, C[22].t + 0.35);
+    tl.fromTo("#s-stateless-notebook-media", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[22].t + 0.45);
+    tl.fromTo(".s17-leader", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", stagger: 0.15 }, C[22].t + 1.1);
+    tl.fromTo(".s17-callout", { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.16 }, C[22].t + 1.2);
+    tl.fromTo("#s-stateless-notebook-final", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, C[22].t + 1.8);
+    tl.fromTo("#s-stateless-notebook-finalrule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power2.out" }, C[22].t + 4.0);
     // 桌上的本子轻轻合上：最后几秒只留这一下，然后定格
-    tl.fromTo("#s-stateless-notebook-passbook", { rotation: -2 }, { rotation: 0, duration: 0.9, ease: "power2.inOut", immediateRender: false }, C[21].t + 2.6);
+    tl.fromTo("#s-stateless-notebook-passbook", { rotation: -2 }, { rotation: 0, duration: 0.9, ease: "power2.inOut", immediateRender: false }, C[22].t + 2.6);
     // MOTION:END
 
     window.__timelines["s-stateless-notebook"] = tl;
