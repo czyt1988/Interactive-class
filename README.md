@@ -191,11 +191,13 @@ ai-learning/
 │  ├─ bootstrap.py               # 双击启动器的环境准备：.venv、依赖、资源、构建、迁移
 │  ├─ env.cmd                    # star.cmd / restart.cmd 调用的环境检查（GBK）
 │  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
-│  └─ launcher.py                # star / restart / stop 的实现
+│  ├─ launcher.py                # star / restart / stop 的实现
+│  └─ worktree.py                # 并行开发：git 工作树 + 复用依赖
 ├─ tests/
 │  ├─ fixtures/courses/          # 合法与非法课程夹具
 │  └─ e2e/                       # 独立静态服务器上的浏览器验收
 ├─ tools/package.json            # 固定的 HyperFrames / GSAP 版本（只在创作期用）
+├─ .worktree/                    # 任务工作树（git worktree，不进 Git）
 ├─ docs/
 │  ├─ architecture.md
 │  ├─ course-contract.md
@@ -261,6 +263,20 @@ python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署�
 ```
 
 > 在 Windows 上用 `python -m http.server` 打开课程包时，`.js` 可能被注册表映射成 `text/plain`，浏览器会拒绝执行 ES module。用 `scripts/serve.py` 验收，它固定了课程包需要的 MIME 类型。
+
+### 并行开发（git 工作树）
+
+本仓库的开发任务都在独立的 git 工作树里进行，主工作树只负责集成（给 AI Agent 的完整规则见 [AGENTS.md](AGENTS.md)「分支与工作树」）：
+
+```powershell
+python scripts/worktree.py add feat/course-xyz              # 新建 .worktree\feat-course-xyz
+python scripts/worktree.py list                             # 查看工作树、分支与共享状态
+python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回 main + 清理
+```
+
+创建工作树时会共享主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`（Windows 目录联接 / POSIX 软链接），并复制 `runtime/vendor` 与 `.env`，所以不需要重新联网安装依赖，新工作树几秒内就能跑测试、构建课程、双击 `star.cmd` 起站点。旁白 TTS 缓存也直接共享，重做旁白不用重新合成已有片段。
+
+共享的代价是依赖目录属于主工作树：**不要在 worktree 里 `pip install` / `npm install`**；删除工作树请用 `remove`，不要手工删目录（Windows 下递归删除目录联接会清空主工作树的目标目录）。
 
 ## 在线生成课程视频
 
