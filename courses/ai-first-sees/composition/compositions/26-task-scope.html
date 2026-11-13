@@ -1,11 +1,14 @@
 <template>
   <style>
 /* S26 ·「把 0 到 100 切成三段」
-   一条 20 格的长条贯穿四拍：一口气冲完（中间漏格）→ 切成三段（每段填满）→
-   切太碎（交接成本）→ 回头评审（三色缺陷被放大镜修绿）。
-   格子 = 5 单位进度；20 格 = 100；三段正好 7 / 7 / 6 格。 */
+   一条 20 格的长条贯穿四拍：一口气冲完（中间漏格）→ 切成三段（三段进度条从长条上
+   拉下来，一段一段填满，全部做完再升回去和长条合并）→ 切太碎（交接成本）→
+   回头评审（三色缺陷被放大镜修绿）。
+   格子 = 5 单位进度；20 格 = 100；三段正好 7 / 7 / 6 格。完成格一律绿色，红黄只表示缺陷。 */
 #s-task-scope-stage {
   --s26-good: #2f8f68;
+  --s26-good-ink: #1f6a4d;
+  --s26-good-soft: rgba(47, 182, 138, 0.16);
   --s26-warn: #e8b23a;
   --s26-bug: #b8452b;
   --s26-cell: 74px;
@@ -22,29 +25,64 @@
   color: var(--ink-faint);
 }
 
-.s26-arrive {
+/* 达成标记：100 到了，长条末端插一面红旗 */
+.s26-goal {
   position: absolute;
-  left: 1566px;
-  top: 24px;
-  width: 98px;
-  text-align: center;
+  left: 1370px;
+  top: 0;
+  width: 294px;
+  height: 108px;
+  z-index: 2;
 }
 
-.s26-arrive b {
-  display: block;
+.s26-goal-text {
+  position: absolute;
+  right: 108px;
+  top: 7px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.s26-goal-text b {
   font-family: var(--font-mono);
-  font-size: 50px;
+  font-size: 38px;
   font-weight: 700;
-  color: var(--accent-text);
+  line-height: 1;
   letter-spacing: -0.04em;
+  color: var(--s26-good-ink);
 }
 
-.s26-arrive span {
-  display: block;
-  margin-top: 2px;
-  font-size: 24px;
-  letter-spacing: 0.1em;
+.s26-goal-text span {
+  font-size: 28px;
+  letter-spacing: 0.08em;
   color: var(--ink-faint);
+}
+
+.s26-goal-flag {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 96px;
+  height: 104px;
+  overflow: visible;
+}
+
+.s26-flagpole {
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.s26-pennant {
+  fill: var(--accent);
+  stroke: var(--s26-bug);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.s26-flagcap {
+  fill: var(--ink);
 }
 
 /* 长条：20 个格子，每格 5 单位 */
@@ -84,7 +122,7 @@
   position: absolute;
   inset: 3px;
   border-radius: 5px;
-  background: var(--accent);
+  background: var(--s26-good);
   transform: scaleX(0);
   transform-origin: left center;
 }
@@ -96,7 +134,7 @@
   width: 3px;
   height: 74px;
   border-radius: 2px;
-  background: var(--accent);
+  background: var(--s26-good);
   transform: scaleY(0);
   transform-origin: center top;
 }
@@ -129,8 +167,8 @@
   width: 3px;
   height: 78px;
   border-radius: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: var(--s26-good);
+  box-shadow: 0 0 0 4px var(--s26-good-soft);
 }
 
 /* 回放扫描线 */
@@ -205,14 +243,14 @@
   width: 182px;
 }
 
-/* 三段总览的外框 */
+/* 三段总览的外框（框住第一段那一条，讲「只想着这一段」时用） */
 .s26-seg1box {
   position: absolute;
-  left: -6px;
-  top: 36px;
-  width: 554px;
+  left: -8px;
+  top: 210px;
+  width: 558px;
   height: 74px;
-  border: 2.5px solid var(--accent);
+  border: 2.5px solid var(--s26-good);
   border-radius: 12px;
 }
 
@@ -298,91 +336,128 @@
   color: var(--s26-bug);
 }
 
-/* 二拍：切成三段 */
+/* 二拍：切成三段，三段进度条从长条上拉下来 */
 .s26-p2line {
   position: absolute;
   left: 0;
-  top: 240px;
-  font-size: 48px;
+  top: 150px;
+  font-size: 40px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-.s26-p2note {
+/* 三条平行的进度条：每格和上面 20 格同尺寸，7 / 7 / 6 正好凑回 20 格 */
+.s26-lane {
   position: absolute;
   left: 0;
-  top: 306px;
-  font-size: 32px;
-  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
 }
 
-.s26-segrow {
-  position: absolute;
-  left: 0;
-  width: 1500px;
-  height: 64px;
-  border-top: 1px solid var(--line);
+.s26-lcell {
+  position: relative;
+  width: var(--s26-cell);
+  height: 58px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(255, 253, 248, 0.7);
+  overflow: hidden;
 }
 
-.s26-segnum {
+.s26-lfill {
+  position: absolute;
+  inset: 3px;
+  border-radius: 5px;
+  background: var(--s26-good);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.s26-lfront {
   position: absolute;
   left: 0;
-  top: 14px;
+  top: -10px;
+  width: 3px;
+  height: 78px;
+  border-radius: 2px;
+  background: var(--s26-good);
+  box-shadow: 0 0 0 4px var(--s26-good-soft);
+  opacity: 0;
+}
+
+.s26-lanelabel {
+  position: absolute;
+  left: 586px;
+  top: 0;
+  width: 1078px;
+  height: 58px;
+  opacity: 0;
+}
+
+.s26-lanen {
+  position: absolute;
+  left: 0;
+  top: 15px;
   font-family: var(--font-mono);
-  font-size: 24px;
-  color: var(--accent-text);
+  font-size: 28px;
+  color: var(--ink-faint);
 }
 
-.s26-segrange {
+.s26-lanerange {
   position: absolute;
-  left: 70px;
+  left: 56px;
   top: 8px;
+  width: 180px;
   font-family: var(--font-mono);
   font-size: 34px;
   font-weight: 700;
   color: var(--ink);
 }
 
-.s26-segdo {
+.s26-lanedo {
   position: absolute;
-  left: 300px;
+  left: 250px;
   top: 14px;
+  width: 340px;
   font-size: 28px;
   color: var(--ink-soft);
 }
 
-.s26-segok {
+.s26-lok {
   position: absolute;
-  left: 980px;
+  left: 600px;
   top: 12px;
   font-size: 30px;
   font-weight: 700;
   color: var(--s26-good);
+  opacity: 0;
 }
 
-.s26-segnote {
+.s26-lanecount {
   position: absolute;
-  left: 1300px;
-  top: 16px;
+  left: 850px;
+  top: 15px;
   font-family: var(--font-mono);
-  font-size: 24px;
+  font-size: 28px;
   color: var(--ink-faint);
 }
 
 .s26-call {
   position: absolute;
-  left: 18px;
-  top: 162px;
+  left: 0;
+  top: 462px;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 18px;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--s26-good);
   border-radius: 12px;
   background: var(--panel);
   font-size: 29px;
   font-weight: 700;
-  color: var(--accent-text);
+  color: var(--s26-good-ink);
   box-shadow: var(--shadow);
 }
 
@@ -391,7 +466,7 @@
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  background: var(--accent);
+  background: var(--s26-good);
 }
 
 .s26-runhint {
@@ -521,12 +596,12 @@
 /* 四拍：回头评审 */
 .s26-legend {
   position: absolute;
-  left: 1000px;
-  top: 6px;
-  width: 556px;
+  left: 780px;
+  top: 4px;
+  width: 560px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 26px;
   font-size: 27px;
   color: var(--ink-soft);
@@ -696,16 +771,17 @@
 #s26-bar,
 #s26-end0,
 #s26-end100,
-#s26-arrive,
+#s26-goal,
 .s26-deliver,
 .s26-p1line,
 .s26-p1note,
 .s26-see,
 .s26-losttag,
 .s26-p2line,
-.s26-p2note,
-.s26-segrow,
-.s26-segok,
+.s26-lane,
+.s26-lanelabel,
+.s26-lok,
+.s26-lfront,
 .s26-seg,
 .s26-seg1box,
 .s26-call,
@@ -757,7 +833,14 @@
       <section id="s-task-scope-stage" class="stage">
         <!-- 一条 20 格的长条：一口气冲完 / 切成三段 / 切太碎 / 回头评审 -->
         <p id="s26-topline" class="s26-topline">任务进度 · 0 → 100</p>
-        <p id="s26-arrive" class="s26-arrive"><b>100</b><span>到了</span></p>
+        <div id="s26-goal" class="s26-goal">
+          <p class="s26-goal-text"><b>100</b><span>到了</span></p>
+          <svg class="s26-goal-flag" viewBox="0 0 96 104" aria-hidden="true">
+            <line class="s26-flagpole" x1="14" y1="6" x2="14" y2="100" />
+            <path class="s26-pennant" d="M 17 8 C 40 1, 62 19, 90 9 L 90 49 C 62 59, 40 41, 17 52 Z" />
+            <circle class="s26-flagcap" cx="14" cy="6" r="6" />
+          </svg>
+        </div>
 
         <div id="s26-bar" class="s26-bar">
           <span class="s26-cell"><i class="s26-gap"></i><i class="s26-fill"></i></span>
@@ -781,8 +864,8 @@
           <span class="s26-cell"><i class="s26-gap"></i><i class="s26-fill"></i></span>
           <span class="s26-cell"><i class="s26-gap"></i><i class="s26-fill"></i></span>
 
-          <span id="s26-cut35" class="s26-cut"></span>
-          <span id="s26-cut70" class="s26-cut"></span>
+          <span id="s26-cut35" class="s26-cut" style="left: 542.5px"></span>
+          <span id="s26-cut70" class="s26-cut" style="left: 1088.5px"></span>
 
           <span class="s26-cut10" style="left: 152.5px"></span>
           <span class="s26-cut10" style="left: 308.5px"></span>
@@ -829,9 +912,9 @@
         <p id="s26-end0" class="s26-end s26-end--0">0</p>
         <p id="s26-end100" class="s26-end s26-end--100">100</p>
 
-        <p id="s26-seg1" class="s26-seg">0 – 35</p>
-        <p id="s26-seg2" class="s26-seg">35 – 70</p>
-        <p id="s26-seg3" class="s26-seg">70 – 100</p>
+        <p id="s26-seg1" class="s26-seg">0 - 35</p>
+        <p id="s26-seg2" class="s26-seg">35 - 70</p>
+        <p id="s26-seg3" class="s26-seg">70 - 100</p>
         <span id="s26-seg1box" class="s26-seg1box"></span>
 
         <p id="s26-runhint" class="s26-runhint">一口气跑完</p>
@@ -850,29 +933,58 @@
         </p>
         <p id="s26-losttag" class="s26-losttag">中间 4 格：细节丢了</p>
 
-        <!-- 二拍：切成三段，每段单独做 -->
+        <!-- 二拍：切成三段，三条进度条从长条上拉下来，一段一段跑 -->
         <p id="s26-p2line" class="s26-p2line">更好的做法：切成三段</p>
-        <p id="s26-p2note" class="s26-p2note">每段只做自己那三分之一，做完再进下一段。</p>
-        <div id="s26-segrow1" class="s26-segrow" style="top: 364px">
-          <span class="s26-segnum">01</span>
-          <span class="s26-segrange">0 – 35</span>
-          <span class="s26-segdo">只做这一段，别想别的</span>
-          <span id="s26-segok1" class="s26-segok">细节完整</span>
-          <span class="s26-segnote">7 / 20 格</span>
+
+        <div id="s26-lane1" class="s26-lane" style="top: 218px">
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lfront"></span>
+          <span class="s26-lanelabel">
+            <span class="s26-lanen">01</span>
+            <span class="s26-lanerange">0 - 35</span>
+            <span class="s26-lanedo">只做这一段，别想别的</span>
+            <span id="s26-lok1" class="s26-lok">细节完整</span>
+            <span class="s26-lanecount">7 / 20 格</span>
+          </span>
         </div>
-        <div id="s26-segrow2" class="s26-segrow" style="top: 436px">
-          <span class="s26-segnum">02</span>
-          <span class="s26-segrange">35 – 70</span>
-          <span class="s26-segdo">只做这一段，别想别的</span>
-          <span id="s26-segok2" class="s26-segok">细节完整</span>
-          <span class="s26-segnote">7 / 20 格</span>
+        <div id="s26-lane2" class="s26-lane" style="top: 300px">
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lfront"></span>
+          <span class="s26-lanelabel">
+            <span class="s26-lanen">02</span>
+            <span class="s26-lanerange">35 - 70</span>
+            <span class="s26-lanedo">只做这一段，别想别的</span>
+            <span id="s26-lok2" class="s26-lok">细节完整</span>
+            <span class="s26-lanecount">7 / 20 格</span>
+          </span>
         </div>
-        <div id="s26-segrow3" class="s26-segrow" style="top: 508px">
-          <span class="s26-segnum">03</span>
-          <span class="s26-segrange">70 – 100</span>
-          <span class="s26-segdo">只做这一段，别想别的</span>
-          <span id="s26-segok3" class="s26-segok">细节完整</span>
-          <span class="s26-segnote">6 / 20 格</span>
+        <div id="s26-lane3" class="s26-lane" style="top: 382px">
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lcell"><i class="s26-lfill"></i></span>
+          <span class="s26-lfront"></span>
+          <span class="s26-lanelabel">
+            <span class="s26-lanen">03</span>
+            <span class="s26-lanerange">70 - 100</span>
+            <span class="s26-lanedo">只做这一段，别想别的</span>
+            <span id="s26-lok3" class="s26-lok">细节完整</span>
+            <span class="s26-lanecount">6 / 20 格</span>
+          </span>
         </div>
         <p id="s26-call" class="s26-call"><i></i>只想着这一段</p>
 
@@ -1008,6 +1120,35 @@
       });
     }
 
+    // 三段进度条：7 / 7 / 6 格，正好凑回上面 20 格；从长条对应位置拉下来，做完再升回去合并。
+    const SEG_CELLS = [
+      [0, 1, 2, 3, 4, 5, 6],
+      [7, 8, 9, 10, 11, 12, 13],
+      [14, 15, 16, 17, 18, 19],
+    ];
+    const LANE = gsap.utils.toArray("#s-task-scope-stage .s26-lane");
+    const LFILL = LANE.map((lane) => gsap.utils.toArray(lane.querySelectorAll(".s26-lfill")));
+    const LFRONT = gsap.utils.toArray("#s-task-scope-stage .s26-lfront");
+    const LOK = ["#s26-lok1", "#s26-lok2", "#s26-lok3"];
+    const LANE_TOP = [218, 300, 382];
+    const LANE_ORIGIN_X = [0, 546, 1092];
+    const LANE_W = [542, 542, 464];
+
+    // 红旗：到 100 就插上，重开进度就拔掉。
+    function plantGoal(at) {
+      tl.fromTo("#s26-goal", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", immediateRender: false }, at);
+      tl.fromTo(
+        "#s26-goal-flag",
+        { scale: 0.68, rotation: -8, transformOrigin: "50% 100%" },
+        { scale: 1, rotation: 0, duration: 0.55, ease: "back.out(1.7)", immediateRender: false },
+        at + 0.04
+      );
+    }
+
+    function retractGoal(at) {
+      tl.fromTo("#s26-goal", { opacity: 1, y: 0 }, { opacity: 0, y: 10, duration: 0.3, ease: "power2.in", immediateRender: false }, at);
+    }
+
     // cue0 · 0 到 100 的长条先落到画面里
     tl.fromTo(
       ["#s26-topline", "#s26-bar", "#s26-end0", "#s26-end100"],
@@ -1021,23 +1162,24 @@
     tl.fromTo("#s26-runhint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[1].t + 0.35);
     tl.fromTo("#s26-losttag", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, C[1].t + 2.85);
 
-    // cue2 · 交付回执：只看到 100 到了
-    tl.fromTo("#s26-arrive", { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, C[1].t + 2.5);
+    // cue2 · 交付回执：只看到 100 到了，长条末端插上红旗
+    plantGoal(C[1].t + 2.45);
     tl.fromTo("#s26-runhint", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[1].t + 2.6);
     tl.fromTo("#s26-deliver", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[2].t + 0.15);
     tl.fromTo("#s26-p1line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[2].t + 0.45);
     tl.fromTo("#s26-p1note", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[2].t + 0.85);
     tl.fromTo("#s26-see", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[2].t + 1.35);
 
-    // cue3 · 如果任务是 0 到 100 的进度：长条清空，准备第二次
-    fadeOut(["#s26-deliver", "#s26-p1line", "#s26-p1note", "#s26-see", "#s26-losttag", "#s26-arrive"], C[3].t + 0.1, 0.35);
+    // cue3 · 如果任务是 0 到 100 的进度：长条清空，红旗收起，准备第二次
+    fadeOut(["#s26-deliver", "#s26-p1line", "#s26-p1note", "#s26-see", "#s26-losttag"], C[3].t + 0.08, 0.35);
+    retractGoal(C[3].t + 0.1);
     resetBar(C[3].t + 0.45);
     tl.fromTo("#s26-runhint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, C[3].t + 0.85);
     tl.fromTo("#s26-runhint", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[4].t + 2.55);
 
     // cue4 · 一口气从 0 做到 100
     rush(C[4].t + 0.3, 2.3);
-    tl.fromTo("#s26-arrive", { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" }, C[4].t + 2.7);
+    plantGoal(C[4].t + 2.65);
 
     // cue5 · 回放：空掉的格子被高亮
     tl.fromTo("#s26-replay", { opacity: 1, x: -2 }, { x: 1554, duration: 1.45, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.15);
@@ -1048,48 +1190,65 @@
     });
     tl.fromTo("#s26-losttag", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, C[5].t + 1.25);
 
-    // cue6 · 切成三段：三条切口 + 三个标签 + 逐段单独执行
-    fadeOut(["#s26-losttag", "#s26-replay", "#s26-arrive"], C[6].t + 0.05, 0.3);
-    tl.fromTo("#s26-p2line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[6].t + 0.2);
-    tl.fromTo("#s26-p2note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[6].t + 0.6);
-    tl.fromTo("#s26-cut35", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power3.out" }, C[6].t + 0.25);
-    tl.fromTo("#s26-cut70", { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: "power3.out" }, C[6].t + 0.35);
-    tl.fromTo(".s26-seg", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.14 }, C[6].t + 0.55);
-    tl.fromTo(".s26-segrow", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out", stagger: 0.2 }, C[6].t + 0.7);
-
-    const SEG_CELLS = [
-      [0, 1, 2, 3, 4, 5, 6],
-      [7, 8, 9, 10, 11, 12, 13],
-      [14, 15, 16, 17, 18, 19],
-    ];
-    const SEG_START = [0, 546, 1092];
-    const SEG_END = [540, 1086, 1552];
+    // cue6 · 切成三段：三段进度条从长条上拉下来，一段一段跑满
+    fadeOut(["#s26-losttag", "#s26-replay"], C[6].t + 0.05, 0.3);
+    tl.fromTo("#s26-cut35", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[6].t + 0.2);
+    tl.fromTo("#s26-cut70", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[6].t + 0.28);
+    tl.fromTo(".s26-seg", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out", stagger: 0.12 }, C[6].t + 0.36);
+    LANE.forEach((lane, k) => {
+      tl.fromTo(
+        lane,
+        { x: LANE_ORIGIN_X[k], y: -(LANE_TOP[k] - 44), opacity: 0 },
+        { x: 0, y: 0, opacity: 1, duration: 0.55, ease: "power3.out", immediateRender: false },
+        C[6].t + 0.55 + k * 0.1
+      );
+    });
+    tl.fromTo("#s26-p2line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, C[6].t + 1.3);
+    tl.fromTo(".s26-lanelabel", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.1 }, C[6].t + 1.35);
     SEG_CELLS.forEach((cells, s) => {
-      const at = C[6].t + 1.3 + s * 1.15;
-      const dur = 0.85;
-      tl.fromTo("#s26-front", { x: SEG_START[s], opacity: 0 }, { opacity: 1, duration: 0.15, ease: "power1.out" }, at);
-      tl.fromTo("#s26-front", { x: SEG_START[s] }, { x: SEG_END[s], duration: dur, ease: "power1.inOut", immediateRender: false }, at + 0.03);
-      tl.fromTo("#s26-front", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power1.out", immediateRender: false }, at + dur + 0.1);
-      cells.forEach((i) => {
-        if (HOLES.indexOf(i) < 0) return;
-        const span = SEG_END[s] - SEG_START[s];
-        const arrive = at + 0.03 + dur * ((cellX(i) - SEG_START[s]) / span);
-        tl.fromTo(GAP[i], { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power1.out", immediateRender: false }, arrive);
-        tl.fromTo(FILL[i], { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out", immediateRender: false }, arrive + 0.04);
+      const at = C[6].t + 2.2 + s * 1.05;
+      const dur = 0.78;
+      const cursor = LFRONT[s];
+      tl.fromTo(cursor, { x: 0, opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power1.out" }, at);
+      tl.fromTo(cursor, { x: 0 }, { x: LANE_W[s], duration: dur, ease: "power1.inOut", immediateRender: false }, at + 0.02);
+      tl.fromTo(cursor, { opacity: 1 }, { opacity: 0, duration: 0.16, ease: "power1.out", immediateRender: false }, at + dur + 0.04);
+      cells.forEach((ci, j) => {
+        const arrive = at + 0.02 + dur * (j / cells.length);
+        tl.fromTo(LFILL[s][j], { scaleX: 0 }, { scaleX: 1, duration: 0.26, ease: "power2.out", immediateRender: false }, arrive);
+        if (HOLES.indexOf(ci) >= 0) {
+          tl.fromTo(GAP[ci], { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power1.out", immediateRender: false }, arrive + 0.2);
+          tl.fromTo(FILL[ci], { scaleX: 0 }, { scaleX: 1, duration: 0.28, ease: "power2.out", immediateRender: false }, arrive + 0.22);
+        }
       });
-      tl.fromTo("#s26-segok" + (s + 1), { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, at + dur + 0.3);
+      tl.fromTo(LOK[s], { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.32, ease: "power2.out" }, at + dur + 0.1);
     });
 
     // cue7 · 做 0 到 35 的时候，它只需要想这一段
-    tl.fromTo("#s26-seg1box", { opacity: 0, scaleX: 0.9 }, { opacity: 1, scaleX: 1, duration: 0.5, ease: "power3.out", transformOrigin: "left center" }, C[7].t + 0.15);
-    tl.fromTo("#s26-call", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[7].t + 0.5);
-    tl.fromTo(["#s26-segrow2", "#s26-segrow3"], { opacity: 1 }, { opacity: 0.42, duration: 0.5, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.35);
-    tl.fromTo(FILL.slice(7), { opacity: 1 }, { opacity: 0.42, duration: 0.5, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.4);
+    tl.fromTo("#s26-seg1box", { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.45, ease: "power3.out", transformOrigin: "left center" }, C[7].t + 0.08);
+    tl.fromTo("#s26-call", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[7].t + 0.32);
+    tl.fromTo([LANE[1], LANE[2]], { opacity: 1 }, { opacity: 0.32, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.3);
+    tl.fromTo(FILL.slice(7), { opacity: 1 }, { opacity: 0.42, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.36);
+
+    // 三段都做完了：三条进度条升回去，和上面的长条合并
+    const MERGE = C[7].t + 3.5;
+    fadeOut(["#s26-call", "#s26-seg1box"], MERGE - 0.16, 0.24);
+    tl.fromTo([LANE[1], LANE[2]], { opacity: 0.32 }, { opacity: 1, duration: 0.22, ease: "power1.out", immediateRender: false }, MERGE - 0.12);
+    tl.fromTo(FILL.slice(7), { opacity: 0.42 }, { opacity: 1, duration: 0.28, ease: "power1.out", immediateRender: false }, MERGE - 0.12);
+    LANE.forEach((lane, k) => {
+      tl.fromTo(
+        lane,
+        { x: 0, y: 0, opacity: 1 },
+        { x: LANE_ORIGIN_X[k], y: -(LANE_TOP[k] - 44), opacity: 0, duration: 0.55, ease: "power2.inOut", immediateRender: false },
+        MERGE + 0.02 + k * 0.06
+      );
+    });
+    tl.fromTo("#s26-bar", { scale: 1 }, { scale: 1.014, duration: 0.16, ease: "power2.out", transformOrigin: "50% 50%", immediateRender: false }, MERGE + 0.3);
+    tl.fromTo("#s26-bar", { scale: 1.014 }, { scale: 1, duration: 0.3, ease: "power2.inOut", immediateRender: false }, MERGE + 0.48);
+    tl.fromTo("#s26-goal-flag", { scale: 1 }, { scale: 1.1, duration: 0.16, ease: "power2.out", transformOrigin: "50% 100%", immediateRender: false }, MERGE + 0.38);
+    tl.fromTo("#s26-goal-flag", { scale: 1.1 }, { scale: 1, duration: 0.36, ease: "power2.inOut", transformOrigin: "50% 100%", immediateRender: false }, MERGE + 0.56);
 
     // cue8 · 但也不能切得太碎：三段收掉，换成十段标尺
-    fadeOut(["#s26-cut35", "#s26-cut70", ".s26-seg", "#s26-segrow1", "#s26-seg1box", "#s26-call", "#s26-p2line", "#s26-p2note"], C[8].t + 0.05, 0.3);
-    fadeOut(["#s26-segrow2", "#s26-segrow3"], C[8].t + 0.05, 0.3, 0.42);
-    tl.fromTo(FILL.slice(7), { opacity: 0.42 }, { opacity: 1, duration: 0.4, ease: "power1.out", immediateRender: false }, C[8].t + 0.1);
+    fadeOut(["#s26-cut35", "#s26-cut70", ".s26-seg", "#s26-p2line"], C[8].t + 0.05, 0.3);
     tl.fromTo("#s26-p3line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[8].t + 0.3);
     tl.fromTo(".s26-cut10", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power2.out", stagger: 0.055 }, C[8].t + 0.55);
     tl.fromTo("#s26-hand1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[8].t + 1.1);
@@ -1101,6 +1260,7 @@
 
     // cue10 · 这个「度」没有标准答案
     fadeOut([".s26-cut10", ".s26-cut20", "#s26-hand1", "#s26-hand2", "#s26-worth", "#s26-p3line"], C[10].t + 0.05, 0.3);
+    retractGoal(C[10].t + 0.3);
     resetBar(C[10].t + 0.4);
     tl.fromTo("#s26-degree", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, C[10].t + 0.25);
     tl.fromTo("#s26-dchip1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[10].t + 0.9);
@@ -1141,6 +1301,8 @@
       tl.fromTo(FILL[i], { backgroundColor: DEF[i] }, { backgroundColor: "#2f8f68", duration: 0.34, ease: "power2.out", immediateRender: false }, arrive);
     });
     tl.fromTo("#s26-stat2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[14].t + 1.15);
+    // 修完以后长条重新一片绿，红旗再插上
+    plantGoal(C[14].t + 1.4);
 
     // cue15 · 开发、评审、修复，再开发、再评审：像做完一个项目要复盘
     tl.fromTo(".s26-node", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.26 }, C[15].t + 0.2);
