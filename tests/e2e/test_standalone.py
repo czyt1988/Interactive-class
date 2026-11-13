@@ -343,6 +343,12 @@ def test_top_bar_yields_to_the_control_bar_while_playing(page: Page) -> None:
 def _start_playing(page: Page) -> None:
     page.click("#btn-start")
     page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=25_000)
+    # The deck flips its state before the player's own play() lands. Waiting for
+    # the player too keeps tests that pause immediately from racing autoplay
+    # (a delayed play would resume the "paused" scrub and move the clock).
+    page.wait_for_function(
+        "() => document.querySelector('#hf-player').paused === false", timeout=25_000
+    )
     page.wait_for_timeout(250)
 
 
@@ -661,4 +667,203 @@ def test_watermark_layer_survives_fullscreen(watermark_page: Page) -> None:
     assert rect["w"] > 0
     assert rect["h"] > 0
     watermark_page.keyboard.press("Escape")
+
+
+# -- directory drawer (TOC) ------------------------------------------------
+# A 28-screen course needs a way to jump straight to a screen instead of
+# pressing "next" nineteen times, so the control bar carries a directory
+# button and the shell a right-hand drawer. The directory and the transcript
+# are two panels of one drawer system: same scrim, same slide, and only one is
+# open at a time. The list is server-rendered, so every screen exists before
+# the deck boots; the shell only moves the active marker and jumps.
+
+
+def _wait_toc_open(page: Page) -> None:
+    page.wait_for_selector("#toc:not([hidden])")
+    page.wait_for_selector("#toc.is-open")
+
+
+def _open_toc(page: Page) -> None:
+    _start_playing(page)
+    page.click("#btn-toc")
+    _wait_toc_open(page)
+    # Let the 220 ms slide-in settle before reading layout or clicking rows.
+    page.wait_for_timeout(300)
+
+
+def _drawer_hidden(page: Page, selector: str) -> bool:
+    return page.evaluate(
+        "(selector) => document.querySelector(selector).hasAttribute('hidden')", selector
+    )
+
+
+def _drawer_has_open_class(page: Page, selector: str) -> bool:
+    return page.evaluate(
+        "(selector) => document.querySelector(selector).classList.contains('is-open')", selector
+    )
+
+
+def _toc_items(page: Page) -> list[dict[str, object]]:
+    return page.evaluate(
+        """
+        () => [...document.querySelectorAll('#toc-list .toc__item')].map((item) => ({
+          tag: item.tagName,
+          index: item.dataset.index,
+          screenId: item.dataset.screenId,
+          num: item.querySelector('.toc__num').textContent.trim(),
+          name: item.querySelector('.toc__name').textContent.trim(),
+          time: item.querySelector('.toc__time').textContent.trim(),
+          current: item.getAttribute('aria-current'),
+        }))
+        """
+    )
+
+
+def test_toc_lists_every_screen_and_marks_the_current_one(page: Page) -> None:
+    _open_toc(page)
+
+    items = _toc_items(page)
+    assert page.locator("#toc-list .toc__item").count() == 2
+    assert [item["tag"] for item in items] == ["BUTTON", "BUTTON"]
+    assert [item["index"] for item in items] == ["0", "1"]
+    assert [item["screenId"] for item in items] == ["hook", "split"]
+    assert [item["num"] for item in items] == ["01", "02"]
+    assert [item["name"] for item in items] == ["第一屏", "第二屏"]
+    assert [item["time"] for item in items] == ["0:00", "0:02"]
+    # Exactly the screen being played carries the current marker.
+    assert [item["current"] for item in items] == ["step", None]
+    assert page.inner_text("#toc-title") == "两屏测试课"
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_toc_jumps_to_a_selected_screen_and_plays(page: Page) -> None:
+    _open_toc(page)
+    page.locator("#toc-list .toc__item").nth(1).click()
+
+    page.wait_for_function(
+        """() => document.querySelector('.toc__item[aria-current="step"]')?.dataset.index === '1'""",
+        timeout=10_000,
+    )
+    assert page.inner_text("#chapter-title") == "第二屏"
+    # The fixture composition puts screen two at 0:02, so the deck must seek
+    # into that range and start playing from there.
+    page.wait_for_function(
+        "() => document.querySelector('#hf-player').currentTime >= 1.9", timeout=10_000
+    )
+    first = _player_state(page)
+    page.wait_for_timeout(500)
+    second = _player_state(page)
+    # "Plays from there" means the clock keeps moving, not just the seek lands.
+    assert 1.9 <= float(second["time"]) <= 4.2, second
+    assert float(second["time"]) > float(first["time"]) + 0.2, (first, second)
+    assert second["paused"] is False, second
+    assert page.get_attribute("#btn-play", "aria-pressed") == "true"
+    page.wait_for_selector("#toc[hidden]", state="attached", timeout=5_000)
+    assert _drawer_has_open_class(page, "#toc") is False
+
+
+def test_toc_and_transcript_drawers_are_mutually_exclusive(page: Page) -> None:
+    _start_playing(page)
+
+    # The scrim covers the control bar, so switching panels is a keyboard path
+    # in the real UI: T opens the transcript, O swaps it for the directory.
+    page.keyboard.press("t")
+    page.wait_for_selector("#transcript.is-open")
+    page.wait_for_selector("#toc[hidden]", state="attached")
+
+    page.keyboard.press("o")
+    page.wait_for_selector("#toc.is-open")
+    page.wait_for_timeout(300)
+    assert _drawer_hidden(page, "#transcript") is True
+    assert _drawer_hidden(page, "#toc") is False
+    assert _drawer_has_open_class(page, "#transcript") is False
+
+    page.keyboard.press("t")
+    page.wait_for_selector("#transcript.is-open")
+    page.wait_for_timeout(300)
+    assert _drawer_hidden(page, "#toc") is True
+    assert _drawer_hidden(page, "#transcript") is False
+    assert _drawer_has_open_class(page, "#toc") is False
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_toc_icon_moved_from_transcript(page: Page) -> None:
+    toc = page.locator("#btn-toc")
+    transcript = page.locator("#btn-transcript")
+
+    assert "☰" in (toc.text_content() or "")
+    assert "☰" not in (transcript.text_content() or "")
+    assert transcript.locator(".icon-doc").count() == 1
+    assert toc.locator(".icon-doc").count() == 0
+    toc_classes = (toc.get_attribute("class") or "").split()
+    assert "control" in toc_classes
+    assert "control--icon" in toc_classes
+    assert (toc.get_attribute("aria-label") or "").startswith("打开目录")
+    assert (transcript.get_attribute("aria-label") or "").startswith("打开讲义")
+    # It sits between replay and the transcript: an icon slot in that group.
+    assert page.evaluate("() => document.querySelector('#btn-replay').nextElementSibling?.id") == (
+        "btn-toc"
+    )
+    assert page.evaluate("() => document.querySelector('#btn-toc').nextElementSibling?.id") == (
+        "btn-transcript"
+    )
+
+
+def test_toc_keyboard_shortcut_and_escape(page: Page) -> None:
+    _start_playing(page)
+
+    page.keyboard.press("o")
+    page.wait_for_selector("#toc.is-open")
+    assert _drawer_hidden(page, "#toc") is False
+
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#toc[hidden]", state="attached", timeout=5_000)
+    # Keyboard users land back on the button that opened the panel.
+    assert page.evaluate("() => document.activeElement?.id") == "btn-toc"
+
+    # O reopens it, and T replaces the directory with the transcript.
+    page.keyboard.press("o")
+    page.wait_for_selector("#toc.is-open")
+    page.keyboard.press("t")
+    page.wait_for_selector("#transcript.is-open")
+    page.wait_for_timeout(300)
+    assert _drawer_hidden(page, "#toc") is True
+    assert _drawer_hidden(page, "#transcript") is False
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_toc_panel_is_on_the_right_and_fits_a_narrow_viewport(
+    open_course: Callable[..., Page],
+) -> None:
+    page = open_course(390, 844)
+    _start_playing(page)
+    page.click("#btn-toc")
+    _wait_toc_open(page)
+    page.wait_for_timeout(300)
+
+    box = page.locator("#toc .drawer__panel").bounding_box()
+    assert box is not None, "the directory panel must have a layout box"
+    viewport = page.evaluate("() => ({ width: innerWidth, height: innerHeight })")
+    assert box["x"] >= -1, box
+    assert box["y"] >= -1, box
+    assert box["x"] + box["width"] <= viewport["width"] + 1, (box, viewport)
+    assert box["y"] + box["height"] <= viewport["height"] + 1, (box, viewport)
+    # Right aligned: the panel edge is the viewport edge, never beyond it.
+    assert box["x"] + box["width"] == pytest.approx(viewport["width"], abs=2)
+    # Full width on a phone is acceptable; horizontal scrolling is not.
+    assert page.evaluate("() => document.documentElement.scrollWidth - window.innerWidth") <= 1
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_toc_scrim_closes_the_drawer(page: Page) -> None:
+    _open_toc(page)
+
+    scrim = page.locator("#toc .drawer__scrim")
+    assert scrim.count() == 1
+    box = scrim.bounding_box()
+    assert box is not None, "the scrim must cover the viewport"
+    # Click the part of the scrim left of the panel, not the panel itself.
+    page.mouse.click(box["x"] + 80, box["y"] + box["height"] / 2)
+    page.wait_for_selector("#toc[hidden]", state="attached", timeout=5_000)
+    assert _drawer_has_open_class(page, "#toc") is False
 

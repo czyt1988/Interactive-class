@@ -72,7 +72,7 @@
 | 2 构建与运行时打包 | ✅ 完成 | `scripts/sync_runtime.py`、`scripts/build_courses.py`、资产扫描、`tests/test_build.py` |
 | 2.5 SQLite 数据层 | ✅ 完成 | `app/db.py`、`app/models.py`、`migrations/0001_initial`、匿名会话、进度 API、`tests/test_progress.py`、`tests/test_migrations.py` |
 | 3a 播放器适配层 | ✅ 完成 | `runtime/course-deck.js` 的 `createPlayerAdapter`；`tests/e2e/test_standalone.py` 验证 range 终点 `ended` |
-| 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
+| 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、目录与讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
 | 4 站点外壳 | ✅ 完成 | 首页、课程库（含 level/tag 过滤）、关于、404、sitemap、robots |
 | 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `courses-outline/ai-first-sees/outline.md`（29 镜头长版，落地 28 屏）完整落地：28 屏 / 29:54（旁白 `rate +0%`），整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 没有 craft error，layout 的 6 条 `content_overlap` 见 3.2 |
 | 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
@@ -95,6 +95,7 @@
 - 全片 MP4 已用 ffmpeg 校验：1920×1080 / 30fps / H.264 + AAC，21m33.5s，有声音；没有在电视和低端手机上做码率/兼容性实测。
 - 课程导入在 TestClient、真实构建流水线和 Playwright 自检（1440px / 390px、真实点击导入、CSP、同源 Origin）中验证过；没有在 TLS 终止的反向代理后验证同源 Origin，也没有在 Safari / Firefox 上打开过 `/import`。
 - 播放页全视口布局与逐屏进度是 2026-11 这轮改的：浏览器验收范围是 Chromium 下 1920×1080 / 1600×900 / 1366×768 / 390×844，用真实鼠标拖动当前屏进度、跳到最后、`End`、确认播放页无滚动；未验证 Safari / Firefox 和真机触摸。
+- 目录抽屉也是 2026-11 这轮加的：控制条「目录」按钮（`O`）打开全部屏的序号、标题和起始时间，点任意一屏跳转并播放；与讲义抽屉互斥，共用遮罩、焦点进入/返回和 `Esc` 关闭；讲义按钮同时换成 CSS 画的纸页图标。
 
 ---
 
@@ -456,9 +457,9 @@ pytest tests/e2e/test_player_contract.py -q
 1. `runtime/shell.html.j2`：
    - 封面：标题、副标题、目标、先修、大纲、时长/级别/屏数、开始、继续上次；
    - 舞台：player、加载遮罩、转场遮罩；
-   - 控制条：上一屏、播放/暂停、下一屏、重播、讲义、声音（有音频）、全屏；
+   - 控制条：上一屏、播放/暂停、下一屏、重播、目录、讲义、声音（有音频）、全屏；
    - 章节信息：kicker、标题、summary；
-   - 讲义抽屉；
+   - 目录抽屉、讲义抽屉；
    - 完成页：takeaways、重看、返回课程库；
    - 错误页；
    - `<noscript>`。

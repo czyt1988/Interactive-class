@@ -4,11 +4,11 @@
   "gsap": "3.15.0",
   "player": "hyperframes-player.global.js",
   "runtime": "hyperframe.runtime.iife.js",
-  "deckVersion": "1.7.0",
+  "deckVersion": "1.8.0",
   "fonts": {
-    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "abd17e4f50151e27ffaa391da0979b7e784207baf6dcca75c300e68527c5afcb",
-    "app/static/fonts/NotoSansSC-VF.woff2": "de032c48c1f4b2e974201abad310fe0b88acbcf7fb24b9833af3e943134f6891",
-    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "73e6f8b9af9e2d1033d2237ebf5d0f9e814d291c7ec7ed9915ee8228e9dc24ea"
+    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "9d305872fc439676912ab0ce8604220291a8af4ca0968a562c0d7829ac858c00",
+    "app/static/fonts/NotoSansSC-VF.woff2": "c5275137f6b247de1d4aee6c9a8f210647d24e769dfd341287c9ddb4da76f33f",
+    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "535cc7ec92608d42f9ba622ec2cf01e29ae8f8716c543179e0c13c9c9c65c856"
   },
   "tokens": {
     "runtime/tokens.css": "f3dc7933f2289b3a61beff6acc8e65cb74ac673796db7dd53dc6c055ea16a4f5",

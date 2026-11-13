@@ -39,6 +39,10 @@ let transitionTimer = null;
 let readyTimer = null;
 let progressTimer = null;
 let lastFocused = null;
+// "toc" | "transcript" | null. Tracked separately from the [hidden] attribute:
+// the 220ms close animation keeps the old panel in the DOM, so "is it hidden"
+// is not a reliable answer while the other drawer is opening.
+let drawerOpen = null;
 
 function readPref(key, fallback) {
   try {
@@ -299,6 +303,8 @@ function renderChapter() {
     else item.removeAttribute("aria-current");
   });
 
+  syncTocActive();
+
   el.transcriptTitle.textContent = screen.title;
   el.transcriptBody.replaceChildren();
   const paragraphs = String(screen.transcript || screen.summary || "")
@@ -336,6 +342,16 @@ function updateAnnouncer() {
   const screen = currentScreen();
   if (!screen) return;
   el.announcer.textContent = `第 ${deck.index + 1} 屏，共 ${data.screens.length} 屏：${screen.title}`;
+}
+
+/** Mark the current screen in the directory, mirroring the cover outline. */
+function syncTocActive() {
+  for (const item of $$(".toc__item")) {
+    const active = Number(item.dataset.index) === deck.index;
+    item.classList.toggle("is-active", active);
+    if (active) item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  }
 }
 
 function updatePlayState() {
@@ -633,6 +649,7 @@ function jumpToScreenEnd({ announce = true } = {}) {
 function finish() {
   clearTransition();
   player.pause();
+  if (drawerOpen) closeDrawer(drawerOpen, { restoreFocus: false });
   setBodyState("complete");
   if (isContinuous()) {
     for (const screen of data.screens) rememberScreen(screen.id, true);
@@ -720,6 +737,7 @@ function startDeck({ fromHash = false } = {}) {
 function showError(message, code) {
   clearTransition();
   clearTimeout(readyTimer);
+  if (drawerOpen) closeDrawer(drawerOpen, { restoreFocus: false });
   setBodyState("error");
   el.errorMessage.textContent = message;
   el.errorCode.textContent = code ? `代码：${code}` : "";
@@ -755,23 +773,73 @@ function togglePlay() {
   else player.pause();
 }
 
-function openTranscript() {
-  lastFocused = document.activeElement;
-  el.transcriptWrap.removeAttribute("hidden");
+/* ---------------------------------------------------------------- drawers */
+
+/* The transcript and the directory are two panels of one drawer system: same
+ * scrim, same slide, same focus contract. Only one is open at a time, so the
+ * learner never stacks two full-height panels over the player. */
+
+function openDrawer(kind) {
+  if (drawerOpen === kind) return;
+  if (drawerOpen) closeDrawer(drawerOpen, { restoreFocus: false });
+  const wrap = kind === "toc" ? el.tocWrap : el.transcriptWrap;
+  lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  drawerOpen = kind;
+  wrap.removeAttribute("hidden");
   requestAnimationFrame(() => {
-    el.transcriptWrap.classList.add("is-open");
-    el.transcriptClose.focus();
+    wrap.classList.add("is-open");
+    (kind === "toc" ? el.tocClose : el.transcriptClose).focus();
   });
   document.body.classList.add("deck-drawer-open");
+  if (kind === "toc") scrollCurrentTocItemIntoView();
+}
+
+function closeDrawer(kind = drawerOpen, { restoreFocus = true } = {}) {
+  if (!kind) return;
+  const wrap = kind === "toc" ? el.tocWrap : el.transcriptWrap;
+  wrap.classList.remove("is-open");
+  setTimeout(() => {
+    // Reopening the same drawer (or opening the other one) within the closing
+    // animation must not leave the fresh panel hidden.
+    if (drawerOpen !== kind) wrap.setAttribute("hidden", "");
+  }, 220);
+  if (drawerOpen === kind) drawerOpen = null;
+  if (!drawerOpen) document.body.classList.remove("deck-drawer-open");
+  if (!restoreFocus) return;
+  // The trigger is the honest fallback: `lastFocused` can be a panel button of
+  // the drawer we just closed (switching drawers by keyboard) or <body> when the
+  // drawer was opened with a shortcut, and neither can take focus back.
+  const trigger = kind === "toc" ? el.tocButton : el.transcriptButton;
+  const insidePanel =
+    lastFocused instanceof HTMLElement &&
+    (el.tocWrap.contains(lastFocused) || el.transcriptWrap.contains(lastFocused));
+  const target =
+    lastFocused instanceof HTMLElement && lastFocused !== document.body && !insidePanel
+      ? lastFocused
+      : trigger;
+  target.focus();
+}
+
+function openTranscript() {
+  openDrawer("transcript");
 }
 
 function closeTranscript() {
-  el.transcriptWrap.classList.remove("is-open");
-  document.body.classList.remove("deck-drawer-open");
-  const hide = () => el.transcriptWrap.setAttribute("hidden", "");
-  setTimeout(hide, 220);
-  if (lastFocused instanceof HTMLElement) lastFocused.focus();
-  else el.transcriptButton.focus();
+  closeDrawer("transcript");
+}
+
+function openToc() {
+  openDrawer("toc");
+}
+
+function closeToc() {
+  closeDrawer("toc");
+}
+
+/** Keep the current screen visible when the directory opens on screen 19. */
+function scrollCurrentTocItemIntoView() {
+  const active = $('.toc__item[aria-current="step"]', el.tocWrap);
+  if (active) active.scrollIntoView({ block: "nearest" });
 }
 
 async function toggleFullscreen() {
@@ -861,7 +929,7 @@ function exitCourse(event) {
       /* fullscreen may already be gone */
     });
   }
-  if (!el.transcriptWrap.hasAttribute("hidden")) closeTranscript();
+  if (drawerOpen) closeDrawer(drawerOpen, { restoreFocus: false });
   window.location.href = el.exit.getAttribute("href");
 }
 
@@ -968,6 +1036,13 @@ function wireControls() {
   el.transcriptClose.addEventListener("click", closeTranscript);
   const scrim = $(".drawer__scrim", el.transcriptWrap);
   if (scrim) scrim.addEventListener("click", closeTranscript);
+  el.tocButton.addEventListener("click", () => {
+    if (drawerOpen === "toc") closeDrawer("toc");
+    else openToc();
+  });
+  el.tocClose.addEventListener("click", closeToc);
+  const tocScrim = $(".drawer__scrim", el.tocWrap);
+  if (tocScrim) tocScrim.addEventListener("click", closeToc);
   el.fullscreen.addEventListener("click", toggleFullscreen);
   if (el.sound) el.sound.addEventListener("click", toggleMute);
   if (el.captions) el.captions.addEventListener("click", toggleCaptions);
@@ -1029,13 +1104,19 @@ function wireControls() {
       case "t":
       case "T":
         event.preventDefault();
-        if (el.transcriptWrap.hasAttribute("hidden")) openTranscript();
-        else closeTranscript();
+        if (drawerOpen === "transcript") closeDrawer("transcript");
+        else openTranscript();
+        break;
+      case "o":
+      case "O":
+        event.preventDefault();
+        if (drawerOpen === "toc") closeDrawer("toc");
+        else openToc();
         break;
       case "Escape":
-        if (!el.transcriptWrap.hasAttribute("hidden")) {
+        if (drawerOpen) {
           event.preventDefault();
-          closeTranscript();
+          closeDrawer(drawerOpen);
         }
         break;
       default:
@@ -1068,6 +1149,27 @@ function wireOutline() {
         return;
       }
       goTo(index);
+    });
+  }
+}
+
+/** Directory rows: jump to the chosen screen and keep the keyboard usable. */
+function wireToc() {
+  for (const item of $$(".toc__item")) {
+    item.addEventListener("click", () => {
+      const index = Number(item.dataset.index);
+      if (Number.isNaN(index)) return;
+      // The panel must not cover the transition, and the jump itself is the
+      // same goTo() the next/prev controls use (continuous mode included).
+      closeDrawer("toc", { restoreFocus: false });
+      if (deck.state !== "playing") {
+        // Only reachable while the first frame is still loading; the bar stays
+        // interactive under the veil, so put focus somewhere real.
+        el.tocButton.focus();
+        return;
+      }
+      goTo(index);
+      el.play.focus();
     });
   }
 }
@@ -1112,6 +1214,9 @@ async function boot() {
     transcriptTitle: $("#transcript-title"),
     transcriptBody: $("#transcript-body"),
     transcriptKeywords: $("#transcript-keywords"),
+    tocButton: $("#btn-toc"),
+    tocWrap: $("#toc"),
+    tocClose: $("#toc-close"),
     fullscreen: $("#btn-fullscreen"),
     sound: $("#btn-sound"),
     captions: $("#btn-captions"),
@@ -1136,6 +1241,7 @@ async function boot() {
   wirePlayer();
   wireControls();
   wireOutline();
+  wireToc();
 
   // Apply saved switches before the first frame so the control bar and the
   // composition agree even when the learner reloads mid-course.

@@ -170,7 +170,7 @@ courses/<slug>/
 | --- | --- | --- | --- |
 | `id` | 是 | string | 见 2 的命名规则；必须与 composition host 的 `data-screen-id` 一致 |
 | `kicker` | 否 | string | 例如 `01 / 开场`；显示在屏幕上方 |
-| `title` | 是 | string | ≤ 40 字符；当前屏标题 |
+| `title` | 是 | string | ≤ 40 字符；当前屏标题；播放器目录用它做条目，写成能独立看懂的一行 |
 | `summary` | 是 | string | ≤ 120 字符；控制条和大纲里的一句话 |
 | `transcript` | 否 | string | 纯文本；有 `audio: true` 时每屏必须有 |
 | `autoAdvance` | 否 | bool | 默认 `false`；为 `true` 时到点自动进下一屏 |
@@ -466,7 +466,7 @@ courses/<slug>/
 - 不允许外部**资源加载**：`script[src]`、会加载资源的 `link[href]`、`img/source/video/audio[src]`、`poster`、CSS `url()`、`@import` 都不能指向课程包外部。普通 `<a href>` 外链可以用于引用/致谢，但要加 `rel="noopener noreferrer"`，且不能自动加载。
 - GSAP 必须放在 `assets/vendor/gsap.min.js`，在根 `index.html` 里本地引用。
 - 字体必须本地：`@font-face` 的 `src` 指向 `assets/fonts/...`。不能用 Google Fonts 或系统字体作为唯一方案。
-- 课程外壳的字体是可选的：构建时如果 `composition/assets/fonts/` 里有 `.woff2`，课程页会自动注入一份 `@font-face`，让封面、控制条、讲义和动画用同一套字体；优先用 `NotoSansSC-VF.woff2`，没有时才取目录里任意一个，都没有就回退到系统字体，构建不报错。
+- 课程外壳的字体是可选的：构建时如果 `composition/assets/fonts/` 里有 `.woff2`，课程页会自动注入一份 `@font-face`，让封面、控制条、目录、讲义和动画用同一套字体；优先用 `NotoSansSC-VF.woff2`，没有时才取目录里任意一个，都没有就回退到系统字体，构建不报错。
 - 中文正文使用自托管的 Noto Sans SC 子集；拉丁标签/数字可以用一套几何无衬线；等宽标签用 `ui-monospace` 或本地字体。
 - 图片 WebP/AVIF；音频 AAC/MP3/Opus；视频只在必要屏幕使用，且必须本地、压缩、带 `muted` 或 `data-has-audio="true"`。
 - 第三方库（Three.js、Lottie、anime.js 等）放在 `assets/vendor/`，带 LICENSE，并在 `STORYBOARD.md` 里记录版本。
@@ -645,11 +645,12 @@ courses/<slug>/
 - 课程页眉：吸顶的「← 返回课程库」真实链接，`href` 来自 `site.homeUrl`、文案来自 `site.backLabel`；封面页首即可见，不用滚动；播放态（playing/loading）、完成页、错误页隐藏，播放态由控制条第一个控件「退出课程（返回课程库）」承担返回，完成页和错误页各有自己的返回按钮；`site.homeUrl` 为 `null` 时整条页眉不渲染；
 - 封面：标题、副标题、目标、先修、章节大纲、时长/级别/屏数、开始按钮；
 - 舞台：`<hyperframes-player>`、加载遮罩、转场遮罩；播放态下页面占满视口（`100dvh`、无页面滚动），16:9 画布按可用区域等比最大化，控制条在画布外通栏；有封面时才设置 player 的 `poster`。
-- 控制条：退出课程（返回课程库）、上一屏、播放/暂停、下一屏、跳到最后（`End`）、重播、讲义、字幕（有音频时）、配音（有音频时）、全屏、当前屏进度；
+- 控制条：退出课程（返回课程库）、上一屏、播放/暂停、下一屏、跳到最后（`End`）、重播、目录、讲义、字幕（有音频时）、配音（有音频时）、全屏、当前屏进度；
 - 水印：可选，按站点数据库里的部署配置构建时写进 composition 内层，渲染角标和满屏平铺水印，只覆盖 16:9 画布，全屏可见；
 - 进度：课程总进度按全课时间连续增长；当前屏进度是可拖动的 range，拖动时暂停、松手恢复，拖到末端等同于「跳到最后」；
 - 章节信息：当前屏 kicker、标题、摘要；
-- 讲义抽屉：当前屏文本；
+- 目录抽屉：从右侧滑出，按顺序列出每屏的序号、标题和起始时间，当前屏高亮；点任意一屏先关抽屉，再跳到那一屏并播放；与讲义抽屉互斥，共用遮罩、焦点进入/返回和 Esc 关闭；深链与连续播放课程同样适用；条目由平台外壳用 `screens[].title` 服务端渲染，作者不用在 composition 里做导航；
+- 讲义抽屉：当前屏文本；与目录抽屉互斥；
 - 完成页：takeaways、重看、返回课程库；
 - 错误页：说明、重试、返回封面。
 
@@ -749,7 +750,7 @@ cd courses/<slug>/composition && npx --yes hyperframes@0.9.19 check
 
 构建完之后：
 
-1. 打开站点 `/courses/<slug>/`，走一遍完整流程。
+1. 打开站点 `/courses/<slug>/`，走一遍完整流程，包括打开目录跳到任意一屏。
 2. 起一个普通静态服务器再走一遍：`python scripts/serve.py dist/courses/<slug> --port 8081`。
    在 Windows 上不要用 `python -m http.server`——注册表可能把 `.js` 映射成 `text/plain`，浏览器会拒绝加载 ES module。
 3. 用键盘走一遍。
@@ -868,9 +869,10 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - [ ] 水印文字过长时在画布内换行或被裁掉，不会撑破舞台；颜色和透明度可读但不盖住正文。
 - [ ] 下一屏/上一屏正常，能回到第一屏。
 - [ ] 暂停/继续/重播正常。
-- [ ] 讲义能打开、关闭，内容正确。
+- [ ] 目录能打开，按顺序列出每屏标题，点任意一屏跳到那一屏并播放，当前屏高亮；与讲义互斥，Esc 关闭后焦点回到「目录」按钮。
+- [ ] 讲义能打开、关闭，内容正确；与目录互斥。
 - [ ] 全屏正常，退出后焦点回到触发按钮。
-- [ ] 键盘 ←/→/Space/End/C/M/T/F/Esc 正常。
+- [ ] 键盘 ←/→/Space/End/C/M/T/O/F/Esc 正常（`O` 开关目录，`Esc` 关闭目录或讲义）。
 - [ ] 深链 `#s=<id>` 打开后停在该屏，等用户播放。
 - [ ] `prefers-reduced-motion` 下不自动播放。
 - [ ] 本地进度能“继续上次”。

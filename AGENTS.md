@@ -146,7 +146,7 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 
 v0.10：课程水印改为站点部署配置：每门课可在后台配置四角角标水印和满屏平铺水印，配置保存在 SQLite 的 `course_watermarks` 表（不进 Git、不写课程源文件），保存后重新构建；构建从数据库读配置并把水印层写进课程 composition，所以网页播放和导出的 MP4 带同一层。播放页仍是全视口舞台 + 通栏控制条，课程模板仍是独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
 
-- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
+- 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、目录与讲义抽屉、字幕/配音开关、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
 - 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。每门课还有「水印配置」页 `/admin/courses/<slug>/watermark`：角标水印 + 满屏平铺水印，16:9 预览，保存时写站点数据库 `course_watermarks` 表（不进 Git）并重新构建（见课程契约 3.7、7.8 与架构 7.12）。
 - 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `courses-outline/ai-first-sees/outline.md` 的 29 镜头长版落地，共 28 屏 / 29:54（旁白 `rate +0%`；原 S28 safety 并入 S27，收尾为 S28）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。

@@ -90,6 +90,28 @@ def test_shell_points_at_local_runtime(tmp_path: Path, source_dir: Path) -> None
     assert 'id="course-data"' in html
 
 
+def test_shell_renders_the_scene_directory(tmp_path: Path, source_dir: Path) -> None:
+    """The directory drawer is server-rendered, so every screen is a row.
+
+    Long courses rely on it to jump to screen 19 without 19 clicks; a missing
+    row would silently make a screen unreachable from the control bar.
+    """
+
+    build_all(source_root=source_dir, out_root=tmp_path / "dist", courses=[SLUG])
+    html = (tmp_path / "dist" / SLUG / "index.html").read_text(encoding="utf-8")
+    assert 'id="btn-toc"' in html
+    assert 'aria-label="打开目录（O）"' in html
+    # The transcript icon moved to a CSS-drawn page; the list glyph now means
+    # "directory" and must not be printed on the transcript button.
+    assert 'class="icon-doc"' in html
+    assert 'id="toc-list"' in html
+    assert html.count('class="toc__item"') == 2
+    for index in (0, 1):
+        assert f'data-index="{index}"' in html
+    assert "第一屏" in html and "第二屏" in html
+    assert "点任意一屏，直接跳到那一屏播放。" in html
+
+
 def test_build_is_idempotent(tmp_path: Path, source_dir: Path) -> None:
     first = build_course(source_dir / SLUG, out_root=tmp_path / "dist")
     second = build_course(source_dir / SLUG, out_root=tmp_path / "dist")

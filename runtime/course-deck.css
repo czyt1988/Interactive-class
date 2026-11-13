@@ -632,6 +632,29 @@ body.deck[data-deck-nav] .deck-shell {
   font-size: 15px;
 }
 
+/* The transcript icon is drawn with CSS: a paper page with two text lines.
+   DESIGN.md allows text glyphs and CSS shapes only, no icon library and no
+   decorative SVG, so this stays a border plus a rule with a box-shadow. */
+.icon-doc {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.icon-doc::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  right: 2px;
+  height: 1.5px;
+  background: currentColor;
+  box-shadow: 0 4px 0 currentColor;
+}
+
 /* Caption and voice toggles: aria-pressed is the only state signal, so the
  * off state also reads visually. Both are mute-switch semantics, not roles. */
 .control--cc {
@@ -953,6 +976,9 @@ body[data-deck-mode="continuous"] .stage-wrap.is-ended .chapter__summary::after 
 
 .drawer__panel {
   position: relative;
+  /* Above the scrim: the scrim is a later sibling and would otherwise swallow
+     clicks and wheel events on the panel itself. */
+  z-index: 1;
   width: min(560px, 100%);
   height: 100%;
   overflow-y: auto;
@@ -994,6 +1020,14 @@ body[data-deck-mode="continuous"] .stage-wrap.is-ended .chapter__summary::after 
   font-size: 24px;
   letter-spacing: -0.02em;
   line-height: 1.25;
+}
+
+.drawer__meta {
+  margin-top: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--stage-muted);
 }
 
 .drawer__close {
@@ -1052,6 +1086,93 @@ body[data-deck-mode="continuous"] .stage-wrap.is-ended .chapter__summary::after 
 
 body.deck-drawer-open {
   overflow: hidden;
+}
+
+/* ------------------------------------------------------------- toc drawer */
+/* The directory is the transcript drawer's sibling, not a second drawer
+   system: same scrim, same slide, same focus contract. It is narrower, and its
+   list scrolls on its own so the header and the hint stay put on long courses. */
+
+.drawer--toc .drawer__panel {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.drawer--toc .drawer__head,
+.drawer--toc .drawer__foot {
+  flex: none;
+}
+
+.drawer--toc .drawer__head {
+  padding: clamp(24px, 3vw, 36px) clamp(20px, 2.4vw, 30px) 16px;
+}
+
+.drawer--toc .drawer__foot {
+  margin: 0;
+  padding: 12px clamp(20px, 2.4vw, 30px) 18px;
+}
+
+.toc {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  list-style: none;
+  margin: 0;
+  padding: 6px clamp(10px, 1.6vw, 16px) 14px;
+  display: grid;
+  gap: 2px;
+}
+
+.toc__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-mini);
+  background: transparent;
+  color: var(--stage-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms var(--ease, ease);
+}
+
+.toc__item:hover {
+  background: var(--deck-ink-wash);
+}
+
+.toc__item[aria-current="step"] {
+  background: var(--deck-accent-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--deck-accent) 30%, transparent);
+}
+
+.toc__num,
+.toc__time {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--stage-muted);
+}
+
+.toc__item[aria-current="step"] .toc__num {
+  color: var(--deck-accent-ink);
+}
+
+.toc__name {
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.toc__time {
+  padding-top: 2px;
 }
 
 /* ---------------------------------------------------------------- noscript */

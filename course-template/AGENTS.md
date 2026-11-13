@@ -152,6 +152,7 @@
 - [ ] `status` 已改成 `published`。
 - [ ] 每屏一个论题，`screens[]` 与 `STORYBOARD.md` 一致。
 - [ ] 讲义和屏幕文字一致；事实都有来源。
+- [ ] 每屏 `title` 简短、能独立看懂：它会出现在播放器目录里。目录/导航由平台外壳提供，composition 里不要自己实现。
 - [ ] `course.json` 里没有 `watermark` 字段：水印由平台部署配置，不是课程内容（见 `COURSE-CONTRACT.md` 4.7）。
 
 **composition 与资源**

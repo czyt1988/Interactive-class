@@ -201,8 +201,11 @@
             <button id="btn-replay" class="control control--icon" type="button" aria-label="重播这一屏" title="重播这一屏（R 不可用，点击即可）">
               <span aria-hidden="true">↺</span>
             </button>
-            <button id="btn-transcript" class="control control--icon" type="button" aria-label="打开讲义（T）" title="讲义（T）">
+            <button id="btn-toc" class="control control--icon" type="button" aria-label="打开目录（O）" title="目录（O）">
               <span aria-hidden="true">☰</span>
+            </button>
+            <button id="btn-transcript" class="control control--icon" type="button" aria-label="打开讲义（T）" title="讲义（T）">
+              <span class="icon-doc" aria-hidden="true"></span>
             </button>
             {% if course.audio %}
               <button id="btn-captions" class="control control--icon control--cc" type="button" aria-pressed="true" aria-label="隐藏字幕（C）" title="字幕（C）">
@@ -235,7 +238,7 @@
         </div>
 
         <p class="deck-hint">
-          键盘：← → 切屏 · 空格 播放/暂停 · End 跳到本屏结尾 · C 字幕 · M 配音 · T 讲义 · F 全屏 · Esc 关闭讲义
+          键盘：← → 切屏 · 空格 播放/暂停 · End 跳到本屏结尾 · C 字幕 · M 配音 · T 讲义 · O 目录 · F 全屏 · Esc 关闭目录或讲义
         </p>
       </section>
 
@@ -292,6 +295,45 @@
         <div id="transcript-keywords" class="drawer__keywords" hidden></div>
         <footer class="drawer__foot">
           <p>讲义和屏幕文字一致；修改内容时两边一起改。</p>
+        </footer>
+      </div>
+      <div class="drawer__scrim" aria-hidden="true"></div>
+    </aside>
+
+    {# ------------------------------------------------------------------- toc #}
+    {# Every screen is a chapter. The list is server-rendered so it exists even
+       before the deck boots; the shell only moves the active marker and jumps.
+       Long courses (28+ screens) rely on this instead of clicking "next" 19 times. #}
+    <aside id="toc" class="drawer drawer--toc" aria-labelledby="toc-title" hidden>
+      <div class="drawer__panel">
+        <header class="drawer__head">
+          <div>
+            <p class="drawer__eyebrow">目录</p>
+            <h2 id="toc-title" class="drawer__title">{{ course.title }}</h2>
+            <p class="drawer__meta">共 {{ course.stats.screenCount }} 屏 · {{ mmss(course.stats.durationSeconds) }}</p>
+          </div>
+          <button id="toc-close" class="drawer__close" type="button" aria-label="关闭目录">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
+        <ol id="toc-list" class="toc" aria-label="课程目录">
+          {% for screen in screens %}
+            <li class="toc__row">
+              <button
+                type="button"
+                class="toc__item"
+                data-index="{{ screen.index }}"
+                data-screen-id="{{ screen.id }}"
+              >
+                <span class="toc__num">{{ "%02d"|format(screen.index + 1) }}</span>
+                <span class="toc__name">{{ screen.title }}</span>
+                <span class="toc__time">{{ mmss(screen.start) }}</span>
+              </button>
+            </li>
+          {% endfor %}
+        </ol>
+        <footer class="drawer__foot">
+          <p>点任意一屏，直接跳到那一屏播放。</p>
         </footer>
       </div>
       <div class="drawer__scrim" aria-hidden="true"></div>
