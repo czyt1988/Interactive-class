@@ -20,6 +20,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.catalog import watermark as watermark_edit
+from app.catalog import watermark_store
 from app.catalog.models import Catalog, CatalogError
 from app.config import Settings
 from app.db import Base
@@ -276,6 +277,10 @@ def _watermark_form(**overrides: str) -> dict[str, str]:
     return data
 
 
+def _stored_watermark(site: Site):
+    return watermark_store.load(site.settings, SLUG)
+
+
 def _source_manifest(site: Site) -> dict:
     return json.loads(
         (Path(site.settings.courses_src_dir) / SLUG / "course.json").read_text(
@@ -288,7 +293,7 @@ def _source_manifest(site: Site) -> dict:
 def fake_rebuild(monkeypatch) -> list[str]:
     calls: list[str] = []
 
-    def _rebuild(_settings: Settings, slug: str):
+    def _rebuild(_settings: Settings, slug: str, watermark=None):
         calls.append(slug)
         return SimpleNamespace(errors=[], skipped=False)
 
@@ -314,15 +319,20 @@ def test_watermark_page_renders_form(source_site: Site) -> None:
     assert 'name="corner_top_left_text"' in page.text
     assert 'name="repeat_text"' in page.text
     assert f'action="/admin/courses/{SLUG}/watermark"' in page.text
-    assert "自定义目录/" in page.text and f"{SLUG}/course.json" in page.text
+    # The config lives in the database; the source label only appears when this
+    # machine cannot rebuild (the page explains it in that case).
+    assert "course_watermarks" in page.text
     # The server-rendered preview must already cover the densest grid setting;
     # JavaScript only mirrors edits and does not add tiles.
     assert page.text.count("data-wm-tile") == watermark_edit.PREVIEW_TILES
 
 
-def test_save_watermark_writes_source_and_redirects(
+def test_save_watermark_writes_to_database_and_redirects(
     source_site: Site, fake_rebuild: list[str]
 ) -> None:
+    before = (Path(source_site.settings.courses_src_dir) / SLUG / "course.json").read_text(
+        encoding="utf-8"
+    )
     response = source_site.client.post(
         f"/admin/courses/{SLUG}/watermark",
         data=_watermark_form(),
@@ -332,15 +342,20 @@ def test_save_watermark_writes_source_and_redirects(
     assert response.headers["location"].endswith("?notice=saved")
     assert fake_rebuild == [SLUG]
 
-    manifest = _source_manifest(source_site)
-    assert manifest["title"] == "两屏测试课"
-    watermark = manifest["watermark"]
-    assert watermark["enabled"] is True
-    assert [corner["position"] for corner in watermark["corners"]] == [
+    # The watermark goes to the database, never into the course source.
+    watermark = _stored_watermark(source_site)
+    assert watermark is not None
+    assert watermark.enabled is True
+    assert [corner.position for corner in watermark.corners] == [
         "top-left",
         "bottom-right",
     ]
-    assert watermark["repeating"]["text"] == "内部资料，请勿外传"
+    assert watermark.repeating is not None
+    assert watermark.repeating.text == "内部资料，请勿外传"
+    assert (
+        Path(source_site.settings.courses_src_dir) / SLUG / "course.json"
+    ).read_text(encoding="utf-8") == before
+    assert "watermark" not in _source_manifest(source_site)
 
     page = source_site.client.get(
         f"/admin/courses/{SLUG}/watermark?notice=saved"
@@ -361,17 +376,17 @@ def test_invalid_watermark_is_reported_without_writing(
     assert "没有保存成功" in response.text
     assert "左上角透明度必须在 0 到 1 之间" in response.text
     assert "作者：张三" in response.text
-    assert "watermark" not in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is None
     assert fake_rebuild == []
 
 
-def test_clear_watermark_removes_the_key(
+def test_clear_watermark_removes_the_row(
     source_site: Site, fake_rebuild: list[str]
 ) -> None:
     source_site.client.post(
         f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
     )
-    assert "watermark" in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is not None
 
     response = source_site.client.post(
         f"/admin/courses/{SLUG}/watermark",
@@ -380,7 +395,7 @@ def test_clear_watermark_removes_the_key(
     )
     assert response.status_code == 303
     assert response.headers["location"].endswith("?notice=cleared")
-    assert "watermark" not in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is None
     assert fake_rebuild == [SLUG, SLUG]
 
 
@@ -390,7 +405,7 @@ def test_blank_save_clears_the_watermark_and_says_cleared(
     source_site.client.post(
         f"/admin/courses/{SLUG}/watermark", data=_watermark_form()
     )
-    assert "watermark" in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is not None
 
     response = source_site.client.post(
         f"/admin/courses/{SLUG}/watermark",
@@ -399,7 +414,7 @@ def test_blank_save_clears_the_watermark_and_says_cleared(
     )
     assert response.status_code == 303
     assert response.headers["location"].endswith("?notice=cleared")
-    assert "watermark" not in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is None
 
 
 def test_watermark_rejects_non_form_posts(
@@ -415,7 +430,7 @@ def test_watermark_rejects_non_form_posts(
     )
     assert response.status_code == 415
     assert "只接受表单提交" in response.text
-    assert "watermark" in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is not None
 
 
 def test_watermark_rejects_unknown_or_missing_action(
@@ -439,7 +454,7 @@ def test_watermark_rejects_unknown_or_missing_action(
     )
     assert missing_action.status_code == 400
     assert "动作无法识别" in missing_action.text
-    assert "watermark" in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is not None
 
 
 def test_watermark_page_is_read_only_without_source(site: Site) -> None:
@@ -459,29 +474,32 @@ def test_watermark_page_is_read_only_without_source(site: Site) -> None:
     assert not (Path(site.settings.courses_src_dir) / SLUG).exists()
 
 
-def test_unreadable_source_is_read_only(source_site: Site) -> None:
+def test_broken_source_saves_config_but_reports_build_failure(source_site: Site) -> None:
     manifest = Path(source_site.settings.courses_src_dir) / SLUG / "course.json"
     manifest.write_text("{broken json", encoding="utf-8")
 
+    # The page is editable: the config lives in the database, not in this file.
     page = source_site.client.get(f"/admin/courses/{SLUG}/watermark")
     assert page.status_code == 200
-    assert "页面暂时只读" in page.text
-    assert re.search(r'<button[^>]*value="save"[^>]*disabled', page.text)
+    assert not re.search(r'<button[^>]*value="save"[^>]*disabled', page.text)
 
     response = source_site.client.post(
         f"/admin/courses/{SLUG}/watermark",
         data=_watermark_form(),
         follow_redirects=False,
     )
-    assert response.status_code == 409
-    assert "水印没有改动" in response.text
+    assert response.status_code == 422
+    assert "重新构建课程包失败" in response.text
+    # The database write happens before the build; fixing the source and saving
+    # again keeps the stored config.
+    assert _stored_watermark(source_site) is not None
     assert manifest.read_text(encoding="utf-8") == "{broken json"
 
 
 def test_watermark_rebuild_failure_is_reported(
     source_site: Site, monkeypatch
 ) -> None:
-    def _failing(_settings: Settings, _slug: str):
+    def _failing(_settings: Settings, _slug: str, watermark=None):
         return SimpleNamespace(
             errors=[
                 CatalogError(
@@ -503,7 +521,7 @@ def test_watermark_rebuild_failure_is_reported(
     assert response.status_code == 422
     assert "重新构建课程包失败" in response.text
     assert "manifest_invalid" in response.text
-    assert "watermark" in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is not None
 
 
 def test_watermark_post_rejects_cross_site_origin(source_site: Site) -> None:
@@ -514,7 +532,7 @@ def test_watermark_post_rejects_cross_site_origin(source_site: Site) -> None:
         follow_redirects=False,
     )
     assert response.status_code == 403
-    assert "watermark" not in _source_manifest(source_site)
+    assert _stored_watermark(source_site) is None
 
 
 def test_watermark_page_requires_admin_token(settings: Settings, write_course, monkeypatch) -> None:
@@ -534,11 +552,7 @@ def test_watermark_page_requires_admin_token(settings: Settings, write_course, m
         )
         assert blocked.status_code == 303
         assert "notice=auth" in blocked.headers["location"]
-        assert "watermark" not in json.loads(
-            (Path(protected.courses_src_dir) / SLUG / "course.json").read_text(
-                encoding="utf-8"
-            )
-        )
+        assert watermark_store.load(protected, SLUG) is None
 
 
 def test_save_rebuilds_a_real_bundle(source_site: Site) -> None:

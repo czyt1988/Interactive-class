@@ -1,10 +1,10 @@
 """Per-course watermark settings: form parsing, persistence and render overlay.
 
-Watermarks are course content. They live in the course's ``course.json`` under
-the optional ``watermark`` field and are baked into the built course bundle, so
-a standalone course keeps its watermark without the site, the database or an
-API. The admin config page is only a form over this module: it edits the source
-``course.json`` and rebuilds ``dist/courses/<slug>/``.
+Watermarks are deployment configuration, not course content. The admin page
+stores them in the site database (``app.catalog.watermark_store``) so the text
+never enters ``courses/<slug>/course.json`` or git history, and the build bakes
+the layer into the built course bundle. A standalone course therefore keeps its
+watermark without the site, the database or an API at play time.
 
 The build injects the overlay into the built composition's entry page rather
 than the shell, because both the web player and the MP4 renderer consume that
@@ -18,10 +18,7 @@ because production images ship only the ``app`` package.
 
 from __future__ import annotations
 
-import json
 import math
-import os
-import tempfile
 import threading
 from collections.abc import Mapping
 from html import escape
@@ -30,6 +27,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.catalog import watermark_store
 from app.catalog.models import (
     ACCENT_PATTERN,
     SLUG_PATTERN,
@@ -518,59 +516,25 @@ def inject_watermark(entry: Path, watermark: WatermarkConfig | None) -> bool:
 
 
 def manifest_path(settings: Settings, slug: str) -> Path:
+    """Source ``course.json`` path, used only to tell whether a rebuild is possible.
+
+    The watermark itself is not stored there any more: this file only decides
+    whether the admin page can rebuild the bundle on this machine.
+    """
+
     if not SLUG_PATTERN.fullmatch(slug) or Path(slug).name != slug:
         raise ValueError("课程 slug 不合法")
     return Path(settings.courses_src_dir) / slug / "course.json"
 
 
-def read_manifest(path: Path) -> dict[str, Any]:
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        raise ValueError("course.json 顶层必须是对象")
-    return raw
-
-
-def watermark_from_manifest(raw: Mapping[str, Any]) -> WatermarkConfig | None:
-    payload = raw.get("watermark")
-    if not payload:
-        return None
-    return WatermarkConfig.model_validate(payload)
-
-
-def write_manifest(path: Path, raw: Mapping[str, Any]) -> None:
-    """Atomically replace the manifest so a failed write never truncates it."""
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, name = tempfile.mkstemp(
-        dir=str(path.parent), prefix=".course-", suffix=".json"
-    )
-    temporary = Path(name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            json.dump(raw, handle, ensure_ascii=False, indent=2)
-            handle.write("\n")
-        os.replace(temporary, path)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
-
-
-def save_watermark(settings: Settings, slug: str, watermark: WatermarkConfig | None) -> Path:
-    path = manifest_path(settings, slug)
-    raw = read_manifest(path)
-    if watermark is None:
-        raw.pop("watermark", None)
-    else:
-        raw["watermark"] = watermark.model_dump(exclude_none=True)
-    write_manifest(path, raw)
-    return path
-
-
-def rebuild_course(settings: Settings, slug: str):
+def rebuild_course(
+    settings: Settings, slug: str, watermark: WatermarkConfig | None = None
+):
     """Rebuild one course bundle from its source directory.
 
     Imported lazily: production deployments install only ``app`` and never run
     the authoring pipeline. The web process calls this only from the admin page.
+    The watermark comes from the database and is baked into the built bundle.
     """
 
     from scripts.build_courses import build_course
@@ -584,18 +548,23 @@ def rebuild_course(settings: Settings, slug: str):
         site_title=settings.site_title,
         course_base_url=settings.course_base_url,
         progress_sync=True,
+        watermark=watermark,
     )
 
 
 def apply_watermark(
     settings: Settings, slug: str, watermark: WatermarkConfig | None
 ):
-    """Persist the watermark and rebuild the bundle as one serialised step."""
+    """Persist the watermark and rebuild the bundle as one serialised step.
+
+    The database write comes first: if the rebuild fails, the config is already
+    stored and the next build picks it up.
+    """
 
     with _WRITE_LOCK:
-        path = save_watermark(settings, slug, watermark)
-        result = rebuild_course(settings, slug)
-    return path, result
+        watermark_store.save(settings, slug, watermark)
+        result = rebuild_course(settings, slug, watermark=watermark)
+    return result
 
 
 def build_error_messages(result: Any) -> list[str]:

@@ -22,11 +22,11 @@ from fastapi.responses import (
     RedirectResponse,
     Response,
 )
-from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from app.catalog import watermark as watermark_edit
-from app.catalog.models import Catalog, ResolvedCourse
+from app.catalog import watermark_store
+from app.catalog.models import Catalog, ResolvedCourse, WatermarkConfig
 from app.catalog.watermark import (
     POSITION_FIELD_KEYS,
     POSITION_LABELS,
@@ -59,8 +59,8 @@ WATERMARK_NOTICES = {
     "cleared": "水印已清除，课程包已重新构建。",
 }
 WATERMARK_SOURCE_HINT = (
-    "这台机器上没有课程源文件 {path}。水印配置只写入课程源文件并重新构建课程包，"
-    "请在持有课程源的机器上配置，或手工编辑 course.json 的 watermark 字段。"
+    "这台机器上没有课程源文件 {path}，无法重新构建课程包。水印本身保存在站点数据库里、"
+    "不写课程源文件，但构建需要课程源，请在持有课程源的机器上配置。"
 )
 WATERMARK_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded"
 WATERMARK_FORM_FIELDS = (
@@ -200,7 +200,14 @@ def _status_label(status: VideoStatus) -> tuple[str, str | None]:
     return "未生成", None
 
 
-def _row(course: ResolvedCourse, status: VideoStatus, *, busy: bool, ready: bool) -> dict[str, Any]:
+def _row(
+    course: ResolvedCourse,
+    status: VideoStatus,
+    *,
+    busy: bool,
+    ready: bool,
+    watermark: WatermarkConfig | None,
+) -> dict[str, Any]:
     label, elapsed_label = _status_label(status)
     artifact = status.artifact
     running = status.state == "running"
@@ -219,9 +226,9 @@ def _row(course: ResolvedCourse, status: VideoStatus, *, busy: bool, ready: bool
         notes.append("正在重新生成，当前可下载上一版视频。")
     if status.stale:
         notes.append("课程在上次构建后更新过，可以重新生成。")
-    if course.watermark is None:
+    if watermark is None:
         watermark_label = "未配置水印"
-    elif course.watermark.enabled:
+    elif watermark.enabled:
         watermark_label = "水印已配置"
     else:
         watermark_label = "水印已关闭"
@@ -251,11 +258,19 @@ def _row(course: ResolvedCourse, status: VideoStatus, *, busy: bool, ready: bool
 def _rows(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     environment = _environment(request)
     manager = _manager(request)
+    settings = _settings(request)
+    watermarks = watermark_store.load_all(settings)
     busy = manager.is_busy()
     rows: list[dict[str, Any]] = []
     for course in _catalog(request).courses:
         status = manager.status(course.slug, content_hash=course.build.contentHash)
-        row = _row(course, status, busy=busy, ready=bool(environment["ready"]))
+        row = _row(
+            course,
+            status,
+            busy=busy,
+            ready=bool(environment["ready"]),
+            watermark=watermarks.get(course.slug),
+        )
         if manager.project_dir(course) is None and not row["reason"]:
             row["reason"] = "服务器上找不到这门课的 composition，不能生成。"
             row["can_generate"] = False
@@ -352,22 +367,14 @@ def _source_label(settings: Settings, slug: str) -> str:
         return f"自定义目录/{slug}/course.json"
 
 
-def _read_source_watermark(
-    settings: Settings, slug: str
-) -> tuple[str, dict[str, Any] | None, str | None]:
-    """Return ``(state, manifest, error)`` for the source course.json.
+def _source_available(settings: Settings, slug: str) -> bool:
+    """Whether this machine can rebuild the bundle.
 
-    ``state`` is ``missing`` (no source on this machine), ``unreadable`` (the file
-    exists but is not valid JSON) or ``ok``. Only ``ok`` may be written to.
+    The watermark itself comes from the database; the source tree is only needed
+    because saving a watermark rebuilds the course bundle.
     """
 
-    source = _source_manifest(settings, slug)
-    if not source.is_file():
-        return "missing", None, None
-    try:
-        return "ok", watermark_edit.read_manifest(source), None
-    except (OSError, ValueError) as exc:
-        return "unreadable", None, str(exc)
+    return _source_manifest(settings, slug).is_file()
 
 
 def _decode_form(body: bytes) -> dict[str, list[str]]:
@@ -383,24 +390,13 @@ def _watermark_page(
     status_code: int = 200,
 ) -> Response:
     settings = _settings(request)
-    state, manifest, read_error = _read_source_watermark(settings, course.slug)
-    source_available = state == "ok"
+    source_available = _source_available(settings, course.slug)
     problems = list(errors or [])
 
     if values is None:
-        current = course.watermark
-        if state == "ok" and manifest is not None:
-            try:
-                current = watermark_edit.watermark_from_manifest(manifest)
-            except ValidationError as exc:
-                problems.append(
-                    f"源文件里的水印配置不合法，下面显示已构建版本：{exc}"
-                )
-        elif state == "unreadable":
-            problems.append(
-                f"读取 {_source_label(settings, course.slug)} 失败，页面暂时只读：{read_error}"
-            )
-        values = watermark_edit.form_values(current)
+        values = watermark_edit.form_values(
+            watermark_store.load(settings, course.slug)
+        )
 
     context = {
         **_base_context(
@@ -421,8 +417,6 @@ def _watermark_page(
         "errors": problems,
         "notice": WATERMARK_NOTICES.get(request.query_params.get("notice") or ""),
         "source_available": source_available,
-        "source_state": state,
-        "source_error": read_error,
         "source_label": _source_label(settings, course.slug),
         "posted_url": _watermark_url(course.slug),
     }
@@ -456,24 +450,14 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
         return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
 
     settings = _settings(request)
-    state, _manifest, read_error = _read_source_watermark(settings, slug)
-    if state == "missing":
+    current = watermark_store.load(settings, slug)
+    if not _source_available(settings, slug):
         return _watermark_page(
             request,
             course,
-            values=watermark_edit.form_values(course.watermark),
+            values=watermark_edit.form_values(current),
             errors=[
                 WATERMARK_SOURCE_HINT.format(path=_source_label(settings, slug))
-            ],
-            status_code=409,
-        )
-    if state == "unreadable":
-        return _watermark_page(
-            request,
-            course,
-            values=watermark_edit.form_values(course.watermark),
-            errors=[
-                f"读取 {_source_label(settings, slug)} 失败，水印没有改动：{read_error}"
             ],
             status_code=409,
         )
@@ -485,7 +469,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
         return _watermark_page(
             request,
             course,
-            values=watermark_edit.form_values(course.watermark),
+            values=watermark_edit.form_values(current),
             errors=["水印配置只接受表单提交，水印没有改动。"],
             status_code=415,
         )
@@ -507,7 +491,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
         return _watermark_page(
             request,
             course,
-            values=watermark_edit.form_values(course.watermark),
+            values=watermark_edit.form_values(current),
             errors=["表单内容为空或字段无法识别，水印没有改动。"],
             status_code=400,
         )
@@ -536,7 +520,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
             )
 
     try:
-        _path, result = await run_in_threadpool(
+        result = await run_in_threadpool(
             watermark_edit.apply_watermark, settings, slug, watermark
         )
     except Exception as exc:  # noqa: BLE001 - report the failure on the page
@@ -556,7 +540,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
             course,
             values=watermark_edit.form_values(watermark),
             errors=[
-                "水印已写入 course.json，但课程是草稿，构建被跳过。"
+                "水印已保存到数据库，但课程是草稿，构建被跳过。"
                 "把 status 改成 published 后重新保存。"
             ],
             status_code=422,
@@ -568,7 +552,7 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
             course,
             values=watermark_edit.form_values(watermark),
             errors=[
-                "水印已写入 course.json，但重新构建课程包失败，修好后重新保存：",
+                "水印已保存到数据库，但重新构建课程包失败，修好后重新保存：",
                 *build_errors,
             ],
             status_code=422,

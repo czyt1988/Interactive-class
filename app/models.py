@@ -8,7 +8,16 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -88,6 +97,25 @@ class ScreenProgress(Base):
     completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+
+class CourseWatermark(Base):
+    """A course watermark kept in the site database instead of the course source.
+
+    Watermarks identify who a deployment is shown to, not what the course says,
+    so they must not travel with ``courses/<slug>/course.json`` or the repository
+    history. The build reads the row and bakes the layer into the built
+    composition, so the standalone bundle still carries it at play time without
+    the database. ``config`` is the validated ``WatermarkConfig`` JSON.
+    """
+
+    __tablename__ = "course_watermarks"
+
+    course_slug: Mapped[str] = mapped_column(String(80), primary_key=True)
+    config: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )

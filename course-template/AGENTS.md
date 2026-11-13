@@ -62,7 +62,7 @@
 - **不要写 `start` / `duration` / `index`**，这些由平台从 composition 解析后生成。
 - `status` 开发期保持 `draft`，**交付前改成 `published`**（平台默认只构建 published）。
 - `credits.author` 写真实作者；`credits.sources` 写事实来源。
-- 需要课程水印时按 `COURSE-CONTRACT.md` 4.7 写 `watermark`；不需要就省略或写 `null`。水印是展示配置，不影响时间和 composition，构建时会写进 composition 的内层，网页播放和导出的视频都带。
+- 课程水印**不是课程字段**：它由需求方在平台后台按部署配置（见 `COURSE-CONTRACT.md` 4.7），不要写进 `course.json`，写了会被当作未知字段拒绝。水印不影响时间和 composition。
 
 ### 第 4 步：逐屏写 scene
 
@@ -152,7 +152,7 @@
 - [ ] `status` 已改成 `published`。
 - [ ] 每屏一个论题，`screens[]` 与 `STORYBOARD.md` 一致。
 - [ ] 讲义和屏幕文字一致；事实都有来源。
-- [ ] 如果写了 `watermark`：颜色是 `#RRGGBB`、字号/步长/透明度在 `COURSE-CONTRACT.md` 4.7 的范围内、每个角最多一条。
+- [ ] `course.json` 里没有 `watermark` 字段：水印由平台部署配置，不是课程内容（见 `COURSE-CONTRACT.md` 4.7）。
 
 **composition 与资源**
 

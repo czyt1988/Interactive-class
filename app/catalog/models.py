@@ -218,7 +218,6 @@ class CourseSource(StrictModel):
     playback: Playback = "screens"
     composition: CompositionInfo = Field(default_factory=CompositionInfo)
     screens: list[ScreenMeta]
-    watermark: WatermarkConfig | None = None
     site: SiteInfo = Field(default_factory=SiteInfo)
     credits: CreditsInfo = Field(default_factory=CreditsInfo)
 

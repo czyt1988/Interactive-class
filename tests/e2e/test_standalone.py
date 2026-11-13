@@ -7,7 +7,6 @@ doc (9.5): if it fails, the course cannot ship.
 from __future__ import annotations
 
 import functools
-import json
 import re
 import shutil
 import socket
@@ -21,6 +20,7 @@ pytest.importorskip("playwright.sync_api")
 
 from playwright.sync_api import Browser, Page, sync_playwright  # noqa: E402
 
+from app.catalog.models import WatermarkConfig  # noqa: E402
 from scripts.build_courses import build_all  # noqa: E402
 from scripts.serve import CourseRequestHandler, ReusableTCPServer  # noqa: E402
 
@@ -519,14 +519,15 @@ WATERMARK = {
 def watermark_bundle(tmp_path_factory: pytest.TempPathFactory) -> Path:
     source = tmp_path_factory.mktemp("watermark-source")
     shutil.copytree(FIXTURES / SLUG, source / SLUG)
-    manifest_path = source / SLUG / "course.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest["watermark"] = WATERMARK
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
     out = tmp_path_factory.mktemp("watermark-dist")
-    results = build_all(source_root=source, out_root=out, courses=[SLUG])
+    # The watermark is deployment config from the site database, so it is passed
+    # to the build directly; it never enters the course source.
+    results = build_all(
+        source_root=source,
+        out_root=out,
+        courses=[SLUG],
+        watermarks={SLUG: WatermarkConfig.model_validate(WATERMARK)},
+    )
     assert results[0].ok, results[0].errors
     return out
 

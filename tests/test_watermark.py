@@ -1,4 +1,8 @@
-"""Tests for the per-course watermark contract, form parsing and build output."""
+"""Tests for the per-course watermark contract, form parsing, DB storage and build output.
+
+A watermark must never enter ``courses/<slug>/course.json`` or git history, so
+these tests also pin where the config lives: the site database, not the source.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +15,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from app import models as _models  # noqa: F401  (registers course_watermarks on Base)
 from app.catalog.models import WatermarkConfig
 from app.catalog.watermark import (
     PREVIEW_TILES,
@@ -18,17 +23,31 @@ from app.catalog.watermark import (
     form_values_from_request,
     inject_watermark,
     parse_form,
-    read_manifest,
-    save_watermark,
     tile_count,
-    watermark_from_manifest,
-    write_manifest,
 )
+from app.catalog.watermark_store import load, load_all, save
 from app.config import Settings
+from app.db import Base, create_db_engine
 from scripts.build_courses import build_course
 
 FIXTURES = Path(__file__).parent / "fixtures" / "courses"
 SLUG = "valid-two-screen"
+
+
+def _settings(tmp_path: Path, **overrides) -> Settings:
+    return Settings(
+        env="dev",
+        courses_src_dir=tmp_path / "courses",
+        courses_dist_dir=tmp_path / "dist" / "courses",
+        database_url=f"sqlite:///{(tmp_path / 'test.db').as_posix()}",
+        **overrides,
+    )
+
+
+def _create_watermark_table(settings: Settings) -> None:
+    engine = create_db_engine(settings.database_url)
+    Base.metadata.create_all(engine)
+    engine.dispose()
 
 
 def _watermark_payload() -> dict:
@@ -271,57 +290,79 @@ def test_tile_count_covers_the_canvas() -> None:
     assert tile_count(dense) == 255  # ceil(1920/120)=16, ceil(1080/80)=14
 
 
-# -- source manifest -------------------------------------------------------
+# -- site database storage -------------------------------------------------
 
 
-def test_save_watermark_writes_and_removes_the_key(tmp_path: Path) -> None:
-    settings = Settings(
-        env="dev",
-        courses_src_dir=tmp_path / "courses",
-        courses_dist_dir=tmp_path / "dist" / "courses",
-        database_url=f"sqlite:///{(tmp_path / 'test.db').as_posix()}",
-    )
+def test_save_watermark_writes_and_removes_the_row(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    _create_watermark_table(settings)
+    watermark = WatermarkConfig.model_validate(_watermark_payload())
+
+    assert load(settings, SLUG) is None
+    save(settings, SLUG, watermark)
+
+    saved = load(settings, SLUG)
+    assert saved is not None
+    assert saved.repeating is not None
+    assert saved.repeating.text == "内部资料，请勿外传"
+    assert load_all(settings)[SLUG].corners[0].text == "作者：张三"
+
+    save(settings, SLUG, None)
+    assert load(settings, SLUG) is None
+    assert load_all(settings) == {}
+
+
+def test_watermark_is_not_written_into_the_course_source(tmp_path: Path) -> None:
+    """The whole point of the database: the text never enters ``course.json``."""
+
+    settings = _settings(tmp_path)
+    _create_watermark_table(settings)
     course_dir = settings.courses_src_dir / SLUG
     shutil.copytree(FIXTURES / SLUG, course_dir)
-    original = read_manifest(course_dir / "course.json")
-    original["title"] = "保留我"
-    write_manifest(course_dir / "course.json", original)
+    before = (course_dir / "course.json").read_text(encoding="utf-8")
 
-    watermark = WatermarkConfig.model_validate(_watermark_payload())
-    save_watermark(settings, SLUG, watermark)
-    saved = read_manifest(course_dir / "course.json")
-    assert saved["title"] == "保留我"
-    assert saved["watermark"]["repeating"]["text"] == "内部资料，请勿外传"
-    assert watermark_from_manifest(saved) is not None
+    save(settings, SLUG, WatermarkConfig.model_validate(_watermark_payload()))
 
-    save_watermark(settings, SLUG, None)
-    assert "watermark" not in read_manifest(course_dir / "course.json")
+    after = (course_dir / "course.json").read_text(encoding="utf-8")
+    assert after == before
+    assert "watermark" not in json.loads(after)
+    assert "作者：张三" not in after
 
 
-def test_manifest_path_rejects_traversal(tmp_path: Path) -> None:
-    settings = Settings(
-        env="dev",
-        courses_src_dir=tmp_path / "courses",
-        courses_dist_dir=tmp_path / "dist" / "courses",
-        database_url=f"sqlite:///{(tmp_path / 'test.db').as_posix()}",
-    )
+def test_missing_table_means_no_watermark(tmp_path: Path) -> None:
+    """A build on a fresh checkout must not fail because migrations have not run."""
+
+    settings = _settings(tmp_path)
+    assert load(settings, SLUG) is None
+    assert load_all(settings) == {}
+
+    # Nothing was created as a side effect of reading.
+    created = create_db_engine(settings.database_url)
+    try:
+        from sqlalchemy import inspect
+
+        assert "course_watermarks" not in inspect(created).get_table_names()
+    finally:
+        created.dispose()
+
+
+def test_slug_traversal_is_rejected(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    _create_watermark_table(settings)
     with pytest.raises(ValueError):
-        save_watermark(settings, "../escape", None)
+        save(settings, "../escape", None)
 
 
 # -- build output ----------------------------------------------------------
 
 
 def _build_with(payload: dict | None, root: Path) -> tuple[str, str, str]:
-    """Build one course and return ``(shell html, composition html, hash)``."""
+    """Build one course with a DB-side watermark and return ``(shell, composition, hash)``."""
 
     source = root / "courses" / SLUG
     shutil.copytree(FIXTURES / SLUG, source)
-    manifest = read_manifest(source / "course.json")
-    if payload is not None:
-        manifest["watermark"] = payload
-    write_manifest(source / "course.json", manifest)
-    result = build_course(source, out_root=root / "dist")
+    watermark = WatermarkConfig.model_validate(payload) if payload is not None else None
+    result = build_course(source, out_root=root / "dist", watermark=watermark)
     assert result.ok, [error.message for error in result.errors]
     bundle = root / "dist" / SLUG
     shell = (bundle / "index.html").read_text(encoding="utf-8")
@@ -356,7 +397,7 @@ def test_build_omits_watermark_when_not_configured(tmp_path: Path) -> None:
     assert "data-course-watermark" not in shell
 
 
-def test_disabled_watermark_is_kept_in_manifest_but_not_rendered(tmp_path: Path) -> None:
+def test_disabled_watermark_is_not_rendered_or_serialized(tmp_path: Path) -> None:
     payload = _watermark_payload()
     payload["enabled"] = False
     _, composition, _ = _build_with(payload, tmp_path / "disabled")
@@ -366,8 +407,9 @@ def test_disabled_watermark_is_kept_in_manifest_but_not_rendered(tmp_path: Path)
             encoding="utf-8"
         )
     )
-    assert built["watermark"]["enabled"] is False
-    assert built["watermark"]["corners"][0]["text"] == "作者：张三"
+    # Not rendered and not part of the built manifest: the config stays in the
+    # database, not in course content.
+    assert "watermark" not in built
 
 
 def test_build_changes_content_hash_when_watermark_changes(tmp_path: Path) -> None:
@@ -437,25 +479,27 @@ def test_inject_watermark_appends_without_a_body_tag(tmp_path: Path) -> None:
     assert "course-watermark__corner--bottom-right" in document
 
 
-def test_invalid_watermark_fails_the_build(tmp_path: Path) -> None:
+def test_course_json_rejects_the_watermark_field(tmp_path: Path) -> None:
+    """Watermark is no longer course content: a stray key must fail the build."""
+
     source = tmp_path / "courses" / SLUG
     shutil.copytree(FIXTURES / SLUG, source)
-    manifest = read_manifest(source / "course.json")
-    manifest["watermark"] = {"corners": [{"position": "middle", "text": "x"}]}
-    write_manifest(source / "course.json", manifest)
+    manifest_path = source / "course.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["watermark"] = _watermark_payload()
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+    )
     result = build_course(source, out_root=tmp_path / "dist")
     assert not result.ok
     assert any(error.code == "manifest_invalid" for error in result.errors)
 
 
-def test_manifest_json_contains_watermark_for_the_deck(tmp_path: Path) -> None:
-    build_course_path = tmp_path / "courses" / SLUG
-    shutil.copytree(FIXTURES / SLUG, build_course_path)
-    manifest = read_manifest(build_course_path / "course.json")
-    manifest["watermark"] = _watermark_payload()
-    write_manifest(build_course_path / "course.json", manifest)
-    assert build_course(build_course_path, out_root=tmp_path / "dist").ok
+def test_build_manifest_does_not_serialize_the_watermark(tmp_path: Path) -> None:
+    _build_with(_watermark_payload(), tmp_path / "marked")
     built = json.loads(
-        (tmp_path / "dist" / SLUG / "course.json").read_text(encoding="utf-8")
+        (tmp_path / "marked" / "dist" / SLUG / "course.json").read_text(
+            encoding="utf-8"
+        )
     )
-    assert built["watermark"]["repeating"]["text"] == "内部资料，请勿外传"
+    assert "watermark" not in built

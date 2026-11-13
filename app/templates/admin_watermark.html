@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}水印配置 · {{ course.title }} · {{ site.title }}{% endblock %}
-{% block description %}给《{{ course.title }}》配置角标水印和满屏平铺水印。保存后写入课程源文件并重新构建课程包。{% endblock %}
+{% block description %}给《{{ course.title }}》配置角标水印和满屏平铺水印。保存后存入站点数据库并重新构建课程包。{% endblock %}
 
 {% block head_extra %}
   <meta name="robots" content="noindex" />
@@ -11,7 +11,7 @@
 <section class="page-head page-head--narrow">
   <p class="eyebrow">后台 / 水印配置</p>
   <h1>给《{{ course.title }}》加水印</h1>
-  <p class="lede">角标水印放在画面四角，适合放作者和公司信息；满屏平铺水印把同一句话重复铺满画面，用来降低截图外传的可读性。两种可以同时使用，保存后会重新构建这门课。</p>
+  <p class="lede">角标水印放在画面四角，适合放作者和公司信息；满屏平铺水印把同一句话重复铺满画面，用来降低截图外传的可读性。两种可以同时使用。水印保存在站点数据库里，不写课程源文件、不进 Git；保存后会重新构建这门课，把水印注入课程包。</p>
   <p class="admin-watermark__back"><a href="/admin">← 返回课程后台</a></p>
 </section>
 
@@ -30,13 +30,9 @@
   </div>
 {% endif %}
 
-{% if source_state == "missing" %}
+{% if not source_available %}
   <div class="admin-notice admin-notice--warn" role="note">
-    <p>这台机器上没有 <code>{{ source_label }}</code>，下面显示的是已构建课程包里的设置。水印只能写在课程源文件里，请在持有课程源的机器上打开本页配置。</p>
-  </div>
-{% elif source_state == "unreadable" %}
-  <div class="admin-notice admin-notice--warn" role="note">
-    <p>读取 <code>{{ source_label }}</code> 失败，页面暂时只读：{{ source_error }}。修好这个文件后刷新本页再配置。</p>
+    <p>这台机器上没有 <code>{{ source_label }}</code>，无法重新构建课程包。水印配置保存在站点数据库里，不写课程源文件；但构建需要课程源，请在持有课程源的机器上打开本页配置。</p>
   </div>
 {% endif %}
 
@@ -158,6 +154,6 @@
   </div>
 </form>
 
-<p class="admin-footnote">水印写在 <code>{{ source_label }}</code> 的 <code>watermark</code> 字段，构建后进入课程包，独立部署也保留。清除水印会从课程源文件里删掉这个字段。</p>
+<p class="admin-footnote">水印保存在站点数据库的 <code>course_watermarks</code> 表里，不写课程源文件、不进 Git；保存后构建时注入课程包，独立部署也保留。清除水印会删除这条记录并重新构建。</p>
 <script src="/static/admin_watermark.js" defer></script>
 {% endblock %}

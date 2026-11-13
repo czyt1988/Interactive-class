@@ -446,17 +446,5 @@
       "字节 Seedance、快手可灵、OpenAI Sora、Google Veo 官方页面",
       "国家网络与信息安全信息通报中心等：OpenClaw 安全预警"
     ]
-  },
-  "watermark": {
-    "enabled": true,
-    "corners": [
-      {
-        "position": "bottom-right",
-        "text": "内部资料",
-        "fontSize": 30,
-        "color": "#16140f",
-        "opacity": 0.6
-      }
-    ]
   }
 }

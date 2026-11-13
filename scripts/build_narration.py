@@ -496,21 +496,6 @@ def write_narration_data(scenes: list[Scene], total: float) -> None:
     (COMPOSITION / "assets" / "narration-data.js").write_text(js, encoding="utf-8", newline="\n")
 
 
-def existing_watermark() -> dict | None:
-    """Carry the admin-managed watermark through a narration rebuild.
-
-    The watermark lives in ``course.json`` and is written by the admin page,
-    but this generator rewrites that file from narration metadata. Without this
-    copy step a narration rebuild would silently drop the watermark config.
-    """
-    try:
-        payload = json.loads((COURSE / "course.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    watermark = payload.get("watermark")
-    return watermark if isinstance(watermark, dict) else None
-
-
 def write_composition_course(scenes: list[Scene], meta: dict) -> None:
     course = {
         "schemaVersion": 1,
@@ -557,9 +542,6 @@ def write_composition_course(scenes: list[Scene], meta: dict) -> None:
             "sources": meta["sources"],
         },
     }
-    watermark = existing_watermark()
-    if watermark:
-        course["watermark"] = watermark
     (COURSE / "course.json").write_text(
         json.dumps(course, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n"
     )

@@ -150,7 +150,6 @@ courses/<slug>/
 | `interactive` | 否 | bool | 默认 `false`；v1 不使用，保留给未来的练习屏 |
 | `composition` | 是 | object | 见 3.3 |
 | `screens` | 是 | array | 至少 1 项；见 3.4 |
-| `watermark` | 否 | object | 可选课程水印；见 3.7 |
 | `site` | 否 | object | 见 3.5 |
 | `credits` | 否 | object | 见 3.6 |
 
@@ -199,39 +198,41 @@ courses/<slug>/
 | `updatedAt` | 否 | string | `YYYY-MM-DD` |
 | `sources` | 否 | string[] | 参考资料链接或说明；只用于展示，不会被运行时请求 |
 
-### 3.7 `watermark`
+### 3.7 课程水印（站点配置，不属于 `course.json`）
 
-可选。水印是课程内容的一部分：构建时写进课程包，独立部署的课程包也保留，不依赖站点、数据库或 API。两种水印可以同时使用。
+水印**不是课程字段**：它属于部署方的身份配置（作者、公司、部门等），存在站点 SQLite 的 `course_watermarks` 表里，不写 `course.json`、不进 Git。`course.json` 里出现 `watermark` 会被严格模型当作未知字段报错。构建时平台从数据库读取配置，把水印层写进构建产物的 composition，独立部署的课程包因此自带水印，运行时不依赖数据库或 API。
+
+后台 `/admin/courses/<slug>/watermark`（需要 `ADMIN_TOKEN`）可视化编辑：角标四角最多各一条，满屏平铺一层；保存后写入数据库并同步重建该课程包。
+
+平台按下面的 `WatermarkConfig` 校验后台表单和数据库行；外部作者不需要写，也不应该写进 `course.json`。两种水印可以同时使用：
 
 ```json
 {
-  "watermark": {
-    "enabled": true,
-    "corners": [
-      {
-        "position": "top-left",
-        "text": "作者：张三",
-        "fontSize": 30,
-        "color": "#16140f",
-        "opacity": 0.6
-      },
-      {
-        "position": "bottom-right",
-        "text": "示例公司",
-        "fontSize": 24,
-        "color": "#b8452b",
-        "opacity": 0.5
-      }
-    ],
-    "repeating": {
-      "text": "内部资料，请勿外传",
-      "fontSize": 28,
+  "enabled": true,
+  "corners": [
+    {
+      "position": "top-left",
+      "text": "作者：张三",
+      "fontSize": 30,
       "color": "#16140f",
-      "opacity": 0.12,
-      "gapX": 320,
-      "gapY": 200,
-      "rotate": -24
+      "opacity": 0.6
+    },
+    {
+      "position": "bottom-right",
+      "text": "示例公司",
+      "fontSize": 24,
+      "color": "#b8452b",
+      "opacity": 0.5
     }
+  ],
+  "repeating": {
+    "text": "内部资料，请勿外传",
+    "fontSize": 28,
+    "color": "#16140f",
+    "opacity": 0.12,
+    "gapX": 320,
+    "gapY": 200,
+    "rotate": -24
   }
 }
 ```
@@ -273,7 +274,7 @@ courses/<slug>/
 - 水印只覆盖播放画布，不遮控制条，`pointer-events: none`，不拦截播放器点击；纯 CSS，无动画、无网络请求。
 - 视觉水印层对辅助技术隐藏；角标文字会另外以不可见文本提供一次，平铺的防截屏文字不重复朗读。
 - 水印文字的字体与课程 composition 共用；字体子集不包含的生僻字会回退到系统字体，不影响可读性。
-- 后台 `/admin/courses/<slug>/watermark` 可以可视化编辑并保存到源 `course.json`，保存后自动重新构建。手工改 `course.json` 后仍需运行构建。
+- 后台 `/admin/courses/<slug>/watermark` 可以可视化编辑，保存到站点数据库并自动重新构建。水印文字只出现在站点数据库和构建产物里，源 `courses/<slug>/` 不含它。
 
 ## 4. composition 约定
 
@@ -645,7 +646,7 @@ courses/<slug>/
 - 封面：标题、副标题、目标、先修、章节大纲、时长/级别/屏数、开始按钮；
 - 舞台：`<hyperframes-player>`、加载遮罩、转场遮罩；播放态下页面占满视口（`100dvh`、无页面滚动），16:9 画布按可用区域等比最大化，控制条在画布外通栏；有封面时才设置 player 的 `poster`。
 - 控制条：退出课程（返回课程库）、上一屏、播放/暂停、下一屏、跳到最后（`End`）、重播、讲义、字幕（有音频时）、配音（有音频时）、全屏、当前屏进度；
-- 水印：可选，按 `course.json` 的 `watermark` 构建时写进 composition 内层，渲染角标和满屏平铺水印，只覆盖 16:9 画布，全屏可见；
+- 水印：可选，按站点数据库里的部署配置构建时写进 composition 内层，渲染角标和满屏平铺水印，只覆盖 16:9 画布，全屏可见；
 - 进度：课程总进度按全课时间连续增长；当前屏进度是可拖动的 range，拖动时暂停、松手恢复，拖到末端等同于「跳到最后」；
 - 章节信息：当前屏 kicker、标题、摘要；
 - 讲义抽屉：当前屏文本；
@@ -658,9 +659,10 @@ courses/<slug>/
 - `outcomes`、`prerequisites`、`takeaways`
 - `accent`、`cover`
 - `audio`、`interactive`
-- `watermark`（角标水印与满屏平铺水印，见 3.7；后台可视化编辑页在 `/admin/courses/<slug>/watermark`）
 - `site.homeUrl`、`site.backLabel`
 - `screens[].kicker/title/summary/transcript/autoAdvance`
+
+水印不属于课程字段：它由部署方在后台按部署配置（见 3.7），不随课程源文件分发。
 
 v1 不支持自定义课程页 HTML。每门课的差异通过封面图、强调色、文案和 composition 体现。如果某门课确实需要不同的外壳，先开平台任务，不要复制一份 shell 到课程目录。
 
@@ -798,16 +800,14 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 
 ### 7.8 配置课程水印
 
-水印是课程的展示配置，不改变播放时间，也不写数据库。两种做法选一种：
-
-1. **后台配置页（推荐）**：打开 `/admin/courses/<slug>/watermark`（需要 `ADMIN_TOKEN`），在 16:9 预览里调四角水印和满屏平铺水印。保存会写回 `courses/<slug>/course.json` 的 `watermark` 字段并重新构建该课程包；构建失败时页面会列出错误。
-2. **手工编辑**：直接在 `course.json` 里加 `watermark`（见 3.7），然后运行 `python scripts/build_courses.py --course <slug>`。
+水印是部署配置，不改变播放时间，不写课程源文件，也不进 Git。打开 `/admin/courses/<slug>/watermark`（需要 `ADMIN_TOKEN`），在 16:9 预览里调四角水印和满屏平铺水印。保存会写入站点数据库（`course_watermarks` 表）并重新构建该课程包；构建失败时页面会列出错误。
 
 注意：
 
-- 水印只写课程源文件，`dist/` 是构建产物。改完不构建不会出现在课程页。
+- 水印文字只存在于站点数据库和构建产物 `dist/`，`courses/<slug>/course.json` 不含它。新克隆的仓库、导入的课程默认都没有水印，需要在这台部署的机器上配置一次。
 - 水印写在构建产物的 composition 入口里（源 composition 不动），因此网页播放和后台导出的 MP4 都带水印。站点给课程包发 `Cache-Control: no-cache`，保存并重建后普通刷新（含从课程库重新进入）就会拿到新版本，不需要强制刷新。
-- 生产环境如果只部署了 `dist/` 和 `app/`，没有 `courses/` 源文件，配置页会变成只读；此时在持有课程源的机器上配置，或随课程包一起发布。
+- 生产环境如果只部署了 `dist/` 和 `app/`，没有 `courses/` 源文件，配置页会变成只读；此时在持有课程源的机器上配置，并让构建产物随部署一起发布。
+- 改水印会让内容哈希变化，已生成的旧视频会被标记为过期，需要重新生成。
 - 水印用于署名和降低截图外传的可读性，**不是访问控制**：它不阻止截图、下载或查看源码。需要权限控制时用登录和访问策略。
 
 ## 8. 验收清单
@@ -830,7 +830,7 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - [ ] 封面存在时 ≤ 300KB；没有封面时接受排版封面。
 - [ ] `accent` 对比度足够，和课程内容气质一致。
 - [ ] `audio` 和实际音频一致；有音频的屏都有 transcript。
-- [ ] `watermark` 字段合法（颜色 `#RRGGBB`、字号和步长在范围内、每个角最多一条）；不需要水印时省略该字段。
+- [ ] `course.json` 里没有 `watermark` 字段：水印是部署配置，存在站点数据库，不随课程源文件分发（见 3.7）。
 
 ### composition
 

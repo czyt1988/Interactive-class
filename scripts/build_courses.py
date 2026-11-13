@@ -29,9 +29,11 @@ if str(ROOT) not in sys.path:
 from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
 
 from app.catalog.assets import scan_composition  # noqa: E402
-from app.catalog.models import CatalogError, ResolvedCourse  # noqa: E402
+from app.catalog.models import CatalogError, ResolvedCourse, WatermarkConfig  # noqa: E402
 from app.catalog.resolver import CourseResolutionError, resolve_course  # noqa: E402
 from app.catalog.watermark import inject_watermark  # noqa: E402
+from app.catalog.watermark_store import load_all as load_watermarks  # noqa: E402
+from app.config import get_settings  # noqa: E402
 
 DEFAULT_SOURCE = ROOT / "courses"
 DEFAULT_OUT = ROOT / "dist" / "courses"
@@ -148,7 +150,16 @@ def _iter_composition_files(root: Path) -> list[Path]:
     return files
 
 
-def content_hash(course_dir: Path, course: ResolvedCourse) -> str:
+def content_hash(
+    course_dir: Path, course: ResolvedCourse, watermark: WatermarkConfig | None = None
+) -> str:
+    """Hash the course source plus the site-side watermark config.
+
+    The watermark lives in the database, not in ``courses/``, so it has to be
+    mixed in explicitly: that keeps ``contentHash`` changing when the watermark
+    changes, which is what marks an already exported video as stale.
+    """
+
     digest = hashlib.sha256()
     candidates: list[Path] = [course_dir / "course.json"]
     composition = course_dir / "composition"
@@ -161,6 +172,15 @@ def content_hash(course_dir: Path, course: ResolvedCourse) -> str:
         digest.update(path.relative_to(course_dir).as_posix().encode("utf-8"))
         digest.update(b"\0")
         digest.update(path.read_bytes())
+    if watermark is not None:
+        digest.update(b"\0watermark\0")
+        digest.update(
+            json.dumps(
+                watermark.model_dump(exclude_none=True),
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8")
+        )
     return digest.hexdigest()
 
 
@@ -383,7 +403,14 @@ def build_course(
     site_title: str = "AI Learning",
     course_base_url: str = "/courses",
     progress_sync: bool = True,
+    watermark: WatermarkConfig | None = None,
 ) -> BuildResult:
+    """Build one course bundle.
+
+    ``watermark`` comes from the site database (see ``watermark_store``), never
+    from ``course.json``: the text must not travel with the course source.
+    """
+
     course_dir = course_dir.resolve()
     slug = course_dir.name
     try:
@@ -398,7 +425,7 @@ def build_course(
     if errors:
         return BuildResult(slug=slug, output_dir=out_root / slug, errors=errors)
 
-    digest = content_hash(course_dir, course)
+    digest = content_hash(course_dir, course, watermark)
     result = BuildResult(
         slug=slug,
         output_dir=out_root / slug,
@@ -424,8 +451,9 @@ def build_course(
         _copy_composition(course_dir / "composition", staging / "composition")
         # The course watermark lives in the composition, not in the shell: the
         # web player and the MP4 renderer both consume the composition, so one
-        # baked layer keeps playback and export identical.
-        inject_watermark(staging / course.composition.entry, course.watermark)
+        # baked layer keeps playback and export identical. The config comes from
+        # the site database so the text never enters the course source or git.
+        inject_watermark(staging / course.composition.entry, watermark)
         font_url = shell_font_url(staging / "composition")
         _copy_runtime(runtime_dir, staging / "runtime")
         if course.cover:
@@ -504,9 +532,11 @@ def build_all(
     site_title: str = "AI Learning",
     course_base_url: str = "/courses",
     progress_sync: bool = True,
+    watermarks: dict[str, WatermarkConfig] | None = None,
 ) -> list[BuildResult]:
     selected = set(courses or [])
     results: list[BuildResult] = []
+    configs = watermarks or {}
     for course_dir in discover_courses(source_root):
         if selected and course_dir.name not in selected:
             continue
@@ -521,6 +551,7 @@ def build_all(
                 site_title=site_title,
                 course_base_url=course_base_url,
                 progress_sync=progress_sync,
+                watermark=configs.get(course_dir.name),
             )
         )
 
@@ -579,6 +610,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--site-title", default="AI Learning")
     parser.add_argument("--course-base-url", default="/courses")
     parser.add_argument("--no-progress-sync", action="store_true")
+    parser.add_argument(
+        "--no-watermarks",
+        action="store_true",
+        help="不读数据库里的课程水印（可复现的干净构建）",
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
 
@@ -588,6 +624,7 @@ def main(argv: list[str] | None = None) -> int:
     if not courses and not args.all:
         parser.error("需要 --course <slug> 或 --all")
 
+    watermarks = {} if args.no_watermarks else load_watermarks(get_settings())
     results = build_all(
         source_root=args.source_dir,
         out_root=args.out_dir,
@@ -599,6 +636,7 @@ def main(argv: list[str] | None = None) -> int:
         site_title=args.site_title,
         course_base_url=args.course_base_url,
         progress_sync=not args.no_progress_sync,
+        watermarks=watermarks,
     )
     if not results:
         print("没有找到可构建的课程", file=sys.stderr)
