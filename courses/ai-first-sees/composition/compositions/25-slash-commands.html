@@ -1083,9 +1083,11 @@
               <span class="s25-card-title">循环推进</span>
               <span class="s25-card-tag">直到完成</span>
             </div>
+            <!-- 环身是一段 310° 顺时针弧（缺口留在正上方），箭头在弧的终点沿切线
+                 指进缺口：无论转到哪个角度，箭头都贴着环、指向行进方向。 -->
             <svg id="s25-goal-loop" class="s25-loop-svg s25-late" viewBox="0 0 160 160" aria-hidden="true">
-              <circle cx="80" cy="80" r="56" stroke-dasharray="300 52" />
-              <path d="M108 30 L124 44 L108 56 Z" fill="var(--accent)" stroke="none" />
+              <path d="M103.7 29.2 A56 56 0 1 1 56.3 29.2" />
+              <path d="M74.5 20.8 L58.7 39.2 L50.3 21 Z" fill="var(--accent)" stroke="none" />
             </svg>
             <p class="s25-loop-label">执行 → 检查 → 继续</p>
             <span class="s25-track"><i id="s25-goal-fill"></i></span>
