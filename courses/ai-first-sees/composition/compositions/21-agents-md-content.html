@@ -1,0 +1,2001 @@
+<template>
+  <style>
+    /* S21 ·「目录的记忆：AGENTS.md 写什么」
+     * 上半场：左右两份并排的模板（编程六块 / PPT 四件事）；
+     * 下半场：把「目录」画成一间房，门口挂一本手册，手册伸出细墨线指向屋里的文档、素材、代码；
+     * 收尾：手册翻开新的一页，红笔写禁令，盖「员工守则」章。 */
+
+    /* ---------------------------------------------------------- 两份模板 */
+
+    .s21-templates {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s21-panel {
+      position: absolute;
+      top: 0;
+      width: 790px;
+      height: 664px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s21-panel--code { left: 0; }
+    .s21-panel--ppt { left: 830px; width: 834px; }
+
+    .s21-panel-head {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      top: 22px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .s21-panel-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s21-panel-file {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.06em;
+      color: var(--accent-text);
+    }
+
+    .s21-panel-chip {
+      margin-left: auto;
+      padding: 4px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s21-ppt-dots {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .s21-ppt-dots i {
+      display: block;
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+
+    /* 编程项目：六块，配六个小格，一块点亮一格 */
+    .s21-count {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .s21-count-label {
+      margin-right: 6px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s21-count-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+
+    .s21-cards {
+      position: absolute;
+      left: 28px;
+      top: 76px;
+      width: 734px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .s21-item {
+      position: relative;
+      height: 84px;
+      padding: 9px 20px 7px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+    }
+
+    .s21-item-row {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      line-height: 1.05;
+    }
+
+    .s21-item-no {
+      flex: none;
+      width: 34px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--accent-text);
+    }
+
+    .s21-item-title {
+      flex: none;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s21-item-desc {
+      font-size: 25px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s21-item-eg {
+      margin-top: 6px;
+      padding-left: 50px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0.01em;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s21-item-tag {
+      position: absolute;
+      right: 18px;
+      top: 28px;
+      padding: 2px 12px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+
+    .s21-code-note {
+      position: absolute;
+      left: 28px;
+      top: 624px;
+      width: 734px;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--ink-faint);
+    }
+
+    /* 还没轮到 PPT 时的空白模板：一块虚线纸，等旁白把内容一条条填上来 */
+    .s21-ppt-blank {
+      position: absolute;
+      left: 28px;
+      top: 84px;
+      width: 778px;
+      height: 552px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 14px;
+      background: #fbf7ef;
+    }
+
+    .s21-ppt-blank-kicker {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s21-ppt-blank-q {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink-soft);
+    }
+
+    /* PPT 项目：四件事 + 素材夹 / 缩略图 / 进度条 */
+    .s21-ppt-underline {
+      position: absolute;
+      left: 28px;
+      top: 66px;
+      width: 120px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .s21-ppt-cards {
+      position: absolute;
+      left: 28px;
+      top: 84px;
+      width: 486px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .s21-ppt-item {
+      position: relative;
+      height: 96px;
+      padding: 12px 18px 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+    }
+
+    .s21-ppt-row {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      line-height: 1.05;
+    }
+
+    .s21-ppt-no {
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--accent-text);
+    }
+
+    .s21-ppt-title {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s21-ppt-desc {
+      margin-top: 5px;
+      font-size: 24px;
+      line-height: 1.15;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s21-ppt-hit {
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 5px;
+      border-radius: 0 3px 3px 0;
+      background: var(--accent);
+    }
+
+    .s21-ppt-note {
+      position: absolute;
+      left: 28px;
+      top: 506px;
+      width: 486px;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--ink-faint);
+    }
+
+    .s21-ppt-foot {
+      position: absolute;
+      left: 28px;
+      top: 598px;
+      width: 778px;
+      font-size: 24px;
+      line-height: 1.25;
+      color: var(--ink-faint);
+    }
+
+    .s21-folder {
+      position: absolute;
+      left: 540px;
+      top: 84px;
+      width: 118px;
+      height: 80px;
+      border: 2.5px solid var(--ink-soft);
+      border-radius: 4px 8px 8px 8px;
+      background: #f7efe0;
+    }
+
+    .s21-folder::before {
+      content: "";
+      position: absolute;
+      left: -2.5px;
+      top: -20px;
+      width: 52px;
+      height: 20px;
+      border: 2.5px solid var(--ink-soft);
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      background: #f7efe0;
+    }
+
+    .s21-folder-sheet {
+      position: absolute;
+      width: 34px;
+      height: 44px;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 2px;
+      background: #fffdf8;
+    }
+
+    .s21-folder-sheet--1 { left: 16px; top: 20px; transform: rotate(-7deg); }
+    .s21-folder-sheet--2 { left: 40px; top: 16px; transform: rotate(3deg); }
+    .s21-folder-sheet--3 { left: 64px; top: 21px; transform: rotate(-2deg); }
+
+    .s21-folder-label {
+      position: absolute;
+      left: 540px;
+      top: 176px;
+      width: 266px;
+      font-size: 22px;
+      line-height: 1.25;
+      color: var(--ink-soft);
+    }
+
+    .s21-folder-path {
+      display: block;
+      margin-bottom: 2px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      color: var(--accent-text);
+    }
+
+    .s21-deck {
+      position: absolute;
+      left: 540px;
+      top: 246px;
+      width: 266px;
+    }
+
+    .s21-deck-frame {
+      position: relative;
+      height: 150px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .s21-slide {
+      position: absolute;
+      width: 104px;
+      height: 66px;
+      padding: 9px 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      background: #fdf9f1;
+    }
+
+    .s21-slide--1 { left: 16px; top: 24px; transform: rotate(-5deg); }
+    .s21-slide--2 { left: 82px; top: 30px; transform: rotate(2deg); }
+    .s21-slide--3 { left: 148px; top: 24px; transform: rotate(-2deg); }
+    .s21-slide--4 { left: 106px; top: 78px; }
+
+    .s21-slide-bar {
+      display: block;
+      width: 56px;
+      height: 7px;
+      border-radius: 2px;
+      background: var(--ink-soft);
+    }
+
+    .s21-slide-line {
+      display: block;
+      width: 74px;
+      height: 5px;
+      margin-top: 7px;
+      border-radius: 2px;
+      background: var(--line-strong);
+    }
+
+    .s21-slide-line--short { width: 46px; }
+
+    .s21-deck-label {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s21-ppt-meter {
+      position: absolute;
+      left: 540px;
+      top: 452px;
+      width: 266px;
+    }
+
+    .s21-ppt-meter-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      width: 266px;
+      font-size: 24px;
+      color: var(--ink-soft);
+    }
+
+    .s21-ppt-meter-head b {
+      font-family: var(--font-mono);
+      font-size: 21px;
+      font-weight: 400;
+      color: var(--ink-faint);
+    }
+
+    .s21-track {
+      display: block;
+      margin-top: 12px;
+      height: 14px;
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
+
+    .s21-track i {
+      display: block;
+      height: 100%;
+      width: 100%;
+      border-radius: 7px;
+      background: var(--accent);
+    }
+
+    /* ------------------------------------------------------- 目录 = 房间 */
+
+    .s21-room {
+      position: absolute;
+      inset: 0;
+    }
+
+    .s21-room-kicker {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: 30px;
+      letter-spacing: 0.12em;
+      color: var(--accent-text);
+    }
+
+    .s21-room-label {
+      position: absolute;
+      left: 400px;
+      top: 52px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s21-room-svg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1664px;
+      height: 664px;
+      overflow: visible;
+    }
+
+    .s21-wall {
+      fill: none;
+      stroke: #514b40;
+      stroke-width: 3.5;
+      stroke-linecap: square;
+    }
+
+    .s21-door-gap {
+      stroke: var(--bg);
+      stroke-width: 9;
+    }
+
+    .s21-door-panel {
+      fill: none;
+      stroke: #514b40;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .s21-door-knob {
+      fill: var(--line-strong);
+    }
+
+    .s21-bay-line {
+      fill: none;
+      stroke: var(--line-strong);
+      stroke-width: 1.5;
+      stroke-dasharray: 8 8;
+    }
+
+    .s21-hook {
+      fill: none;
+      stroke: var(--line-strong);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    .s21-link {
+      fill: none;
+      stroke: #514b40;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    .s21-tip {
+      fill: #514b40;
+    }
+
+    .s21-manual {
+      position: absolute;
+      left: 20px;
+      top: 100px;
+      width: 332px;
+      height: 420px;
+      padding: 24px 26px;
+      border: 2.5px solid var(--ink);
+      border-radius: 6px 12px 12px 6px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .s21-manual::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--line-strong);
+    }
+
+    .s21-manual-title {
+      font-family: var(--font-mono);
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s21-manual-sub {
+      margin-top: 6px;
+      font-size: 22px;
+      color: var(--accent-text);
+    }
+
+    .s21-manual-line {
+      margin-top: 20px;
+      font-size: 23px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s21-memory-tag {
+      position: absolute;
+      left: 26px;
+      bottom: 24px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-text);
+    }
+
+    .s21-zone {
+      position: absolute;
+      left: 600px;
+      width: 1010px;
+      height: 124px;
+      display: flex;
+      align-items: center;
+      gap: 26px;
+    }
+
+    #s21-zone-docs { top: 64px; }
+    #s21-zone-assets { top: 237px; }
+    #s21-zone-code { top: 411px; }
+
+    .s21-zone-ico {
+      display: block;
+      flex: none;
+      width: 46px;
+      height: 46px;
+      color: var(--ink-soft);
+    }
+
+    .s21-zone-ico svg {
+      display: block;
+      width: 46px;
+      height: 46px;
+    }
+
+    .s21-ico-main {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s21-ico-faint {
+      fill: none;
+      stroke: var(--line-strong);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .s21-zone-text { flex: 1; }
+
+    .s21-zone-line {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      line-height: 1.05;
+    }
+
+    .s21-zone-path {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      color: var(--accent-text);
+    }
+
+    .s21-zone-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s21-zone-note {
+      margin-top: 8px;
+      font-size: 26px;
+      line-height: 1.2;
+      color: var(--ink-soft);
+    }
+
+    .s21-zone-tick {
+      margin-right: 20px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .s21-room-note {
+      position: absolute;
+      left: 600px;
+      top: 598px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink-soft);
+    }
+
+    .s21-takeaway {
+      position: absolute;
+      left: 600px;
+      top: 598px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s21-takeaway-rule {
+      position: absolute;
+      left: 600px;
+      top: 640px;
+      width: 560px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+
+    /* ------------------------------------------------- 手册翻页 / 红笔 / 章 */
+
+    .s21-book-kicker {
+      position: absolute;
+      left: 292px;
+      top: 42px;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.08em;
+      color: var(--accent-text);
+    }
+
+    .s21-book {
+      position: absolute;
+      left: 292px;
+      top: 92px;
+      width: 1080px;
+      height: 420px;
+      perspective: 1600px;
+    }
+
+    .s21-page {
+      position: absolute;
+      top: 0;
+      width: 540px;
+      height: 420px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .s21-page--left {
+      left: 0;
+      padding: 24px 30px;
+      border-radius: 14px 2px 2px 14px;
+    }
+
+    .s21-page--right {
+      left: 540px;
+      border-radius: 2px 14px 14px 2px;
+    }
+
+    .s21-spine {
+      position: absolute;
+      left: 538px;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      background: var(--line);
+    }
+
+    .s21-page-head {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      line-height: 1.3;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s21-page-row {
+      margin-top: 9px;
+      font-size: 26px;
+      line-height: 1.2;
+      color: var(--ink-soft);
+    }
+
+    .s21-page-row b {
+      display: inline-block;
+      width: 40px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--accent-text);
+    }
+
+    .s21-page-tag {
+      position: absolute;
+      left: 30px;
+      top: 24px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s21-page-title {
+      position: absolute;
+      right: 30px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s21-norm-chip {
+      position: absolute;
+      right: 30px;
+      top: 58px;
+      padding: 2px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s21-blank {
+      position: absolute;
+      left: 30px;
+      width: 480px;
+      height: 0;
+      border-top: 2px dashed var(--line-strong);
+    }
+
+    #s21-blank-1 { top: 96px; }
+    #s21-blank-2 { top: 126px; }
+    #s21-blank-3 { top: 156px; }
+
+    .s21-write-q {
+      position: absolute;
+      left: 30px;
+      top: 178px;
+      font-size: 26px;
+      color: var(--ink-soft);
+    }
+
+    .s21-write-q b {
+      margin-right: 6px;
+      color: var(--accent);
+    }
+
+    .s21-rule-text {
+      position: absolute;
+      left: 30px;
+      top: 226px;
+      font-size: 38px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .s21-rule-line {
+      position: absolute;
+      left: 30px;
+      top: 282px;
+      width: 430px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+
+    .s21-forbid {
+      position: absolute;
+      left: 30px;
+      top: 298px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s21-checks {
+      position: absolute;
+      left: 30px;
+      top: 332px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .s21-check {
+      padding: 3px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.02em;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s21-pit {
+      position: absolute;
+      left: 30px;
+      top: 292px;
+      width: 320px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      border-radius: 3px 8px 8px 3px;
+      background: #f7ecd2;
+      font-size: 23px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+    }
+
+    .s21-pit-x {
+      margin-right: 6px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .s21-flip {
+      position: absolute;
+      left: 540px;
+      top: 0;
+      width: 540px;
+      height: 420px;
+      padding: 26px 30px;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px 14px 14px 2px;
+      background: #fdf8ef;
+      box-shadow: var(--shadow);
+      transform-origin: left center;
+      backface-visibility: hidden;
+    }
+
+    .s21-flip-head {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s21-flip-line {
+      display: block;
+      width: 440px;
+      height: 6px;
+      margin-top: 26px;
+      border-radius: 3px;
+      background: var(--line);
+    }
+
+    .s21-flip-line--short { width: 300px; }
+
+    .s21-flip-note {
+      margin-top: 46px;
+      font-size: 24px;
+      color: var(--ink-soft);
+    }
+
+    .s21-seal {
+      position: absolute;
+      right: 18px;
+      top: 368px;
+      padding: 8px 20px;
+      font-size: 28px;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(255, 253, 248, 0.62);
+    }
+
+    .s21-book-note {
+      position: absolute;
+      left: 292px;
+      top: 538px;
+      font-size: 28px;
+      color: var(--ink-soft);
+    }
+
+    /* 晚出现的元素先隐藏：快照和拖动进度条直接 seek 到中段时不会提前露出。 */
+    #s21-templates,
+    #s21-ppt-blank,
+    .s21-count,
+    .s21-count-dot,
+    .s21-item,
+    .s21-item-eg,
+    #s21-tag-6,
+    #s21-code-note,
+    #s21-ppt-file,
+    #s21-ppt-underline,
+    #s21-ppt-chip,
+    .s21-ppt-dots,
+    #s21-ppt-dot-1,
+    #s21-ppt-dot-2,
+    #s21-ppt-dot-3,
+    #s21-ppt-dot-4,
+    .s21-ppt-item,
+    #s21-ppt-note,
+    #s21-ppt-foot,
+    #s21-folder,
+    #s21-folder-label,
+    #s21-deck,
+    #s21-ppt-meter,
+    #s21-slide-4,
+    #s21-room,
+    #s21-room-kicker,
+    #s21-room-label,
+    #s21-room-svg,
+    #s21-hook,
+    #s21-room-detail,
+    #s21-manual,
+    .s21-manual-line,
+    #s21-memory-tag,
+    #s21-link-1,
+    #s21-link-2,
+    #s21-link-3,
+    #s21-tip-1,
+    #s21-tip-2,
+    #s21-tip-3,
+    .s21-zone,
+    .s21-zone-tick,
+    #s21-room-note,
+    #s21-takeaway,
+    #s21-takeaway-rule,
+    #s21-book,
+    #s21-book-kicker,
+    #s21-book-note,
+    #s21-page-head,
+    .s21-page-row,
+    #s21-page-tag,
+    #s21-page-title,
+    #s21-norm-chip,
+    .s21-blank,
+    #s21-write-q,
+    #s21-rule-text,
+    #s21-rule-line,
+    #s21-forbid,
+    .s21-check,
+    #s21-pit,
+    #s21-seal {
+      opacity: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-agents-md-content"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S21</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-agents-md-content-title" class="scene-title">目录的记忆：AGENTS.md 写什么</h1>
+        <p class="scene-no">21 / 28</p>
+      </header>
+
+      <section id="s-agents-md-content-stage" class="stage">
+        <!-- ===== 上半场：左右两份并排的 AGENTS.md 模板 ===== -->
+        <div class="s21-templates" id="s21-templates">
+          <!-- 编程项目：六块 -->
+          <article class="s21-panel s21-panel--code" id="s21-panel-code">
+            <header class="s21-panel-head">
+              <span class="s21-panel-name">编程项目</span>
+              <span class="s21-panel-file">AGENTS.md</span>
+              <span class="s21-count" id="s21-count">
+                <span class="s21-count-label">六块</span>
+                <span class="s21-count-dot" id="s21-count-1"></span>
+                <span class="s21-count-dot" id="s21-count-2"></span>
+                <span class="s21-count-dot" id="s21-count-3"></span>
+                <span class="s21-count-dot" id="s21-count-4"></span>
+                <span class="s21-count-dot" id="s21-count-5"></span>
+                <span class="s21-count-dot" id="s21-count-6"></span>
+              </span>
+            </header>
+
+            <div class="s21-cards">
+              <div class="s21-item" id="s21-card-1">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">01</span>
+                  <span class="s21-item-title">项目概述</span>
+                  <span class="s21-item-desc">这个项目是干什么的，目标是什么</span>
+                </div>
+                <p class="s21-item-eg">例：AI Learning 课程，目标是讲清楚 Agent 怎么干活</p>
+              </div>
+              <div class="s21-item" id="s21-card-2">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">02</span>
+                  <span class="s21-item-title">目录结构</span>
+                  <span class="s21-item-desc">哪个目录放什么，哪些目录不能动</span>
+                </div>
+                <p class="s21-item-eg">例：courses/ 可以改，大纲/ 和 .env 不能动</p>
+              </div>
+              <div class="s21-item" id="s21-card-3">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">03</span>
+                  <span class="s21-item-title">编码规范</span>
+                  <span class="s21-item-desc">命名、格式、注释、提交信息怎么写</span>
+                </div>
+                <p class="s21-item-eg">例：中文注释；commit 用一句话说清做了什么</p>
+              </div>
+              <div class="s21-item" id="s21-card-4">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">04</span>
+                  <span class="s21-item-title">构建与测试</span>
+                  <span class="s21-item-desc">怎么装依赖、怎么跑起来、怎么跑测试</span>
+                </div>
+                <p class="s21-item-eg">例：python scripts/build_courses.py --all</p>
+              </div>
+              <div class="s21-item" id="s21-card-5">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">05</span>
+                  <span class="s21-item-title">文档地图</span>
+                  <span class="s21-item-desc">重要文档放在哪，先读哪一份</span>
+                </div>
+                <p class="s21-item-eg">例：遇到问题先读 DESIGN.md 第 8 节</p>
+              </div>
+              <div class="s21-item" id="s21-card-6">
+                <div class="s21-item-row">
+                  <span class="s21-item-no">06</span>
+                  <span class="s21-item-title">注意事项</span>
+                  <span class="s21-item-desc">护栏：哪些事明确不能做</span>
+                </div>
+                <p class="s21-item-eg">例：不许自动 commit，不许动 大纲/ 目录</p>
+                <span class="s21-item-tag" id="s21-tag-6">护栏</span>
+              </div>
+            </div>
+
+            <p class="s21-code-note" id="s21-code-note">经验清单，不是标准：只写 AI 每次开工都要知道的事。</p>
+          </article>
+
+          <!-- PPT 项目：四件事 + 素材夹 / 缩略图 / 进度条 -->
+          <article class="s21-panel s21-panel--ppt" id="s21-panel-ppt">
+            <header class="s21-panel-head">
+              <span class="s21-panel-name">PPT 项目</span>
+              <span class="s21-panel-file" id="s21-ppt-file">AGENTS.md</span>
+              <span class="s21-ppt-dots" id="s21-ppt-dots">
+                <i id="s21-ppt-dot-1"></i>
+                <i id="s21-ppt-dot-2"></i>
+                <i id="s21-ppt-dot-3"></i>
+                <i id="s21-ppt-dot-4"></i>
+              </span>
+              <span class="s21-panel-chip" id="s21-ppt-chip">四件事</span>
+            </header>
+            <span class="s21-ppt-underline" id="s21-ppt-underline"></span>
+
+            <div class="s21-ppt-blank" id="s21-ppt-blank">
+              <p class="s21-ppt-blank-kicker">同一个文件</p>
+              <p class="s21-ppt-blank-q">换一种项目，写什么？</p>
+            </div>
+
+            <div class="s21-ppt-cards">
+              <div class="s21-ppt-item" id="s21-ppt-card-1">
+                <div class="s21-ppt-row">
+                  <span class="s21-ppt-no">01</span>
+                  <span class="s21-ppt-title">素材目录</span>
+                </div>
+                <p class="s21-ppt-desc">素材汇集在哪个目录，怎么命名</p>
+              </div>
+              <div class="s21-ppt-item" id="s21-ppt-card-2">
+                <span class="s21-ppt-hit" id="s21-ppt-hit"></span>
+                <div class="s21-ppt-row">
+                  <span class="s21-ppt-no">02</span>
+                  <span class="s21-ppt-title">项目背景</span>
+                </div>
+                <p class="s21-ppt-desc">给谁做的、要讲什么、讲到什么程度</p>
+              </div>
+              <div class="s21-ppt-item" id="s21-ppt-card-3">
+                <div class="s21-ppt-row">
+                  <span class="s21-ppt-no">03</span>
+                  <span class="s21-ppt-title">当前进度</span>
+                </div>
+                <p class="s21-ppt-desc">现在做到哪一页，下一步做什么</p>
+              </div>
+              <div class="s21-ppt-item" id="s21-ppt-card-4">
+                <div class="s21-ppt-row">
+                  <span class="s21-ppt-no">04</span>
+                  <span class="s21-ppt-title">设计风格</span>
+                </div>
+                <p class="s21-ppt-desc">配色、字号、版式，参考哪份稿</p>
+              </div>
+            </div>
+
+            <p class="s21-ppt-note" id="s21-ppt-note">换成做 PPT，就写这四件事。</p>
+
+            <p class="s21-ppt-foot" id="s21-ppt-foot">这四件事写下来，下次开工不用再解释一遍。</p>
+
+            <div class="s21-folder" id="s21-folder">
+              <span class="s21-folder-sheet s21-folder-sheet--1"></span>
+              <span class="s21-folder-sheet s21-folder-sheet--2"></span>
+              <span class="s21-folder-sheet s21-folder-sheet--3"></span>
+            </div>
+            <p class="s21-folder-label" id="s21-folder-label">
+              <span class="s21-folder-path">素材/</span>图片 · 字体 · 旧稿
+            </p>
+
+            <div class="s21-deck" id="s21-deck">
+              <div class="s21-deck-frame">
+                <span class="s21-slide s21-slide--1">
+                  <i class="s21-slide-bar"></i>
+                  <i class="s21-slide-line"></i>
+                  <i class="s21-slide-line s21-slide-line--short"></i>
+                </span>
+                <span class="s21-slide s21-slide--2">
+                  <i class="s21-slide-bar"></i>
+                  <i class="s21-slide-line"></i>
+                  <i class="s21-slide-line s21-slide-line--short"></i>
+                </span>
+                <span class="s21-slide s21-slide--3">
+                  <i class="s21-slide-bar"></i>
+                  <i class="s21-slide-line"></i>
+                  <i class="s21-slide-line s21-slide-line--short"></i>
+                </span>
+                <span class="s21-slide s21-slide--4" id="s21-slide-4">
+                  <i class="s21-slide-bar"></i>
+                  <i class="s21-slide-line"></i>
+                  <i class="s21-slide-line s21-slide-line--short"></i>
+                </span>
+              </div>
+              <p class="s21-deck-label">缩略图 · 几页参考</p>
+            </div>
+
+            <div class="s21-ppt-meter" id="s21-ppt-meter">
+              <p class="s21-ppt-meter-head"><span>当前进度</span><b>写到哪一页</b></p>
+              <span class="s21-track"><i id="s21-track-fill"></i></span>
+            </div>
+          </article>
+        </div>
+
+        <!-- ===== 下半场：目录 = 房间，门口挂一本手册 ===== -->
+        <div class="s21-room" id="s21-room">
+          <p class="s21-room-kicker" id="s21-room-kicker">目录 = 房间</p>
+
+          <p class="s21-room-label" id="s21-room-label">workspace/</p>
+          <svg class="s21-room-svg" id="s21-room-svg" viewBox="0 0 1664 664" aria-hidden="true">            <path class="s21-wall" d="M 380 40 L 380 300" />
+            <path class="s21-wall" d="M 380 500 L 380 560 L 1640 560 L 1640 40 L 380 40" />
+            <path class="s21-door-gap" d="M 380 300 L 380 500" />
+            <g id="s21-room-detail">
+              <path class="s21-wall" d="M 372 300 L 390 300" />
+              <path class="s21-wall" d="M 372 500 L 390 500" />
+              <path class="s21-door-panel" d="M 386 300 L 386 500" />
+              <circle class="s21-door-knob" cx="394" cy="408" r="4" />
+              <path class="s21-bay-line" d="M 380 212 L 1640 212" />
+              <path class="s21-bay-line" d="M 380 386 L 1640 386" />
+            </g>
+            <path class="s21-hook" id="s21-hook" d="M 352 118 L 352 66 L 380 66" />
+            <path class="s21-link" id="s21-link-1" d="M 356 186 Q 456 140 576 128" />
+            <path class="s21-link" id="s21-link-2" d="M 356 296 Q 456 296 576 298" />
+            <path class="s21-link" id="s21-link-3" d="M 356 408 Q 462 450 576 474" />
+            <path class="s21-tip" id="s21-tip-1" d="M 576 128 L 562 121 L 566 137 Z" />
+            <path class="s21-tip" id="s21-tip-2" d="M 576 298 L 562 291 L 562 305 Z" />
+            <path class="s21-tip" id="s21-tip-3" d="M 576 474 L 564 464 L 561 478 Z" />
+          </svg>
+
+          <div class="s21-manual" id="s21-manual">
+            <p class="s21-manual-title">AGENTS.md</p>
+            <p class="s21-manual-sub">AI 开工先读</p>
+            <p class="s21-manual-line" id="s21-manual-l1">项目概述 · 目标</p>
+            <p class="s21-manual-line" id="s21-manual-l2">目录结构 · 哪里不能动</p>
+            <p class="s21-manual-line" id="s21-manual-l3">文档地图 · 先读哪一份</p>
+            <p class="s21-manual-line" id="s21-manual-l4">构建与测试 · 常用命令</p>
+            <p class="s21-memory-tag" id="s21-memory-tag">这间房的记忆</p>
+          </div>
+
+          <div class="s21-zone" id="s21-zone-docs">
+            <span class="s21-zone-ico">
+              <svg viewBox="0 0 46 46" aria-hidden="true">
+                <path class="s21-ico-main" d="M 10 8 H 30 V 38 H 10 Z" />
+                <path class="s21-ico-faint" d="M 15 17 H 25 M 15 23 H 25 M 15 29 H 22" />
+                <path class="s21-ico-faint" d="M 14 13 V 33" />
+              </svg>
+            </span>
+            <div class="s21-zone-text">
+              <p class="s21-zone-line">
+                <span class="s21-zone-path">docs/</span>
+                <span class="s21-zone-name">文档</span>
+              </p>
+              <p class="s21-zone-note">README · 规范 · 决策记录</p>
+            </div>
+            <span class="s21-zone-tick" id="s21-tick-1">✓ 已读</span>
+          </div>
+
+          <div class="s21-zone" id="s21-zone-assets">
+            <span class="s21-zone-ico">
+              <svg viewBox="0 0 46 46" aria-hidden="true">
+                <path class="s21-ico-main" d="M 7 10 H 39 V 36 H 7 Z" />
+                <path class="s21-ico-faint" d="M 12 31 L 21 22 L 27 28 L 31 24 L 35 28" />
+                <circle class="s21-ico-main" cx="29" cy="17" r="2.4" />
+              </svg>
+            </span>
+            <div class="s21-zone-text">
+              <p class="s21-zone-line">
+                <span class="s21-zone-path">assets/</span>
+                <span class="s21-zone-name">素材</span>
+              </p>
+              <p class="s21-zone-note">图片 · 字体 · 旧稿 · 参考</p>
+            </div>
+            <span class="s21-zone-tick" id="s21-tick-2">✓ 已读</span>
+          </div>
+
+          <div class="s21-zone" id="s21-zone-code">
+            <span class="s21-zone-ico">
+              <svg viewBox="0 0 46 46" aria-hidden="true">
+                <path class="s21-ico-main" d="M 6 9 H 40 V 37 H 6 Z" />
+                <path class="s21-ico-faint" d="M 6 16 H 40" />
+                <path class="s21-ico-main" d="M 13 23 L 18 27 L 13 31" />
+                <path class="s21-ico-faint" d="M 21 31 H 29" />
+              </svg>
+            </span>
+            <div class="s21-zone-text">
+              <p class="s21-zone-line">
+                <span class="s21-zone-path">src/</span>
+                <span class="s21-zone-name">代码</span>
+              </p>
+              <p class="s21-zone-note">模块 · 脚本 · 测试 · 配置</p>
+            </div>
+            <span class="s21-zone-tick" id="s21-tick-3">✓ 已读</span>
+          </div>
+
+          <p class="s21-room-note" id="s21-room-note">一个目录一本手册：写清楚这间房是干什么的。</p>
+          <p class="s21-takeaway" id="s21-takeaway">先读手册再动手，这是 AI 时代的办公习惯。</p>
+          <span class="s21-takeaway-rule" id="s21-takeaway-rule"></span>
+        </div>
+
+        <!-- ===== 收尾：手册翻页，红笔加一条禁令，盖上员工守则章 ===== -->
+        <p class="s21-book-kicker" id="s21-book-kicker">AGENTS.md · 翻开新的一页</p>
+        <div class="s21-book" id="s21-book">
+          <div class="s21-page s21-page--left" id="s21-page-left">
+            <p class="s21-page-head" id="s21-page-head">AGENTS.md · 已有条目</p>
+            <p class="s21-page-row" id="s21-row-1"><b>01</b>项目概述 · 目标</p>
+            <p class="s21-page-row" id="s21-row-2"><b>02</b>目录结构 · 不能动的目录</p>
+            <p class="s21-page-row" id="s21-row-3"><b>03</b>编码规范 · 命名与提交</p>
+            <p class="s21-page-row" id="s21-row-4"><b>04</b>构建与测试 · 常用命令</p>
+            <p class="s21-page-row" id="s21-row-5"><b>05</b>文档地图 · 先读哪一份</p>
+            <div class="s21-pit" id="s21-pit">
+              <span class="s21-pit-x">✗</span>上次：动了 大纲/ 目录
+            </div>
+          </div>
+
+          <div class="s21-page s21-page--right" id="s21-page-right">
+            <p class="s21-page-tag" id="s21-page-tag">新增一页</p>
+            <p class="s21-page-title" id="s21-page-title">员工守则</p>
+            <span class="s21-norm-chip" id="s21-norm-chip">管理规范</span>
+            <span class="s21-blank" id="s21-blank-1"></span>
+            <span class="s21-blank" id="s21-blank-2"></span>
+            <span class="s21-blank" id="s21-blank-3"></span>
+            <p class="s21-write-q" id="s21-write-q"><b>＋</b> 这件事要不要写进去？</p>
+            <p class="s21-rule-text" id="s21-rule-text">禁止：动 大纲/ 目录</p>
+            <span class="s21-rule-line" id="s21-rule-line"></span>
+            <p class="s21-forbid" id="s21-forbid">以后禁止再犯</p>
+            <div class="s21-checks" id="s21-checks">
+              <span class="s21-check">什么能做 ✓</span>
+              <span class="s21-check">什么不能做 ✕</span>
+              <span class="s21-check">事情怎么做 →</span>
+            </div>
+          </div>
+
+          <div class="s21-spine"></div>
+
+          <div class="s21-flip" id="s21-flip">
+            <p class="s21-flip-head">上一页</p>
+            <span class="s21-flip-line"></span>
+            <span class="s21-flip-line s21-flip-line--short"></span>
+            <span class="s21-flip-line"></span>
+            <p class="s21-flip-note">第一版：只写了项目概述和目录</p>
+          </div>
+
+          <span class="stamp s21-seal" id="s21-seal">员工守则</span>
+        </div>
+        <p class="s21-book-note" id="s21-book-note">规则是后补的：踩一次坑，补一条。</p>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-agents-md-content-cap-0" class="cap-line clip" data-start="0.7" data-duration="2.96">那 agents.md 里到底该写什么？</p>
+        <p id="s-agents-md-content-cap-1" class="cap-line clip" data-start="3.66" data-duration="3.55">如果是一个编程项目，我建议至少写六块。</p>
+        <p id="s-agents-md-content-cap-2" class="cap-line clip" data-start="7.25" data-duration="4.972">第一，项目概述：这个项目是干什么的，目标是什么。</p>
+        <p id="s-agents-md-content-cap-3" class="cap-line clip" data-start="12.262" data-duration="4.835">第二，目录结构：哪个目录放什么，哪些目录不能动。</p>
+        <p id="s-agents-md-content-cap-4" class="cap-line clip" data-start="17.137" data-duration="5.96">第三，编码规范：命名、格式、注释、提交信息怎么写。</p>
+        <p id="s-agents-md-content-cap-5" class="cap-line clip" data-start="23.137" data-duration="5.723">第四，构建与测试：怎么装依赖、怎么跑起来、怎么跑测试。</p>
+        <p id="s-agents-md-content-cap-6" class="cap-line clip" data-start="28.9" data-duration="5.86">第五，文档地图：重要的文档放在哪，遇到问题先读哪一份。</p>
+        <p id="s-agents-md-content-cap-7" class="cap-line clip" data-start="34.8" data-duration="5.697">第六，注意事项：也就是护栏，明确告诉它哪些事不能做。</p>
+        <p id="s-agents-md-content-cap-8" class="cap-line clip" data-start="40.537" data-duration="3.623">但 Agent 早就不只是编程工具了。</p>
+        <p id="s-agents-md-content-cap-9" class="cap-line clip" data-start="44.2" data-duration="2.772">我经常拿它当 PPT 撰写工具。</p>
+        <p id="s-agents-md-content-cap-10" class="cap-line clip" data-start="47.012" data-duration="1.738">做 PPT 是要素材的，</p>
+        <p id="s-agents-md-content-cap-11" class="cap-line clip" data-start="48.79" data-duration="4.826">所以我会在项目目录里放一个 agents.md，写清楚四件事：</p>
+        <p id="s-agents-md-content-cap-12" class="cap-line clip" data-start="53.657" data-duration="5.201">素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进</p>
+        <p id="s-agents-md-content-cap-13" class="cap-line clip" data-start="58.897" data-duration="2.3">度、这份 PPT 要什么风格。</p>
+        <p id="s-agents-md-content-cap-14" class="cap-line clip" data-start="61.237" data-duration="5.449">这样下次再让它做这个项目的 PPT，Agent 一开始就知道背景，</p>
+        <p id="s-agents-md-content-cap-15" class="cap-line clip" data-start="66.726" data-duration="4.371">也知道素材去哪儿找，做出来的 ppt 效果会更好。</p>
+        <p id="s-agents-md-content-cap-16" class="cap-line clip" data-start="71.137" data-duration="4.374">所以，不管你是编程、做 PPT，还是做别的事，</p>
+        <p id="s-agents-md-content-cap-17" class="cap-line clip" data-start="75.551" data-duration="3.534">一个目录下都应该有一份 agents.md。</p>
+        <p id="s-agents-md-content-cap-18" class="cap-line clip" data-start="79.125" data-duration="4.434">它就是这个目录的记忆：写清楚这个目录是干什么的，</p>
+        <p id="s-agents-md-content-cap-19" class="cap-line clip" data-start="83.599" data-duration="2.011">再指向相关的其他文档。</p>
+        <p id="s-agents-md-content-cap-20" class="cap-line clip" data-start="85.65" data-duration="3.78">这样 AI 每次干活，都能很快进入状态，</p>
+        <p id="s-agents-md-content-cap-21" class="cap-line clip" data-start="89.47" data-duration="5.902">不用花大量时间到处探索，这也是 AI 时代办公习惯的新变化。</p>
+        <p id="s-agents-md-content-cap-22" class="cap-line clip" data-start="95.412" data-duration="4.785">还有一点：agents.md 不是一次写好就不管了。</p>
+        <p id="s-agents-md-content-cap-23" class="cap-line clip" data-start="100.237" data-duration="4.748">它像写代码一样，要一边干一边想：这件事要不要写进去？</p>
+        <p id="s-agents-md-content-cap-24" class="cap-line clip" data-start="105.025" data-duration="4.034">AI 踩了坑，或者做出来的东西让你很不满意，</p>
+        <p id="s-agents-md-content-cap-25" class="cap-line clip" data-start="109.099" data-duration="5.923">就想想是不是该补一条规则，让它写进 agents.md，以后禁止再犯。</p>
+        <p id="s-agents-md-content-cap-26" class="cap-line clip" data-start="115.062" data-duration="3.449">你可以把它理解成一家大公司的管理规范：</p>
+        <p id="s-agents-md-content-cap-27" class="cap-line clip" data-start="118.551" data-duration="6.021">正规公司都有详细的制度和禁令，什么能做、什么不能做、事情该怎么做。</p>
+        <p id="s-agents-md-content-cap-28" class="cap-line clip" data-start="124.612" data-duration="5.523">agents.md 就是你给 AI 在这个目录里定的员工守则。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S21</span>
+        <span class="cap-clock">02:12</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S21","id":"agents-md-content","index":0,"start":0,"duration":131.83,"audioStart":0.599999999999909,"audioDuration":129.624,"cues":[{"i":0,"t":0.7,"d":2.96,"text":"那 agents.md 里到底该写什么？","sent":"那 agents.md 里到底该写什么？"},{"i":1,"t":3.66,"d":3.55,"text":"如果是一个编程项目，我建议至少写六块。","sent":"如果是一个编程项目，我建议至少写六块。"},{"i":2,"t":7.25,"d":4.972,"text":"第一，项目概述：这个项目是干什么的，目标是什么。","sent":"第一，项目概述：这个项目是干什么的，目标是什么。"},{"i":3,"t":12.262,"d":4.835,"text":"第二，目录结构：哪个目录放什么，哪些目录不能动。","sent":"第二，目录结构：哪个目录放什么，哪些目录不能动。"},{"i":4,"t":17.137,"d":5.96,"text":"第三，编码规范：命名、格式、注释、提交信息怎么写。","sent":"第三，编码规范：命名、格式、注释、提交信息怎么写。"},{"i":5,"t":23.137,"d":5.723,"text":"第四，构建与测试：怎么装依赖、怎么跑起来、怎么跑测试。","sent":"第四，构建与测试：怎么装依赖、怎么跑起来、怎么跑测试。"},{"i":6,"t":28.9,"d":5.86,"text":"第五，文档地图：重要的文档放在哪，遇到问题先读哪一份。","sent":"第五，文档地图：重要的文档放在哪，遇到问题先读哪一份。"},{"i":7,"t":34.8,"d":5.697,"text":"第六，注意事项：也就是护栏，明确告诉它哪些事不能做。","sent":"第六，注意事项：也就是护栏，明确告诉它哪些事不能做。"},{"i":8,"t":40.537,"d":3.623,"text":"但 Agent 早就不只是编程工具了。","sent":"但 Agent 早就不只是编程工具了。"},{"i":9,"t":44.2,"d":2.772,"text":"我经常拿它当 PPT 撰写工具。","sent":"我经常拿它当 PPT 撰写工具。"},{"i":10,"t":47.012,"d":1.738,"text":"做 PPT 是要素材的，","sent":"做 PPT 是要素材的，所以我会在项目目录里放一个 agents.md，写清楚四件事：素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进度、这份 PPT 要什么风格。"},{"i":11,"t":48.79,"d":4.826,"text":"所以我会在项目目录里放一个 agents.md，写清楚四件事：","sent":"做 PPT 是要素材的，所以我会在项目目录里放一个 agents.md，写清楚四件事：素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进度、这份 PPT 要什么风格。"},{"i":12,"t":53.657,"d":5.201,"text":"素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进","sent":"做 PPT 是要素材的，所以我会在项目目录里放一个 agents.md，写清楚四件事：素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进度、这份 PPT 要什么风格。"},{"i":13,"t":58.897,"d":2.3,"text":"度、这份 PPT 要什么风格。","sent":"做 PPT 是要素材的，所以我会在项目目录里放一个 agents.md，写清楚四件事：素材汇集在哪个目录、这个项目的背景是什么、现在做到什么进度、这份 PPT 要什么风格。"},{"i":14,"t":61.237,"d":5.449,"text":"这样下次再让它做这个项目的 PPT，Agent 一开始就知道背景，","sent":"这样下次再让它做这个项目的 PPT，Agent 一开始就知道背景，也知道素材去哪儿找，做出来的 ppt 效果会更好。"},{"i":15,"t":66.726,"d":4.371,"text":"也知道素材去哪儿找，做出来的 ppt 效果会更好。","sent":"这样下次再让它做这个项目的 PPT，Agent 一开始就知道背景，也知道素材去哪儿找，做出来的 ppt 效果会更好。"},{"i":16,"t":71.137,"d":4.374,"text":"所以，不管你是编程、做 PPT，还是做别的事，","sent":"所以，不管你是编程、做 PPT，还是做别的事，一个目录下都应该有一份 agents.md。"},{"i":17,"t":75.551,"d":3.534,"text":"一个目录下都应该有一份 agents.md。","sent":"所以，不管你是编程、做 PPT，还是做别的事，一个目录下都应该有一份 agents.md。"},{"i":18,"t":79.125,"d":4.434,"text":"它就是这个目录的记忆：写清楚这个目录是干什么的，","sent":"它就是这个目录的记忆：写清楚这个目录是干什么的，再指向相关的其他文档。"},{"i":19,"t":83.599,"d":2.011,"text":"再指向相关的其他文档。","sent":"它就是这个目录的记忆：写清楚这个目录是干什么的，再指向相关的其他文档。"},{"i":20,"t":85.65,"d":3.78,"text":"这样 AI 每次干活，都能很快进入状态，","sent":"这样 AI 每次干活，都能很快进入状态，不用花大量时间到处探索，这也是 AI 时代办公习惯的新变化。"},{"i":21,"t":89.47,"d":5.902,"text":"不用花大量时间到处探索，这也是 AI 时代办公习惯的新变化。","sent":"这样 AI 每次干活，都能很快进入状态，不用花大量时间到处探索，这也是 AI 时代办公习惯的新变化。"},{"i":22,"t":95.412,"d":4.785,"text":"还有一点：agents.md 不是一次写好就不管了。","sent":"还有一点：agents.md 不是一次写好就不管了。"},{"i":23,"t":100.237,"d":4.748,"text":"它像写代码一样，要一边干一边想：这件事要不要写进去？","sent":"它像写代码一样，要一边干一边想：这件事要不要写进去？"},{"i":24,"t":105.025,"d":4.034,"text":"AI 踩了坑，或者做出来的东西让你很不满意，","sent":"AI 踩了坑，或者做出来的东西让你很不满意，就想想是不是该补一条规则，让它写进 agents.md，以后禁止再犯。"},{"i":25,"t":109.099,"d":5.923,"text":"就想想是不是该补一条规则，让它写进 agents.md，以后禁止再犯。","sent":"AI 踩了坑，或者做出来的东西让你很不满意，就想想是不是该补一条规则，让它写进 agents.md，以后禁止再犯。"},{"i":26,"t":115.062,"d":3.449,"text":"你可以把它理解成一家大公司的管理规范：","sent":"你可以把它理解成一家大公司的管理规范：正规公司都有详细的制度和禁令，什么能做、什么不能做、事情该怎么做。"},{"i":27,"t":118.551,"d":6.021,"text":"正规公司都有详细的制度和禁令，什么能做、什么不能做、事情该怎么做。","sent":"你可以把它理解成一家大公司的管理规范：正规公司都有详细的制度和禁令，什么能做、什么不能做、事情该怎么做。"},{"i":28,"t":124.612,"d":5.523,"text":"agents.md 就是你给 AI 在这个目录里定的员工守则。","sent":"agents.md 就是你给 AI 在这个目录里定的员工守则。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // MOTION:BEGIN
+    // S21 · 每一拍钉在旁白句子上：六块 → 四件事 → 目录当房间 → 翻页盖章。
+    const C = N.cues;
+    const at = (i, offset = 0) =>
+      Math.min(C[Math.min(i, C.length - 1)].t + offset, N.duration - 1.7);
+
+    // 先摆好初始状态：快照/拖动进度条 seek 到中段时不会提前露出。
+    gsap.set("#s21-track-fill", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s21-ppt-hit", { scaleY: 0, transformOrigin: "center center" });
+    gsap.set("#s21-rule-line", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s21-takeaway-rule", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s21-slide-4", { rotate: 3 });
+    gsap.set("#s21-pit", { rotate: -8 });
+    gsap.set("#s21-seal", { rotate: -7 });
+    ["#s21-link-1", "#s21-link-2", "#s21-link-3"].forEach((sel) => {
+      const path = document.querySelector(sel);
+      if (!path) return;
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+    });
+
+    // cue0 · 两份模板并排立起来：先问「到底该写什么」。
+    tl.fromTo(
+      "#s21-templates",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      at(0, 0.25),
+    );
+    tl.fromTo(
+      "#s21-ppt-blank",
+      { opacity: 0, scale: 0.98 },
+      { opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+      at(0, 0.55),
+    );
+
+    // cue1 · 先说编程项目：至少六块；右边 PPT 项目先压暗待用。
+    tl.fromTo(
+      "#s21-count",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(1, 0.1),
+    );
+    tl.fromTo(
+      "#s21-panel-ppt",
+      { opacity: 1 },
+      { opacity: 0.34, duration: 0.5, ease: "power1.out", immediateRender: false },
+      at(1, 0.2),
+    );
+
+    // cue2–cue7 · 六张条目卡自上而下逐条落下；每张卡的小字说明和进度小格各补一拍。
+    [1, 2, 3, 4, 5, 6].forEach((n, i) => {
+      tl.fromTo(
+        "#s21-card-" + n,
+        { opacity: 0, y: -30 },
+        { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        at(2 + i, 0.1),
+      );
+      tl.fromTo(
+        "#s21-count-" + n,
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+        at(2 + i, 0.4),
+      );
+      tl.fromTo(
+        "#s21-card-" + n + " .s21-item-eg",
+        { opacity: 0, x: -8 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        at(2 + i, 1.5),
+      );
+    });
+
+    // cue7 · 第六块是护栏：标签、经验清单小注、卡片轻抬一下。
+    tl.fromTo(
+      "#s21-tag-6",
+      { opacity: 0, scale: 0.8 },
+      { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" },
+      at(7, 1.9),
+    );
+    tl.fromTo(
+      "#s21-code-note",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(7, 2.4),
+    );
+    tl.fromTo(
+      "#s21-card-6",
+      { scale: 1 },
+      { scale: 1.012, duration: 0.4, ease: "power1.out", immediateRender: false },
+      at(7, 3.4),
+    );
+    tl.fromTo(
+      "#s21-card-6",
+      { scale: 1.012 },
+      { scale: 1, duration: 0.45, ease: "power1.inOut", immediateRender: false },
+      at(7, 3.8),
+    );
+
+    // cue8 · 但 Agent 不只是编程工具：左栏退后，右栏亮起来。
+    tl.fromTo(
+      "#s21-panel-code",
+      { opacity: 1 },
+      { opacity: 0.4, duration: 0.6, ease: "power2.out", immediateRender: false },
+      at(8, 0.1),
+    );
+    tl.fromTo(
+      "#s21-panel-ppt",
+      { opacity: 0.34 },
+      { opacity: 1, duration: 0.6, ease: "power2.out", immediateRender: false },
+      at(8, 0.1),
+    );
+
+    // cue9 · 我经常拿它当 PPT 撰写工具：空白模板收走，右栏标题下拉一条强调线。
+    tl.fromTo(
+      "#s21-ppt-blank",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.5, ease: "power2.in", immediateRender: false },
+      at(9, 0.05),
+    );
+    tl.fromTo(
+      "#s21-ppt-underline",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.5, ease: "power2.out", transformOrigin: "left center" },
+      at(9, 0.2),
+    );
+
+    // cue10 · 做 PPT 是要素材的：素材文件夹出现。
+    tl.fromTo(
+      "#s21-folder",
+      { opacity: 0, y: 16, scale: 0.92 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+      at(10, 0.15),
+    );
+    tl.fromTo(
+      "#s21-folder-label",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(10, 0.55),
+    );
+
+    // cue11 · 在项目目录里放一个 AGENTS.md，写清楚四件事。
+    tl.fromTo(
+      "#s21-ppt-file",
+      { opacity: 0, x: 8 },
+      { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+      at(11, 0.15),
+    );
+    tl.fromTo(
+      "#s21-ppt-chip",
+      { opacity: 0, scale: 0.9 },
+      { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" },
+      at(11, 0.4),
+    );
+    tl.fromTo(
+      "#s21-ppt-dots",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.35, ease: "power2.out" },
+      at(11, 0.6),
+    );
+    tl.fromTo(
+      "#s21-ppt-note",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(11, 1.7),
+    );
+
+    // cue12–cue13 · 四件事逐条写下，进度条跟着走。
+    tl.fromTo(
+      "#s21-ppt-card-1",
+      { opacity: 0, y: -18 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(12, 0.15),
+    );
+    tl.fromTo(
+      "#s21-ppt-dot-1",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+      at(12, 0.4),
+    );
+    tl.fromTo(
+      "#s21-ppt-card-2",
+      { opacity: 0, y: -18 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(12, 1.9),
+    );
+    tl.fromTo(
+      "#s21-ppt-dot-2",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+      at(12, 2.15),
+    );
+    tl.fromTo(
+      "#s21-ppt-card-3",
+      { opacity: 0, y: -18 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(13, 0.1),
+    );
+    tl.fromTo(
+      "#s21-ppt-dot-3",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+      at(13, 0.35),
+    );
+    tl.fromTo(
+      "#s21-ppt-meter",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(13, 0.4),
+    );
+    tl.fromTo(
+      "#s21-track-fill",
+      { scaleX: 0 },
+      { scaleX: 0.62, duration: 1.1, ease: "power2.inOut" },
+      at(13, 0.55),
+    );
+    tl.fromTo(
+      "#s21-ppt-card-4",
+      { opacity: 0, y: -18 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(13, 1.0),
+    );
+    tl.fromTo(
+      "#s21-ppt-dot-4",
+      { opacity: 0, scale: 0.5 },
+      { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+      at(13, 1.25),
+    );
+    tl.fromTo(
+      "#s21-deck",
+      { opacity: 0, y: 14, scale: 0.94 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" },
+      at(13, 1.6),
+    );
+
+    // cue14 · 一开始就知道背景：第二张卡亮边、轻抬。
+    tl.fromTo(
+      "#s21-ppt-hit",
+      { scaleY: 0 },
+      { scaleY: 1, duration: 0.45, ease: "power2.out" },
+      at(14, 0.25),
+    );
+    tl.fromTo(
+      "#s21-ppt-card-2",
+      { y: 0 },
+      { y: -5, duration: 0.35, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false },
+      at(14, 0.3),
+    );
+    tl.fromTo(
+      "#s21-ppt-foot",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(15, 1.2),
+    );
+
+    // cue15 · 知道素材去哪儿找、效果更好：文件夹点一下，缩略图多出一页。
+    tl.fromTo(
+      "#s21-folder",
+      { scale: 1 },
+      { scale: 1.05, duration: 0.4, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false },
+      at(15, 0.15),
+    );
+    tl.fromTo(
+      "#s21-slide-4",
+      { opacity: 0, scale: 0.9 },
+      { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.8)" },
+      at(15, 2.2),
+    );
+
+    // cue16 · 不管编程还是做 PPT：两份模板一起退场，换「目录 = 房间」。
+    tl.fromTo(
+      "#s21-templates",
+      { y: 0 },
+      { y: -12, duration: 0.6, ease: "power2.in", immediateRender: false },
+      at(16, 0.1),
+    );
+    tl.fromTo(
+      "#s21-panel-code",
+      { opacity: 0.4 },
+      { opacity: 0, duration: 0.55, ease: "power2.in", immediateRender: false },
+      at(16, 0.1),
+    );
+    tl.fromTo(
+      "#s21-panel-ppt",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.55, ease: "power2.in", immediateRender: false },
+      at(16, 0.2),
+    );
+    tl.fromTo(
+      "#s21-room-kicker",
+      { opacity: 0, x: -14 },
+      { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
+      at(16, 0.55),
+    );
+
+    // cue17 · 一个目录下都应该有一份 agents.md：房间和挂在门口的手册。
+    tl.fromTo(
+      "#s21-room",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: "power2.out" },
+      at(16, 0.6),
+    );
+    tl.fromTo(
+      "#s21-room-svg",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.7, ease: "power2.out" },
+      at(16, 0.65),
+    );
+    tl.fromTo(
+      "#s21-room-detail",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: "power2.out" },
+      at(16, 1.55),
+    );
+    tl.fromTo(
+      "#s21-room-label",
+      { opacity: 0, y: 6 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(16, 1.0),
+    );
+    tl.fromTo(
+      "#s21-hook",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: "power1.out" },
+      at(17, 0.35),
+    );
+    tl.fromTo(
+      "#s21-manual",
+      { opacity: 0, y: -24 },
+      { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" },
+      at(17, 0.3),
+    );
+    tl.fromTo(
+      "#s21-manual",
+      { rotate: 0 },
+      { rotate: -1.2, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false },
+      at(17, 1.15),
+    );
+
+    // cue18 · 它就是这间房的记忆：手册里的小字、屋里的三个区域。
+    tl.fromTo(
+      ["#s21-manual-l1", "#s21-manual-l2", "#s21-manual-l3", "#s21-manual-l4"],
+      { opacity: 0, x: -8 },
+      { opacity: 1, x: 0, duration: 0.4, ease: "power2.out", stagger: 0.12 },
+      at(17, 1.6),
+    );
+    tl.fromTo(
+      "#s21-memory-tag",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      at(18, 0.3),
+    );
+    tl.fromTo(
+      ".s21-zone",
+      { opacity: 0, x: 18 },
+      { opacity: 1, x: 0, duration: 0.5, ease: "power2.out", stagger: 0.14 },
+      at(18, 0.6),
+    );
+    tl.fromTo(
+      "#s21-room-note",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(18, 2.0),
+    );
+
+    // cue19 · 再指向相关的其他文档：三根细墨线从手册画到三个区域，线到位再落箭头。
+    ["#s21-link-1", "#s21-link-2", "#s21-link-3"].forEach((sel, i) => {
+      const path = document.querySelector(sel);
+      if (!path) return;
+      const len = path.getTotalLength();
+      tl.fromTo(
+        path,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power1.out" },
+        at(19, 0.15 + i * 0.3),
+      );
+      tl.fromTo(
+        path,
+        { strokeDashoffset: len },
+        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" },
+        at(19, 0.2 + i * 0.3),
+      );
+      tl.fromTo(
+        "#s21-tip-" + (i + 1),
+        { opacity: 0 },
+        { opacity: 1, duration: 0.2, ease: "power1.out" },
+        at(19, 0.7 + i * 0.3),
+      );
+    });
+
+    // cue20 · AI 每次干活都能很快进入状态：三个区域依次亮「已读」。
+    ["#s21-tick-1", "#s21-tick-2", "#s21-tick-3"].forEach((sel, i) => {
+      tl.fromTo(
+        sel,
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.8)" },
+        at(20, 0.2 + i * 0.3),
+      );
+    });
+
+    // cue21 · 不用到处探索，这是 AI 时代办公习惯：底部换成一句结论。
+    tl.fromTo(
+      "#s21-room-note",
+      { opacity: 1 },
+      { opacity: 0, duration: 0.35, ease: "power1.out", immediateRender: false },
+      at(21, 0.15),
+    );
+    tl.fromTo(
+      "#s21-takeaway",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(21, 0.35),
+    );
+    tl.fromTo(
+      "#s21-takeaway-rule",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.6, ease: "power2.out" },
+      at(21, 0.75),
+    );
+    tl.fromTo(
+      "#s21-takeaway-rule",
+      { opacity: 1 },
+      { opacity: 0.5, duration: 0.4, ease: "sine.inOut", immediateRender: false },
+      at(21, 2.6),
+    );
+    tl.fromTo(
+      "#s21-takeaway-rule",
+      { opacity: 0.5 },
+      { opacity: 1, duration: 0.4, ease: "sine.inOut", immediateRender: false },
+      at(21, 3.0),
+    );
+
+    // cue22 · 不是一次写好就不管了：房间先收走，手册再搬到画面中间，翻到新一页。
+    tl.fromTo(
+      "#s21-room",
+      { opacity: 1, y: 0, scale: 1 },
+      { opacity: 0, y: 20, scale: 0.97, duration: 0.35, ease: "power2.in", immediateRender: false, transformOrigin: "center center" },
+      at(22, 0.05),
+    );
+    tl.fromTo(
+      "#s21-book-kicker",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(22, 0.55),
+    );
+    tl.fromTo(
+      "#s21-book",
+      { opacity: 0, y: 26, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" },
+      at(22, 0.45),
+    );
+    tl.fromTo(
+      "#s21-page-head",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: "power1.out" },
+      at(22, 1.0),
+    );
+    ["#s21-row-1", "#s21-row-2", "#s21-row-3", "#s21-row-4", "#s21-row-5"].forEach((sel, i) => {
+      tl.fromTo(
+        sel,
+        { opacity: 0, x: -8 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        at(22, 1.15 + i * 0.14),
+      );
+    });
+    tl.fromTo(
+      "#s21-flip",
+      { rotateY: 0 },
+      { rotateY: -178, duration: 1.0, ease: "power2.inOut" },
+      at(22, 2.05),
+    );
+
+    // cue23 · 一边干一边想：新页面上一行空白，加一句自问。
+    tl.fromTo(
+      "#s21-page-tag",
+      { opacity: 0, y: 6 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      at(23, 0.15),
+    );
+    ["#s21-blank-1", "#s21-blank-2", "#s21-blank-3"].forEach((sel, i) => {
+      tl.fromTo(
+        sel,
+        { opacity: 0, scaleX: 0.4 },
+        { opacity: 1, scaleX: 1, duration: 0.4, ease: "power2.out", transformOrigin: "left center" },
+        at(23, 0.3 + i * 0.12),
+      );
+    });
+    tl.fromTo(
+      "#s21-write-q",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(23, 1.6),
+    );
+
+    // cue24 · AI 踩了坑、你不满意：左边贴一张踩坑记录。
+    tl.fromTo(
+      "#s21-pit",
+      { opacity: 0, y: 14, rotate: -8 },
+      { opacity: 1, y: 0, rotate: -3, duration: 0.55, ease: "power3.out" },
+      at(24, 0.2),
+    );
+
+    // cue25 · 补一条规则，让它以后禁止再犯：红笔写禁令，再划一道红线。
+    tl.fromTo(
+      "#s21-rule-text",
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+      at(25, 0.25),
+    );
+    tl.fromTo(
+      "#s21-rule-line",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.7, ease: "power2.out" },
+      at(25, 0.75),
+    );
+    tl.fromTo(
+      "#s21-forbid",
+      { opacity: 0, x: 6 },
+      { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" },
+      at(25, 3.4),
+    );
+    tl.fromTo(
+      "#s21-book-note",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      at(25, 2.2),
+    );
+
+    // cue26 · 一家大公司的管理规范：这一页有了标题和身份。
+    tl.fromTo(
+      "#s21-page-title",
+      { opacity: 0, x: 12 },
+      { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+      at(26, 0.2),
+    );
+    tl.fromTo(
+      "#s21-norm-chip",
+      { opacity: 0, y: 6 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+      at(26, 0.6),
+    );
+
+    // cue27 · 什么能做、什么不能做、事情该怎么做：三枚小标签。
+    tl.fromTo(
+      ".s21-check",
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.22 },
+      at(27, 0.2),
+    );
+
+    // cue28 · 员工守则：章盖下去，画面定格。
+    tl.fromTo(
+      "#s21-seal",
+      { opacity: 0, scale: 1.5, rotate: -18 },
+      { opacity: 1, scale: 1, rotate: -7, duration: 0.36, ease: "power3.out" },
+      at(28, 0.3),
+    );
+    tl.fromTo(
+      "#s21-page-right",
+      { y: 0 },
+      { y: 3, duration: 0.14, ease: "power2.out", yoyo: true, repeat: 1 },
+      at(28, 0.42),
+    );
+    tl.fromTo(
+      "#s21-rule-line",
+      { opacity: 1 },
+      { opacity: 0.55, duration: 0.35, ease: "sine.inOut", immediateRender: false },
+      at(28, 2.5),
+    );
+    tl.fromTo(
+      "#s21-rule-line",
+      { opacity: 0.55 },
+      { opacity: 1, duration: 0.35, ease: "sine.inOut", immediateRender: false },
+      at(28, 2.85),
+    );
+    // MOTION:END
+
+    window.__timelines["s-agents-md-content"] = tl;
+  </script>
+</template>

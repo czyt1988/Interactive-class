@@ -1,0 +1,1470 @@
+<template>
+  <style>
+    /* S24 先选对模型：同一张纸面上分四段接力。
+       ① 模型货架：多模态一排 / 非多模态一排；② PPT 工作台左右对照；
+       ③ 国产 / 国外名册 +「不是更聪明」对照条；④ 生图 / 生视频货架。
+       晚出现的元素先在 CSS 里藏住，快照 seek 到中段也不会提前露出来。 */
+    .s24-act {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .s24-late {
+      opacity: 0;
+    }
+
+    /* ---------------- 第一段：模型货架 ---------------- */
+    .s24-kicker {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.1em;
+      color: var(--accent-text);
+    }
+
+    .s24-hint {
+      position: absolute;
+      right: 0;
+      top: 2px;
+      font-size: 26px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s24-hint b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s24-row-label {
+      position: absolute;
+      left: 0;
+      width: 236px;
+    }
+
+    .s24-row-name {
+      font-size: 42px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+
+    .s24-row-name--off {
+      color: var(--ink-soft);
+    }
+
+    .s24-cap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 26px;
+      line-height: 1.2;
+      color: var(--ink-soft);
+    }
+
+    .s24-cap svg {
+      width: 27px;
+      height: 27px;
+      flex: none;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s24-card {
+      position: absolute;
+      width: 400px;
+      height: 178px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s24-logo {
+      display: block;
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .s24-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 44px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+    }
+
+    .s24-card-name {
+      margin-top: 2px;
+      font-size: 30px;
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s24-card-sub {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s24-board {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--line-strong), color-mix(in srgb, var(--line) 55%, transparent));
+    }
+
+    .s24-glow {
+      position: absolute;
+      left: -18px;
+      top: 88px;
+      width: 1560px;
+      height: 232px;
+      border-radius: 22px;
+      background: var(--accent-soft);
+    }
+
+    .s24-tasks {
+      position: absolute;
+      left: 0;
+      top: 566px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .s24-task {
+      padding: 8px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-size: 26px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s24-task-arrow {
+      font-family: var(--font-mono);
+      font-size: 30px;
+      color: var(--accent-text);
+    }
+
+    .s24-verdict {
+      margin-left: 8px;
+      padding: 7px 22px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    /* ---------------- 第二段：PPT 工作台对照 ---------------- */
+    .s24-col {
+      position: absolute;
+      top: 0;
+      width: 806px;
+    }
+
+    .s24-col-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 44px;
+    }
+
+    .s24-col-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-col-name--off {
+      color: var(--ink-soft);
+    }
+
+    .s24-chip {
+      padding: 4px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 23px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s24-chip--off {
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      color: var(--ink-faint);
+    }
+
+    .s24-work {
+      position: relative;
+      margin-top: 12px;
+      height: 470px;
+    }
+
+    .s24-steps {
+      position: absolute;
+      left: 22px;
+      top: 16px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .s24-step {
+      padding: 4px 14px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s24-step--on {
+      border-style: solid;
+      border-color: transparent;
+      background: var(--accent-soft);
+      color: var(--ink);
+    }
+
+    .s24-code {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 52px;
+      height: 114px;
+      padding: 7px 14px;
+      font-size: 18px;
+      line-height: 1.38;
+    }
+
+    .s24-code .code-line {
+      border-radius: 2px;
+    }
+
+    .s24-slides-label {
+      position: absolute;
+      left: 22px;
+      top: 170px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s24-slides {
+      position: absolute;
+      left: 22px;
+      top: 208px;
+      width: 642px;
+      height: 110px;
+      display: flex;
+      gap: 26px;
+    }
+
+    .s24-slide {
+      position: relative;
+      width: 196px;
+      height: 110px;
+      flex: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      overflow: hidden;
+      box-shadow: 0 10px 22px -22px rgba(22, 20, 15, 0.6);
+    }
+
+    .s24-slide-title {
+      position: absolute;
+      left: 10px;
+      top: 12px;
+      width: 74px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--ink-soft);
+    }
+
+    .s24-slide-img {
+      position: absolute;
+      left: 10px;
+      top: 26px;
+      width: 88px;
+      height: 70px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #e6dcc9, #c9bda4);
+    }
+
+    .s24-slide-line {
+      position: absolute;
+      left: 108px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line-strong);
+    }
+
+    .s24-bug-text {
+      position: absolute;
+      left: 26px;
+      top: 52px;
+      width: 62px;
+      height: 9px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .s24-bug-badge {
+      position: absolute;
+      left: 78px;
+      top: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      background: var(--accent);
+    }
+
+    .s24-shot-frame {
+      position: absolute;
+      left: -12px;
+      top: -12px;
+      width: 666px;
+      height: 134px;
+      border: 2px dashed var(--accent);
+      border-radius: 10px;
+    }
+
+    .s24-shot-tag {
+      position: absolute;
+      right: 22px;
+      top: 168px;
+      padding: 1px 10px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      color: var(--ink);
+    }
+
+    .s24-inspect {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 336px;
+      height: 114px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+
+    .s24-iline {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 14px;
+      font-size: 23px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s24-iline b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s24-veil {
+      position: absolute;
+      left: -12px;
+      top: -12px;
+      width: 666px;
+      height: 134px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 10px;
+      background: repeating-linear-gradient(45deg, rgba(22, 20, 15, 0.07) 0 9px, transparent 9px 20px);
+    }
+
+    .s24-veil-badge {
+      position: absolute;
+      left: 236px;
+      top: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s24-veil-badge svg {
+      width: 26px;
+      height: 26px;
+      fill: none;
+      stroke: var(--ink-faint);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s24-scan {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 40px;
+      height: 128px;
+      border: 2px dashed var(--line-strong);
+      border-radius: 12px;
+    }
+
+    .s24-scan i {
+      position: absolute;
+      right: 10px;
+      top: -15px;
+      padding: 1px 10px;
+      border-radius: 6px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-style: normal;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+    }
+
+    .s24-pass {
+      position: absolute;
+      right: 18px;
+      top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    .s24-pass svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s24-bench-verdict {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 552px;
+      text-align: center;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-bench-verdict b {
+      color: var(--accent-text);
+    }
+
+    /* ---------------- 第三段：国产 / 国外名册 + 对照条 ---------------- */
+    .s24-th {
+      position: absolute;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s24-trow {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .s24-tlabel {
+      position: absolute;
+      left: 0;
+      top: 14px;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-tcell {
+      position: absolute;
+      top: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 14px;
+    }
+
+    .s24-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      height: 66px;
+      padding: 0 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      font-size: 27px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+
+    .s24-name img {
+      display: block;
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+
+    .s24-slot {
+      position: absolute;
+      height: 66px;
+      width: 200px;
+      border: 1.5px dashed var(--line-strong);
+      border-radius: 12px;
+    }
+
+    .s24-name--off {
+      border-style: dashed;
+      border-color: var(--line-strong);
+      background: var(--panel-2);
+      color: var(--ink-soft);
+    }
+
+    .s24-name-note {
+      width: 100%;
+      margin-top: 2px;
+      font-size: 22px;
+      line-height: 1.5;
+      color: var(--ink-faint);
+    }
+
+    .s24-gl-note {
+      position: absolute;
+      left: 0;
+      top: 16px;
+      width: 660px;
+      font-size: 25px;
+      line-height: 1.6;
+      color: var(--ink-soft);
+    }
+
+    .s24-compare {
+      position: absolute;
+    }
+
+    .s24-cmp-title {
+      position: absolute;
+      left: 26px;
+      top: 20px;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-cmp-sub {
+      position: absolute;
+      left: 26px;
+      top: 68px;
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s24-cmp-head {
+      position: absolute;
+      top: 16px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s24-cmp-row {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .s24-cmp-label {
+      width: 118px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-soft);
+    }
+
+    .s24-track {
+      position: relative;
+      width: 380px;
+      height: 14px;
+      border-radius: 7px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
+
+    .s24-fill {
+      display: block;
+      height: 100%;
+      width: 100%;
+      border-radius: 7px;
+      background: var(--accent);
+    }
+
+    .s24-cmp-price {
+      position: absolute;
+    }
+
+    .s24-cmp-note {
+      position: absolute;
+      left: 1320px;
+      top: 50px;
+      width: 320px;
+      font-size: 24px;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    /* ---------------- 第四段：生图 / 生视频货架 ---------------- */
+    .s24-gen-col {
+      position: absolute;
+      top: 0;
+      width: 800px;
+    }
+
+    .s24-gen-title {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-gen-sub {
+      margin-top: 4px;
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s24-gen-names {
+      position: absolute;
+      left: 0;
+      top: 80px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .s24-gen-name {
+      padding: 5px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s24-sample {
+      position: absolute;
+      top: 132px;
+      width: 382px;
+    }
+
+    .s24-sample img {
+      display: block;
+      width: 100%;
+      height: 258px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .s24-shelf-note {
+      position: absolute;
+      top: 474px;
+      width: 780px;
+      font-size: 26px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s24-shelf-note b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s24-drama-tag {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      padding: 3px 12px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 19px;
+      letter-spacing: 0.08em;
+    }
+
+    .s24-drama-flag {
+      position: absolute;
+      left: 16px;
+      bottom: 48px;
+      padding: 4px 12px;
+      border-left: 4px solid var(--accent);
+      background: rgba(250, 246, 238, 0.92);
+      font-size: 20px;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+
+    .s24-agent-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 462px;
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 26px;
+    }
+
+    .s24-agent-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .s24-agent-icon {
+      width: 42px;
+      height: 42px;
+      flex: none;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s24-agent-title {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s24-agent-sub {
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s24-agent-right {
+      font-size: 22px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s24-flow {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 566px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .s24-flow-task {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      font-size: 24px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s24-flow-arrow {
+      font-family: var(--font-mono);
+      font-size: 30px;
+      color: var(--accent-text);
+    }
+
+    .s24-flow-gen {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 22px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    .s24-flow-code {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 12px;
+      background: var(--panel-2);
+      font-size: 24px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s24-flow-note {
+      margin-left: auto;
+      font-size: 24px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      text-align: right;
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-model-choice"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S24</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-model-choice-title" class="scene-title">先选对模型</h1>
+        <p class="scene-no">24 / 28</p>
+      </header>
+
+      <section id="s-model-choice-stage" class="stage">
+        <!-- 第一段：模型货架（cue 0-5）。多模态一排、非多模态一排。 -->
+        <div id="s24-shelf" class="s24-act">
+          <p id="s24-shelf-kicker" class="s24-kicker s24-late">模型货架 · 先分两类</p>
+          <p id="s24-shelf-hint" class="s24-hint s24-late">先确认：<b>这个模型，适合这项任务吗？</b></p>
+
+          <i id="s24-row-a-glow" class="s24-glow s24-late"></i>
+
+          <div class="s24-row-label" style="top: 106px">
+            <p id="s24-label-a" class="s24-row-name s24-late">多模态</p>
+            <p id="s24-cap-a1" class="s24-cap s24-late">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12C6 7 18 7 21.5 12 18 17 6 17 2.5 12Z" /><circle cx="12" cy="12" r="3" /></svg>看图
+            </p>
+            <p id="s24-cap-a2" class="s24-cap s24-late">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3" /><path d="M10 9.4 15 12l-5 2.6Z" /></svg>读视频
+            </p>
+          </div>
+
+          <article id="s24-card-a1" class="s24-card s24-late" style="left: 264px; top: 106px">
+            <img class="s24-logo" src="assets/media/logo/deepseek.png" alt="DeepSeek 标志" width="44" height="44" />
+            <p class="s24-card-name">DeepSeek-V4.1 flash</p>
+            <p class="s24-card-sub">原生多模态</p>
+          </article>
+          <article id="s24-card-a2" class="s24-card s24-late" style="left: 696px; top: 106px">
+            <img class="s24-logo" src="assets/media/logo/qwen.png" alt="千问标志" width="44" height="44" />
+            <p class="s24-card-name">千问 3.8 Max</p>
+            <p class="s24-card-sub">视觉理解</p>
+          </article>
+          <article id="s24-card-a3" class="s24-card s24-late" style="left: 1128px; top: 106px">
+            <span class="s24-mark">GLM</span>
+            <p class="s24-card-name">GLM-5.3-Flash</p>
+            <p class="s24-card-sub">视觉理解</p>
+          </article>
+          <span id="s24-board-a" class="s24-board s24-late" style="top: 296px"></span>
+
+          <div class="s24-row-label" style="top: 336px">
+            <p id="s24-label-b" class="s24-row-name s24-row-name--off s24-late">非多模态</p>
+            <p id="s24-cap-b1" class="s24-cap s24-late">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 11h16M4 16h10" /></svg>只处理文字
+            </p>
+          </div>
+
+          <article id="s24-card-b1" class="s24-card s24-late" style="left: 264px; top: 336px">
+            <span class="s24-mark">GLM</span>
+            <p class="s24-card-name">GLM-5.3 旗舰</p>
+            <p class="s24-card-sub">偏文本和 Agent 任务</p>
+          </article>
+          <article id="s24-card-b2" class="s24-card s24-late" style="left: 696px; top: 336px">
+            <span class="s24-mark">TXT</span>
+            <p class="s24-card-name">纯文本模型</p>
+            <p class="s24-card-sub">只收文字</p>
+          </article>
+          <span id="s24-board-b" class="s24-board s24-late" style="top: 526px"></span>
+
+          <div id="s24-tasks" class="s24-tasks">
+            <span id="s24-task-1" class="s24-task s24-late">做一套精美 PPT</span>
+            <span id="s24-task-2" class="s24-task s24-late">解读图片</span>
+            <span id="s24-task-3" class="s24-task s24-late">看设计稿</span>
+            <span id="s24-task-arrow" class="s24-task-arrow s24-late">→</span>
+            <span id="s24-verdict" class="s24-verdict s24-late">必须选多模态</span>
+          </div>
+        </div>
+
+        <!-- 第二段：同一句需求，左右两个工作台（cue 5-10）。 -->
+        <div id="s24-bench" class="s24-act">
+          <div id="s24-col-l" class="s24-col" style="left: 0">
+            <div class="s24-col-head">
+              <p id="s24-head-l" class="s24-col-name s24-late">多模态模型</p>
+              <span id="s24-chip-l" class="s24-chip s24-late">能看图，能自检</span>
+            </div>
+            <div id="s24-work-l" class="panel s24-work s24-late">
+              <div class="s24-steps">
+                <span id="s24-step-l1" class="s24-step s24-step--on s24-late">① 写代码生成</span>
+                <span id="s24-step-l2" class="s24-step s24-late">② 截图</span>
+                <span id="s24-step-l3" class="s24-step s24-late">③ 视觉检查</span>
+              </div>
+              <div id="s24-code-l" class="code s24-code s24-late">
+                <span class="code-line">from pptx import Presentation</span>
+                <span class="code-line">prs = Presentation()</span>
+                <span class="code-line">slide = prs.slides.add_slide(layout)</span>
+                <span class="code-line" id="s24-code-l4">slide.shapes.add_textbox(40, 300, 520, 120)</span>
+              </div>
+              <p id="s24-slides-label-l" class="s24-slides-label s24-late">生成的 PPT · 3 页</p>
+              <span id="s24-shot-tag" class="s24-shot-tag s24-late">screenshot.png</span>
+              <div class="s24-slides">
+                <div id="s24-slide-l1" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 56px; width: 56px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 62px"></span>
+                </div>
+                <div id="s24-slide-l2" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 56px"></span>
+                  <span id="s24-bug-text" class="s24-bug-text s24-late"></span>
+                  <span id="s24-bug-badge" class="s24-bug-badge s24-late"></span>
+                  <span id="s24-slide-l2-fix" class="s24-slide-line s24-late" style="top: 56px; width: 60px;"></span>
+                </div>
+                <div id="s24-slide-l3" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 60px"></span>
+                  <span class="s24-slide-line" style="top: 56px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 52px"></span>
+                </div>
+                <span id="s24-shot-frame" class="s24-shot-frame s24-late"></span>
+              </div>
+              <div class="s24-inspect">
+                <p id="s24-l-1" class="s24-iline s24-late">先写代码，把 PPT 生成出来</p>
+                <p id="s24-l-2" class="s24-iline s24-late">截图 → 视觉检查：发现 <b>文字压图</b>、<b>元素干涉</b></p>
+                <p id="s24-l-3" class="s24-iline s24-late">回代码修好，再截一次图，重新看一遍</p>
+                <span id="s24-pass" class="s24-pass s24-late">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg>通过
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div id="s24-col-r" class="s24-col" style="left: 858px">
+            <div class="s24-col-head">
+              <p id="s24-head-r" class="s24-col-name s24-col-name--off s24-late">非多模态模型</p>
+              <span id="s24-chip-r" class="s24-chip s24-chip--off s24-late">只能读代码</span>
+            </div>
+            <div id="s24-work-r" class="panel s24-work s24-late">
+              <div class="s24-steps">
+                <span id="s24-step-r1" class="s24-step s24-step--on s24-late">① 写代码生成</span>
+                <span id="s24-step-r2" class="s24-step s24-late">② 翻代码</span>
+                <span id="s24-step-r3" class="s24-step s24-late">③ 猜</span>
+              </div>
+              <div id="s24-code-r" class="code s24-code s24-late">
+                <span class="code-line">from pptx import Presentation</span>
+                <span class="code-line">prs = Presentation()</span>
+                <span class="code-line">slide = prs.slides.add_slide(layout)</span>
+                <span class="code-line">slide.shapes.add_textbox(40, 300, 520, 120)</span>
+              </div>
+              <p id="s24-slides-label-r" class="s24-slides-label s24-late">同一个 PPT · 3 页</p>
+              <div class="s24-slides">
+                <div id="s24-slide-r1" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 56px; width: 56px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 62px"></span>
+                </div>
+                <div id="s24-slide-r2" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 56px"></span>
+                  <span id="s24-bug-text-r" class="s24-bug-text s24-late"></span>
+                  <span id="s24-bug-badge-r" class="s24-bug-badge s24-late"></span>
+                </div>
+                <div id="s24-slide-r3" class="s24-slide s24-late">
+                  <span class="s24-slide-title"></span>
+                  <span class="s24-slide-img"></span>
+                  <span class="s24-slide-line" style="top: 40px; width: 60px"></span>
+                  <span class="s24-slide-line" style="top: 56px; width: 66px"></span>
+                  <span class="s24-slide-line" style="top: 72px; width: 52px"></span>
+                </div>
+                <span id="s24-veil" class="s24-veil s24-late">
+                  <span id="s24-veil-badge" class="s24-veil-badge s24-late">
+                    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16c5-7 19-7 24 0-5 7-19 7-24 0Z" /><circle cx="16" cy="16" r="4" /><path d="M6 26 26 6" /></svg>画面看不见
+                  </span>
+                </span>
+              </div>
+              <span id="s24-scan" class="s24-scan s24-late"><i>只能读代码</i></span>
+              <div class="s24-inspect">
+                <p id="s24-r-1" class="s24-iline s24-late">同样写代码，把 PPT 生成出来</p>
+                <p id="s24-r-2" class="s24-iline s24-late">没有画面可看，只能翻代码、自己猜</p>
+                <p id="s24-r-3" class="s24-iline s24-late">只能通过代码评估，看不出好不好看、有没有干涉</p>
+              </div>
+            </div>
+          </div>
+
+          <p id="s24-bench-verdict" class="s24-bench-verdict s24-late">做完要能自己看截图，<b>必须多模态</b></p>
+        </div>
+
+        <!-- 第三段：国产 / 国外名册 +「不是更聪明」对照条（cue 11-16）。 -->
+        <div id="s24-roster" class="s24-act">
+          <span id="s24-th-1" class="s24-th s24-late" style="left: 0">产地</span>
+          <span id="s24-th-2" class="s24-th s24-late" style="left: 180px">多模态</span>
+          <span id="s24-th-3" class="s24-th s24-late" style="left: 960px">非多模态</span>
+
+          <div id="s24-row-cn" class="s24-trow s24-late" style="top: 40px; height: 216px">
+            <p id="s24-cn" class="s24-tlabel s24-late">国产</p>
+            <div class="s24-tcell" style="left: 180px; width: 748px">
+              <span id="s24-name-ds" class="s24-name s24-late"><img src="assets/media/logo/deepseek.png" alt="DeepSeek 标志" width="28" height="28" />DeepSeek-V4.1 flash</span>
+              <span id="s24-name-qwen" class="s24-name s24-late"><img src="assets/media/logo/qwen.png" alt="千问标志" width="28" height="28" />千问 3.8 Max</span>
+              <span id="s24-name-glmf" class="s24-name s24-late">GLM-5.3-Flash</span>
+            </div>
+            <div class="s24-tcell" style="left: 960px; width: 704px">
+              <span id="s24-slot-cn" class="s24-slot s24-late" style="left: 0; top: 0"></span>
+              <span id="s24-name-glmflag" class="s24-name s24-name--off s24-late">GLM-5.3 旗舰</span>
+              <p id="s24-nonmulti-note" class="s24-name-note s24-late">非多模态 · 偏文本和 Agent 任务</p>
+            </div>
+          </div>
+
+          <div id="s24-row-gl" class="s24-trow s24-late" style="top: 274px; height: 190px">
+            <p id="s24-gl" class="s24-tlabel s24-late">国外</p>
+            <div class="s24-tcell" style="left: 180px; width: 748px">
+              <span id="s24-slot-g1" class="s24-slot s24-late" style="left: 0; top: 0"></span>
+              <span id="s24-slot-g2" class="s24-slot s24-late" style="left: 214px; top: 0"></span>
+              <span id="s24-slot-g3" class="s24-slot s24-late" style="left: 428px; top: 0"></span>
+              <span id="s24-name-gpt" class="s24-name s24-late">GPT</span>
+              <span id="s24-name-claude" class="s24-name s24-late">Claude</span>
+              <span id="s24-name-gemini" class="s24-name s24-late">Gemini</span>
+            </div>
+            <div class="s24-tcell" style="left: 960px; width: 704px">
+              <span id="s24-slot-gn" class="s24-slot s24-late" style="left: 0; top: 0"></span>
+              <p id="s24-gl-note" class="s24-gl-note s24-late">主流旗舰基本都已经是多模态<br />差别更多在能力侧重和价格</p>
+            </div>
+          </div>
+
+          <div id="s24-compare" class="panel s24-compare s24-late" style="left: 0; right: 0; top: 486px; height: 158px">
+            <p id="s24-cmp-title" class="s24-cmp-title s24-late">多模态 ≠ 更聪明</p>
+            <p id="s24-cmp-sub" class="s24-cmp-sub s24-late">不是更聪明，是能力侧重不同（示意）</p>
+            <p id="s24-cmp-head-a" class="s24-cmp-head s24-late" style="left: 470px">纯文本任务</p>
+            <div id="s24-cmp-row1" class="s24-cmp-row s24-late" style="left: 470px; top: 52px">
+              <span class="s24-cmp-label">多模态</span>
+              <span class="s24-track"><i id="s24-fill-a" class="s24-fill"></i></span>
+            </div>
+            <div id="s24-cmp-row2" class="s24-cmp-row s24-late" style="left: 470px; top: 92px">
+              <span class="s24-cmp-label">非多模态</span>
+              <span class="s24-track"><i id="s24-fill-b" class="s24-fill"></i></span>
+            </div>
+            <p id="s24-cmp-head-b" class="s24-cmp-head s24-late" style="left: 1030px">价格</p>
+            <span id="s24-cmp-price1" class="s24-cmp-price s24-late" style="left: 1030px; top: 48px"><span class="chip">多模态 ¥¥¥</span></span>
+            <span id="s24-cmp-price2" class="s24-cmp-price s24-late" style="left: 1030px; top: 92px"><span class="chip">非多模态 ¥</span></span>
+            <p id="s24-cmp-note" class="s24-cmp-note s24-late">纯文本任务上，可能更强，也可能更便宜</p>
+          </div>
+        </div>
+
+        <!-- 第四段：生图 / 生视频货架（cue 17-23）。 -->
+        <div id="s24-gen" class="s24-act">
+          <div class="s24-gen-col" style="left: 0">
+            <p id="s24-gen-title-a" class="s24-gen-title s24-late">生图模型</p>
+            <p id="s24-gen-sub-a" class="s24-gen-sub s24-late">直接出图，不用写代码画</p>
+            <div class="s24-gen-names">
+              <span id="s24-gen-a1" class="s24-gen-name s24-late">GPT Image</span>
+              <span id="s24-gen-a2" class="s24-gen-name s24-late">Midjourney</span>
+              <span id="s24-gen-a3" class="s24-gen-name s24-late">Seedream</span>
+            </div>
+            <figure id="s24-sample-seedream" class="media s24-sample s24-late" style="left: 0">
+              <img src="assets/media/gen/seedream-sample.webp" alt="Seedream 官方示例：夜晚海边奔跑的女生" width="366" height="200" />
+              <figcaption class="media__label"><span>Seedream</span><span>官方示例</span></figcaption>
+            </figure>
+            <figure id="s24-sample-gpt" class="media s24-sample s24-late" style="left: 402px">
+              <img src="assets/media/gen/gpt-image-sample.webp" alt="GPT Image 官方示例：夜间四人群像" width="366" height="200" />
+              <figcaption class="media__label"><span>GPT Image</span><span>官方示例</span></figcaption>
+            </figure>
+            <p id="s24-note-a" class="s24-shelf-note s24-late">配图、封面、插画，<b>直接出图</b></p>
+          </div>
+
+          <div class="s24-gen-col" style="left: 864px">
+            <p id="s24-gen-title-b" class="s24-gen-title s24-late">生视频模型</p>
+            <p id="s24-gen-sub-b" class="s24-gen-sub s24-late">文 / 图生视频，直接出镜头</p>
+            <div class="s24-gen-names">
+              <span id="s24-gen-b1" class="s24-gen-name s24-late">Seedance</span>
+              <span id="s24-gen-b2" class="s24-gen-name s24-late">可灵</span>
+              <span id="s24-gen-b3" class="s24-gen-name s24-late">Veo</span>
+              <span id="s24-gen-b4" class="s24-gen-name s24-late">Sora</span>
+            </div>
+            <figure id="s24-sample-seedance" class="media s24-sample s24-late" style="left: 0">
+              <img src="assets/media/gen/seedance-still.webp" alt="Seedance 官方博客视频抽帧：阳台晾衣的女生" width="366" height="200" />
+              <figcaption class="media__label"><span>Seedance</span><span>官方视频抽帧</span></figcaption>
+              <span id="s24-drama-tag" class="s24-drama-tag s24-late">短剧镜头</span>
+              <span id="s24-drama-flag" class="s24-drama-flag s24-late">刷到的短剧，很多就是这样生成的</span>
+            </figure>
+            <figure id="s24-sample-kling" class="media s24-sample s24-late" style="left: 402px">
+              <img src="assets/media/gen/kling-still.webp" alt="可灵官网 hero 视频抽帧：暴风雨甲板上弹钢琴" width="366" height="200" />
+              <figcaption class="media__label"><span>可灵</span><span>官方视频抽帧</span></figcaption>
+            </figure>
+            <p id="s24-note-b" class="s24-shelf-note s24-late">短剧、广告、分镜，<b>直接出镜头</b></p>
+          </div>
+
+          <div id="s24-agent-bar" class="panel s24-agent-bar s24-late">
+            <div class="s24-agent-main">
+              <svg class="s24-agent-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M13 5v6M19 5v6M9 11h14v6a7 7 0 0 1-14 0Z" /><path d="M16 24v5" /></svg>
+              <div>
+                <p class="s24-agent-title">Agent 的工具</p>
+                <p class="s24-agent-sub">也可以直接接入生图 / 生视频模型</p>
+              </div>
+            </div>
+            <p class="s24-agent-right">专门模型，干专门的活</p>
+          </div>
+
+          <div class="s24-flow">
+            <span id="s24-flow-task" class="s24-flow-task s24-late">任务：给 PPT 配一张图</span>
+            <span id="s24-flow-arrow" class="s24-flow-arrow s24-late">→</span>
+            <span id="s24-flow-gen" class="s24-flow-gen s24-late">生图模型直接生成</span>
+            <span id="s24-flow-vs" class="s24-late" style="font-size: 24px; color: var(--ink-faint)">而不是</span>
+            <span id="s24-flow-code" class="s24-flow-code s24-late"><span class="strike">AI 写代码画图</span></span>
+            <p id="s24-flow-note" class="s24-flow-note s24-late">有些活，直接交给专门的模型</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-model-choice-cap-0" class="cap-line clip" data-start="0.7" data-duration="4.022">这里补充一个容易被忽略的技巧：选对模型。</p>
+        <p id="s-model-choice-cap-1" class="cap-line clip" data-start="4.722" data-duration="4.75">任务开始的时候，先确认这个模型适不适合你的任务。</p>
+        <p id="s-model-choice-cap-2" class="cap-line clip" data-start="9.512" data-duration="4.91">现在的模型很多，但无非两类：多模态，和非多模态。</p>
+        <p id="s-model-choice-cap-3" class="cap-line clip" data-start="14.462" data-duration="6.06">多模态可以识别图片，甚至能解读视频；非多模态只能处理文字。</p>
+        <p id="s-model-choice-cap-4" class="cap-line clip" data-start="20.562" data-duration="4.824">如果你要做一套精美的 PPT，或者需要它解读图片、看设计稿，</p>
+        <p id="s-model-choice-cap-5" class="cap-line clip" data-start="25.426" data-duration="1.871">就一定要选多模态模型。</p>
+        <p id="s-model-choice-cap-6" class="cap-line clip" data-start="27.337" data-duration="4.343">因为现在能力强的 Agent 做完 PPT 会自己截图，</p>
+        <p id="s-model-choice-cap-7" class="cap-line clip" data-start="31.72" data-duration="5.14">让视觉模型检查有没有元素干涉、文字和图片有没有重叠。</p>
+        <p id="s-model-choice-cap-8" class="cap-line clip" data-start="36.9" data-duration="4.086">你选一个非多模态模型，就算他的编程能力比较强，</p>
+        <p id="s-model-choice-cap-9" class="cap-line clip" data-start="41.026" data-duration="4.893">但是他无法检查做完的这个 PPT 在视觉上是否好看或者有干涉</p>
+        <p id="s-model-choice-cap-10" class="cap-line clip" data-start="45.959" data-duration="2.113">，他只能通过代码来评估。</p>
+        <p id="s-model-choice-cap-11" class="cap-line clip" data-start="48.112" data-duration="6.96">国产这边，DeepSeek-V4.1 flash、千问 3.8 Max、GLM-5.3-Flash 都是多</p>
+        <p id="s-model-choice-cap-12" class="cap-line clip" data-start="55.112" data-duration="6.098">模态；GLM-5.3 这个旗舰则是非多模态，偏文本和 Agent 任务。</p>
+        <p id="s-model-choice-cap-13" class="cap-line clip" data-start="61.25" data-duration="4.031">国外主流旗舰，像 GPT、Claude、Gemini，</p>
+        <p id="s-model-choice-cap-14" class="cap-line clip" data-start="65.321" data-duration="4.889">基本都已经是多模态，差别更多在能力侧重和价格。</p>
+        <p id="s-model-choice-cap-15" class="cap-line clip" data-start="70.25" data-duration="2.684">注意，多模态不等于更聪明；</p>
+        <p id="s-model-choice-cap-16" class="cap-line clip" data-start="72.974" data-duration="5.198">纯文本任务上，非多模态模型可能更强，也可能更便宜。</p>
+        <p id="s-model-choice-cap-17" class="cap-line clip" data-start="78.212" data-duration="2.835">另外还有两类专门的模型。</p>
+        <p id="s-model-choice-cap-18" class="cap-line clip" data-start="81.087" data-duration="5.942">生图模型，比如 GPT Image、Midjourney、Seedream；生视频模型，</p>
+        <p id="s-model-choice-cap-19" class="cap-line clip" data-start="87.069" data-duration="6.341">比如字节的 Seedance、快手的可灵、Google 的 Veo、OpenAI 的 Sora。</p>
+        <p id="s-model-choice-cap-20" class="cap-line clip" data-start="93.45" data-duration="5.122">平时刷到的那些短剧，很多就是 Seedance 这类模型生成的。</p>
+        <p id="s-model-choice-cap-21" class="cap-line clip" data-start="98.612" data-duration="5.835">现在很多 Agent 的工具也可以集成图片生成模型和视频生成模型。</p>
+        <p id="s-model-choice-cap-22" class="cap-line clip" data-start="104.487" data-duration="5.206">在有些任务里面，可以让生图模型直接生成你需要的图片，</p>
+        <p id="s-model-choice-cap-23" class="cap-line clip" data-start="109.733" data-duration="3.189">而不是通过 AI 写代码来生成图片。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S24</span>
+        <span class="cap-clock">01:55</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S24","id":"model-choice","index":0,"start":0,"duration":114.62,"audioStart":0.6000000000001364,"audioDuration":112.416,"cues":[{"i":0,"t":0.7,"d":4.022,"text":"这里补充一个容易被忽略的技巧：选对模型。","sent":"这里补充一个容易被忽略的技巧：选对模型。"},{"i":1,"t":4.722,"d":4.75,"text":"任务开始的时候，先确认这个模型适不适合你的任务。","sent":"任务开始的时候，先确认这个模型适不适合你的任务。"},{"i":2,"t":9.512,"d":4.91,"text":"现在的模型很多，但无非两类：多模态，和非多模态。","sent":"现在的模型很多，但无非两类：多模态，和非多模态。"},{"i":3,"t":14.462,"d":6.06,"text":"多模态可以识别图片，甚至能解读视频；非多模态只能处理文字。","sent":"多模态可以识别图片，甚至能解读视频；非多模态只能处理文字。"},{"i":4,"t":20.562,"d":4.824,"text":"如果你要做一套精美的 PPT，或者需要它解读图片、看设计稿，","sent":"如果你要做一套精美的 PPT，或者需要它解读图片、看设计稿，就一定要选多模态模型。"},{"i":5,"t":25.426,"d":1.871,"text":"就一定要选多模态模型。","sent":"如果你要做一套精美的 PPT，或者需要它解读图片、看设计稿，就一定要选多模态模型。"},{"i":6,"t":27.337,"d":4.343,"text":"因为现在能力强的 Agent 做完 PPT 会自己截图，","sent":"因为现在能力强的 Agent 做完 PPT 会自己截图，让视觉模型检查有没有元素干涉、文字和图片有没有重叠。"},{"i":7,"t":31.72,"d":5.14,"text":"让视觉模型检查有没有元素干涉、文字和图片有没有重叠。","sent":"因为现在能力强的 Agent 做完 PPT 会自己截图，让视觉模型检查有没有元素干涉、文字和图片有没有重叠。"},{"i":8,"t":36.9,"d":4.086,"text":"你选一个非多模态模型，就算他的编程能力比较强，","sent":"你选一个非多模态模型，就算他的编程能力比较强，但是他无法检查做完的这个 PPT 在视觉上是否好看或者有干涉，他只能通过代码来评估。"},{"i":9,"t":41.026,"d":4.893,"text":"但是他无法检查做完的这个 PPT 在视觉上是否好看或者有干涉","sent":"你选一个非多模态模型，就算他的编程能力比较强，但是他无法检查做完的这个 PPT 在视觉上是否好看或者有干涉，他只能通过代码来评估。"},{"i":10,"t":45.959,"d":2.113,"text":"，他只能通过代码来评估。","sent":"你选一个非多模态模型，就算他的编程能力比较强，但是他无法检查做完的这个 PPT 在视觉上是否好看或者有干涉，他只能通过代码来评估。"},{"i":11,"t":48.112,"d":6.96,"text":"国产这边，DeepSeek-V4.1 flash、千问 3.8 Max、GLM-5.3-Flash 都是多","sent":"国产这边，DeepSeek-V4.1 flash、千问 3.8 Max、GLM-5.3-Flash 都是多模态；GLM-5.3 这个旗舰则是非多模态，偏文本和 Agent 任务。"},{"i":12,"t":55.112,"d":6.098,"text":"模态；GLM-5.3 这个旗舰则是非多模态，偏文本和 Agent 任务。","sent":"国产这边，DeepSeek-V4.1 flash、千问 3.8 Max、GLM-5.3-Flash 都是多模态；GLM-5.3 这个旗舰则是非多模态，偏文本和 Agent 任务。"},{"i":13,"t":61.25,"d":4.031,"text":"国外主流旗舰，像 GPT、Claude、Gemini，","sent":"国外主流旗舰，像 GPT、Claude、Gemini，基本都已经是多模态，差别更多在能力侧重和价格。"},{"i":14,"t":65.321,"d":4.889,"text":"基本都已经是多模态，差别更多在能力侧重和价格。","sent":"国外主流旗舰，像 GPT、Claude、Gemini，基本都已经是多模态，差别更多在能力侧重和价格。"},{"i":15,"t":70.25,"d":2.684,"text":"注意，多模态不等于更聪明；","sent":"注意，多模态不等于更聪明；纯文本任务上，非多模态模型可能更强，也可能更便宜。"},{"i":16,"t":72.974,"d":5.198,"text":"纯文本任务上，非多模态模型可能更强，也可能更便宜。","sent":"注意，多模态不等于更聪明；纯文本任务上，非多模态模型可能更强，也可能更便宜。"},{"i":17,"t":78.212,"d":2.835,"text":"另外还有两类专门的模型。","sent":"另外还有两类专门的模型。"},{"i":18,"t":81.087,"d":5.942,"text":"生图模型，比如 GPT Image、Midjourney、Seedream；生视频模型，","sent":"生图模型，比如 GPT Image、Midjourney、Seedream；生视频模型，比如字节的 Seedance、快手的可灵、Google 的 Veo、OpenAI 的 Sora。"},{"i":19,"t":87.069,"d":6.341,"text":"比如字节的 Seedance、快手的可灵、Google 的 Veo、OpenAI 的 Sora。","sent":"生图模型，比如 GPT Image、Midjourney、Seedream；生视频模型，比如字节的 Seedance、快手的可灵、Google 的 Veo、OpenAI 的 Sora。"},{"i":20,"t":93.45,"d":5.122,"text":"平时刷到的那些短剧，很多就是 Seedance 这类模型生成的。","sent":"平时刷到的那些短剧，很多就是 Seedance 这类模型生成的。"},{"i":21,"t":98.612,"d":5.835,"text":"现在很多 Agent 的工具也可以集成图片生成模型和视频生成模型。","sent":"现在很多 Agent 的工具也可以集成图片生成模型和视频生成模型。"},{"i":22,"t":104.487,"d":5.206,"text":"在有些任务里面，可以让生图模型直接生成你需要的图片，","sent":"在有些任务里面，可以让生图模型直接生成你需要的图片，而不是通过 AI 写代码来生成图片。"},{"i":23,"t":109.733,"d":3.189,"text":"而不是通过 AI 写代码来生成图片。","sent":"在有些任务里面，可以让生图模型直接生成你需要的图片，而不是通过 AI 写代码来生成图片。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // MOTION:BEGIN
+    // 四段画面接力：货架 → PPT 工作台 → 名册与对照条 → 生图 / 生视频货架。
+    // 每一拍钉在 N.cues[i].t 上；句与句之间穿插次级的小位移，避免画面长时间完全静止。
+    const T = N.cues.map((c) => c.t);
+    const e = "power3.out";
+    const q = "power2.out";
+
+    // 快照会直接 seek：先把要长的条压回 0，避免中段提前露出来。
+    gsap.set(["#s24-board-a", "#s24-board-b"], { scaleX: 0, transformOrigin: "left center" });
+    gsap.set(["#s24-fill-a", "#s24-fill-b"], { scaleX: 0, transformOrigin: "left center" });
+
+    // ---------------- 第一段：模型货架 ----------------
+    tl.fromTo("#s24-shelf", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[0] + 0.05);
+    tl.fromTo("#s24-shelf-kicker", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[0] + 0.15);
+    tl.fromTo("#s24-label-a", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.5, ease: e }, T[0] + 0.3);
+    tl.fromTo("#s24-card-a1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease: e }, T[0] + 0.45);
+    tl.fromTo("#s24-card-a2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease: e }, T[0] + 0.65);
+    tl.fromTo("#s24-card-a3", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease: e }, T[0] + 0.85);
+    tl.fromTo("#s24-board-a", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: q }, T[0] + 1.05);
+    tl.fromTo("#s24-card-a1", { y: 0 }, { y: -5, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[0] + 2.2);
+
+    // cue1 · 先确认这个模型适不适合任务
+    tl.fromTo("#s24-shelf-hint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[1] + 0.1);
+    tl.fromTo("#s24-shelf-hint", { opacity: 1 }, { opacity: 0.6, duration: 0.8, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[1] + 2.4);
+
+    // cue2 · 无非两类
+    tl.fromTo("#s24-label-b", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.5, ease: e }, T[2] + 0.1);
+    tl.fromTo("#s24-card-b1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease: e }, T[2] + 0.3);
+    tl.fromTo("#s24-card-b2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease: e }, T[2] + 0.5);
+    tl.fromTo("#s24-board-b", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: q }, T[2] + 0.9);
+    tl.fromTo("#s24-card-b2", { y: 0 }, { y: -5, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[2] + 3.0);
+
+    // cue3 · 能看图 / 读视频 vs 只处理文字
+    tl.fromTo("#s24-cap-a1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[3] + 0.1);
+    tl.fromTo("#s24-cap-a2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[3] + 0.45);
+    tl.fromTo("#s24-cap-b1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[3] + 2.0);
+    tl.fromTo("#s24-card-a2", { y: 0 }, { y: -5, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[3] + 3.2);
+
+    // cue4 · 做 PPT、看图片、看设计稿
+    tl.fromTo("#s24-task-1", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: q }, T[4] + 0.1);
+    tl.fromTo("#s24-task-2", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: q }, T[4] + 0.45);
+    tl.fromTo("#s24-task-3", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: q }, T[4] + 0.8);
+    tl.fromTo("#s24-task-arrow", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[4] + 1.3);
+    tl.fromTo("#s24-card-a3", { y: 0 }, { y: -5, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[4] + 2.8);
+
+    // cue5 · 就一定要选多模态
+    tl.fromTo("#s24-row-a-glow", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[5] + 0.05);
+    tl.fromTo("#s24-verdict", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, T[5] + 0.3);
+    tl.fromTo("#s24-shelf", { opacity: 1, y: 0 }, { opacity: 0, y: -26, duration: 0.4, ease: "power2.in", immediateRender: false }, T[6] + 0.05);
+
+    // ---------------- 第二段：PPT 工作台，两边一开始一样 ----------------
+    tl.fromTo("#s24-bench", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[6] + 0.08);
+    tl.fromTo("#s24-head-l", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[6] + 0.1);
+    tl.fromTo("#s24-head-r", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[6] + 0.2);
+    tl.fromTo("#s24-work-l", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[6] + 0.25);
+    tl.fromTo("#s24-work-r", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[6] + 0.35);
+    tl.fromTo("#s24-step-l1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 0.5);
+    tl.fromTo("#s24-step-r1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 0.55);
+    tl.fromTo("#s24-code-l", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[6] + 0.7);
+    tl.fromTo("#s24-code-r", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[6] + 0.75);
+    tl.fromTo("#s24-slides-label-l", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 0.95);
+    tl.fromTo("#s24-slides-label-r", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 1.0);
+    tl.fromTo("#s24-slide-l1", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.05);
+    tl.fromTo("#s24-slide-l2", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.2);
+    tl.fromTo("#s24-slide-l3", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.35);
+    tl.fromTo("#s24-slide-r1", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.15);
+    tl.fromTo("#s24-slide-r2", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.3);
+    tl.fromTo("#s24-slide-r3", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: e }, T[6] + 1.45);
+    // 多模态这边多出两步：截图 → 视觉检查
+    tl.fromTo("#s24-chip-l", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 1.6);
+    tl.fromTo("#s24-shot-frame", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.5, ease: e }, T[6] + 1.9);
+    tl.fromTo("#s24-shot-tag", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[6] + 1.95);
+    tl.fromTo("#s24-step-l2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 2.1);
+    tl.fromTo("#s24-step-l3", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[6] + 2.35);
+    tl.fromTo("#s24-l-1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 2.7);
+    tl.fromTo("#s24-r-1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[6] + 2.75);
+
+    // cue7 · 截图检查：文字压图、元素干涉，然后回代码修好
+    tl.fromTo("#s24-bug-text", { opacity: 0, scaleX: 0.4 }, { opacity: 1, scaleX: 1, duration: 0.4, ease: q }, T[7] + 0.1);
+    tl.fromTo("#s24-bug-badge", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[7] + 0.3);
+    tl.fromTo("#s24-l-1", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[7] + 0.35);
+    tl.fromTo("#s24-l-2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[7] + 0.4);
+    tl.fromTo("#s24-code-l4", { backgroundColor: "rgba(232, 91, 74, 0)" }, { backgroundColor: "rgba(232, 91, 74, 0.18)", duration: 0.5, ease: q }, T[7] + 2.4);
+    tl.fromTo("#s24-bug-text", { opacity: 1, y: 0 }, { opacity: 0, y: -14, duration: 0.4, ease: q, immediateRender: false }, T[7] + 3.0);
+    tl.fromTo("#s24-bug-badge", { opacity: 1 }, { opacity: 0, duration: 0.35, immediateRender: false }, T[7] + 3.0);
+    tl.fromTo("#s24-slide-l2-fix", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[7] + 3.15);
+    tl.fromTo("#s24-l-2", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[7] + 3.35);
+    tl.fromTo("#s24-l-3", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.4, ease: e }, T[7] + 3.4);
+    tl.fromTo("#s24-pass", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[7] + 3.6);
+    tl.fromTo("#s24-code-l4", { backgroundColor: "rgba(232, 91, 74, 0.18)" }, { backgroundColor: "rgba(232, 91, 74, 0)", duration: 0.5, ease: q, immediateRender: false }, T[7] + 3.9);
+    tl.fromTo("#s24-bench-verdict", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[7] + 4.1);
+
+    // cue8 · 换到非多模态：就算编程强，也看不见画面
+    tl.fromTo("#s24-col-l", { opacity: 1 }, { opacity: 0.48, duration: 0.5, ease: q, immediateRender: false }, T[8] + 0.1);
+    tl.fromTo("#s24-chip-r", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[8] + 0.25);
+    tl.fromTo("#s24-r-1", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[8] + 0.3);
+    tl.fromTo("#s24-r-2", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.35);
+    tl.fromTo("#s24-chip-r", { opacity: 1 }, { opacity: 0.5, duration: 0.7, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[8] + 2.6);
+
+    // cue9 · 无法检查好不好看、有没有干涉
+    tl.fromTo("#s24-veil", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[9] + 0.05);
+    tl.fromTo("#s24-veil-badge", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[9] + 0.45);
+    tl.fromTo("#s24-slide-r2", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[9] + 2.3);
+
+    // cue10 · 只能通过代码来评估
+    tl.fromTo("#s24-scan", { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.45, ease: e }, T[10] + 0.05);
+    tl.fromTo("#s24-r-2", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[10] + 0.1);
+    tl.fromTo("#s24-r-3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[10] + 0.15);
+    tl.fromTo("#s24-bench", { opacity: 1, y: 0 }, { opacity: 0, y: -22, duration: 0.5, ease: "power2.in", immediateRender: false }, T[11] - 0.55);
+
+    // ---------------- 第三段：国产 / 国外名册 ----------------
+    tl.fromTo("#s24-roster", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[11] + 0.02);
+    tl.fromTo("#s24-th-1", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[11] + 0.1);
+    tl.fromTo("#s24-th-2", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[11] + 0.18);
+    tl.fromTo("#s24-th-3", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[11] + 0.26);
+    tl.fromTo("#s24-row-cn", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[11] + 0.2);
+    tl.fromTo("#s24-cn", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: e }, T[11] + 0.25);
+    tl.fromTo("#s24-name-ds", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[11] + 0.4);
+    tl.fromTo("#s24-name-qwen", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[11] + 0.7);
+    tl.fromTo("#s24-name-glmf", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[11] + 1.0);
+    tl.fromTo("#s24-name-qwen", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[11] + 3.3);
+    tl.fromTo("#s24-name-glmf", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[11] + 4.7);
+
+    // cue12 · GLM-5.3 旗舰是非多模态
+    tl.fromTo("#s24-slot-cn", { opacity: 0.55 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[12] + 0.05);
+    tl.fromTo("#s24-name-glmflag", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[12] + 0.1);
+    tl.fromTo("#s24-nonmulti-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[12] + 0.5);
+    tl.fromTo("#s24-name-ds", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[12] + 2.9);
+
+    // cue13 · 国外主流旗舰
+    tl.fromTo("#s24-row-gl", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[11] + 0.45);
+    tl.fromTo("#s24-slot-cn", { opacity: 0 }, { opacity: 0.55, duration: 0.4, ease: q }, T[11] + 0.7);
+    tl.fromTo(["#s24-slot-g1", "#s24-slot-g2", "#s24-slot-g3"], { opacity: 0 }, { opacity: 0.55, duration: 0.4, stagger: 0.12, ease: q }, T[11] + 0.85);
+    tl.fromTo("#s24-slot-gn", { opacity: 0 }, { opacity: 0.55, duration: 0.4, ease: q }, T[11] + 1.15);
+    tl.fromTo("#s24-gl", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: e }, T[11] + 0.55);
+    tl.fromTo(["#s24-slot-g1", "#s24-slot-g2", "#s24-slot-g3"], { opacity: 0.55 }, { opacity: 0, duration: 0.3, stagger: 0.06, immediateRender: false }, T[13] + 0.1);
+    tl.fromTo("#s24-name-gpt", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[13] + 0.3);
+    tl.fromTo("#s24-name-claude", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[13] + 0.55);
+    tl.fromTo("#s24-name-gemini", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[13] + 0.8);
+    tl.fromTo("#s24-name-claude", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[13] + 2.9);
+
+    // cue14 · 差别更多在能力侧重和价格
+    tl.fromTo("#s24-slot-gn", { opacity: 0.55 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[14] + 0.05);
+    tl.fromTo("#s24-gl-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[14] + 0.1);
+    tl.fromTo("#s24-name-gpt", { y: 0 }, { y: -4, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[14] + 2.4);
+
+    // cue15 · 多模态不等于更聪明
+    tl.fromTo("#s24-compare", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[15] + 0.05);
+    tl.fromTo("#s24-cmp-title", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease: e }, T[15] + 0.15);
+    tl.fromTo("#s24-cmp-sub", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[15] + 0.4);
+    tl.fromTo("#s24-cmp-head-a", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[15] + 0.6);
+    tl.fromTo("#s24-cmp-row1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[15] + 0.7);
+    tl.fromTo("#s24-cmp-row2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[15] + 0.9);
+    tl.fromTo("#s24-cmp-head-b", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[15] + 1.6);
+    tl.fromTo("#s24-cmp-price1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[15] + 1.7);
+    tl.fromTo("#s24-cmp-price2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[15] + 1.9);
+
+    // cue16 · 纯文本任务上可能更强，也可能更便宜
+    tl.fromTo("#s24-fill-a", { scaleX: 0 }, { scaleX: 0.62, duration: 1.1, ease: q }, T[16] + 0.1);
+    tl.fromTo("#s24-fill-b", { scaleX: 0 }, { scaleX: 0.9, duration: 1.3, ease: q }, T[16] + 0.35);
+    tl.fromTo("#s24-cmp-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: q }, T[16] + 1.6);
+    tl.fromTo("#s24-cmp-title", { opacity: 1 }, { opacity: 0.6, duration: 0.7, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[16] + 3.5);
+    tl.fromTo("#s24-roster", { opacity: 1, y: 0 }, { opacity: 0, y: -22, duration: 0.5, ease: "power2.in", immediateRender: false }, T[17] - 0.55);
+
+    // ---------------- 第四段：生图 / 生视频货架 ----------------
+    tl.fromTo("#s24-gen", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[17] + 0.02);
+    tl.fromTo("#s24-gen-title-a", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[17] + 0.1);
+    tl.fromTo("#s24-gen-title-b", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[17] + 0.2);
+    tl.fromTo("#s24-gen-sub-a", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[17] + 0.3);
+    tl.fromTo("#s24-gen-sub-b", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[17] + 0.4);
+
+    // cue18 · 生图模型
+    tl.fromTo("#s24-gen-a1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[18] + 0.1);
+    tl.fromTo("#s24-gen-a2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[18] + 0.3);
+    tl.fromTo("#s24-gen-a3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[18] + 0.5);
+    tl.fromTo("#s24-sample-seedream", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: e }, T[18] + 0.8);
+    tl.fromTo("#s24-sample-gpt", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: e }, T[18] + 1.1);
+    tl.fromTo("#s24-sample-seedream", { y: 0 }, { y: -4, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[18] + 3.2);
+    tl.fromTo("#s24-sample-gpt", { y: 0 }, { y: -4, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[18] + 4.8);
+    tl.fromTo("#s24-note-a", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[18] + 2.5);
+
+    // cue19 · 生视频模型
+    tl.fromTo("#s24-gen-b1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[19] + 0.1);
+    tl.fromTo("#s24-gen-b2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[19] + 0.3);
+    tl.fromTo("#s24-gen-b3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[19] + 0.5);
+    tl.fromTo("#s24-gen-b4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[19] + 0.7);
+    tl.fromTo("#s24-sample-seedance", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: e }, T[19] + 1.0);
+    tl.fromTo("#s24-sample-kling", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: e }, T[19] + 1.3);
+    tl.fromTo("#s24-sample-seedance", { y: 0 }, { y: -4, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[19] + 3.1);
+    tl.fromTo("#s24-sample-kling", { y: 0 }, { y: -4, duration: 0.8, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[19] + 5.0);
+    tl.fromTo("#s24-note-b", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[19] + 2.5);
+
+    // cue20 · 短剧很多就是 Seedance 这类模型生成的
+    tl.fromTo("#s24-drama-tag", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(2)" }, T[20] + 0.1);
+    tl.fromTo("#s24-drama-flag", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: e }, T[20] + 0.7);
+    tl.fromTo("#s24-sample-seedance", { y: 0 }, { y: -5, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[20] + 2.6);
+    tl.fromTo("#s24-drama-tag", { opacity: 1 }, { opacity: 0.65, duration: 0.8, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[20] + 4.4);
+
+    // cue21 · Agent 的工具也能接入生图 / 生视频
+    tl.fromTo("#s24-note-a", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[21] - 0.1);
+    tl.fromTo("#s24-note-b", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[21] - 0.1);
+    tl.fromTo("#s24-agent-bar", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[21] + 0.1);
+    tl.fromTo("#s24-agent-bar", { y: 0 }, { y: -3, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[21] + 4.6);
+
+    // cue22 · 让生图模型直接生成需要的图片
+    tl.fromTo("#s24-flow-task", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: q }, T[22] + 0.05);
+    tl.fromTo("#s24-flow-arrow", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[22] + 0.4);
+    tl.fromTo("#s24-flow-gen", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[22] + 0.55);
+    tl.fromTo("#s24-flow-gen", { scale: 1 }, { scale: 1.03, duration: 0.7, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[22] + 2.6);
+
+    // cue23 · 而不是通过写代码来生成图片
+    tl.fromTo("#s24-flow-vs", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[23] + 0.05);
+    tl.fromTo("#s24-flow-code", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[23] + 0.2);
+    tl.fromTo("#s24-flow-note", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[23] + 0.6);
+    // MOTION:END
+
+    window.__timelines["s-model-choice"] = tl;
+  </script>
+</template>

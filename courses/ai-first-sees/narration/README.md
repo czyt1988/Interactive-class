@@ -4,11 +4,11 @@
 
 ## 文本源
 
-- `narration/scenes.json`：22 个 S 的最终文本与场景元数据（标题、幕、主题色、画面/动画备注、旁白）。全部场景 `theme: "paper"`，整门课浅色纸面。
-- `narration/scenes.from-outline.json`：从 `大纲/AI-Agent-入门课/02-逐页脚本.md`（22 镜头长版）解析出的原始镜头表，供 `scripts/curate_narration.py` 重新生成 `scenes.json`。改镜头、删减页面只需要改大纲，然后重跑 curate。
+- `narration/scenes.json`：28 个 S 的最终文本与场景元数据（标题、幕、主题色、画面/动画备注、旁白）。全部场景 `theme: "paper"`，整门课浅色纸面。
+- `narration/scenes.from-outline.json`：从 `courses-outline/ai-first-sees/outline.md`（29 镜头长版；S28 safety 已并入 S27，课程落地 28 屏）解析出的原始镜头表，供 `scripts/curate_narration.py` 重新生成 `scenes.json`。改镜头、删减页面只需要改大纲，然后重跑 curate。
 - `narration/timings.json` / `narration/scenes.timed.json`：每页起止、音频时长与分句 cue 表（由 `build_narration.py` 生成，供场景作者对齐动效）。
-- 事实口径以 `大纲/AI-Agent-入门课/03-事实核查与纠错.md` 为准。
-- 真实素材（logo / 截图 / 照片）由 `scripts/prepare_course_media.py` 压缩进 `composition/assets/media/`，源文件在 `大纲/AI-Agent-入门课/素材/`。
+- 事实口径以 `courses-outline/ai-first-sees/outline.md` 里的「事实/口径」小节为准。
+- 真实素材（logo / 截图 / 照片）由 `scripts/prepare_course_media.py` 压缩进 `composition/assets/media/`，源文件在 `courses-outline/ai-first-sees/素材/`。
 
 ## 重做旁白（需要网络与可选依赖）
 
@@ -39,11 +39,11 @@ python scripts\prepare_course_media.py
 .\.venv\Scripts\python.exe scripts\build_narration.py --voice zh-CN-YunyangNeural --rate "+0%"
 ```
 
-当前配置：`zh-CN-YunxiNeural`、`rate +0%`（约 5.6 字/秒，全片 18:38）。`narration/cache/` 的复用键包含 voice、rate 和旁白文本指纹，任意一项变了都会自动重新合成，只有完全一致才复用（`--no-tts` 也只接受完全匹配的缓存）。改完记得跑 `python scripts/build_courses.py --all` 重建 `dist/`。
+当前配置：`zh-CN-YunxiNeural`、`rate +0%`（约 5.6 字/秒，全片 29:54）。`narration/cache/` 的复用键包含 voice、rate 和旁白文本指纹，任意一项变了都会自动重新合成，只有完全一致才复用（`--no-tts` 也只接受完全匹配的缓存）。改完记得跑 `python scripts/build_courses.py --all` 重建 `dist/`。
 
 产物：
 
-- `composition/assets/audio/s<NN>-<id>.ogg`：一页一条旁白（OGG/Opus，约 4.3 MB / 18.6 分钟）。这是本地静态文件，播放时不需要网络，也不调用任何线上 TTS。
+- `composition/assets/audio/s<NN>-<id>.ogg`：一页一条旁白（OGG/Opus，约 6.9 MB / 30 分钟）。这是本地静态文件，播放时不需要网络，也不调用任何线上 TTS。
 - `composition/assets/fonts/NotoSansSC-VF.woff2`：由 `scripts/sync_runtime.py` 按本课实际用字重新子集化。
 - `composition/index.html`：根 composition，含每页 scene host 和每页一条 `<audio>`。
 - `course.json`：每页 `transcript`、`autoAdvance`、`playback: "continuous"`。

@@ -135,6 +135,31 @@
       color: var(--ink-faint);
     }
 
+    /* 第三张卡：权限和密钥的边界。cue7 点名前先划一道线，再盖一枚「边界」章。 */
+    .s-closing-boundary-line {
+      position: absolute;
+      left: 26px;
+      top: 150px;
+      width: 210px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+      opacity: 0;
+    }
+
+    .s-closing-boundary-stamp {
+      position: absolute;
+      right: 16px;
+      top: -16px;
+      padding: 6px 16px;
+      font-size: 26px;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(255, 253, 248, 0.72);
+      opacity: 0;
+    }
+
     /* Later states are invisible until the timeline reaches them. */
     .sc-word,
     .sc-card,
@@ -157,11 +182,11 @@
     <div class="scene-in">
       <header class="scene-head">
         <p class="scene-kicker">
-          <span class="scene-code">S22</span>
+          <span class="scene-code">S28</span>
           <span class="scene-act">收尾</span>
         </p>
         <h1 id="s-closing-title" class="scene-title">第三次跃迁</h1>
-        <p class="scene-no">22 / 22</p>
+        <p class="scene-no">28 / 28</p>
       </header>
 
       <section id="s-closing-stage" class="stage">
@@ -199,9 +224,11 @@
             <p class="sc-card__sub">新任务换一本干净笔记本；舍不得丢的结论先 handoff</p>
           </article>
           <article class="sc-card" id="s-closing-card-3">
-            <span class="sc-card__no">03 / 留记忆</span>
-            <h2 class="sc-card__title">写一份 AGENTS.md</h2>
-            <p class="sc-card__sub">项目背景、目标、目录、常用命令、禁止事项</p>
+            <span class="sc-card__no">03 / 设边界</span>
+            <h2 class="sc-card__title">把权限和密钥边界设好</h2>
+            <p class="sc-card__sub">哪些不能给、哪些权限不能开</p>
+            <span class="s-closing-boundary-line" id="s-closing-boundary-line"></span>
+            <span class="stamp s-closing-boundary-stamp" id="s-closing-boundary-stamp">边界</span>
           </article>
         </div>
 
@@ -231,12 +258,13 @@
         <p id="s-closing-cap-4" class="cap-line clip" data-start="16.179" data-duration="4.077">那么建议你还是下载一个真正的 Agent 工具体验一下，</p>
         <p id="s-closing-cap-5" class="cap-line clip" data-start="20.295" data-duration="2.985">让它帮你做个 PPT，帮你处理一下数据，</p>
         <p id="s-closing-cap-6" class="cap-line clip" data-start="23.32" data-duration="4.665">帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。</p>
-        <p id="s-closing-cap-7" class="cap-line clip" data-start="28.025" data-duration="3.41">AI 的第三次跃迁，才刚刚开始。</p>
-        <p id="s-closing-cap-8" class="cap-line clip" data-start="31.475" data-duration="6.235">很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。</p>
+        <p id="s-closing-cap-7" class="cap-line clip" data-start="28.025" data-duration="6.335">在让它干活之前，先想清楚：哪些东西不能给它，哪些权限不能开。</p>
+        <p id="s-closing-cap-8" class="cap-line clip" data-start="34.4" data-duration="3.41">AI 的第三次跃迁，才刚刚开始。</p>
+        <p id="s-closing-cap-9" class="cap-line clip" data-start="37.85" data-duration="6.235">很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。</p>
       </div>
       <div class="cap-foot">
-        <span class="cap-code">S22</span>
-        <span class="cap-clock">00:39</span>
+        <span class="cap-code">S28</span>
+        <span class="cap-clock">00:46</span>
       </div>
     </footer>
     <!-- CAPTIONS:END -->
@@ -244,7 +272,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S22","id":"closing","index":0,"start":0,"duration":39.41,"audioStart":0.599999999999909,"audioDuration":37.2,"cues":[{"i":0,"t":0.7,"d":1.36,"text":"回到开头。","sent":"回到开头。"},{"i":1,"t":2.06,"d":6.976,"text":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":2,"t":9.076,"d":3.534,"text":"学会做，是 Agent 和 Harness。","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":3,"t":12.65,"d":3.489,"text":"如果你当前还是仅仅只会使用对话型的大模型，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":4,"t":16.179,"d":4.077,"text":"那么建议你还是下载一个真正的 Agent 工具体验一下，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":5,"t":20.295,"d":2.985,"text":"让它帮你做个 PPT，帮你处理一下数据，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":6,"t":23.32,"d":4.665,"text":"帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":7,"t":28.025,"d":3.41,"text":"AI 的第三次跃迁，才刚刚开始。","sent":"AI 的第三次跃迁，才刚刚开始。"},{"i":8,"t":31.475,"d":6.235,"text":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。","sent":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。"}]};
+    const N = {"code":"S28","id":"closing","index":0,"start":0,"duration":45.79,"audioStart":0.6000000000001364,"audioDuration":43.584,"cues":[{"i":0,"t":0.7,"d":1.36,"text":"回到开头。","sent":"回到开头。"},{"i":1,"t":2.06,"d":6.976,"text":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":2,"t":9.076,"d":3.534,"text":"学会做，是 Agent 和 Harness。","sent":"AI 学会看，是 AlphaGo 和 CNN；学会说，是 GPT 和 ChatGPT；学会做，是 Agent 和 Harness。"},{"i":3,"t":12.65,"d":3.489,"text":"如果你当前还是仅仅只会使用对话型的大模型，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":4,"t":16.179,"d":4.077,"text":"那么建议你还是下载一个真正的 Agent 工具体验一下，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":5,"t":20.295,"d":2.985,"text":"让它帮你做个 PPT，帮你处理一下数据，","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":6,"t":23.32,"d":4.665,"text":"帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。","sent":"如果你当前还是仅仅只会使用对话型的大模型，那么建议你还是下载一个真正的 Agent 工具体验一下，让它帮你做个 PPT，帮你处理一下数据，帮你搭建一个平台或者软件，甚至你可以让他给你做一个游戏。"},{"i":7,"t":28.025,"d":6.335,"text":"在让它干活之前，先想清楚：哪些东西不能给它，哪些权限不能开。","sent":"在让它干活之前，先想清楚：哪些东西不能给它，哪些权限不能开。"},{"i":8,"t":34.4,"d":3.41,"text":"AI 的第三次跃迁，才刚刚开始。","sent":"AI 的第三次跃迁，才刚刚开始。"},{"i":9,"t":37.85,"d":6.235,"text":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。","sent":"很难预估未来 1~2 年还会发生什么样的变革，可以大家一起期待一下。"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -254,6 +282,10 @@
     // MOTION:BEGIN
     const at = (i, offset = 0) =>
       Math.min(N.cues[Math.min(i, N.cues.length - 1)].t + offset, N.duration - 1.4);
+
+    // 边界线和章先摆好初始形态：拖动进度条 seek 到中段也不会提前露出。
+    gsap.set("#s-closing-boundary-line", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s-closing-boundary-stamp", { rotate: -8 });
 
     // 1) 回到三个词：看 → 说 → 做，各自带一个真实 logo。
     tl.fromTo(
@@ -319,18 +351,44 @@
       at(6, 0.55),
     );
 
-    // 6) 第三次跃迁：卡片退后，上升线从左往右长出来。
+    // 6) 「哪些东西不能给它，哪些权限不能开」：第三张卡先划一道边界线，再盖章。
+    tl.fromTo(
+      "#s-closing-boundary-line",
+      { opacity: 0, scaleX: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.6, ease: "power2.out" },
+      at(7, 0.2),
+    );
+    tl.fromTo(
+      "#s-closing-boundary-stamp",
+      { opacity: 0, scale: 1.5, rotate: -18 },
+      { opacity: 1, scale: 1, rotate: -8, duration: 0.36, ease: "power3.out" },
+      at(7, 2.3),
+    );
+    tl.fromTo(
+      "#s-closing-boundary-line",
+      { opacity: 1 },
+      { opacity: 0.5, duration: 0.4, ease: "sine.inOut", immediateRender: false },
+      at(7, 3.6),
+    );
+    tl.fromTo(
+      "#s-closing-boundary-line",
+      { opacity: 0.5 },
+      { opacity: 1, duration: 0.4, ease: "sine.inOut", immediateRender: false },
+      at(7, 4.0),
+    );
+
+    // 7) 第三次跃迁：卡片退后，上升线从左往右长出来。
     tl.fromTo(
       "#s-closing-cards",
       { opacity: 1 },
       { opacity: 0.5, duration: 0.7, ease: "power2.out" },
-      at(7),
+      at(8),
     );
     tl.fromTo(
       "#s-closing-rise",
       { opacity: 0 },
       { opacity: 1, duration: 0.4, ease: "power1.out" },
-      at(7, 0.2),
+      at(8, 0.2),
     );
     const risePath = document.getElementById("s-closing-rise-path");
     const riseLength = risePath ? risePath.getTotalLength() : 0;
@@ -340,28 +398,34 @@
         risePath,
         { strokeDashoffset: riseLength },
         { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" },
-        at(7, 0.3),
+        at(8, 0.3),
       );
     }
     tl.fromTo(
       ["#s-closing-dot-1", "#s-closing-dot-2", "#s-closing-dot-3", "#s-closing-dot-4"],
       { opacity: 0, scale: 0 },
       { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.34 },
-      at(7, 0.35),
+      at(8, 0.35),
     );
     tl.fromTo(
       "#s-closing-final",
       { opacity: 0, y: 16 },
       { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
-      at(7, 0.8),
+      at(8, 0.8),
     );
 
-    // 7) 最后一句：往下收，画面稳定。
+    // 8) 最后一句：未来 1~2 年落到副标题上，四个点轻轻亮一下，画面停住。
     tl.fromTo(
       "#s-closing-sub",
       { opacity: 0, y: 10 },
       { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
-      at(8),
+      at(9, 0.2),
+    );
+    tl.fromTo(
+      ["#s-closing-dot-1", "#s-closing-dot-2", "#s-closing-dot-3", "#s-closing-dot-4"],
+      { scale: 1 },
+      { scale: 1.22, duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 1, stagger: 0.16, immediateRender: false },
+      at(9, 1.6),
     );
     // MOTION:END
 

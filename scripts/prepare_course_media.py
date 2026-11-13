@@ -1,13 +1,26 @@
 """Copy the curated outline material into the course package, compressed.
 
-The director script (``大纲/AI-Agent-入门课/02-逐页脚本.md``) asks for real product
-logos, real UI screenshots and real photos as evidence. This script is the only
-place those files enter ``courses/ai-first-sees/composition/assets/media``:
+The course outline (``courses-outline/ai-first-sees/outline.md``) asks for real
+product logos, real UI screenshots, real photos and official model samples as
+evidence. This script is the only place those files enter
+``courses/ai-first-sees/composition/assets/media``:
 
 - logos: trim transparent padding, cap at 256 px, keep brand colour;
 - screenshots: RGB WebP, max 1280 px wide, quality 80 (card evidence, not a
   background), hard cap 420 KB per file;
-- photos: WebP, max 1000 px on the long side.
+- photos: WebP, max 1000 px on the long side;
+- generated samples (``gen/``): official image / video-model examples, same
+  rules as screenshots.
+
+Source tree: ``courses-outline/ai-first-sees/素材`` (the old ``大纲/`` tree was
+migrated away). The original downloads for S01-S20 were never tracked by git and
+were lost together with that directory: for those entries the source file is
+missing. This script then prints a warning and leaves the already committed
+``composition/assets/media`` file untouched, so a full rebuild only rewrites what
+can still be reproduced. The media files committed under
+``courses/ai-first-sees/composition/assets/media`` are the source of truth for
+S01-S20; the S21-S27 material added in this round is fully reproducible from
+``素材/``.
 
 It never touches ``素材/`` itself and is safe to re-run. Run it with a Python
 that has Pillow (the bundled authoring runtime), then rebuild the course:
@@ -24,7 +37,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "大纲" / "AI-Agent-入门课" / "素材"
+SOURCE = ROOT / "courses-outline" / "ai-first-sees" / "素材"
 TARGET = ROOT / "courses" / "ai-first-sees" / "composition" / "assets" / "media"
 
 LOGOS = {
@@ -40,6 +53,7 @@ LOGOS = {
     "openclaw": "logo/openclaw.png",
     "trae": "logo/trae.png",
     "qwen": "logo/qwen.png",
+    "qoder": "logo/qoder.png",
     "kimi": "logo/kimi.png",
     "zcode": "logo/zcode.png",
     "codebuddy": "logo/codebuddy.png",
@@ -64,6 +78,7 @@ PHOTOS = {
 }
 
 SCREENSHOTS = {
+    # S01-S20 (sources lost with the 大纲/ migration, kept as committed media)
     "chatgpt-ui": "screenshot/chatgpt-ui.png",
     "cursor-agent-mode": "screenshot/cursor-agent-mode.png",
     "claude-code-terminal": "screenshot/claude-code-terminal.png",
@@ -77,17 +92,59 @@ SCREENSHOTS = {
     "qwen-code-terminal": "screenshot/qwen-code-terminal.png",
     "kimi-code": "screenshot/kimi-code.png",
     "zcode": "screenshot/zcode.png",
+    "qoder": "screenshot/qoder.png",
     "workbuddy": "screenshot/workbuddy.png",
     "dsh-desktop": "screenshot/dsh-desktop.png",
     "dsh-plugins": "screenshot/dsh-plugins.png",
     "agents-md-site": "screenshot/agents-md-site.png",
     "claude-code-permission": "screenshot/claude-code-permission.png",
+    # S21-S27 (reproducible from 素材/)
+    "dsh-context": "screenshot/dsh-context.webp",
+    "dsh-tools": "screenshot/dsh-tools.webp",
+    "dsh-skills": "screenshot/dsh-skills.webp",
+    "dsh-slash": "screenshot/dsh-slash-input.webp",
+    "superpowers-star": "screenshot/superpowers-star-history.png",
+    "huashu-ppt": "screenshot/huashu-case-qianli-pages.jpg",
+    "huashu-ppt-science": "screenshot/huashu-case-blackhole-pages.jpg",
+}
+
+# Official image / video model samples (S24). Video files are not kept, only a
+# representative still extracted with ffmpeg from the official release video.
+GEN = {
+    "seedream-sample": "gen/seedream-sample.webp",
+    "gpt-image-sample": "gen/gpt-image-sample.png",
+    "seedance-still": "gen/seedance-still.jpg",
+    "kling-still": "gen/kling-still.jpg",
+}
+
+# Entries added for S21-S27 must be reproducible; missing source is fatal.
+REQUIRED_SOURCES = {
+    "screenshot/dsh-context.webp",
+    "screenshot/dsh-tools.webp",
+    "screenshot/dsh-skills.webp",
+    "screenshot/dsh-slash-input.webp",
+    "screenshot/superpowers-star-history.png",
+    "screenshot/huashu-case-qianli-pages.jpg",
+    "screenshot/huashu-case-blackhole-pages.jpg",
+    *GEN.values(),
 }
 
 MAX_LOGO_PX = 256
 MAX_SHOT_WIDTH = 1280
 MAX_SHOT_BYTES = 420 * 1024
 MAX_PHOTO_PX = 1000
+
+MISSING_SOURCES: list[str] = []
+
+
+def _resolve(relative: str) -> Path | None:
+    path = SOURCE / relative
+    if path.exists():
+        return path
+    if relative in REQUIRED_SOURCES:
+        raise SystemExit(f"required source is missing: {path}")
+    MISSING_SOURCES.append(relative)
+    return None
 
 
 def _save_webp(image: Image.Image, path: Path, quality: int) -> None:
@@ -96,7 +153,10 @@ def _save_webp(image: Image.Image, path: Path, quality: int) -> None:
 
 
 def prepare_logo(name: str, relative: str) -> None:
-    image = Image.open(SOURCE / relative).convert("RGBA")
+    source = _resolve(relative)
+    if source is None:
+        return
+    image = Image.open(source).convert("RGBA")
     if name in WHITE_BG_LOGOS:
         threshold = WHITE_BG_LOGOS[name]
         pixels = image.load()
@@ -116,20 +176,26 @@ def prepare_logo(name: str, relative: str) -> None:
 
 
 def prepare_photo(name: str, relative: str) -> None:
-    image = Image.open(SOURCE / relative).convert("RGB")
+    source = _resolve(relative)
+    if source is None:
+        return
+    image = Image.open(source).convert("RGB")
     if max(image.size) > MAX_PHOTO_PX:
         image.thumbnail((MAX_PHOTO_PX, MAX_PHOTO_PX), Image.LANCZOS)
     _save_webp(image, TARGET / "photo" / f"{name}.webp", 84)
 
 
-def prepare_screenshot(name: str, relative: str) -> None:
-    image = Image.open(SOURCE / relative).convert("RGB")
+def prepare_compressed(name: str, relative: str, folder: str, quality: int = 80) -> None:
+    """Resize to max 1280 px wide, encode WebP, shrink quality until under cap."""
+    source = _resolve(relative)
+    if source is None:
+        return
+    image = Image.open(source).convert("RGB")
     if image.width > MAX_SHOT_WIDTH:
         height = round(image.height * MAX_SHOT_WIDTH / image.width)
         image = image.resize((MAX_SHOT_WIDTH, height), Image.LANCZOS)
-    target = TARGET / "shot" / f"{name}.webp"
-    _save_webp(image, target, 80)
-    quality = 80
+    target = TARGET / folder / f"{name}.webp"
+    _save_webp(image, target, quality)
     while target.stat().st_size > MAX_SHOT_BYTES and quality > 45:
         quality -= 8
         _save_webp(image, target, quality)
@@ -143,11 +209,21 @@ def main() -> None:
     for name, relative in PHOTOS.items():
         prepare_photo(name, relative)
     for name, relative in SCREENSHOTS.items():
-        prepare_screenshot(name, relative)
+        prepare_compressed(name, relative, "shot")
+    for name, relative in GEN.items():
+        prepare_compressed(name, relative, "gen", quality=82)
+
+    if MISSING_SOURCES:
+        print(
+            f"{len(MISSING_SOURCES)} legacy source file(s) missing from {SOURCE}; "
+            "kept the committed media file instead:"
+        )
+        for relative in MISSING_SOURCES:
+            print(f"  keep  {relative}")
 
     total = sum(path.stat().st_size for path in TARGET.rglob("*") if path.is_file())
     print(f"media -> {TARGET}")
-    for folder in ("logo", "photo", "shot"):
+    for folder in ("logo", "photo", "shot", "gen"):
         files = sorted((TARGET / folder).glob("*"))
         size = sum(path.stat().st_size for path in files) / 1024
         print(f"  {folder:5s} {len(files):2d} files {size:7.1f} KB")

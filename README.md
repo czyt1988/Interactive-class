@@ -4,7 +4,7 @@
 
 AI Learning 是一个用网页动画讲 AI 的教学网站。每一屏只讲一个概念；短课点一下进入下一屏，长视频课程会随旁白自动接续。一门课是一串可以直接在浏览器里播放的动画，而不是一段被锁在播放器里的视频。
 
-当前状态：**v0.8，平台骨架可用，播放页撑满视口，课程水印可配置，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳（全视口播放、逐屏进度可拖动、跳到最后）、匿名进度、后台设置页、课程水印配置（水印写进课程 composition，网页播放和导出的 MP4 都带）、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 22 屏 / 18:38，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
+当前状态：**v0.9，平台骨架可用，播放页撑满视口，课程水印可配置，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳（全视口播放、逐屏进度可拖动、跳到最后）、匿名进度、后台设置页、课程水印配置（水印写进课程 composition，网页播放和导出的 MP4 都带）、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 28 屏 / 29:54，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
 
 ## 为什么要做
 
@@ -135,7 +135,7 @@ ai-learning/
 ├─ DESIGN.md                     # 前端设计契约（视觉/文案/动效/课程画面）
 ├─ pyproject.toml                # 依赖、ruff、pytest 配置
 ├─ alembic.ini                   # 数据库迁移配置
-├─ star.cmd                      # Windows 双击启动站点
+├─ start.cmd                      # Windows 双击启动站点
 ├─ restart.cmd                   # Windows 双击重启
 ├─ stop.cmd                      # Windows 双击停止
 ├─ app/                          # FastAPI 应用
@@ -189,7 +189,7 @@ ai-learning/
 │  ├─ new_course.py              # 从课程模板生成新课程脚手架
 │  ├─ import_course.py           # 导入外部课程文件夹
 │  ├─ bootstrap.py               # 双击启动器的环境准备：.venv、依赖、资源、构建、迁移
-│  ├─ env.cmd                    # star.cmd / restart.cmd 调用的环境检查（GBK）
+│  ├─ env.cmd                    # start.cmd / restart.cmd 调用的环境检查（GBK）
 │  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
 │  ├─ launcher.py                # star / restart / stop 的实现
 │  └─ worktree.py                # 并行开发：git 工作树 + 复用依赖
@@ -222,7 +222,7 @@ alembic upgrade head                   # 建 SQLite 表
 python -m uvicorn app.main:app --reload          # http://127.0.0.1:8000
 ```
 
-Windows 上不想敲这些命令也没关系：直接双击 `star.cmd`，它会把上面的准备自动做完再启动（见下面「Windows 双击启动」）。
+Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会把上面的准备自动做完再启动（见下面「Windows 双击启动」）。
 
 ### Windows 双击启动
 
@@ -230,11 +230,11 @@ Windows 上不想敲这些命令也没关系：直接双击 `star.cmd`，它会�
 
 | 脚本 | 作用 |
 | --- | --- |
-| `star.cmd` | 启动站点，默认监听 `0.0.0.0:8081`；第一次双击会自动准备环境 |
-| `restart.cmd` | 先停掉正在运行的实例，再按 `star.cmd` 的配置重启 |
+| `start.cmd` | 启动站点，默认监听 `0.0.0.0:8081`；第一次双击会自动准备环境 |
+| `restart.cmd` | 先停掉正在运行的实例，再按 `start.cmd` 的配置重启 |
 | `stop.cmd` | 停止服务 |
 
-**第一次使用只需要双击 `star.cmd`。** 它会先调用 `scripts\env.cmd` 检查环境，缺什么补什么，再交给 `scripts\launcher.py` 启动：
+**第一次使用只需要双击 `start.cmd`。** 它会先调用 `scripts\env.cmd` 检查环境，缺什么补什么，再交给 `scripts\launcher.py` 启动：
 
 1. 找到本机的 Python 3.11+（找不到时打印下载地址）；
 2. 创建 `.venv` 虚拟环境；
@@ -245,14 +245,14 @@ Windows 上不想敲这些命令也没关系：直接双击 `star.cmd`，它会�
 
 这一步要联网，第一次通常几分钟；之后每次双击只做几秒钟的检查，已经就绪的步骤会跳过。开始之前需要 Python 3.11+，第 4 步还需要 Node.js 22+（只在第一次下载播放器资源时用到，之后就绪后启动不再需要 Node）。任何一步失败都会用中文说明原因和下一步怎么做，窗口不会立刻关掉，可以照着提示处理后重新双击。
 
-端口和绑定地址写在 `star.cmd` 开头，改这两行后保存即可：
+端口和绑定地址写在 `start.cmd` 开头，改这两行后保存即可：
 
 ```text
 set "APP_PORT=8081"
 set "APP_HOST=0.0.0.0"
 ```
 
-`0.0.0.0` 表示本机和局域网都能访问；只想本机访问就改成 `127.0.0.1`。启动后直接访问 <http://127.0.0.1:8081>。重启会先读取 `.run/service.json` 里记录的当前实例，再按 `star.cmd` 的配置启动新实例；日志直接输出在脚本窗口里。也可以单独运行 `python scripts\bootstrap.py` 只做环境准备（或加 `--quiet` 检查一遍），准备完再双击 `star.cmd` 启动。
+`0.0.0.0` 表示本机和局域网都能访问；只想本机访问就改成 `127.0.0.1`。启动后直接访问 <http://127.0.0.1:8081>。重启会先读取 `.run/service.json` 里记录的当前实例，再按 `start.cmd` 的配置启动新实例；日志直接输出在脚本窗口里。也可以单独运行 `python scripts\bootstrap.py` 只做环境准备（或加 `--quiet` 检查一遍），准备完再双击 `start.cmd` 启动。
 
 验收命令：
 
@@ -274,7 +274,7 @@ python scripts/worktree.py list                             # 查看工作树、
 python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回 main + 清理
 ```
 
-创建工作树时会共享主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`（Windows 目录联接 / POSIX 软链接），并复制 `runtime/vendor` 与 `.env`，所以不需要重新联网安装依赖，新工作树几秒内就能跑测试、构建课程、双击 `star.cmd` 起站点。旁白 TTS 缓存也直接共享，重做旁白不用重新合成已有片段。
+创建工作树时会共享主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`（Windows 目录联接 / POSIX 软链接），并复制 `runtime/vendor` 与 `.env`，所以不需要重新联网安装依赖，新工作树几秒内就能跑测试、构建课程、双击 `start.cmd` 起站点。旁白 TTS 缓存也直接共享，重做旁白不用重新合成已有片段。
 
 共享的代价是依赖目录属于主工作树：**不要在 worktree 里 `pip install` / `npm install`**（启动器检测到共享环境会拒绝重装）；重做旁白也是串行步骤，不要多个工作树同时重建同一门课的旁白。依赖或本地配置变化后，`python scripts/worktree.py link` 会补齐缺失项并刷新 `runtime/vendor`、`.env` 副本。删除工作树请用 `remove`，不要手工删目录；工作树有未提交改动时 `remove` 会拒绝，确认丢弃才加 `--force`。`merge` 默认要求分支有工作树才能跑合并前验证，冲突时会自动回滚主工作树。
 
@@ -406,7 +406,9 @@ course-template/
 - **v0.4**：长视频课程按新版导演脚本重做，22 屏 / 21:42，旁白驱动、连续播放。
 - **v0.5**：后台设置页 `/admin`，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
 - **v0.6**：课程模板抽成独立包 `course-template/`，外部作者可以拿它交给 AI 生成课程；`scripts/new_course.py` 脚手架、`scripts/import_course.py` 和开发环境 `/import` 页面支持把外部课程校验、构建并登记来源后直接加入课程库。
-- **v0.7（当前）**：播放页撑满视口，16:9 画布按可用区域等比最大化、控制条通栏；当前屏进度可拖动，新增「跳到最后」（`End`），课程总进度按全课时间连续增长。
+- **v0.7**：播放页撑满视口，16:9 画布按可用区域等比最大化、控制条通栏；当前屏进度可拖动，新增「跳到最后」（`End`），课程总进度按全课时间连续增长。
+- **v0.8**：课程水印可配置，后台按课配置角标与满屏平铺水印，写进课程 composition，网页播放和 MP4 导出一致。
+- **v0.9（当前）**：课程扩到 28 屏 / 29:54，新增 AGENTS.md 写法、上下文组装、Skill 取舍、选模型、斜杠命令、任务粒度、密钥安全七个使用场景；删除独立的安全场景（并入 S27），收尾顺延为 S28。
 - **v1.0**：课程库规模化、质量门、账号与跨设备进度。
 
 没有日期承诺。先把结构做对，再往上加课程。

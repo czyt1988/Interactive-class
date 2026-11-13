@@ -63,7 +63,7 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 2. **复制会被写坏的生成物**：`runtime/vendor` 和 `.env` 复制一份。工作树里重跑 `sync_runtime.py` 或改本地配置，不会污染主工作树。
 3. **安全拆除**：Windows 目录联接在不同工具/版本里的递归删除行为不一致，可能跟随到目标目录（主工作树的 `.venv`、`node_modules`）。`remove` 先拆联接再删工作树，拒绝递归删除仍含联接的目录；工作树有未提交改动时拒绝删除（`--force` 才丢弃）。
 
-创建工作树时会顺手预构建 `dist/`（`--no-build` 跳过），新工作树直接双击 `star.cmd` 就能起站点。
+创建工作树时会顺手预构建 `dist/`（`--no-build` 跳过），新工作树直接双击 `start.cmd` 就能起站点。
 
 ### 共享的代价（必须守的纪律）
 
@@ -78,7 +78,7 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 
 - 命令与主工作树一致：`pytest -q && ruff check .`、`python scripts/build_courses.py --all`、`python scripts/sync_runtime.py`。
 - 仓库根已由根 `conftest.py` 和构建脚本放进 `sys.path`：测试与构建脚本导入的是**当前检出**的 `app`，不会因为共享 `.venv` 的 editable install 跑到主工作树。自己写的一次性脚本若要 `import app`，从仓库根用 `python -m` 或先 `set PYTHONPATH=%CD%`。
-- 起站点用 `python -m uvicorn app.main:app`（`uvicorn` 控制台脚本不会把当前目录放进 `sys.path`，会导入主工作树；双击 `star.cmd` 的 launcher 已处理这一点）。
+- 起站点用 `python -m uvicorn app.main:app`（`uvicorn` 控制台脚本不会把当前目录放进 `sys.path`，会导入主工作树；双击 `start.cmd` 的 launcher 已处理这一点）。
 - 提交规则不变：验收通过后在工作树里提交（Conventional Commits），WIP 提交在任务结束前整理干净。
 
 ### 合并回 `main`
@@ -149,7 +149,7 @@ v0.8：课程水印可配置：每门课可在后台配置四角角标水印和�
 - 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、字幕/配音开关、讲义、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
 - 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。每门课还有「水印配置」页 `/admin/courses/<slug>/watermark`：角标水印 + 满屏平铺水印，16:9 预览，保存时写 `courses/<slug>/course.json` 并重新构建（见课程契约 3.7、7.8 与架构 7.12）。
 - 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
-- 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `大纲/AI-Agent-入门课/02-逐页脚本.md` 的 22 个镜头落地，共 22 屏 / 18:38（旁白 `rate +0%`）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
+- 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `courses-outline/ai-first-sees/outline.md` 的 29 镜头长版落地，共 28 屏 / 29:54（旁白 `rate +0%`；原 S28 safety 并入 S27，收尾为 S28）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源（`--rate` 控语速，当前 `+0%`，必须带符号；`narration/cache/` 按 voice + rate + 旁白文本指纹失效）。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
 - 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程控制条第一个按钮是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
 - 还没做：CI、Docker/部署、登录、搜索。
@@ -170,4 +170,4 @@ python scripts/build_narration.py --no-tts   # 复用缓存重建时间/根 comp
 python scripts/worktree.py add feat/<域>-<主题>   # 建工作树并复用 .venv / node_modules，不联网
 ```
 
-Windows 上不用逐条敲：双击 `star.cmd` 时，`scripts/bootstrap.py` 会自动建 `.venv`、装依赖、同步运行时（`--skip-fonts`，字体子集用仓库里已提交的）、构建课程并迁移数据库；改了课程或设计令牌后仍按上面的命令手动重建。
+Windows 上不用逐条敲：双击 `start.cmd` 时，`scripts/bootstrap.py` 会自动建 `.venv`、装依赖、同步运行时（`--skip-fonts`，字体子集用仓库里已提交的）、构建课程并迁移数据库；改了课程或设计令牌后仍按上面的命令手动重建。

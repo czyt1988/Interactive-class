@@ -533,7 +533,7 @@ courses/<slug>/
 
 ### 4.11 长视频课程（旁白驱动）
 
-`courses/ai-first-sees` 是这类课程的样板：22 个 S、约 18.6 分钟、一条旁白一条时间轴。
+`courses/ai-first-sees` 是这类课程的样板：28 个 S、约 30 分钟、一条旁白一条时间轴。
 
 约定：
 
