@@ -96,6 +96,14 @@ def course_text(course_dir: Path) -> str:
     composition = course_dir / "composition"
     if composition.is_dir():
         for path in sorted(composition.rglob("*")):
+            relative = path.relative_to(composition)
+            # Authoring caches (.hyperframes/, .snaps-*/, .review-*/) hold probe
+            # artifacts with copy the site never prints. Reading them makes the
+            # subset depend on local render history: a clean checkout and the
+            # main worktree would produce different fonts, so a no-op sync would
+            # rewrite the committed files.
+            if any(part.startswith(".") for part in relative.parts):
+                continue
             if path.is_file() and path.suffix.lower() in {".html", ".htm", ".json"}:
                 parts.append(path.read_text(encoding="utf-8", errors="ignore"))
     return "".join(parts)
