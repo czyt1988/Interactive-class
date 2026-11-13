@@ -1,0 +1,1584 @@
+<template>
+  <style>
+    /* S23 ·「技能不是越多越好」
+       拍1：左边塞满几百个技能的目录树，放大镜扫过 → 右边 Agent 内部聊天被塞进超长技能目录，token 跳涨；
+       拍2：时间轴：2026.03 superpowers 走红 → 2026.07 社区讨论卸载 → 2026.11 常驻只剩 grill-me；
+       拍3：/grill-me 盘问出计划文件，收进聊天框，右半边让给 huashu design 与输出样例。 */
+
+    /* -------------------------------------------------- 拍1：技能目录树 */
+    .s23-tree {
+      position: absolute;
+      left: 0;
+      top: 22px;
+      width: 560px;
+      height: 452px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s23-tree-head {
+      position: absolute;
+      left: 22px;
+      top: 14px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    .s23-tree-badge {
+      position: absolute;
+      right: 20px;
+      top: 14px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+    }
+
+    .s23-rows {
+      position: absolute;
+      left: 22px;
+      right: 20px;
+      top: 58px;
+      height: 374px;
+      overflow: hidden;
+    }
+
+    .s23-rows::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 120px;
+      background: linear-gradient(to bottom, rgba(250, 246, 238, 0) 0%, var(--panel) 82%);
+      pointer-events: none;
+    }
+
+    .s23-row {
+      display: block;
+      height: 25px;
+      font-family: var(--font-mono);
+      font-size: 19px;
+      line-height: 25px;
+      letter-spacing: 0.01em;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .s23-only {
+      position: absolute;
+      left: 322px;
+      top: 412px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+      white-space: nowrap;
+      opacity: 0;
+      z-index: 7;
+    }
+
+    .s23-row b {
+      display: inline-block;
+      width: 176px;
+      font-weight: 400;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+    }
+
+    .s23-row--keep b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s23-tree-badge--2 {
+      position: absolute;
+      right: 20px;
+      top: 14px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-keepdot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin: 0 9px 2px 0;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+    }
+
+    .s23-hidden {
+      position: absolute;
+      left: 0;
+      top: 492px;
+      width: 560px;
+      height: 152px;
+      padding: 16px 20px;
+      border: 2px dashed #b9ad99;
+      border-radius: 14px;
+      background: rgba(255, 253, 248, 0.55);
+      opacity: 0;
+    }
+
+    .s23-hidden-head {
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink);
+    }
+
+    .s23-hidden-tag {
+      position: absolute;
+      right: 16px;
+      top: 12px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--accent-text);
+    }
+
+    .s23-hidden-row {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s23-lens {
+      position: absolute;
+      left: 330px;
+      top: 92px;
+      width: 190px;
+      height: 190px;
+      opacity: 0;
+      z-index: 6;
+    }
+
+    .s23-lens-glass {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 138px;
+      height: 138px;
+      border: 7px solid rgba(81, 75, 64, 0.88);
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 32%, rgba(255, 253, 248, 0.45) 0%, rgba(232, 91, 74, 0.1) 62%, rgba(232, 91, 74, 0.16) 100%);
+    }
+
+    .s23-lens-handle {
+      position: absolute;
+      left: 122px;
+      top: 128px;
+      width: 15px;
+      height: 62px;
+      border-radius: 8px;
+      background: #514b40;
+      transform: rotate(-38deg);
+      transform-origin: top center;
+    }
+
+    /* 从目录树飞进聊天框的技能目录条 */
+    .s23-strip {
+      position: absolute;
+      left: 430px;
+      top: 300px;
+      padding: 6px 16px;
+      border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+      border-radius: 8px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      z-index: 8;
+    }
+
+    /* ------------------------------------------------ 拍1：Agent 内部聊天 */
+    .s23-chat {
+      position: absolute;
+      left: 600px;
+      top: 18px;
+      width: 1064px;
+      height: 520px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .s23-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      height: 48px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .s23-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--line-strong);
+      flex: none;
+    }
+
+    .s23-bar-title {
+      margin-left: 10px;
+      font-size: 23px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s23-bar-sub {
+      margin-left: 10px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.05em;
+      color: var(--ink-faint);
+    }
+
+    .s23-bubble {
+      position: absolute;
+      padding: 10px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fffdf8;
+      font-size: 23px;
+      line-height: 1.42;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-sys { left: 22px; top: 14px; width: 620px; }
+
+    .s23-sys b {
+      color: var(--accent-text);
+    }
+
+    .s23-cat {
+      position: absolute;
+      left: 22px;
+      top: 86px;
+      width: 960px;
+      height: 330px;
+      padding: 12px 18px;
+      border: 1px solid var(--line-strong);
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      background: #fffdf8;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .s23-cat {
+      transform-origin: 50% 0%;
+    }
+
+    .s23-cat-line {
+      display: block;
+      height: 27px;
+      font-family: var(--font-mono);
+      font-size: 19px;
+      line-height: 27px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s23-cat-line b {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .s23-cat-line--more {
+      color: var(--ink-faint);
+    }
+
+    .s23-cat2 {
+      position: absolute;
+      left: 22px;
+      top: 86px;
+      width: 960px;
+      padding: 12px 18px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      background: var(--accent-soft);
+      opacity: 0;
+    }
+
+    .s23-cat2-head {
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+    }
+
+    .s23-cat2-line {
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--ink-soft);
+    }
+
+    .s23-ask {
+      position: absolute;
+      padding: 9px 15px;
+      border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line-strong));
+      border-radius: 10px;
+      background: var(--accent-soft);
+      font-size: 23px;
+      line-height: 1.35;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-ask--1 { left: 452px; top: 214px; width: 566px; }
+    .s23-ask--2 { left: 400px; top: 272px; width: 618px; }
+
+    .s23-reply {
+      left: 22px;
+      top: 336px;
+      width: 820px;
+    }
+
+    .s23-reply b {
+      font-family: var(--font-mono);
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    /* token 计数器 */
+    .s23-tok {
+      position: absolute;
+      left: 600px;
+      top: 550px;
+      width: 1064px;
+      height: 96px;
+      padding: 12px 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      opacity: 0;
+    }
+
+    .s23-tok-label {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.05em;
+      color: var(--ink-faint);
+    }
+
+    .s23-tok-num {
+      position: relative;
+      display: block;
+      height: 52px;
+      margin-top: 2px;
+    }
+
+    .s23-tok-num span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .s23-tok-num .s23-tok-big {
+      color: var(--accent-text);
+    }
+
+    .s23-tok-bar {
+      position: absolute;
+      right: 22px;
+      top: 46px;
+      width: 380px;
+      height: 12px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--ink) 9%, transparent);
+      overflow: hidden;
+    }
+
+    .s23-tok-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s23-tok-note {
+      position: absolute;
+      right: 22px;
+      top: 16px;
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    /* ------------------------------------------------ 拍2：技能的时间轴 */
+    .s23-line {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1664px;
+      height: 664px;
+    }
+
+    .s23-tl-head {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-tl-sub {
+      position: absolute;
+      left: 230px;
+      top: 6px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s23-axis {
+      position: absolute;
+      left: 40px;
+      top: 536px;
+      width: 1584px;
+      height: 3px;
+      background: var(--line-strong);
+      opacity: 0;
+    }
+
+    .s23-axis i {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: var(--ink-soft);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s23-node {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      margin-left: -9px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--ink-soft);
+      box-shadow: 0 0 0 1px var(--line-strong);
+      opacity: 0;
+    }
+
+    .s23-node--1 { left: 340px; top: 527px; }
+    .s23-node--2 { left: 890px; top: 527px; }
+    .s23-node--3 { left: 1430px; top: 527px; }
+
+    .s23-date {
+      position: absolute;
+      top: 556px;
+      width: 160px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    .s23-date--1 { left: 260px; }
+    .s23-date--2 { left: 810px; }
+    .s23-date--3 { left: 1350px; }
+
+    .s23-sp {
+      position: absolute;
+      left: 60px;
+      top: 62px;
+      width: 520px;
+      height: 424px;
+      padding: 18px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s23-sp-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s23-sp-repo {
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    .s23-star-tag {
+      position: absolute;
+      right: 18px;
+      top: 20px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-sp-media {
+      position: absolute;
+      left: 20px;
+      top: 94px;
+      width: 480px;
+      opacity: 0;
+    }
+
+    .s23-sp-media img {
+      display: block;
+      width: 464px;
+      height: 250px;
+      object-fit: contain;
+      background: #fffdf8;
+      border-radius: 6px;
+    }
+
+    .s23-sp-media .media__label {
+      font-size: 19px;
+      white-space: nowrap;
+    }
+
+    .s23-sp-note {
+      position: absolute;
+      left: 20px;
+      top: 396px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    .s23-burden {
+      position: absolute;
+      left: 60px;
+      top: 496px;
+      padding: 5px 14px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+      border-radius: 999px;
+      background: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--accent-text);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .s23-uninstall {
+      position: absolute;
+      left: 300px;
+      top: 268px;
+      padding: 8px 20px;
+      border: 3px double var(--stamp);
+      border-radius: 8px;
+      color: var(--stamp);
+      font-family: var(--font-mono);
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      background: rgba(255, 253, 248, 0.62);
+      opacity: 0;
+      z-index: 5;
+    }
+
+    .s23-disc {
+      position: absolute;
+      left: 706px;
+      top: 246px;
+      width: 376px;
+      height: 250px;
+      padding: 16px 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s23-disc-head {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.02em;
+      color: var(--ink-faint);
+    }
+
+    .s23-disc-foot {
+      position: absolute;
+      right: 16px;
+      top: 14px;
+      padding: 3px 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 19px;
+      color: var(--ink-faint);
+    }
+
+    .s23-disc-quote {
+      position: absolute;
+      left: 18px;
+      top: 62px;
+      width: 336px;
+      font-size: 25px;
+      line-height: 1.5;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s23-disc-meta {
+      position: absolute;
+      left: 18px;
+      bottom: 16px;
+      font-family: var(--font-mono);
+      font-size: 19px;
+      color: var(--ink-faint);
+    }
+
+    .s23-hot {
+      position: absolute;
+      top: 120px;
+      padding: 6px 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--panel);
+      font-size: 22px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .s23-hot--1 { left: 700px; }
+    .s23-hot--2 { left: 862px; }
+    .s23-hot--3 { left: 1042px; }
+
+    .s23-hot-line {
+      position: absolute;
+      height: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      opacity: 0;
+    }
+
+    .s23-hot-line--1 { left: 700px; top: 148px; width: 106px; }
+    .s23-hot-line--2 { left: 862px; top: 148px; width: 122px; }
+    .s23-hot-line--3 { left: 1042px; top: 148px; width: 118px; }
+
+    .s23-grillwrap {
+      position: absolute;
+      left: 1290px;
+      top: 300px;
+      width: 330px;
+      opacity: 0;
+    }
+
+    .s23-grill {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 24px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fffdf8;
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .s23-grill-note {
+      margin-top: 14px;
+      font-size: 24px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s23-grill-tag {
+      margin-top: 14px;
+      display: inline-flex;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink);
+    }
+
+    .s23-cycle {
+      position: absolute;
+      left: 60px;
+      top: 500px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    /* ---------------------------------------- 拍3：/grill-me 与 huashu */
+    .s23-chat2 {
+      position: absolute;
+      left: 0;
+      top: 18px;
+      width: 880px;
+      height: 530px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .s23-chat2 .s23-bar-title { margin-left: 10px; }
+
+    .s23-q {
+      left: 22px;
+      width: 620px;
+    }
+
+    .s23-q--1 { top: 58px; }
+    .s23-q--2 { top: 174px; }
+    .s23-q--3 { top: 290px; }
+
+    .s23-q b {
+      color: var(--accent-text);
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .s23-a {
+      position: absolute;
+      padding: 9px 15px;
+      border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line-strong));
+      border-radius: 10px;
+      background: var(--accent-soft);
+      font-size: 22px;
+      line-height: 1.35;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-a--1 { left: 458px; top: 116px; width: 400px; }
+    .s23-a--2 { left: 418px; top: 232px; width: 440px; }
+    .s23-a--3 { left: 498px; top: 348px; width: 360px; }
+
+    .s23-slash {
+      position: absolute;
+      left: 648px;
+      top: 58px;
+      width: 208px;
+      padding: 8px 16px;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+      border-radius: 10px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-start {
+      left: 22px;
+      top: 410px;
+      width: 440px;
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+    }
+
+    .s23-start b {
+      color: var(--accent-text);
+    }
+
+    .s23-docchip {
+      position: absolute;
+      left: 22px;
+      top: 470px;
+      width: 300px;
+      padding: 8px 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: var(--panel);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    /* 计划文件 */
+    .s23-plan {
+      position: absolute;
+      left: 940px;
+      top: 30px;
+      width: 700px;
+      height: 528px;
+      padding: 26px 30px;
+      border: 2px solid #514b40;
+      border-radius: 6px;
+      background-color: #fffdf8;
+      background-image: repeating-linear-gradient(to bottom, transparent 0 39px, #ece3d3 39px 40px);
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s23-plan-head {
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s23-plan-title {
+      margin-top: 8px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s23-plan-row {
+      position: absolute;
+      left: 30px;
+      width: 620px;
+      opacity: 0;
+    }
+
+    .s23-plan-row b {
+      display: inline-block;
+      width: 92px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--accent-text);
+      vertical-align: top;
+    }
+
+    .s23-plan-row span {
+      display: inline-block;
+      width: 510px;
+      font-size: 25px;
+      line-height: 1.4;
+      color: var(--ink);
+      vertical-align: top;
+    }
+
+    .s23-plan-row--1 { top: 128px; }
+    .s23-plan-row--2 { top: 208px; }
+    .s23-plan-row--3 { top: 288px; }
+    .s23-plan-row--4 { top: 368px; }
+
+    .s23-plan-stamp {
+      position: absolute;
+      right: 30px;
+      bottom: 30px;
+      padding: 6px 16px;
+      border: 3px double var(--stamp);
+      border-radius: 8px;
+      color: var(--stamp);
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      opacity: 0;
+    }
+
+    /* huashu design 技能卡 */
+    .s23-hua {
+      position: absolute;
+      left: 920px;
+      top: 14px;
+      width: 744px;
+      height: 566px;
+      padding: 18px 22px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s23-hua-name {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s23-hua-sub {
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    .s23-hua-tag {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 20px;
+      color: var(--ink);
+    }
+
+    .s23-hua-media {
+      position: absolute;
+      left: 22px;
+      top: 100px;
+      width: 700px;
+      opacity: 0;
+    }
+
+    .s23-hua-media img {
+      display: block;
+      width: 684px;
+      height: 376px;
+      object-fit: cover;
+      object-position: left top;
+      border-radius: 6px;
+    }
+
+    .s23-hua-media .media__label {
+      font-size: 19px;
+    }
+
+    .s23-flow {
+      position: absolute;
+      left: 22px;
+      top: 524px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      width: 700px;
+    }
+
+    .s23-flow-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 13px;
+      border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line-strong));
+      border-radius: 8px;
+      background: var(--panel);
+      font-size: 21px;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s23-flow-arrow {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    /* 最后一句：少而精 / 按需点名 / 会过时 */
+    .s23-final {
+      position: absolute;
+      left: 0;
+      top: 594px;
+      width: 1664px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+    }
+
+    .s23-final-word {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s23-final-word em {
+      font-style: normal;
+      color: var(--accent-text);
+    }
+
+    .s23-final-rule {
+      width: 1px;
+      height: 30px;
+      margin: 0 34px;
+      background: var(--line-strong);
+    }
+
+    .s23-final-note {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+    }
+
+    /* 快照会直接 seek：晚出现的元素先在 CSS 里隐藏。 */
+    .s23-tree,
+    .s23-hidden,
+    .s23-lens,
+    .s23-strip,
+    .s23-chat,
+    .s23-bubble,
+    .s23-cat,
+    .s23-cat2,
+    .s23-ask,
+    .s23-reply,
+    .s23-tok,
+    .s23-tl-head,
+    .s23-tl-sub,
+    .s23-axis,
+    .s23-node,
+    .s23-date,
+    .s23-sp,
+    .s23-star-tag,
+    .s23-sp-media,
+    .s23-sp-note,
+    .s23-uninstall,
+    .s23-disc,
+    .s23-hot,
+    .s23-hot-line,
+    .s23-grillwrap,
+    .s23-cycle,
+    .s23-chat2,
+    .s23-q,
+    .s23-a,
+    .s23-slash,
+    .s23-start,
+    .s23-docchip,
+    .s23-plan,
+    .s23-plan-row,
+    .s23-plan-stamp,
+    .s23-hua,
+    .s23-hua-media,
+    .s23-flow-chip,
+    .s23-flow-arrow,
+    .s23-final,
+    .s23-cat-line,
+    .s23-keepdot,
+    .s23-only,
+    .s23-burden,
+    .s23-tree-badge--2 {
+      opacity: 0;
+    }
+</style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-skills"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S23</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-skills-title" class="scene-title">技能不是越多越好</h1>
+        <p class="scene-no">23 / 28</p>
+      </header>
+
+      <section id="s-skills-stage" class="stage">
+        <!-- 拍1：塞满几百个技能的目录树 -->
+        <div id="s-skills-tree" class="s23-tree">
+          <p class="s23-tree-head">~/.agent/skills</p>
+          <span id="s-skills-tree-badge" class="s23-tree-badge">312 个</span>
+          <span id="s-skills-tree-badge2" class="s23-tree-badge s23-tree-badge--2">常驻 3 / 312</span>
+          <span id="s-skills-only" class="s23-only">只留真正有用的</span>
+          <div class="s23-rows">
+            <span id="s-skills-r1" class="s23-row s23-row--keep"><span class="s23-keepdot"></span><b>grill-me</b>需求盘问与澄清</span>
+            <span id="s-skills-r2" class="s23-row s23-row--keep"><span class="s23-keepdot"></span><b>huashu-design</b>一句话变成一套设计</span>
+            <span id="s-skills-r3" class="s23-row s23-row--keep"><span class="s23-keepdot"></span><b>dsh-notes</b>整理会话笔记</span>
+            <span class="s23-row"><b>brainstorming</b>头脑风暴与发散</span>
+            <span class="s23-row"><b>pdf</b>读写 PDF 文档</span>
+            <span class="s23-row"><b>docx</b>生成 Word 文档</span>
+            <span class="s23-row"><b>xlsx</b>表格与公式</span>
+            <span class="s23-row"><b>pptx</b>生成演示文稿</span>
+            <span class="s23-row"><b>diagram</b>画流程图</span>
+            <span class="s23-row"><b>git-commit</b>整理提交信息</span>
+            <span class="s23-row"><b>code-review</b>代码审查清单</span>
+            <span class="s23-row"><b>test-runner</b>跑测试并总结</span>
+            <span class="s23-row"><b>db-query</b>查数据库</span>
+            <span class="s23-row"><b>docker</b>镜像与容器</span>
+            <span class="s23-row"><b>k8s</b>集群排障</span>
+            <span class="s23-row"><b>figma</b>读设计稿</span>
+            <span class="s23-row"><b>notion</b>同步文档</span>
+            <span class="s23-row"><b>slack</b>发消息</span>
+            <span class="s23-row"><b>jira</b>建任务</span>
+            <span class="s23-row"><b>calendar</b>排会议</span>
+            <span class="s23-row"><b>email</b>写邮件</span>
+            <span class="s23-row"><b>translate</b>中英互译</span>
+            <span class="s23-row"><b>summarize</b>长文摘要</span>
+            <span class="s23-row"><b>transcribe</b>录音转文字</span>
+            <span class="s23-row"><b>image-gen</b>生成配图</span>
+            <span class="s23-row"><b>video-edit</b>剪短视频</span>
+            <span class="s23-row"><b>chart</b>画图表</span>
+            <span class="s23-row"><b>map</b>路线规划</span>
+            <span class="s23-row"><b>stock</b>看行情</span>
+            <span class="s23-row"><b>crm</b>客户记录</span>
+            <span class="s23-row"><b>seo</b>关键词检查</span>
+            <span class="s23-row"><b>brand-kit</b>品牌规范</span>
+            <span class="s23-row"><b>prd</b>写需求文档</span>
+          </div>
+        </div>
+
+        <!-- 不在扫描路径里的技能：用的时候再给确切目录 -->
+        <div id="s-skills-hidden" class="s23-hidden">
+          <p class="s23-hidden-head">~/work/archive/skills</p>
+          <span class="s23-hidden-tag">不在扫描路径</span>
+          <p class="s23-hidden-row">huashu-design-1.x · 旧版设计技能</p>
+          <p class="s23-hidden-row">ppt-outline · 半年没用过一次</p>
+        </div>
+
+        <!-- 放大镜：扫过整个目录，把描述收集成一段文本 -->
+        <div id="s-skills-lens" class="s23-lens">
+          <span class="s23-lens-glass"></span>
+          <span class="s23-lens-handle"></span>
+        </div>
+
+        <span id="s-skills-strip" class="s23-strip">技能目录 · 312 条描述</span>
+
+        <!-- Agent 内部聊天：超长的技能目录被拼进上下文 -->
+        <div id="s-skills-chat" class="s23-chat">
+          <div class="s23-bar">
+            <i class="s23-dot"></i><i class="s23-dot"></i><i class="s23-dot"></i>
+            <span class="s23-bar-title">Agent 内部对话</span>
+            <span class="s23-bar-sub">会话开始 · 拼上下文</span>
+          </div>
+          <p id="s-skills-sys" class="s23-bubble s23-sys">你是 AI Agent。可以用 <b>&lt;skills&gt;</b> 里的技能，描述如下。</p>
+
+          <div id="s-skills-cat" class="s23-cat">
+            <span class="s23-cat-line">&lt;skills&gt;</span>
+            <span id="s-skills-cl1" class="s23-cat-line"><b>- brainstorming</b> 头脑风暴与发散</span>
+            <span id="s-skills-cl2" class="s23-cat-line"><b>- pdf</b> 读写 PDF 文档</span>
+            <span id="s-skills-cl3" class="s23-cat-line"><b>- docx</b> 生成 Word 文档</span>
+            <span id="s-skills-cl4" class="s23-cat-line"><b>- xlsx</b> 表格与公式</span>
+            <span id="s-skills-cl5" class="s23-cat-line"><b>- huashu-design</b> 一句话变成一套设计</span>
+            <span id="s-skills-cl6" class="s23-cat-line"><b>- diagram</b> 画流程图</span>
+            <span id="s-skills-cl7" class="s23-cat-line"><b>- git-commit</b> 整理提交信息</span>
+            <span id="s-skills-cl8" class="s23-cat-line"><b>- test-runner</b> 跑测试并总结</span>
+            <span id="s-skills-cl9" class="s23-cat-line s23-cat-line--more">- … 还有 303 条</span>
+            <span id="s-skills-cl10" class="s23-cat-line s23-cat-line--more">共 312 条 · 约 9,800 字符</span>
+            <span id="s-skills-cl11" class="s23-cat-line s23-cat-line--more">&lt;/skills&gt;</span>
+          </div>
+
+          <div id="s-skills-cat2" class="s23-cat2">
+            <p class="s23-cat2-head">常驻技能目录（3 条 · 约 120 字符）</p>
+            <p class="s23-cat2-line">- grill-me 需求盘问</p>
+            <p class="s23-cat2-line">- huashu-design 一句话变成设计</p>
+            <p class="s23-cat2-line">- dsh-notes 整理会话笔记</p>
+          </div>
+
+          <p id="s-skills-ask1" class="s23-ask s23-ask--1">这个技能不在常驻目录里</p>
+          <p id="s-skills-ask2" class="s23-ask s23-ask--2">用 ~/work/archive/skills 下的那个</p>
+          <p id="s-skills-reply" class="s23-bubble s23-reply">找到 <b>huashu-design-1.x</b>，这次只加载这一个。</p>
+        </div>
+
+        <div id="s-skills-tok" class="s23-tok">
+          <p class="s23-tok-label">上下文 token（示意）</p>
+          <span class="s23-tok-note">目录越长，占得越多</span>
+          <div class="s23-tok-num">
+            <span id="s-skills-tok-a">1,240</span>
+            <span id="s-skills-tok-b" class="s23-tok-big">11,400</span>
+            <span id="s-skills-tok-c">2,460</span>
+          </div>
+          <div class="s23-tok-bar"><i id="s-skills-tok-fill" class="s23-tok-fill"></i></div>
+        </div>
+
+        <!-- 拍2：技能的时间轴 -->
+        <div id="s-skills-line" class="s23-line">
+          <p id="s-skills-tl-head" class="s23-tl-head">技能的生命周期</p>
+          <p id="s-skills-tl-sub" class="s23-tl-sub">2026 · 从走红到淘汰</p>
+          <div id="s-skills-axis" class="s23-axis"><i id="s-skills-axis-fill"></i></div>
+          <span id="s-skills-node1" class="s23-node s23-node--1"></span>
+          <span id="s-skills-node2" class="s23-node s23-node--2"></span>
+          <span id="s-skills-node3" class="s23-node s23-node--3"></span>
+          <p id="s-skills-date1" class="s23-date s23-date--1">2026.03</p>
+          <p id="s-skills-date2" class="s23-date s23-date--2">2026.07</p>
+          <p id="s-skills-date3" class="s23-date s23-date--3">2026.11</p>
+
+          <div id="s-skills-sp" class="s23-sp">
+            <p class="s23-sp-name">superpowers</p>
+            <p class="s23-sp-repo">obra/superpowers · 一套 AI 编程流程规范</p>
+            <span id="s-skills-star-tag" class="s23-star-tag">GitHub 31.6 万星</span>
+            <div id="s-skills-sp-media" class="media s23-sp-media">
+              <img
+                src="assets/media/shot/superpowers-star.webp"
+                alt="star-history 页面：obra/superpowers 星标曲线，2026 年快速上涨到 31.6 万"
+                width="464"
+                height="310"
+              />
+              <p class="media__label"><span>star-history 抓取</span><span>31.6 万</span></p>
+            </div>
+            <p id="s-skills-sp-note" class="s23-sp-note">那时候模型还弱，需要流程来兜底。</p>
+          </div>
+
+          <div id="s-skills-disc" class="s23-disc">
+            <p class="s23-disc-head">社区讨论 · 2026.07</p>
+            <span class="s23-disc-foot">示意</span>
+            <p class="s23-disc-quote">「技能装太多，光目录就吃掉半屏上下文。」</p>
+            <p class="s23-disc-meta">帖子摘录 · 非真实截图</p>
+          </div>
+
+          <span id="s-skills-hot1" class="s23-hot s23-hot--1">流程模板</span>
+          <span id="s-skills-hot2" class="s23-hot s23-hot--2">强约束</span>
+          <span id="s-skills-hot3" class="s23-hot s23-hot--3">长技能书</span>
+          <span id="s-skills-hotline1" class="s23-hot-line s23-hot-line--1"></span>
+          <span id="s-skills-hotline2" class="s23-hot-line s23-hot-line--2"></span>
+          <span id="s-skills-hotline3" class="s23-hot-line s23-hot-line--3"></span>
+
+          <span id="s-skills-uninstall" class="s23-uninstall">已卸载</span>
+          <span id="s-skills-burden" class="s23-burden">模型强了，强约束成了负担</span>
+
+          <div id="s-skills-grillwrap" class="s23-grillwrap">
+            <span id="s-skills-grill" class="s23-grill">grill-me</span>
+            <p class="s23-grill-note">现在编程上唯一保留的技能：需求不清楚时，先盘问清楚。</p>
+            <span class="s23-grill-tag">常驻只剩 1 个</span>
+          </div>
+
+          <p id="s-skills-cycle" class="s23-cycle">⇢ 同一批技能，几个月就换一轮</p>
+        </div>
+
+        <!-- 拍3：/grill-me 盘问出计划，再让位给 huashu design -->
+        <div id="s-skills-chat2" class="s23-chat2">
+          <div class="s23-bar">
+            <i class="s23-dot"></i><i class="s23-dot"></i><i class="s23-dot"></i>
+            <span class="s23-bar-title">Agent · 新会话</span>
+            <span class="s23-bar-sub">grill-me</span>
+          </div>
+          <span id="s-skills-slash" class="s23-slash">/grill-me</span>
+          <p id="s-skills-q1" class="s23-bubble s23-q s23-q--1"><b>Q1</b>这套 PPT 讲给谁听？</p>
+          <p id="s-skills-a1" class="s23-a s23-a--1">团队周会，10 分钟</p>
+          <p id="s-skills-q2" class="s23-bubble s23-q s23-q--2"><b>Q2</b>有没有指定的素材和风格？</p>
+          <p id="s-skills-a2" class="s23-a s23-a--2">用项目里的截图，简洁一点</p>
+          <p id="s-skills-q3" class="s23-bubble s23-q s23-q--3"><b>Q3</b>最后要交付什么？</p>
+          <p id="s-skills-a3" class="s23-a s23-a--3">HTML 幻灯片</p>
+          <p id="s-skills-start" class="s23-bubble s23-start">需求清楚了，<b>开始干活</b></p>
+          <span id="s-skills-docchip" class="s23-docchip">计划.md · 已写回聊天</span>
+        </div>
+
+        <div id="s-skills-plan" class="s23-plan">
+          <p class="s23-plan-head">计划文件 · 一页纸 · grill-me</p>
+          <p class="s23-plan-title">S22 上下文组装 · 10 分钟分享</p>
+          <p id="s-skills-plan1" class="s23-plan-row s23-plan-row--1"><b>目标</b><span>讲清楚「你只问一句，模型读的是一大本」</span></p>
+          <p id="s-skills-plan2" class="s23-plan-row s23-plan-row--2"><b>听众</b><span>团队周会，10 分钟，不需要前置知识</span></p>
+          <p id="s-skills-plan3" class="s23-plan-row s23-plan-row--3"><b>素材</b><span>项目里的截图 + DSH 上下文面板</span></p>
+          <p id="s-skills-plan4" class="s23-plan-row s23-plan-row--4"><b>交付</b><span>HTML 幻灯片，再转一份可编辑 PPTX</span></p>
+          <span id="s-skills-plan-stamp" class="s23-plan-stamp">已确认</span>
+        </div>
+
+        <div id="s-skills-hua" class="s23-hua">
+          <p class="s23-hua-name">huashu design</p>
+          <p class="s23-hua-sub">HTML-native 设计技能 · 一句话变成一套设计</p>
+          <span class="s23-hua-tag">按需点名</span>
+          <div id="s-skills-hua-media" class="media s23-hua-media">
+            <img
+              src="assets/media/shot/huashu-ppt.webp"
+              alt="huashu design 官方案例：千里江山图讲座 PPT 的四页幻灯片"
+              width="684"
+              height="390"
+            />
+            <p class="media__label"><span>huashu design · 输出样例</span><span>HTML 幻灯片</span></p>
+          </div>
+          <div class="s23-flow">
+            <span id="s-skills-flow1" class="s23-flow-chip">一句话</span>
+            <span id="s-skills-arrow1" class="s23-flow-arrow">→</span>
+            <span id="s-skills-flow2" class="s23-flow-chip">HTML 幻灯片</span>
+            <span id="s-skills-arrow2" class="s23-flow-arrow">→</span>
+            <span id="s-skills-flow3" class="s23-flow-chip">PPTX（可编辑）</span>
+          </div>
+        </div>
+
+        <div id="s-skills-final" class="s23-final">
+          <span class="s23-final-word">少而<em>精</em></span>
+          <span class="s23-final-rule"></span>
+          <span class="s23-final-word">按需<em>点名</em></span>
+          <span class="s23-final-rule"></span>
+          <span class="s23-final-word">会<em>过时</em></span>
+          <span class="s23-final-note">常驻只留每天都要用的，其余用到再给路径</span>
+        </div>
+</section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-skills-cap-0" class="cap-line clip" data-start="0.7" data-duration="5.412">说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，</p>
+        <p id="s-skills-cap-1" class="cap-line clip" data-start="6.152" data-duration="3.653">会把你目录下技能拼接为一个目录给到大模型，</p>
+        <p id="s-skills-cap-2" class="cap-line clip" data-start="9.845" data-duration="4.357">你电脑上的技能越多，Agent 就要生成越长的技能目录；</p>
+        <p id="s-skills-cap-3" class="cap-line clip" data-start="14.242" data-duration="4.005">这个目录本身会占上下文，很多时候是没用的内容。</p>
+        <p id="s-skills-cap-4" class="cap-line clip" data-start="18.287" data-duration="3.235">我的做法是：只装真正有用的。</p>
+        <p id="s-skills-cap-5" class="cap-line clip" data-start="21.562" data-duration="3.811">有些技能，我甚至放到 Agent 正常搜不到的地方；</p>
+        <p id="s-skills-cap-6" class="cap-line clip" data-start="25.413" data-duration="3.726">等我用到它的时候，再给一个确切目录给 agent：</p>
+        <p id="s-skills-cap-7" class="cap-line clip" data-start="29.179" data-duration="2.956">「你就用 xxx 目录下这个技能来执行。</p>
+        <p id="s-skills-cap-8" class="cap-line clip" data-start="32.175" data-duration="4.435">常用的、确实每天都要用的，才放进常驻目录。</p>
+        <p id="s-skills-cap-9" class="cap-line clip" data-start="36.65" data-duration="6.322">随着 AI 的快速迭代，一些原本好用技能会变得没那么好用或者没必要的。</p>
+        <p id="s-skills-cap-10" class="cap-line clip" data-start="43.012" data-duration="4.69">2026 年 3 月，有一个技能特别火，叫 superpowers，</p>
+        <p id="s-skills-cap-11" class="cap-line clip" data-start="47.742" data-duration="2.03">GitHub 上三十多万星。</p>
+        <p id="s-skills-cap-12" class="cap-line clip" data-start="49.812" data-duration="6.51">那时候 AI 的编程能力还不够强，大家需要它来规范 AI 的编程流程。</p>
+        <p id="s-skills-cap-13" class="cap-line clip" data-start="56.362" data-duration="5.214">但模型能力上来之后，执行 Agent 任务基本不需要这种约束了，</p>
+        <p id="s-skills-cap-14" class="cap-line clip" data-start="61.616" data-duration="3.094">所以它已经从我的常驻技能里淘汰了。</p>
+        <p id="s-skills-cap-15" class="cap-line clip" data-start="64.75" data-duration="2.009">那几个月很火的那批技能，</p>
+        <p id="s-skills-cap-16" class="cap-line clip" data-start="66.799" data-duration="4.398">大部分今天都不太适用了——这个领域就是这样，日新月异。</p>
+        <p id="s-skills-cap-17" class="cap-line clip" data-start="71.237" data-duration="4.048">我现在在编程上唯一保留的技能，是 grill me。</p>
+        <p id="s-skills-cap-18" class="cap-line clip" data-start="75.325" data-duration="4.627">需求不清楚的时候，我会用它来跟我一起盘问、确认，</p>
+        <p id="s-skills-cap-19" class="cap-line clip" data-start="79.992" data-duration="1.905">把问题问清楚再动手。</p>
+        <p id="s-skills-cap-20" class="cap-line clip" data-start="81.937" data-duration="4.773">另外我还推荐一个做 PPT 的技能，叫 huashu design。</p>
+        <p id="s-skills-cap-21" class="cap-line clip" data-start="86.75" data-duration="5.128">它可以把一句话变成一套设计，输出精美的 HTML 幻灯片；</p>
+        <p id="s-skills-cap-22" class="cap-line clip" data-start="91.918" data-duration="4.829">你再让 AI 把它转成 PPTX，就得到一个可编辑的版本。</p>
+        <p id="s-skills-cap-23" class="cap-line clip" data-start="96.787" data-duration="3.61">日常做汇报、做分享，很实用。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S23</span>
+        <span class="cap-clock">01:42</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S23","id":"skills","index":0,"start":0,"duration":102.09,"audioStart":0.599999999999909,"audioDuration":99.888,"cues":[{"i":0,"t":0.7,"d":5.412,"text":"说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，","sent":"说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，会把你目录下技能拼接为一个目录给到大模型，你电脑上的技能越多，Agent 就要生成越长的技能目录；这个目录本身会占上下文，很多时候是没用的内容。"},{"i":1,"t":6.152,"d":3.653,"text":"会把你目录下技能拼接为一个目录给到大模型，","sent":"说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，会把你目录下技能拼接为一个目录给到大模型，你电脑上的技能越多，Agent 就要生成越长的技能目录；这个目录本身会占上下文，很多时候是没用的内容。"},{"i":2,"t":9.845,"d":4.357,"text":"你电脑上的技能越多，Agent 就要生成越长的技能目录；","sent":"说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，会把你目录下技能拼接为一个目录给到大模型，你电脑上的技能越多，Agent 就要生成越长的技能目录；这个目录本身会占上下文，很多时候是没用的内容。"},{"i":3,"t":14.242,"d":4.005,"text":"这个目录本身会占上下文，很多时候是没用的内容。","sent":"说到技能，有些人特别喜欢装一大堆，刚刚提到，agent 在会话开始，会把你目录下技能拼接为一个目录给到大模型，你电脑上的技能越多，Agent 就要生成越长的技能目录；这个目录本身会占上下文，很多时候是没用的内容。"},{"i":4,"t":18.287,"d":3.235,"text":"我的做法是：只装真正有用的。","sent":"我的做法是：只装真正有用的。"},{"i":5,"t":21.562,"d":3.811,"text":"有些技能，我甚至放到 Agent 正常搜不到的地方；","sent":"有些技能，我甚至放到 Agent 正常搜不到的地方；等我用到它的时候，再给一个确切目录给 agent：「你就用 xxx 目录下这个技能来执行。"},{"i":6,"t":25.413,"d":3.726,"text":"等我用到它的时候，再给一个确切目录给 agent：","sent":"有些技能，我甚至放到 Agent 正常搜不到的地方；等我用到它的时候，再给一个确切目录给 agent：「你就用 xxx 目录下这个技能来执行。"},{"i":7,"t":29.179,"d":2.956,"text":"「你就用 xxx 目录下这个技能来执行。","sent":"有些技能，我甚至放到 Agent 正常搜不到的地方；等我用到它的时候，再给一个确切目录给 agent：「你就用 xxx 目录下这个技能来执行。"},{"i":8,"t":32.175,"d":4.435,"text":"常用的、确实每天都要用的，才放进常驻目录。","sent":"常用的、确实每天都要用的，才放进常驻目录。"},{"i":9,"t":36.65,"d":6.322,"text":"随着 AI 的快速迭代，一些原本好用技能会变得没那么好用或者没必要的。","sent":"随着 AI 的快速迭代，一些原本好用技能会变得没那么好用或者没必要的。"},{"i":10,"t":43.012,"d":4.69,"text":"2026 年 3 月，有一个技能特别火，叫 superpowers，","sent":"2026 年 3 月，有一个技能特别火，叫 superpowers，GitHub 上三十多万星。"},{"i":11,"t":47.742,"d":2.03,"text":"GitHub 上三十多万星。","sent":"2026 年 3 月，有一个技能特别火，叫 superpowers，GitHub 上三十多万星。"},{"i":12,"t":49.812,"d":6.51,"text":"那时候 AI 的编程能力还不够强，大家需要它来规范 AI 的编程流程。","sent":"那时候 AI 的编程能力还不够强，大家需要它来规范 AI 的编程流程。"},{"i":13,"t":56.362,"d":5.214,"text":"但模型能力上来之后，执行 Agent 任务基本不需要这种约束了，","sent":"但模型能力上来之后，执行 Agent 任务基本不需要这种约束了，所以它已经从我的常驻技能里淘汰了。"},{"i":14,"t":61.616,"d":3.094,"text":"所以它已经从我的常驻技能里淘汰了。","sent":"但模型能力上来之后，执行 Agent 任务基本不需要这种约束了，所以它已经从我的常驻技能里淘汰了。"},{"i":15,"t":64.75,"d":2.009,"text":"那几个月很火的那批技能，","sent":"那几个月很火的那批技能，大部分今天都不太适用了——这个领域就是这样，日新月异。"},{"i":16,"t":66.799,"d":4.398,"text":"大部分今天都不太适用了——这个领域就是这样，日新月异。","sent":"那几个月很火的那批技能，大部分今天都不太适用了——这个领域就是这样，日新月异。"},{"i":17,"t":71.237,"d":4.048,"text":"我现在在编程上唯一保留的技能，是 grill me。","sent":"我现在在编程上唯一保留的技能，是 grill me。"},{"i":18,"t":75.325,"d":4.627,"text":"需求不清楚的时候，我会用它来跟我一起盘问、确认，","sent":"需求不清楚的时候，我会用它来跟我一起盘问、确认，把问题问清楚再动手。"},{"i":19,"t":79.992,"d":1.905,"text":"把问题问清楚再动手。","sent":"需求不清楚的时候，我会用它来跟我一起盘问、确认，把问题问清楚再动手。"},{"i":20,"t":81.937,"d":4.773,"text":"另外我还推荐一个做 PPT 的技能，叫 huashu design。","sent":"另外我还推荐一个做 PPT 的技能，叫 huashu design。"},{"i":21,"t":86.75,"d":5.128,"text":"它可以把一句话变成一套设计，输出精美的 HTML 幻灯片；","sent":"它可以把一句话变成一套设计，输出精美的 HTML 幻灯片；你再让 AI 把它转成 PPTX，就得到一个可编辑的版本。"},{"i":22,"t":91.918,"d":4.829,"text":"你再让 AI 把它转成 PPTX，就得到一个可编辑的版本。","sent":"它可以把一句话变成一套设计，输出精美的 HTML 幻灯片；你再让 AI 把它转成 PPTX，就得到一个可编辑的版本。"},{"i":23,"t":96.787,"d":3.61,"text":"日常做汇报、做分享，很实用。","sent":"日常做汇报、做分享，很实用。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // MOTION:BEGIN
+    // S23 · 旁白是时钟：每一拍都钉在 N.cues[i].t 上。
+    const C = N.cues;
+    const T = C.map((c) => c.t);
+    const E = "power3.out";
+    const Q = "power2.out";
+
+    // 快照会直接 seek：需要缩放/位移的元素先显式归零。
+    gsap.set("#s-skills-cat", { scaleY: 0.24 });
+    gsap.set("#s-skills-lens", { y: 0 });
+    gsap.set("#s-skills-plan", { transformOrigin: "0% 0%" });
+
+    // ------------------------------------- 拍1：目录树 → 放大镜 → 超长目录
+    tl.fromTo("#s-skills-tree", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[0] + 0.1);
+    tl.fromTo("#s-skills-tree-badge", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, T[0] + 0.6);
+
+    // 「会把你目录下技能拼接为一个目录」：聊天窗口出现，放大镜开始扫
+    tl.fromTo("#s-skills-chat", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[1] + 0.1);
+    tl.fromTo("#s-skills-sys", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[1] + 0.55);
+    tl.fromTo("#s-skills-lens", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[1] + 0.2);
+    tl.fromTo("#s-skills-lens", { y: 0 }, { y: 176, duration: 3.6, ease: "power1.inOut", immediateRender: false }, T[1] + 0.5);
+
+    // 「技能越多，目录越长」：放大镜继续往下扫，计数徽章顶一下
+    tl.fromTo("#s-skills-lens", { y: 176 }, { y: 336, duration: 2.9, ease: "power1.inOut", immediateRender: false }, T[2] + 0.1);
+    tl.fromTo("#s-skills-lens", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power1.in", immediateRender: false }, T[2] + 3.0);
+    tl.fromTo("#s-skills-tree-badge", { scale: 1 }, { scale: 1.08, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[2] + 0.35);
+    tl.fromTo("#s-skills-tree-badge", { scale: 1.08 }, { scale: 1, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[2] + 0.7);
+
+    // 「这个目录本身会占上下文」：目录文本飞进聊天，铺成超长一段
+    tl.fromTo("#s-skills-strip", { opacity: 0, x: 0, y: 0 }, { opacity: 1, duration: 0.2, ease: Q }, T[3] + 0.05);
+    tl.fromTo("#s-skills-strip", { x: 0, y: 0 }, { x: 320, y: -150, duration: 0.85, ease: "power2.inOut", immediateRender: false }, T[3] + 0.2);
+    tl.fromTo("#s-skills-strip", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power1.in", immediateRender: false }, T[3] + 0.95);
+    tl.fromTo("#s-skills-tok", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[3] + 0.7);
+    tl.fromTo("#s-skills-tok-a", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[3] + 0.8);
+    tl.fromTo("#s-skills-cat", { opacity: 0, scaleY: 0.24 }, { opacity: 1, scaleY: 1, duration: 0.6, ease: Q }, T[3] + 1.0);
+    tl.fromTo(".s23-cat-line", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.28, ease: Q, stagger: 0.07 }, T[3] + 1.25);
+    // token 跳涨：1,240 → 11,400
+    tl.fromTo("#s-skills-tok-fill", { scaleX: 0 }, { scaleX: 0.14, duration: 0.6, ease: Q }, T[3] + 0.9);
+    tl.fromTo("#s-skills-tok-a", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[3] + 2.35);
+    tl.fromTo("#s-skills-tok-b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: E }, T[3] + 2.4);
+    tl.fromTo("#s-skills-tok-fill", { scaleX: 0.14 }, { scaleX: 0.82, duration: 0.7, ease: Q, immediateRender: false }, T[3] + 2.4);
+
+    // 「我的做法是：只装真正有用的」：目录塌回去，三个常用技能被圈出来
+    tl.fromTo("#s-skills-only", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, T[4] + 0.15);
+    tl.fromTo(".s23-keepdot", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: Q }, T[4] + 0.3);
+    tl.fromTo("#s-skills-cat", { scaleY: 1 }, { scaleY: 0.14, duration: 0.5, ease: "power2.inOut", immediateRender: false }, T[4] + 0.4);
+    tl.fromTo("#s-skills-cat", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power2.inOut", immediateRender: false }, T[4] + 0.4);
+
+    // 「有些技能放到 Agent 正常搜不到的地方」
+    tl.fromTo("#s-skills-hidden", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: E }, T[5] + 0.15);
+
+    // 「等我用到它的时候，再给一个确切目录」
+    tl.fromTo("#s-skills-ask1", { opacity: 0, x: 90 }, { opacity: 1, x: 0, duration: 0.5, ease: E }, T[6] + 0.15);
+    tl.fromTo("#s-skills-ask2", { opacity: 0, x: 90 }, { opacity: 1, x: 0, duration: 0.5, ease: E }, T[7] + 0.1);
+    tl.fromTo("#s-skills-reply", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[7] + 0.7);
+
+    // 「常用的、确实每天都要用的，才放进常驻目录」
+    tl.fromTo("#s-skills-cat2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[8] + 0.2);
+    tl.fromTo(".s23-row", { opacity: 1 }, { opacity: 0.12, duration: 0.5, ease: "power1.out", immediateRender: false }, T[8] + 0.15);
+    tl.fromTo(".s23-row--keep", { opacity: 0.12 }, { opacity: 1, duration: 0.4, ease: Q, immediateRender: false, stagger: 0.08 }, T[8] + 0.45);
+    tl.fromTo("#s-skills-tree-badge", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[8] + 0.25);
+    tl.fromTo("#s-skills-tree-badge2", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, T[8] + 0.35);
+    tl.fromTo("#s-skills-tok-b", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[8] + 1.0);
+    tl.fromTo("#s-skills-tok-c", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: E }, T[8] + 1.05);
+    tl.fromTo("#s-skills-tok-fill", { scaleX: 0.82 }, { scaleX: 0.18, duration: 0.6, ease: Q, immediateRender: false }, T[8] + 1.05);
+
+    // ------------------------------------------- 拍2：技能的时间轴
+    tl.fromTo("#s-skills-tree", { opacity: 1, x: 0 }, { opacity: 0, x: -46, duration: 0.55, ease: "power2.in", immediateRender: false }, T[9] + 0.1);
+    tl.fromTo("#s-skills-hidden", { opacity: 1, x: 0 }, { opacity: 0, x: -46, duration: 0.5, ease: "power2.in", immediateRender: false }, T[9] + 0.1);
+    tl.fromTo("#s-skills-only", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, T[9] + 0.05);
+    tl.fromTo("#s-skills-chat", { opacity: 1, x: 0 }, { opacity: 0, x: 46, duration: 0.55, ease: "power2.in", immediateRender: false }, T[9] + 0.1);
+    tl.fromTo("#s-skills-tok", { opacity: 1, x: 0 }, { opacity: 0, x: 46, duration: 0.5, ease: "power2.in", immediateRender: false }, T[9] + 0.1);
+
+    tl.fromTo("#s-skills-tl-head", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[9] + 0.45);
+    tl.fromTo("#s-skills-tl-sub", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[9] + 0.65);
+    tl.fromTo("#s-skills-axis", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: Q }, T[9] + 0.5);
+    tl.fromTo("#s-skills-axis-fill", { scaleX: 0 }, { scaleX: 1, duration: 1.5, ease: "power2.inOut" }, T[9] + 0.65);
+    // 句间次级运动：标题轻轻点一下
+    tl.fromTo("#s-skills-tl-head", { scale: 1 }, { scale: 1.03, duration: 0.45, ease: "power1.inOut", immediateRender: false }, T[9] + 4.4);
+    tl.fromTo("#s-skills-tl-head", { scale: 1.03 }, { scale: 1, duration: 0.45, ease: "power1.inOut", immediateRender: false }, T[9] + 4.85);
+    tl.fromTo(".s23-date", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: Q, stagger: 0.25 }, T[9] + 1.5);
+
+    // 「2026 年 3 月，有一个技能特别火，叫 superpowers」
+    tl.fromTo("#s-skills-node1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[10] + 0.2);
+    tl.fromTo("#s-skills-sp", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, T[10] + 0.25);
+    // 句间次级运动：卡片轻点
+    tl.fromTo("#s-skills-sp", { scale: 1 }, { scale: 1.006, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[10] + 2.6);
+    tl.fromTo("#s-skills-sp", { scale: 1.006 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[10] + 3.0);
+
+    // 星标图跟着卡片一起出现，别让卡片先空着
+    tl.fromTo("#s-skills-sp-media", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, T[10] + 0.55);
+
+    // 「GitHub 上三十多万星」
+    tl.fromTo("#s-skills-star-tag", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)" }, T[11] + 0.15);
+    tl.fromTo("#s-skills-sp-media", { scale: 1 }, { scale: 1.02, duration: 0.5, ease: "power1.inOut", immediateRender: false }, T[11] + 0.2);
+    tl.fromTo("#s-skills-sp-media", { scale: 1.02 }, { scale: 1, duration: 0.6, ease: "power1.inOut", immediateRender: false }, T[11] + 0.7);
+
+    // 「那时候 AI 的编程能力还不够强，需要它来规范流程」
+    tl.fromTo("#s-skills-sp-note", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[12] + 0.2);
+    // 句间次级运动：星标曲线慢慢放大，表示还在涨
+    tl.fromTo("#s-skills-sp-media", { scale: 1 }, { scale: 1.018, duration: 5.6, ease: "none", immediateRender: false }, T[12] + 0.3);
+
+    // 「但模型能力上来之后，这种约束不再必要」
+    tl.fromTo("#s-skills-burden", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[13] + 0.25);
+    tl.fromTo("#s-skills-burden", { scale: 1 }, { scale: 1.04, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[13] + 2.5);
+    tl.fromTo("#s-skills-burden", { scale: 1.04 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[13] + 2.9);
+
+    // 「所以它已经从我的常驻技能里淘汰了」：2026.07 社区讨论，盖章已卸载
+    tl.fromTo("#s-skills-node2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[14] + 0.1);
+    tl.fromTo("#s-skills-disc", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: E }, T[14] + 0.15);
+    tl.fromTo("#s-skills-uninstall", { opacity: 0, scale: 1.3, rotate: -8 }, { opacity: 1, scale: 1, rotate: -8, duration: 0.45, ease: "back.out(1.8)" }, T[14] + 0.9);
+    tl.fromTo("#s-skills-sp", { opacity: 1 }, { opacity: 0.62, duration: 0.5, ease: "power1.out", immediateRender: false }, T[14] + 0.8);
+
+    // 「那几个月很火的那批技能」
+    tl.fromTo("#s-skills-hot1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[15] + 0.15);
+    tl.fromTo("#s-skills-hot2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[15] + 0.45);
+    tl.fromTo("#s-skills-hot3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[15] + 0.75);
+
+    // 「大部分今天都不太适用了，日新月异」
+    tl.fromTo("#s-skills-hotline1", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: "power2.out" }, T[16] + 0.1);
+    tl.fromTo("#s-skills-hotline2", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: "power2.out" }, T[16] + 0.3);
+    tl.fromTo("#s-skills-hotline3", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: "power2.out" }, T[16] + 0.5);
+    tl.fromTo("#s-skills-cycle", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[16] + 1.2);
+
+    // 「我现在在编程上唯一保留的技能，是 grill me」
+    tl.fromTo("#s-skills-node3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[17] + 0.1);
+    tl.fromTo("#s-skills-grillwrap", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: E }, T[17] + 0.2);
+
+    // ------------------------------ 拍3：/grill-me 盘问，再把右半边让出来
+    tl.fromTo("#s-skills-line", { opacity: 1, x: 0 }, { opacity: 0, x: -360, duration: 0.55, ease: "power2.in", immediateRender: false }, T[17] + 0.6);
+    tl.fromTo("#s-skills-chat2", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[17] + 0.95);
+    tl.fromTo("#s-skills-slash", { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.45, ease: E }, T[17] + 1.35);
+
+    // 「需求不清楚的时候，我会用它来跟我一起盘问、确认」
+    tl.fromTo("#s-skills-q1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[18] + 0.1);
+    tl.fromTo("#s-skills-a1", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.4, ease: E }, T[18] + 0.7);
+    tl.fromTo("#s-skills-q2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[18] + 1.35);
+    tl.fromTo("#s-skills-a2", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.4, ease: E }, T[18] + 1.95);
+    tl.fromTo("#s-skills-q3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[18] + 2.55);
+    tl.fromTo("#s-skills-a3", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.4, ease: E }, T[18] + 3.15);
+
+    // 「把问题问清楚再动手」：右边生成一份计划文件
+    tl.fromTo("#s-skills-plan", { opacity: 0, y: 16, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: E }, T[19] + 0.15);
+    tl.fromTo(".s23-plan-row", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.4, ease: Q, stagger: 0.16 }, T[19] + 0.45);
+    tl.fromTo("#s-skills-plan-stamp", { opacity: 0, scale: 1.2, rotate: -6 }, { opacity: 1, scale: 1, rotate: -6, duration: 0.4, ease: "back.out(1.7)" }, T[19] + 1.5);
+
+    // 「另外还推荐一个做 PPT 的技能」：计划缩成文档放回聊天框，右半边让给 huashu design
+    tl.fromTo("#s-skills-plan", { x: 0, y: 0, scale: 1 }, { x: -250, y: 380, scale: 0.24, duration: 0.8, ease: "power2.inOut", immediateRender: false }, T[20] + 0.1);
+    tl.fromTo("#s-skills-start", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[20] + 0.35);
+    tl.fromTo("#s-skills-docchip", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[20] + 0.8);
+    tl.fromTo("#s-skills-hua", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[20] + 0.6);
+    // 句间次级运动：技能卡轻轻动一下
+    tl.fromTo("#s-skills-hua", { scale: 1 }, { scale: 1.005, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[20] + 3.2);
+    tl.fromTo("#s-skills-hua", { scale: 1.005 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[20] + 3.6);
+
+    // 技能卡带着样例图一起进来，别让卡片先空着
+    tl.fromTo("#s-skills-hua-media", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, T[20] + 0.95);
+
+    // 「它可以把一句话变成一套设计，输出精美的 HTML 幻灯片」
+    tl.fromTo("#s-skills-hua-media", { scale: 1 }, { scale: 1.012, duration: 3.6, ease: "none", immediateRender: false }, T[21] + 0.9);
+
+    // 「你再让 AI 把它转成 PPTX，就得到一个可编辑的版本」
+    tl.fromTo("#s-skills-flow1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: Q }, T[22] + 0.1);
+    tl.fromTo("#s-skills-arrow1", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: Q }, T[22] + 0.35);
+    tl.fromTo("#s-skills-flow2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: Q }, T[22] + 0.5);
+    tl.fromTo("#s-skills-arrow2", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: Q }, T[22] + 0.75);
+    tl.fromTo("#s-skills-flow3", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: Q }, T[22] + 0.9);
+    // 句间次级运动：链条上的箭头依次亮一下
+    tl.fromTo("#s-skills-arrow1", { opacity: 1 }, { opacity: 0.35, duration: 0.3, ease: "power1.inOut", immediateRender: false }, T[22] + 2.6);
+    tl.fromTo("#s-skills-arrow1", { opacity: 0.35 }, { opacity: 1, duration: 0.3, ease: "power1.inOut", immediateRender: false }, T[22] + 2.9);
+    tl.fromTo("#s-skills-arrow2", { opacity: 1 }, { opacity: 0.35, duration: 0.3, ease: "power1.inOut", immediateRender: false }, T[22] + 3.6);
+    tl.fromTo("#s-skills-arrow2", { opacity: 0.35 }, { opacity: 1, duration: 0.3, ease: "power1.inOut", immediateRender: false }, T[22] + 3.9);
+
+    // 「日常做汇报、做分享，很实用」：落三句结论
+    tl.fromTo("#s-skills-final", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: E }, T[23] + 0.2);
+    // 页尾：结论按着句子轻轻收一下，停在稳定帧
+    tl.fromTo(".s23-final-word", { scale: 1 }, { scale: 1.014, duration: 0.45, ease: "power1.inOut", stagger: 0.12, immediateRender: false }, T[23] + 1.7);
+    tl.fromTo(".s23-final-word", { scale: 1.014 }, { scale: 1, duration: 0.5, ease: "power1.inOut", stagger: 0.12, immediateRender: false }, T[23] + 2.15);
+// MOTION:END
+
+    window.__timelines["s-skills"] = tl;
+  </script>
+</template>

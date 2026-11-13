@@ -1,0 +1,1561 @@
+<template>
+  <style>
+    /* S22 ·「你只问一句，模型读的是一大本」
+       拍1：左边输入框只有一句话；拍2：右边 Agent 内部组装台像聊天窗口，一层层滚入；
+       拍3：聊天缩成长卷轴，装成笔记本第 1 页，放上纸飞机飞给右边戴眼镜的专家；
+       拍4：切到 DSH 真实轨迹面板，四层证据 + 最后一句「Harness = 提示词组装器」。 */
+
+    /* ---------------------------------------------------------- 拍1：输入框 */
+    .s22-input {
+      position: absolute;
+      left: 0;
+      top: 56px;
+      width: 396px;
+      height: 500px;
+      opacity: 0;
+    }
+
+    .s22-who {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 30px;
+      color: var(--ink);
+    }
+
+    .s22-who b {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .s22-who-sub {
+      margin-left: 2px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s22-box {
+      position: absolute;
+      left: 0;
+      top: 74px;
+      width: 396px;
+      height: 168px;
+      padding: 26px 26px;
+      border: 2px solid #514b40;
+      border-radius: 16px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .s22-box-text {
+      font-size: 42px;
+      line-height: 1.3;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s22-caret {
+      position: absolute;
+      left: 266px;
+      top: 120px;
+      width: 3px;
+      height: 42px;
+      background: var(--accent);
+    }
+
+    .s22-send {
+      position: absolute;
+      left: 0;
+      top: 272px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .s22-send-label {
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+
+    .s22-sent {
+      position: absolute;
+      left: 0;
+      top: 272px;
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      color: var(--accent-text);
+      opacity: 0;
+    }
+
+    .s22-qmark {
+      position: absolute;
+      left: 0;
+      top: 330px;
+      width: 380px;
+      font-size: 32px;
+      line-height: 1.4;
+      font-weight: 600;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s22-notstamp {
+      position: absolute;
+      left: 22px;
+      top: 420px;
+      font-size: 34px;
+      opacity: 0;
+    }
+
+    /* -------------------------------------------------------- 拍2：组装台 */
+    .s22-chat {
+      position: absolute;
+      left: 440px;
+      top: 0;
+      width: 1224px;
+      height: 600px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transform-origin: left top;
+      opacity: 0;
+    }
+
+    .s22-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      height: 54px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .s22-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--line-strong);
+      flex: none;
+    }
+
+    .s22-bar-title {
+      margin-left: 10px;
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .s22-bar-sub {
+      margin-left: 10px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s22-bar-prog {
+      margin-left: auto;
+      width: 230px;
+      height: 8px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
+
+    .s22-bar-prog i {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s22-body {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 54px;
+      height: 458px;
+      overflow: hidden;
+    }
+
+    .s22-thread {
+      position: absolute;
+      left: 24px;
+      top: 0;
+      width: 1174px;
+    }
+
+    .s22-wait {
+      position: absolute;
+      left: 396px;
+      top: 156px;
+      width: 420px;
+      padding: 18px 22px;
+      border: 2px dashed #b9ad99;
+      border-radius: 12px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s22-block {
+      position: absolute;
+      left: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      box-shadow: 0 12px 22px -20px rgba(22, 20, 15, 0.55);
+      opacity: 0;
+    }
+
+    .s22-block::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 5px;
+      border-radius: 0 3px 3px 0;
+      background: var(--accent);
+    }
+
+    .s22-b1 { top: 0; width: 1128px; height: 168px; }
+    .s22-b2 { top: 180px; width: 1174px; height: 170px; }
+    .s22-b3 { top: 362px; width: 1068px; height: 132px; }
+    .s22-b4 { top: 506px; width: 1012px; height: 120px; }
+    .s22-b5 { top: 638px; width: 944px; height: 100px; }
+
+    .s22-block-no {
+      position: absolute;
+      left: 22px;
+      top: 16px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      color: var(--accent-text);
+    }
+
+    .s22-block-title {
+      position: absolute;
+      left: 70px;
+      top: 8px;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s22-block-sub {
+      position: absolute;
+      left: 70px;
+      top: 52px;
+      font-size: 23px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s22-mini {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s22-chips {
+      position: absolute;
+      left: 70px;
+      top: 92px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .s22-b1-more {
+      position: absolute;
+      left: 70px;
+      top: 136px;
+      font-size: 22px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s22-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s22-b1-diff {
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      opacity: 0;
+    }
+
+    .s22-b2-path {
+      font-family: var(--font-mono);
+      color: var(--accent-text);
+    }
+
+    .s22-skrow {
+      position: absolute;
+      left: 70px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      line-height: 1;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    .s22-skrow--1 { top: 88px; }
+    .s22-skrow--2 { top: 116px; }
+    .s22-skrow--3 { top: 144px; }
+
+    .s22-skrow b {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .s22-b2-tag {
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      opacity: 0;
+    }
+
+    .s22-b2-load {
+      position: absolute;
+      right: 24px;
+      top: 58px;
+      opacity: 0;
+    }
+
+    .s22-scan {
+      position: absolute;
+      left: 66px;
+      right: 26px;
+      top: 84px;
+      height: 2px;
+      background: var(--accent);
+      opacity: 0;
+    }
+
+    .s22-b3-load {
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      opacity: 0;
+    }
+
+    .s22-b4-join {
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      opacity: 0;
+    }
+
+    .s22-b4-line {
+      position: absolute;
+      left: 70px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      line-height: 1;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    .s22-b4-line--1 { top: 88px; }
+    .s22-b4-line--2 { top: 116px; }
+
+    .s22-user {
+      position: absolute;
+      left: 574px;
+      top: 750px;
+      width: 600px;
+      height: 80px;
+      padding: 12px 22px;
+      border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line-strong));
+      border-radius: 12px;
+      background: var(--accent-soft);
+      opacity: 0;
+    }
+
+    .s22-user-text {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s22-user-meta {
+      position: absolute;
+      right: 20px;
+      top: 16px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-soft);
+    }
+
+    .s22-foot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      height: 88px;
+      padding: 0 26px;
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .s22-foot-label {
+      width: 200px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      line-height: 1.45;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+    }
+
+    .s22-tok {
+      position: relative;
+      width: 244px;
+      height: 62px;
+    }
+
+    .s22-tok > span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      font-family: var(--font-mono);
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .s22-tok--b,
+    .s22-tok--c {
+      color: var(--accent-text);
+    }
+
+    .s22-tok-unit {
+      margin-left: -8px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s22-tok-bar {
+      position: relative;
+      flex: 1;
+      height: 12px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--ink) 9%, transparent);
+      overflow: hidden;
+    }
+
+    .s22-barfill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .s22-foot-note {
+      width: 210px;
+      font-size: 22px;
+      line-height: 1.4;
+      color: var(--ink-faint);
+      text-align: right;
+    }
+
+    /* -------------------------------------------------- 拍3：卷轴 / 纸飞机 */
+    .s22-flight {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1664px;
+      height: 664px;
+      transform-origin: left top;
+    }
+
+    .s22-plane {
+      position: absolute;
+      left: 560px;
+      top: 452px;
+      width: 560px;
+      height: 162px;
+      opacity: 0;
+    }
+
+    .s22-plane svg {
+      display: block;
+      width: 560px;
+      height: 162px;
+      transform: rotate(-6deg);
+    }
+
+    .s22-notebook {
+      position: absolute;
+      left: 40px;
+      top: 4px;
+      width: 720px;
+      height: 518px;
+      border: 2px solid #514b40;
+      border-radius: 6px 12px 12px 6px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      opacity: 0;
+    }
+
+    .s22-notebook::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      border-right: 1px solid var(--line-strong);
+      border-radius: 4px 0 0 4px;
+      background: var(--panel-2);
+    }
+
+    .s22-ring {
+      position: absolute;
+      left: 10px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #b9ad99;
+      border-radius: 50%;
+      background: var(--bg);
+    }
+
+    .s22-ring--1 { top: 48px; }
+    .s22-ring--2 { top: 136px; }
+    .s22-ring--3 { top: 224px; }
+    .s22-ring--4 { top: 312px; }
+    .s22-ring--5 { top: 400px; }
+    .s22-ring--6 { top: 488px; }
+
+    .s22-page-head {
+      position: absolute;
+      left: 66px;
+      top: 10px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s22-page-foot {
+      position: absolute;
+      left: 66px;
+      bottom: 24px;
+      font-size: 24px;
+      color: var(--ink-soft);
+    }
+
+    .s22-scroll {
+      position: absolute;
+      left: 56px;
+      top: 46px;
+      width: 664px;
+      height: 412px;
+      padding: 14px 24px;
+      border: 1.5px solid #514b40;
+      border-radius: 4px;
+      background: #fffdf8;
+      opacity: 0;
+    }
+
+    .s22-scroll-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--line-strong);
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.03em;
+      color: var(--ink-soft);
+    }
+
+    .s22-scroll-token {
+      font-size: 21px;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+
+    .s22-srow {
+      position: relative;
+      height: 58px;
+      padding: 3px 0 0 56px;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .s22-srow b {
+      position: absolute;
+      left: 0;
+      top: 11px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--accent-text);
+    }
+
+    .s22-srow span {
+      display: block;
+      font-size: 25px;
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s22-srow i {
+      display: block;
+      margin-top: 1px;
+      font-style: normal;
+      font-size: 19px;
+      line-height: 1.2;
+      color: var(--ink-soft);
+    }
+
+    .s22-srow--you span {
+      color: var(--accent-text);
+    }
+
+    .s22-scroll-foot {
+      position: absolute;
+      left: 26px;
+      bottom: 12px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s22-scroll-hl {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 345px;
+      height: 58px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      opacity: 0;
+    }
+
+    .s22-scroll-tag {
+      position: absolute;
+      right: 24px;
+      top: 351px;
+      font-size: 20px;
+      opacity: 0;
+    }
+
+    .s22-tape {
+      position: absolute;
+      width: 96px;
+      height: 26px;
+      background: rgba(217, 207, 191, 0.82);
+    }
+
+    .s22-tape--1 { left: -46px; top: 6px; transform: rotate(-6deg); }
+    .s22-tape--2 { right: -46px; top: 6px; transform: rotate(6deg); }
+
+    .s22-trail {
+      position: absolute;
+      left: 60px;
+      top: 330px;
+      width: 1400px;
+      height: 300px;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .s22-trail path {
+      fill: none;
+      stroke: #b9ad99;
+      stroke-width: 2.5;
+      stroke-dasharray: 10 10;
+    }
+
+    .s22-expert {
+      position: absolute;
+      left: 1404px;
+      top: 46px;
+      width: 250px;
+      height: 214px;
+      opacity: 0;
+    }
+
+    .s22-expert svg {
+      display: block;
+      width: 250px;
+      height: 214px;
+    }
+
+    .s22-expert-glasses {
+      fill: #fffdf8;
+      stroke: #514b40;
+      stroke-width: 3;
+    }
+
+    .s22-expert-cap {
+      position: absolute;
+      left: 1380px;
+      top: 0;
+      width: 298px;
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s22-expert-sub {
+      position: absolute;
+      left: 1380px;
+      top: 266px;
+      width: 298px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s22-flight-note {
+      position: absolute;
+      left: 44px;
+      top: 596px;
+      width: 792px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    /* ------------------------------------------------ 拍4：DSH 真实面板 */
+    .s22-dsh-head {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1664px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      opacity: 0;
+    }
+
+    .s22-dsh-title {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+    }
+
+    .s22-dsh-title b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s22-dsh-badge {
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s22-shot {
+      position: absolute;
+      left: 0;
+      top: 52px;
+      width: 708px;
+      opacity: 0;
+    }
+
+    .s22-shot img {
+      display: block;
+      width: 690px;
+      height: 367px;
+      object-fit: cover;
+      object-position: left top;
+      border-radius: 6px;
+    }
+
+    .s22-shot .media__label {
+      font-size: 21px;
+    }
+
+    .s22-shot-scan {
+      position: absolute;
+      left: 9px;
+      right: 9px;
+      top: 60px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--accent);
+      opacity: 0;
+    }
+
+    .s22-zoom {
+      position: absolute;
+      left: 452px;
+      top: 300px;
+      width: 336px;
+      opacity: 0;
+      z-index: 6;
+    }
+
+    .s22-zoom img {
+      display: block;
+      width: 302px;
+      height: 305px;
+      object-fit: cover;
+      object-position: left top;
+      border-radius: 6px;
+    }
+
+    .s22-zoom .media__label {
+      font-size: 20px;
+    }
+
+    .s22-leaders {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1664px;
+      height: 664px;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .s22-leader {
+      fill: none;
+      stroke: var(--line-strong);
+      stroke-width: 2;
+      stroke-dasharray: 7 7;
+      opacity: 0;
+    }
+
+    .s22-leader-dot {
+      fill: var(--accent);
+      opacity: 0;
+    }
+
+    .s22-callout {
+      position: absolute;
+      left: 800px;
+      width: 800px;
+      height: 84px;
+      opacity: 0;
+    }
+
+    .s22-callout--1 { top: 76px; }
+    .s22-callout--2 { top: 176px; }
+    .s22-callout--3 { top: 276px; }
+    .s22-callout--4 { top: 376px; }
+
+    .s22-callout-no {
+      position: absolute;
+      left: 0;
+      top: 4px;
+      font-family: var(--font-mono);
+      font-size: 24px;
+      letter-spacing: 0.04em;
+      color: var(--accent-text);
+    }
+
+    .s22-callout-title {
+      position: absolute;
+      left: 54px;
+      top: 0;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s22-callout-sub {
+      position: absolute;
+      left: 54px;
+      top: 48px;
+      font-size: 24px;
+      line-height: 1.3;
+      color: var(--ink-soft);
+    }
+
+    .s22-fourtag {
+      position: absolute;
+      left: 800px;
+      top: 480px;
+      opacity: 0;
+    }
+
+    .s22-fin {
+      position: absolute;
+      left: 800px;
+      top: 74px;
+      width: 850px;
+    }
+
+    .s22-fin-text {
+      font-size: 34px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+      opacity: 0;
+    }
+
+    .s22-fin-text b {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s22-fin-big {
+      margin-top: 26px;
+      font-size: 58px;
+      line-height: 1.14;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s22-fin-big span {
+      color: var(--accent-text);
+    }
+
+    .s22-fin-steps {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px 14px;
+      margin-top: 34px;
+      width: 840px;
+    }
+
+    .s22-step {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 16px;
+      border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line-strong));
+      border-radius: 10px;
+      background: #fffdf8;
+      font-size: 25px;
+      font-weight: 600;
+      color: var(--ink);
+      opacity: 0;
+    }
+
+    .s22-arrow {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s22-fin-note {
+      margin-top: 30px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    /* 快照会直接 seek：晚出现的元素先在 CSS 里隐藏。 */
+    .s22-input,
+    .s22-chat,
+    .s22-qmark,
+    .s22-notstamp,
+    .s22-sent,
+    .s22-wait,
+    .s22-block,
+    .s22-skrow,
+    .s22-b1-more,
+    .s22-b1-diff,
+    .s22-b2-tag,
+    .s22-b2-load,
+    .s22-b3-load,
+    .s22-b4-join,
+    .s22-b4-line,
+    .s22-user,
+    .s22-plane,
+    .s22-trail,
+    .s22-notebook,
+    .s22-scroll,
+    .s22-scroll-hl,
+    .s22-scroll-tag,
+    .s22-expert,
+    .s22-expert-cap,
+    .s22-expert-sub,
+    .s22-flight-note,
+    .s22-dsh-head,
+    .s22-shot,
+    .s22-shot-scan,
+    .s22-zoom,
+    .s22-callout,
+    .s22-fourtag,
+    .s22-fin-text,
+    .s22-fin-big,
+    .s22-step,
+    .s22-arrow,
+    .s22-fin-note,
+    .s22-leader,
+    .s22-leader-dot {
+      opacity: 0;
+    }
+</style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-prompt-assembly"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S22</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-prompt-assembly-title" class="scene-title">你只问一句，模型读的是一大本</h1>
+        <p class="scene-no">22 / 28</p>
+      </header>
+
+      <section id="s-prompt-assembly-stage" class="stage">
+        <!-- 拍1：左边输入框，只有一句话 -->
+        <div id="s-prompt-input" class="s22-input">
+          <p class="s22-who"><span class="avatar-dot"></span><b>你</b><span class="s22-who-sub">输入框</span></p>
+          <div class="s22-box">
+            <p class="s22-box-text">帮我做个 PPT</p>
+            <span id="s-prompt-caret" class="s22-caret"></span>
+          </div>
+          <div id="s-prompt-send" class="s22-send">
+            <span class="kbd">Enter</span>
+            <span class="s22-send-label">按下回车</span>
+          </div>
+          <p id="s-prompt-sent" class="s22-sent">已发送给 Agent</p>
+          <p id="s-prompt-qmark" class="s22-qmark">传给模型的，<br />真的只有这句话？</p>
+          <span id="s-prompt-notstamp" class="stamp s22-notstamp">不是</span>
+        </div>
+
+        <!-- 拍2：Agent 内部的聊天组装台 -->
+        <div id="s-prompt-chat" class="s22-chat">
+          <div class="s22-bar">
+            <i class="s22-dot"></i><i class="s22-dot"></i><i class="s22-dot"></i>
+            <span class="s22-bar-title">Agent 内部组装台</span>
+            <span class="s22-bar-sub">context assembly</span>
+            <span class="s22-bar-prog"><i id="s-prompt-prog"></i></span>
+          </div>
+          <div class="s22-body">
+            <p id="s-prompt-wait" class="s22-wait">开始组装上下文</p>
+            <div id="s-prompt-thread" class="s22-thread">
+              <div id="s-prompt-b1" class="s22-block s22-b1">
+                <span class="s22-block-no">01</span>
+                <p class="s22-block-title">系统提示词</p>
+                <p class="s22-block-sub">写死在 Harness 里的第一段</p>
+                <div class="s22-chips">
+                  <span class="s22-mini">你是谁</span>
+                  <span class="s22-mini">能做什么</span>
+                  <span class="s22-mini">不能做什么</span>
+                  <span class="s22-mini">输出格式</span>
+                </div>
+                <p id="s-prompt-b1-more" class="s22-b1-more">还有目录约定、工具偏好、拒答规则……往往很长</p>
+                <span id="s-prompt-b1-diff" class="s22-tag s22-b1-diff">不同 Agent 写法不同</span>
+              </div>
+
+              <div id="s-prompt-b2" class="s22-block s22-b2">
+                <span class="s22-block-no">02</span>
+                <p class="s22-block-title">技能目录描述</p>
+                <p class="s22-block-sub"><span class="s22-b2-path">~/.agent/skills/</span> 扫描后拼成一段话</p>
+                <span id="s-prompt-b2-tag" class="s22-tag s22-b2-tag">共 24 个技能</span>
+                <span id="s-prompt-b2-load" class="s22-tag s22-b2-load">模型：要不要加载？</span>
+                <span id="s-prompt-skrow1" class="s22-skrow s22-skrow--1"><b>brainstorming</b> · 头脑风暴与发散</span>
+                <span id="s-prompt-skrow2" class="s22-skrow s22-skrow--2"><b>huashu-design</b> · 一句话变成一套设计</span>
+                <span id="s-prompt-skrow3" class="s22-skrow s22-skrow--3"><b>pdf</b> · 读写 PDF 文档</span>
+                <span id="s-prompt-scan" class="s22-scan"></span>
+              </div>
+
+              <div id="s-prompt-b3" class="s22-block s22-b3">
+                <span class="s22-block-no">03</span>
+                <p class="s22-block-title">MCP 工具说明</p>
+                <p class="s22-block-sub">外部服务登记好的工具，schema 也在开头注入</p>
+                <div class="s22-chips">
+                  <span class="s22-mini">db.query</span>
+                  <span class="s22-mini">calendar.create</span>
+                  <span class="s22-mini">browser.open</span>
+                </div>
+                <span id="s-prompt-b3-load" class="s22-tag s22-b3-load">固定格式</span>
+              </div>
+
+              <div id="s-prompt-b4" class="s22-block s22-b4">
+                <span class="s22-block-no">04</span>
+                <p class="s22-block-title">AGENTS.md / 全局记忆</p>
+                <p class="s22-block-sub">工作区里的 markdown 与个人记忆</p>
+                <span id="s-prompt-b4-join" class="s22-tag s22-b4-join">拼接进来</span>
+                <span id="s-prompt-b4-l1" class="s22-b4-line s22-b4-line--1">AGENTS.md · 项目背景 / 目录结构 / 禁止事项</span>
+                <span id="s-prompt-b4-l2" class="s22-b4-line s22-b4-line--2">~/.agent/memory.md · 个人偏好与习惯</span>
+              </div>
+
+              <div id="s-prompt-b5" class="s22-block s22-b5">
+                <span class="s22-block-no">05</span>
+                <p class="s22-block-title">历史消息</p>
+                <p class="s22-block-sub">上一轮你说过的话、工具返回的结果，原样带着走</p>
+              </div>
+
+              <div id="s-prompt-user" class="s22-user">
+                <p class="s22-user-text">帮我做个 PPT</p>
+                <span class="s22-user-meta">你 · 刚刚</span>
+              </div>
+            </div>
+          </div>
+          <div class="s22-foot">
+            <p class="s22-foot-label">本次请求<br />发给模型</p>
+            <div class="s22-tok">
+              <span id="s-prompt-tok-a">80</span>
+              <span id="s-prompt-tok-b" class="s22-tok--b">≈ 1 万</span>
+              <span id="s-prompt-tok-c" class="s22-tok--c">≈ 10 万</span>
+            </div>
+            <span class="s22-tok-unit">token</span>
+            <div class="s22-tok-bar"><i id="s-prompt-barfill" class="s22-barfill"></i></div>
+            <p class="s22-foot-note">一句话的问题<br />上万 token 的请求</p>
+          </div>
+        </div>
+
+        <!-- 拍3：缩成长卷轴，装成笔记本第 1 页，放上纸飞机 -->
+        <div id="s-prompt-flight" class="s22-flight">
+          <div id="s-prompt-notebook" class="s22-notebook">
+            <span class="s22-ring s22-ring--1"></span>
+            <span class="s22-ring s22-ring--2"></span>
+            <span class="s22-ring s22-ring--3"></span>
+            <span class="s22-ring s22-ring--4"></span>
+            <span class="s22-ring s22-ring--5"></span>
+            <span class="s22-ring s22-ring--6"></span>
+            <p class="s22-page-head">SESSION NOTEBOOK · 第 1 页</p>
+          </div>
+
+          <div id="s-prompt-scroll" class="s22-scroll">
+            <div class="s22-scroll-head">
+              <span>这一次请求，发给模型的全部文本</span>
+              <span class="s22-scroll-token">≈ 10 万 token</span>
+            </div>
+            <div class="s22-srow"><b>01</b><span>系统提示词</span><i>你是谁 / 能做什么 / 输出格式</i></div>
+            <div class="s22-srow"><b>02</b><span>技能目录</span><i>24 个技能的描述，拼成一段话</i></div>
+            <div class="s22-srow"><b>03</b><span>MCP 工具说明</span><i>db · calendar · browser</i></div>
+            <div class="s22-srow"><b>04</b><span>AGENTS.md / 全局记忆</span><i>项目背景 · 禁止事项 · 个人偏好</i></div>
+            <div class="s22-srow"><b>05</b><span>历史消息</span><i>上一轮对话与工具返回</i></div>
+            <div class="s22-srow s22-srow--you"><b>06</b><span>你这句话</span><i>帮我做个 PPT</i></div>
+            <span id="s-prompt-scroll-hl" class="s22-scroll-hl"></span>
+            <span id="s-prompt-scroll-tag" class="s22-tag s22-scroll-tag">最后一页</span>
+          </div>
+
+          <div id="s-prompt-plane" class="s22-plane">
+            <svg viewBox="0 0 900 260" aria-hidden="true">
+              <polygon points="880,130 40,10 430,130" fill="#f0e8da" stroke="#514b40" stroke-width="3.5" stroke-linejoin="round" />
+              <polygon points="880,130 40,250 430,130" fill="#e6dbc8" stroke="#514b40" stroke-width="3.5" stroke-linejoin="round" />
+              <path d="M 40 10 L 430 130 L 40 250" fill="none" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+              <line x1="430" y1="130" x2="880" y2="130" stroke="#514b40" stroke-width="2.5" />
+              <path d="M 430 130 L 540 118" stroke="#514b40" stroke-width="1.5" opacity="0.5" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- 飞行轨迹：一道浅浅的虚线，说明它要飞向右边 -->
+        <svg id="s-prompt-trail" class="s22-trail" viewBox="0 0 1400 300" aria-hidden="true">
+          <path d="M 20 226 Q 420 96 760 132 T 1340 52" />
+        </svg>
+
+        <!-- 右边的大模型：戴眼镜的纸面专家 -->
+        <div id="s-prompt-expert" class="s22-expert">
+          <svg viewBox="0 0 264 226" aria-hidden="true">
+            <path d="M 20 250 L 25 178 Q 34 140 82 130 L 182 130 Q 230 140 239 178 L 244 250 Z" fill="#e4d5bd" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+            <path d="M 118 108 L 118 138 L 146 138 L 146 108 Z" fill="#f0debf" stroke="#514b40" stroke-width="2.5" />
+            <circle cx="132" cy="78" r="47" fill="#f2e2c9" stroke="#514b40" stroke-width="3" />
+            <circle cx="85" cy="80" r="8" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+            <circle cx="179" cy="80" r="8" fill="#f2e2c9" stroke="#514b40" stroke-width="2.5" />
+            <path d="M 87 66 Q 90 26 132 24 Q 174 26 177 66 Q 160 50 132 48 Q 104 50 87 66 Z" fill="#514b40" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+            <circle cx="112" cy="82" r="13" class="s22-expert-glasses" />
+            <circle cx="152" cy="82" r="13" class="s22-expert-glasses" />
+            <path d="M 125 82 L 139 82" stroke="#514b40" stroke-width="3" />
+            <path d="M 99 82 L 85 80 M 165 82 L 179 80" stroke="#514b40" stroke-width="2.5" />
+            <circle cx="112" cy="82" r="3.2" fill="#16140f" />
+            <circle cx="152" cy="82" r="3.2" fill="#16140f" />
+            <path d="M 100 63 Q 111 58 122 63 M 142 63 Q 153 58 164 63" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+            <path d="M 132 86 L 132 96 Q 132 100 127 100" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+            <path d="M 120 108 Q 132 116 144 108" stroke="#514b40" stroke-width="2.5" fill="none" stroke-linecap="round" />
+            <path d="M 98 132 L 132 168 L 166 132" fill="#fffdf8" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
+            <path d="M 120 132 L 132 150 L 144 132" fill="#f0e8da" stroke="#514b40" stroke-width="2" />
+            <path d="M 100 182 L 164 182" stroke="#514b40" stroke-width="2" opacity="0.32" />
+            <circle cx="132" cy="196" r="3.4" fill="#514b40" />
+            <circle cx="132" cy="212" r="3.4" fill="#514b40" />
+            <rect x="176" y="172" width="9" height="30" rx="2" fill="#e85b4a" />
+          </svg>
+        </div>
+        <p id="s-prompt-expert-cap" class="s22-expert-cap">大模型</p>
+        <p id="s-prompt-expert-sub" class="s22-expert-sub">只负责读这一整段</p>
+
+        <!-- 拍4：DSH 真实轨迹面板，四层逐层展开 -->
+        <div id="s-prompt-dsh-head" class="s22-dsh-head">
+          <p class="s22-dsh-title">DeepSeek Harness · <b>轨迹 / 上下文面板</b></p>
+          <p class="s22-dsh-badge">真实界面截图 · 局部</p>
+        </div>
+
+        <div id="s-prompt-shot" class="media s22-shot">
+          <img
+            src="assets/media/shot/dsh-context.webp"
+            alt="DSH 轨迹面板截图：SYSTEM、CONTEXT、USER、ASSISTANT、TOOL 逐层列出，右侧是工具详情"
+            width="690"
+            height="367"
+          />
+          <p class="media__label"><span>dsh-context · 轨迹面板</span><span>真实截图</span></p>
+          <span id="s-prompt-shot-scan" class="s22-shot-scan"></span>
+        </div>
+
+        <div id="s-prompt-zoom" class="media s22-zoom">
+          <img
+            src="assets/media/shot/dsh-tools.webp"
+            alt="DSH 工具面板截图：Summary、Payload、Result、Schema、Timing"
+            width="302"
+            height="305"
+          />
+          <p class="media__label"><span>TOOL · Schema</span><span>局部放大</span></p>
+        </div>
+
+        <svg id="s-prompt-leaders" class="s22-leaders" viewBox="0 0 1664 664" aria-hidden="true">
+          <path id="s-prompt-leader1" class="s22-leader" d="M 695 152 L 800 118" />
+          <path id="s-prompt-leader2" class="s22-leader" d="M 695 196 L 800 218" />
+          <path id="s-prompt-leader3" class="s22-leader" d="M 695 285 L 800 318" />
+          <path id="s-prompt-leader4" class="s22-leader" d="M 788 340 L 800 418" />
+          <circle id="s-prompt-dot1" class="s22-leader-dot" cx="695" cy="152" r="4" />
+          <circle id="s-prompt-dot2" class="s22-leader-dot" cx="695" cy="196" r="4" />
+          <circle id="s-prompt-dot3" class="s22-leader-dot" cx="695" cy="285" r="4" />
+          <circle id="s-prompt-dot4" class="s22-leader-dot" cx="788" cy="340" r="4" />
+        </svg>
+
+        <div id="s-prompt-callout1" class="s22-callout s22-callout--1">
+          <span class="s22-callout-no">01</span>
+          <p class="s22-callout-title">系统提示</p>
+          <p class="s22-callout-sub">你是谁、能做什么、不能做什么</p>
+        </div>
+        <div id="s-prompt-callout2" class="s22-callout s22-callout--2">
+          <span class="s22-callout-no">02</span>
+          <p class="s22-callout-title">技能说明</p>
+          <p class="s22-callout-sub">扫描结果拼成目录，注入在开头</p>
+        </div>
+        <div id="s-prompt-callout3" class="s22-callout s22-callout--3">
+          <span class="s22-callout-no">03</span>
+          <p class="s22-callout-title">消息历史</p>
+          <p class="s22-callout-sub">用户、助手、工具返回，原文都在</p>
+        </div>
+        <div id="s-prompt-callout4" class="s22-callout s22-callout--4">
+          <span class="s22-callout-no">04</span>
+          <p class="s22-callout-title">工具 schema</p>
+          <p class="s22-callout-sub">参数与返回格式，右侧放大看</p>
+        </div>
+        <span id="s-prompt-fourtag" class="s22-tag s22-fourtag">四层，最后都拼进同一段文本</span>
+
+        <div id="s-prompt-fin" class="s22-fin">
+          <p id="s-prompt-fin-text" class="s22-fin-text">我们能控制的，只有 <b>提示词</b>，也就是文本</p>
+          <p id="s-prompt-fin-big" class="s22-fin-big">Harness = <span>提示词组装器</span></p>
+          <div class="s22-fin-steps">
+            <span id="s-prompt-step1" class="s22-step">组装文本</span>
+            <span id="s-prompt-arrow1" class="s22-arrow">→</span>
+            <span id="s-prompt-step2" class="s22-step">发给模型</span>
+            <span id="s-prompt-arrow2" class="s22-arrow">→</span>
+            <span id="s-prompt-step3" class="s22-step">接回文本</span>
+            <span id="s-prompt-arrow3" class="s22-arrow">→</span>
+            <span id="s-prompt-step4" class="s22-step">执行动作</span>
+          </div>
+          <p id="s-prompt-fin-note" class="s22-fin-note">不停地组装、发送、接回、执行<br />你写的每一句，最后都变成它读的字</p>
+        </div>
+</section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-prompt-assembly-cap-0" class="cap-line clip" data-start="0.7" data-duration="2.891">前面讲了这么多，我们在回头想一个问题：</p>
+        <p id="s-prompt-assembly-cap-1" class="cap-line clip" data-start="3.631" data-duration="4.666">你在 Agent 里问了一个问题，传给大模型的，真的只有你这句话吗？</p>
+        <p id="s-prompt-assembly-cap-2" class="cap-line clip" data-start="8.297" data-duration="1.65">答案显然不是。</p>
+        <p id="s-prompt-assembly-cap-3" class="cap-line clip" data-start="9.987" data-duration="4.723">你按下回车之前，Agent 已经帮你组装好了一大段文本。</p>
+        <p id="s-prompt-assembly-cap-4" class="cap-line clip" data-start="14.75" data-duration="6.847">最前面是系统提示词：你是谁、能做什么、不能做什么、输出要什么格式。</p>
+        <p id="s-prompt-assembly-cap-5" class="cap-line clip" data-start="21.637" data-duration="3.968">任何一个 Agent 都有系统提示，而且往往很长，</p>
+        <p id="s-prompt-assembly-cap-6" class="cap-line clip" data-start="25.645" data-duration="2.29">不同 Agent 写得也不一样。</p>
+        <p id="s-prompt-assembly-cap-7" class="cap-line clip" data-start="27.975" data-duration="3.285">系统提示后面，接着是技能列表。</p>
+        <p id="s-prompt-assembly-cap-8" class="cap-line clip" data-start="31.3" data-duration="5.847">大部分通用 Agent 会在用户目录下的 agents/skills 文件夹里放技能。</p>
+        <p id="s-prompt-assembly-cap-9" class="cap-line clip" data-start="37.187" data-duration="5.634">它会扫描这个目录，把所有技能的描述拼成一段话——相当于告诉模型：</p>
+        <p id="s-prompt-assembly-cap-10" class="cap-line clip" data-start="42.861" data-duration="3.986">这台电脑上有这些技能，它们大概是做这些事的。</p>
+        <p id="s-prompt-assembly-cap-11" class="cap-line clip" data-start="46.887" data-duration="4.673">模型看到之后，再判断你的问题要不要加载某个技能。</p>
+        <p id="s-prompt-assembly-cap-12" class="cap-line clip" data-start="51.6" data-duration="5.647">MCP 服务也类似，它的工具说明会在开头就被注入进去。</p>
+        <p id="s-prompt-assembly-cap-13" class="cap-line clip" data-start="57.287" data-duration="5.547">接下来还有工作区下 Agents.md 文件的内容，获取全局记忆内容，</p>
+        <p id="s-prompt-assembly-cap-14" class="cap-line clip" data-start="62.874" data-duration="3.748">Agent 会把这写 markdown 文本也拼接进来。</p>
+        <p id="s-prompt-assembly-cap-15" class="cap-line clip" data-start="66.662" data-duration="2.873">不同 Agent 的拼接方式不一样。</p>
+        <p id="s-prompt-assembly-cap-16" class="cap-line clip" data-start="69.575" data-duration="4.051">所以，你问的可能只是一句不到 100 个 token 的话，</p>
+        <p id="s-prompt-assembly-cap-17" class="cap-line clip" data-start="73.666" data-duration="5.244">真正发到大模型那里的请求，可能已经接近一万、甚至十万个 token。</p>
+        <p id="s-prompt-assembly-cap-18" class="cap-line clip" data-start="78.95" data-duration="3.15">你的问题，只是这本笔记本的最后一页；</p>
+        <p id="s-prompt-assembly-cap-19" class="cap-line clip" data-start="82.14" data-duration="2.707">前面几页，是 Agent 提前写好的。</p>
+        <p id="s-prompt-assembly-cap-20" class="cap-line clip" data-start="84.887" data-duration="4.916">这也是我推荐大家把 DeepSeek Harness 当日常 Agent 工具的</p>
+        <p id="s-prompt-assembly-cap-21" class="cap-line clip" data-start="89.843" data-duration="5.367">原因：它插件很多、很开放，还把整个上下文组装过程摊开给你看。</p>
+        <p id="s-prompt-assembly-cap-22" class="cap-line clip" data-start="95.25" data-duration="5.26">系统提示、技能、工具、历史，每一层都能看到。</p>
+        <p id="s-prompt-assembly-cap-23" class="cap-line clip" data-start="100.55" data-duration="4.632">看多了你就会明白：我们现在能控制大模型的唯一方法，</p>
+        <p id="s-prompt-assembly-cap-24" class="cap-line clip" data-start="105.222" data-duration="3.324">就是提示词，也就是文本；而 Harness，</p>
+        <p id="s-prompt-assembly-cap-25" class="cap-line clip" data-start="108.586" data-duration="5.193">本质上就是一个提示词组装器——不停地组装文本、发给模型、接</p>
+        <p id="s-prompt-assembly-cap-26" class="cap-line clip" data-start="113.819" data-duration="2.016">回文本，再去执行动作。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S22</span>
+        <span class="cap-clock">01:58</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S22","id":"prompt-assembly","index":0,"start":0,"duration":117.55,"audioStart":0.599999999999909,"audioDuration":115.344,"cues":[{"i":0,"t":0.7,"d":2.891,"text":"前面讲了这么多，我们在回头想一个问题：","sent":"前面讲了这么多，我们在回头想一个问题：你在 Agent 里问了一个问题，传给大模型的，真的只有你这句话吗？"},{"i":1,"t":3.631,"d":4.666,"text":"你在 Agent 里问了一个问题，传给大模型的，真的只有你这句话吗？","sent":"前面讲了这么多，我们在回头想一个问题：你在 Agent 里问了一个问题，传给大模型的，真的只有你这句话吗？"},{"i":2,"t":8.297,"d":1.65,"text":"答案显然不是。","sent":"答案显然不是。"},{"i":3,"t":9.987,"d":4.723,"text":"你按下回车之前，Agent 已经帮你组装好了一大段文本。","sent":"你按下回车之前，Agent 已经帮你组装好了一大段文本。"},{"i":4,"t":14.75,"d":6.847,"text":"最前面是系统提示词：你是谁、能做什么、不能做什么、输出要什么格式。","sent":"最前面是系统提示词：你是谁、能做什么、不能做什么、输出要什么格式。"},{"i":5,"t":21.637,"d":3.968,"text":"任何一个 Agent 都有系统提示，而且往往很长，","sent":"任何一个 Agent 都有系统提示，而且往往很长，不同 Agent 写得也不一样。"},{"i":6,"t":25.645,"d":2.29,"text":"不同 Agent 写得也不一样。","sent":"任何一个 Agent 都有系统提示，而且往往很长，不同 Agent 写得也不一样。"},{"i":7,"t":27.975,"d":3.285,"text":"系统提示后面，接着是技能列表。","sent":"系统提示后面，接着是技能列表。"},{"i":8,"t":31.3,"d":5.847,"text":"大部分通用 Agent 会在用户目录下的 agents/skills 文件夹里放技能。","sent":"大部分通用 Agent 会在用户目录下的 agents/skills 文件夹里放技能。"},{"i":9,"t":37.187,"d":5.634,"text":"它会扫描这个目录，把所有技能的描述拼成一段话——相当于告诉模型：","sent":"它会扫描这个目录，把所有技能的描述拼成一段话——相当于告诉模型：这台电脑上有这些技能，它们大概是做这些事的。"},{"i":10,"t":42.861,"d":3.986,"text":"这台电脑上有这些技能，它们大概是做这些事的。","sent":"它会扫描这个目录，把所有技能的描述拼成一段话——相当于告诉模型：这台电脑上有这些技能，它们大概是做这些事的。"},{"i":11,"t":46.887,"d":4.673,"text":"模型看到之后，再判断你的问题要不要加载某个技能。","sent":"模型看到之后，再判断你的问题要不要加载某个技能。"},{"i":12,"t":51.6,"d":5.647,"text":"MCP 服务也类似，它的工具说明会在开头就被注入进去。","sent":"MCP 服务也类似，它的工具说明会在开头就被注入进去。"},{"i":13,"t":57.287,"d":5.547,"text":"接下来还有工作区下 Agents.md 文件的内容，获取全局记忆内容，","sent":"接下来还有工作区下 Agents.md 文件的内容，获取全局记忆内容，Agent 会把这写 markdown 文本也拼接进来。"},{"i":14,"t":62.874,"d":3.748,"text":"Agent 会把这写 markdown 文本也拼接进来。","sent":"接下来还有工作区下 Agents.md 文件的内容，获取全局记忆内容，Agent 会把这写 markdown 文本也拼接进来。"},{"i":15,"t":66.662,"d":2.873,"text":"不同 Agent 的拼接方式不一样。","sent":"不同 Agent 的拼接方式不一样。"},{"i":16,"t":69.575,"d":4.051,"text":"所以，你问的可能只是一句不到 100 个 token 的话，","sent":"所以，你问的可能只是一句不到 100 个 token 的话，真正发到大模型那里的请求，可能已经接近一万、甚至十万个 token。"},{"i":17,"t":73.666,"d":5.244,"text":"真正发到大模型那里的请求，可能已经接近一万、甚至十万个 token。","sent":"所以，你问的可能只是一句不到 100 个 token 的话，真正发到大模型那里的请求，可能已经接近一万、甚至十万个 token。"},{"i":18,"t":78.95,"d":3.15,"text":"你的问题，只是这本笔记本的最后一页；","sent":"你的问题，只是这本笔记本的最后一页；前面几页，是 Agent 提前写好的。"},{"i":19,"t":82.14,"d":2.707,"text":"前面几页，是 Agent 提前写好的。","sent":"你的问题，只是这本笔记本的最后一页；前面几页，是 Agent 提前写好的。"},{"i":20,"t":84.887,"d":4.916,"text":"这也是我推荐大家把 DeepSeek Harness 当日常 Agent 工具的","sent":"这也是我推荐大家把 DeepSeek Harness 当日常 Agent 工具的原因：它插件很多、很开放，还把整个上下文组装过程摊开给你看。"},{"i":21,"t":89.843,"d":5.367,"text":"原因：它插件很多、很开放，还把整个上下文组装过程摊开给你看。","sent":"这也是我推荐大家把 DeepSeek Harness 当日常 Agent 工具的原因：它插件很多、很开放，还把整个上下文组装过程摊开给你看。"},{"i":22,"t":95.25,"d":5.26,"text":"系统提示、技能、工具、历史，每一层都能看到。","sent":"系统提示、技能、工具、历史，每一层都能看到。"},{"i":23,"t":100.55,"d":4.632,"text":"看多了你就会明白：我们现在能控制大模型的唯一方法，","sent":"看多了你就会明白：我们现在能控制大模型的唯一方法，就是提示词，也就是文本；而 Harness，本质上就是一个提示词组装器——不停地组装文本、发给模型、接回文本，再去执行动作。"},{"i":24,"t":105.222,"d":3.324,"text":"就是提示词，也就是文本；而 Harness，","sent":"看多了你就会明白：我们现在能控制大模型的唯一方法，就是提示词，也就是文本；而 Harness，本质上就是一个提示词组装器——不停地组装文本、发给模型、接回文本，再去执行动作。"},{"i":25,"t":108.586,"d":5.193,"text":"本质上就是一个提示词组装器——不停地组装文本、发给模型、接","sent":"看多了你就会明白：我们现在能控制大模型的唯一方法，就是提示词，也就是文本；而 Harness，本质上就是一个提示词组装器——不停地组装文本、发给模型、接回文本，再去执行动作。"},{"i":26,"t":113.819,"d":2.016,"text":"回文本，再去执行动作。","sent":"看多了你就会明白：我们现在能控制大模型的唯一方法，就是提示词，也就是文本；而 Harness，本质上就是一个提示词组装器——不停地组装文本、发给模型、接回文本，再去执行动作。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // MOTION:BEGIN
+    // S22 · 旁白是时钟：每一拍都钉在 N.cues[i].t 上。
+    const C = N.cues;
+    const T = C.map((c) => c.t);
+    const E = "power3.out";
+    const Q = "power2.out";
+
+    // 快照会直接 seek：需要位移/缩放的元素先显式归零，避免提前露出来。
+    gsap.set("#s-prompt-thread", { y: 0 });
+    gsap.set("#s-prompt-notstamp", { rotate: -6 });
+
+    // ---------------------------------------------------------- 拍1：输入框
+    tl.fromTo("#s-prompt-input", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.7, ease: E }, T[0] + 0.1);
+    tl.fromTo("#s-prompt-caret", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: Q }, T[0] + 0.55);
+    // 次级运动：光标闪两下，停在稳定帧
+    tl.fromTo("#s-prompt-caret", { opacity: 1 }, { opacity: 0.2, duration: 0.3, ease: "power1.inOut", immediateRender: false }, 1.6);
+    tl.fromTo("#s-prompt-caret", { opacity: 0.2 }, { opacity: 1, duration: 0.3, ease: "power1.inOut", immediateRender: false }, 1.9);
+    tl.fromTo("#s-prompt-caret", { opacity: 1 }, { opacity: 0.2, duration: 0.3, ease: "power1.inOut", immediateRender: false }, 2.7);
+    tl.fromTo("#s-prompt-caret", { opacity: 0.2 }, { opacity: 1, duration: 0.3, ease: "power1.inOut", immediateRender: false }, 3.0);
+
+    // ------------------------------------------------ 拍2：组装台开始工作
+    tl.fromTo("#s-prompt-chat", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, T[1] + 0.15);
+    tl.fromTo("#s-prompt-qmark", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: Q }, T[1] + 0.85);
+    tl.fromTo("#s-prompt-wait", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[1] + 1.35);
+    // 次级运动：问号轻点一下
+    tl.fromTo("#s-prompt-qmark", { scale: 1 }, { scale: 1.03, duration: 0.4, ease: "power1.inOut", immediateRender: false }, 6.3);
+    tl.fromTo("#s-prompt-qmark", { scale: 1.03 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, 6.7);
+
+    // 「答案显然不是」
+    tl.fromTo("#s-prompt-notstamp", { opacity: 0, scale: 1.3, rotate: -6 }, { opacity: 1, scale: 1, rotate: -6, duration: 0.5, ease: "back.out(1.6)" }, T[2] + 0.15);
+
+    // 「按下回车之前，Agent 已经帮你组装好了一大段文本」
+    tl.fromTo("#s-prompt-input", { opacity: 1 }, { opacity: 0.62, duration: 0.6, ease: Q, immediateRender: false }, T[3] + 0.1);
+    tl.fromTo("#s-prompt-wait", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[4] + 0.02);
+    tl.fromTo("#s-prompt-tok-a", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[3] + 0.3);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0 }, { scaleX: 0.08, duration: 0.6, ease: Q }, T[3] + 0.3);
+
+    // cue4 · 系统提示词：第一块从左边滚进聊天
+    tl.fromTo("#s-prompt-b1", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[4] + 0.12);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.08 }, { scaleX: 0.2, duration: 6.4, ease: "none", immediateRender: false }, T[4] + 0.6);
+
+    // cue5 · 往往很长：多出一行
+    tl.fromTo("#s-prompt-b1-more", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[5] + 0.15);
+    tl.fromTo("#s-prompt-b1", { scale: 1 }, { scale: 1.006, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[5] + 1.0);
+    tl.fromTo("#s-prompt-b1", { scale: 1.006 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[5] + 1.4);
+
+    // cue6 · 不同 Agent 写得也不一样
+    tl.fromTo("#s-prompt-b1-diff", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[6] + 0.15);
+
+    // cue7 · 技能列表
+    tl.fromTo("#s-prompt-b2", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[7] + 0.12);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.2 }, { scaleX: 0.34, duration: 3.6, ease: "none", immediateRender: false }, T[7] + 0.5);
+
+    // cue8 · agents/skills 目录被扫到
+    tl.fromTo("#s-prompt-b2-tag", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[8] + 0.15);
+
+    // cue9 · 扫描这个目录：三条技能描述依次亮起，扫描线扫过
+    tl.fromTo("#s-prompt-skrow1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: Q }, T[9] + 0.15);
+    tl.fromTo("#s-prompt-skrow2", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: Q }, T[9] + 0.45);
+    tl.fromTo("#s-prompt-skrow3", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: Q }, T[9] + 0.75);
+    tl.fromTo("#s-prompt-scan", { opacity: 0 }, { opacity: 0.5, duration: 0.3, ease: Q }, T[9] + 0.2);
+    tl.fromTo("#s-prompt-scan", { y: 0 }, { y: 66, duration: 2.6, ease: "none", immediateRender: false }, T[9] + 0.45);
+    tl.fromTo("#s-prompt-scan", { opacity: 0.5 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[9] + 3.05);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.34 }, { scaleX: 0.46, duration: 5.4, ease: "none", immediateRender: false }, T[9] + 0.5);
+
+    // cue10 · 拼成一段话
+    tl.fromTo("#s-prompt-b2", { scale: 1 }, { scale: 1.006, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[10] + 0.2);
+    tl.fromTo("#s-prompt-b2", { scale: 1.006 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[10] + 0.6);
+
+    // cue11 · 模型判断要不要加载
+    tl.fromTo("#s-prompt-b2-load", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[11] + 0.15);
+
+    // cue12 · MCP 工具说明
+    tl.fromTo("#s-prompt-b3", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[12] + 0.12);
+    tl.fromTo("#s-prompt-thread", { y: 0 }, { y: -36, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[12] + 0.42);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.46 }, { scaleX: 0.62, duration: 5.2, ease: "none", immediateRender: false }, T[12] + 0.5);
+
+    // cue13 · 工作区 AGENTS.md 与全局记忆
+    tl.fromTo("#s-prompt-b4", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[13] + 0.12);
+    tl.fromTo("#s-prompt-b4-l1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: Q }, T[13] + 0.55);
+    tl.fromTo("#s-prompt-b4-l2", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: Q }, T[13] + 0.85);
+    tl.fromTo("#s-prompt-thread", { y: -36 }, { y: -168, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[13] + 0.42);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.62 }, { scaleX: 0.72, duration: 5.0, ease: "none", immediateRender: false }, T[13] + 0.5);
+
+    // cue14 · markdown 文本也拼接进来
+    tl.fromTo("#s-prompt-b4-join", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[14] + 0.15);
+
+    // cue15 · 历史消息
+    tl.fromTo("#s-prompt-b5", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[15] + 0.12);
+    tl.fromTo("#s-prompt-thread", { y: -168 }, { y: -280, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[15] + 0.42);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.72 }, { scaleX: 0.86, duration: 3.0, ease: "none", immediateRender: false }, T[15] + 0.5);
+
+    // cue16 · 最后才轮到用户这句话：从右边切成发件人气泡
+    tl.fromTo("#s-prompt-user", { opacity: 0, x: 130 }, { opacity: 1, x: 0, duration: 0.6, ease: E }, T[16] + 0.12);
+    tl.fromTo("#s-prompt-thread", { y: -280 }, { y: -372, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[16] + 0.42);
+    tl.fromTo("#s-prompt-send", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[16] + 0.2);
+    tl.fromTo("#s-prompt-sent", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[16] + 0.3);
+    tl.fromTo("#s-prompt-prog", { scaleX: 0.86 }, { scaleX: 1, duration: 2.6, ease: "none", immediateRender: false }, T[16] + 0.5);
+    // 计数器从 80 开始，条也跟着涨
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0 }, { scaleX: 0.14, duration: 0.8, ease: Q }, T[16] + 0.45);
+
+    // cue17 · 真正发出去的请求，接近一万、甚至十万
+    tl.fromTo("#s-prompt-tok-a", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[17] + 0.3);
+    tl.fromTo("#s-prompt-tok-b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.42, ease: E }, T[17] + 0.35);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.14 }, { scaleX: 0.66, duration: 0.7, ease: Q, immediateRender: false }, T[17] + 0.35);
+    tl.fromTo("#s-prompt-tok-b", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[17] + 2.5);
+    tl.fromTo("#s-prompt-tok-c", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.44, ease: E }, T[17] + 2.55);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.66 }, { scaleX: 1, duration: 0.8, ease: Q, immediateRender: false }, T[17] + 2.55);
+
+    // ------------------------------------ 拍3：镜头拉开，聊天缩成长卷轴
+    tl.fromTo("#s-prompt-input", { opacity: 0.62, x: 0 }, { opacity: 0, x: -26, duration: 0.6, ease: "power2.in", immediateRender: false }, T[18] + 0.05);
+    tl.fromTo("#s-prompt-notstamp", { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, T[18] + 0.05);
+    tl.fromTo("#s-prompt-chat", { x: 0, y: 0, scale: 1 }, { x: -420, y: 36, scale: 0.54, duration: 0.95, ease: "power2.inOut", immediateRender: false }, T[18] + 0.1);
+    tl.fromTo("#s-prompt-scroll", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.6, ease: E }, T[18] + 0.85);
+    tl.fromTo("#s-prompt-chat", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[18] + 1.25);
+    // 你的问题只是最后一页
+    tl.fromTo("#s-prompt-scroll-hl", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: Q }, T[18] + 1.45);
+    tl.fromTo("#s-prompt-scroll-tag", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[18] + 1.7);
+
+    // cue19 · 前面几页是 Agent 提前写好的：装进笔记本第 1 页，放上纸飞机
+    tl.fromTo("#s-prompt-notebook", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.6, ease: E }, T[19] + 0.08);
+    tl.fromTo("#s-prompt-plane", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[19] + 0.42);
+    tl.fromTo("#s-prompt-trail", { opacity: 0 }, { opacity: 0.9, duration: 0.4, ease: Q }, T[19] + 0.6);
+    tl.fromTo("#s-prompt-flight", { x: 0, y: 0, scale: 1, rotate: 0 }, { x: 860, y: 70, scale: 0.58, rotate: -2, duration: 1.6, ease: "power2.inOut", immediateRender: false }, T[19] + 0.9);
+    tl.fromTo("#s-prompt-expert", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.7, ease: E }, T[19] + 1.5);
+    tl.fromTo("#s-prompt-expert-cap", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[19] + 1.75);
+    tl.fromTo("#s-prompt-expert-sub", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[19] + 2.0);
+
+    // -------------------------------- 拍4：切到 DSH 真实面板，四层逐层展开
+    tl.fromTo("#s-prompt-flight", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
+    tl.fromTo("#s-prompt-expert", { opacity: 1 }, { opacity: 0, x: 30, duration: 0.45, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
+    tl.fromTo("#s-prompt-expert-cap", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
+    tl.fromTo("#s-prompt-expert-sub", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
+    tl.fromTo("#s-prompt-trail", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
+
+    tl.fromTo("#s-prompt-dsh-head", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[20] + 0.15);
+    tl.fromTo("#s-prompt-shot", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[20] + 0.25);
+    // 证据卡上的扫描线：一层层往下看
+    tl.fromTo("#s-prompt-shot-scan", { opacity: 0 }, { opacity: 0.55, duration: 0.35, ease: Q }, T[20] + 0.85);
+    tl.fromTo("#s-prompt-shot-scan", { y: 0 }, { y: 300, duration: 6.6, ease: "none", immediateRender: false }, T[20] + 1.0);
+    tl.fromTo("#s-prompt-shot-scan", { opacity: 0.55 }, { opacity: 0, duration: 0.5, ease: "power1.in", immediateRender: false }, T[20] + 7.2);
+
+    // cue21 · 「摊开给你看」：系统提示 + 技能说明
+    tl.fromTo("#s-prompt-callout1", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[20] + 1.05);
+    tl.fromTo("#s-prompt-leader1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[20] + 1.2);
+    tl.fromTo("#s-prompt-dot1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[20] + 1.2);
+    tl.fromTo("#s-prompt-callout2", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[21] + 0.15);
+    tl.fromTo("#s-prompt-leader2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[21] + 0.3);
+    tl.fromTo("#s-prompt-dot2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[21] + 0.3);
+    tl.fromTo("#s-prompt-zoom", { opacity: 0, y: 26, rotate: -3 }, { opacity: 1, y: 0, rotate: -1.5, duration: 0.6, ease: E }, T[21] + 0.8);
+
+    // cue22 · 系统提示、技能、工具、历史，每一层都能看到
+    tl.fromTo("#s-prompt-callout3", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[22] + 0.15);
+    tl.fromTo("#s-prompt-leader3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[22] + 0.3);
+    tl.fromTo("#s-prompt-dot3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[22] + 0.3);
+    tl.fromTo("#s-prompt-callout4", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[22] + 0.65);
+    tl.fromTo("#s-prompt-leader4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[22] + 0.8);
+    tl.fromTo("#s-prompt-dot4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[22] + 0.8);
+    tl.fromTo("#s-prompt-fourtag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[22] + 2.0);
+    tl.fromTo("#s-prompt-fourtag", { scale: 1 }, { scale: 1.04, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[22] + 3.6);
+    tl.fromTo("#s-prompt-fourtag", { scale: 1.04 }, { scale: 1, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[22] + 3.95);
+
+    // cue23 · 我们唯一能控制的，是提示词，也就是文本
+    tl.fromTo(["#s-prompt-shot", "#s-prompt-zoom"], { opacity: 1 }, { opacity: 0.4, duration: 0.6, ease: "power1.out", immediateRender: false }, T[23] + 0.1);
+    ["#s-prompt-callout1", "#s-prompt-callout2", "#s-prompt-callout3", "#s-prompt-callout4"].forEach((sel, i) => {
+      tl.fromTo(sel, { opacity: 1 }, { opacity: 0, x: 14, duration: 0.4, ease: "power1.in", immediateRender: false }, T[23] + 0.1 + i * 0.07);
+    });
+    ["#s-prompt-leader1", "#s-prompt-leader2", "#s-prompt-leader3", "#s-prompt-leader4", "#s-prompt-dot1", "#s-prompt-dot2", "#s-prompt-dot3", "#s-prompt-dot4"].forEach((sel) => {
+      tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, T[23] + 0.12);
+    });
+    tl.fromTo("#s-prompt-fourtag", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[23] + 0.1);
+    tl.fromTo("#s-prompt-fin-text", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: E }, T[23] + 0.45);
+
+    // cue24 · 而 Harness
+    tl.fromTo("#s-prompt-fin-big", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, T[24] + 0.35);
+
+    // cue25 · 本质上就是一个提示词组装器：不停地组装、发给模型、接回
+    tl.fromTo("#s-prompt-step1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[25] + 0.25);
+    tl.fromTo("#s-prompt-arrow1", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: Q }, T[25] + 0.55);
+    tl.fromTo("#s-prompt-step2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[25] + 0.7);
+    tl.fromTo("#s-prompt-arrow2", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: Q }, T[25] + 1.0);
+    tl.fromTo("#s-prompt-step3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[25] + 1.15);
+    // 这一步要走到下一句：先让链条自己走一格
+    tl.fromTo("#s-prompt-arrow3", { opacity: 0 }, { opacity: 0.5, duration: 0.6, ease: "power1.inOut" }, T[25] + 3.2);
+
+    // cue26 · 回文本，再去执行动作
+    tl.fromTo("#s-prompt-arrow3", { opacity: 0.5 }, { opacity: 1, duration: 0.35, ease: Q, immediateRender: false }, T[26] + 0.2);
+    tl.fromTo("#s-prompt-step4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[26] + 0.35);
+    tl.fromTo("#s-prompt-fin-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[26] + 0.85);
+    tl.fromTo("#s-prompt-fin-big", { scale: 1 }, { scale: 1.015, duration: 0.5, ease: "power1.inOut", immediateRender: false }, T[26] + 1.1);
+    tl.fromTo("#s-prompt-fin-big", { scale: 1.015 }, { scale: 1, duration: 0.5, ease: "power1.inOut", immediateRender: false }, T[26] + 1.6);
+// MOTION:END
+
+    window.__timelines["s-prompt-assembly"] = tl;
+  </script>
+</template>

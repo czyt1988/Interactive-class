@@ -103,7 +103,7 @@
 | D15 | 课程模板抽成仓库根的独立包 `course-template/`：两屏可构建骨架 + 给 AI 的 `AGENTS.md` + 作者版 `COURSE-CONTRACT.md`/`STYLE.md`；平台内用 `scripts/new_course.py` 复制它生成脚手架 | 多人协作时，外部作者不需要克隆平台仓库；把整个文件夹交给 AI 当工作目录，规则自包含。模板移出 `courses/` 后不会被构建或课程扫描误当成课程，也让「平台代码」和「课程结构」的边界更清楚 | 模板文档与平台课程契约有重复，需要靠测试和同一任务内的同步更新防漂移；模板里的字体/GSAP 仍由 `sync_runtime.py` 统一生成 | 出现第二套模板（例如长视频课专用）且无法用同一骨架覆盖时 |
 | D16 | 外部课程通过导入流水线进入平台：`scripts/import_course.py` 或开发环境 `/import` 页面校验 → 在隐藏 staging 目录构建 → 原子替换 `courses/<slug>/` 与 `dist/courses/<slug>/`；成功后只在 SQLite 的 `course_imports` 表登记来源 | 用户希望「把生成好的文件夹直接放进软件配置的目录，选中导入」就能加入课程库。导入把校验和构建放在落盘之前，失败不会留下半个课程；数据库登记来源方便多人协作时追溯，但课程内容仍然只存在于文件和 `dist/`，不破坏 D5 | 导入需要 `scripts/` 作者工具（生产镜像没有），因此页面默认只在 dev 开放；来源路径是本地信息，换机器后只能作为历史记录 | 需要多人在线提交课程（那时应做上传/审核后台，而不是本地目录导入） |
 | D17 | 课程播放页全视口：舞台区占满控制条以上高度，16:9 画布在可用区域等比最大化，控制条在画布外通栏；当前屏进度可拖动，并提供「跳到最后」（`End`） | 用户需要快速看到最终画面，也要像视频一样拖动定位。16:9 画布嵌在阅读列里太小，两侧留白浪费空间；控制条与画布分离后，画布可以吃满屏幕高度 | 控制条不再与画布同宽，16:9 两侧出现纸色留边；末帧成为必须可读的验收项（拖动、跳到最后都会直接停在那里）；封面、完成页与播放页的高度策略不同 | 出现逐帧编辑、分支互动，或需要移动端竖屏专门版式时重新考虑 |
-| D18 | 本机双击启动器自带环境准备：`scripts\env.cmd` 找系统 Python，`scripts\bootstrap.py` 创建 `.venv`、`pip install -e ".[dev]"`、`npm install` + `sync_runtime.py --skip-fonts` 同步播放器资源、构建 `dist/`、`alembic upgrade head`，然后交给 `scripts/launcher.py` 起服务 | 用户是新手，第一次双击 `star.cmd` 只看到「没有找到虚拟环境」，照着 README 逐条敲命令不现实。把准备做成幂等的检查，缺什么补什么，双击一个文件就能从空仓库跑到可访问的站点；准备逻辑放在 Python 里可以测试，批处理只做引导 | 启动器第一次接触网络和 Node.js（之后不需要）；仓库多一层需要随依赖、构建步骤同步维护的准备逻辑；`--skip-fonts` 意味着字体子集仍由作者改动后手动重建 | 出现安装包 / 桌面 app 形态，或需要完全离线的一次性分发时，把准备逻辑换成安装器 |
+| D18 | 本机双击启动器自带环境准备：`scripts\env.cmd` 找系统 Python，`scripts\bootstrap.py` 创建 `.venv`、`pip install -e ".[dev]"`、`npm install` + `sync_runtime.py --skip-fonts` 同步播放器资源、构建 `dist/`、`alembic upgrade head`，然后交给 `scripts/launcher.py` 起服务 | 用户是新手，第一次双击 `start.cmd` 只看到「没有找到虚拟环境」，照着 README 逐条敲命令不现实。把准备做成幂等的检查，缺什么补什么，双击一个文件就能从空仓库跑到可访问的站点；准备逻辑放在 Python 里可以测试，批处理只做引导 | 启动器第一次接触网络和 Node.js（之后不需要）；仓库多一层需要随依赖、构建步骤同步维护的准备逻辑；`--skip-fonts` 意味着字体子集仍由作者改动后手动重建 | 出现安装包 / 桌面 app 形态，或需要完全离线的一次性分发时，把准备逻辑换成安装器 |
 | D19 | 并行开发任务各自在 `.worktree/` 下的独立 git 工作树里进行，完成后合并回 `main`；`scripts/worktree.py` 负责创建/查看/合并/删除工作树，并把主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`、`courses/*/narration/cache/` 以目录联接共享，把 `runtime/vendor` 与 `.env` 复制进工作树（`link` 负责刷新副本）；根 `conftest.py` 与构建脚本把仓库根放进 `sys.path`，避免共享虚拟环境的 editable install 把导入劫持到主工作树；删除前校验未提交改动，合并冲突自动回滚 | 多个 Agent 会话并行开发时，共用工作区会互相污染（切分支、暂存区、未提交改动）；共享已装依赖与创作工具让新工作树几秒内可跑测试、构建课程，不重复联网安装；复制写侧生成物保证工作树里重跑同步脚本或改本地配置不影响主工作树；删除/合并的安全检查避免误丢未提交改动或把主工作树留在冲突态 | 依赖目录共享意味着在工作树里 `pip install` / `npm install` / 重做旁白会写主工作树或共享缓存，必须串行处理（启动器对重装会直接拒绝）；`dist/`、`data/` 与主工作树各自独立，需要各自构建与迁移；多一层需要在任务收尾时合并与清理的流程 | 需要每个任务独立依赖版本、跨机器分发生成物，或迁移到 CI/容器化并行时 |
 | D20 | 课程水印是课程内容：配置写在 `course.json` 的 `watermark` 字段，构建时由 `scripts/build_courses.py` 把水印层写进构建产物的 composition 入口；后台 `/admin/courses/<slug>/watermark` 编辑源文件并同步重新构建，不写数据库、不在运行期向站点 API 取配置 | 独立部署的课程包必须自带水印；水印属于课程的展示配置，和封面、强调色一样应随课程版本化。把配置放在 `dist/` 会被下次构建覆盖，放在 SQLite 则静态包丢水印，也违反 D5。写进 composition 而不是页面外壳，是因为网页播放器和 MP4 渲染器消费同一份 composition，水印在播放和导出里天然一致。后台页复用 `/import` 的「同步编辑 + 重建」模式，不引入新任务队列 | 后台写课程源文件需要 `courses/` 与 `scripts/`，生产镜像若只部署 `app/` 和 `dist/`，配置页只能只读；同一时间多人保存会互相覆盖（单实例、串行写保护，不做乐观锁）；水印文本随构建进入 composition，改水印后旧视频会因内容哈希变化被标记为过期 | 水印需要按观看者动态生成（用户名、时间戳）时，改为运行期渲染或图片服务，并重新评估权限与缓存 |
 
@@ -1063,7 +1063,7 @@ HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程
 双击脚本是第一次接触这个仓库的人唯一会用的入口，所以它不能停在「没有找到虚拟环境」。三层各管一件事：
 
 ```text
-star.cmd / restart.cmd            GBK 编码的批处理，只负责：
+start.cmd / restart.cmd            GBK 编码的批处理，只负责：
   └─ call scripts\env.cmd           1. 找系统 Python 3.11+（py -3.13 / -3.12 / -3.11 / python / python3）
                                     2. 调 bootstrap.py：没有 .venv 时用系统 Python，有 .venv 时用虚拟环境 Python
   └─ .venv\Scripts\python.exe
@@ -1203,7 +1203,7 @@ course_imports（导入来源登记，与用户/进度无关）
 11. `test_import` / `test_new_course`：外部课程文件夹校验、staging 构建、原子落盘、失败回滚；占位 slug / 保留 slug / 目标已存在 / 覆盖导入 / 原地重建；`course_imports` upsert；从 `course-template/` 生成可构建脚手架。
 12. `test_course_template`：模板包结构齐全、无外部资源、复制并改 slug 后可解析与构建、作者文档指引齐全。
 13. `test_import_web`：`/import` 的 GET/POST、收件箱候选与校验状态、路径逃逸拒绝、prod/未启用时 404、导入后目录与数据库记录。
-14. `test_bootstrap`：就绪机器只跑一次迁移、不重复安装；缺 `.venv` / 依赖 / 播放器资源 / `dist/` 时分别补齐；缺 Python 3.11+ 或 Node.js 22+ 时给出带下载地址的中文提示；`star.cmd` / `restart.cmd` / `stop.cmd` 保持 GBK 并走同一套环境准备。
+14. `test_bootstrap`：就绪机器只跑一次迁移、不重复安装；缺 `.venv` / 依赖 / 播放器资源 / `dist/` 时分别补齐；缺 Python 3.11+ 或 Node.js 22+ 时给出带下载地址的中文提示；`start.cmd` / `restart.cmd` / `stop.cmd` 保持 GBK 并走同一套环境准备。
 
 ### 11.3 测试数据
 

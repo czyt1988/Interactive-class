@@ -1,0 +1,1344 @@
+<template>
+  <style>
+    /* S25 斜杠后面的三个命令：左边一个输入框 + 命令面板，右边一块演示台，
+       /init、/goal、/plan 依次高亮，演示台换三段小场景。 */
+    .s25-late {
+      opacity: 0;
+    }
+
+    /* ---------------- 左栏：命令面板 + 输入框 ---------------- */
+    .s25-panel {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 560px;
+      height: 356px;
+    }
+
+    .s25-panel-head {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      top: 0;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .s25-panel-title {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+
+    .s25-panel-hint {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      color: var(--accent-text);
+    }
+
+    .s25-row {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+    }
+
+    .s25-hl {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      opacity: 0;
+    }
+
+    .s25-barline {
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+      opacity: 0;
+    }
+
+    .s25-row-name {
+      position: relative;
+      width: 96px;
+      margin-left: 22px;
+      font-family: var(--font-mono);
+      font-size: 27px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s25-row-desc {
+      position: relative;
+      font-size: 22px;
+      color: var(--ink-faint);
+    }
+
+    .s25-num {
+      position: absolute;
+      right: 16px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--accent-text);
+      opacity: 0;
+    }
+
+    .s25-divider {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      top: 240px;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .s25-gray-row {
+      position: absolute;
+      left: 28px;
+      right: 20px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+      opacity: 0;
+    }
+
+    .s25-gray-row span:last-child {
+      font-family: var(--font-sans);
+      font-size: 20px;
+    }
+
+    .s25-input {
+      position: absolute;
+      left: 0;
+      top: 150px;
+      width: 560px;
+      height: 100px;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 18px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+    }
+
+    .s25-input-ph {
+      position: absolute;
+      left: 26px;
+      top: 34px;
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s25-typed {
+      position: absolute;
+      left: 26px;
+      top: 24px;
+      font-family: var(--font-mono);
+      font-size: 38px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .s25-caret {
+      position: absolute;
+      left: 26px;
+      top: 23px;
+      width: 3px;
+      height: 48px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .s25-send {
+      position: absolute;
+      right: 20px;
+      top: 26px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .s25-send svg {
+      position: absolute;
+      left: 13px;
+      top: 13px;
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: #fffdf8;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s25-real {
+      position: absolute;
+      left: 0;
+      top: 518px;
+      width: 540px;
+    }
+
+    .s25-real img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    /* ---------------- 右栏：演示台 ---------------- */
+    .s25-stage-panel {
+      position: absolute;
+      left: 600px;
+      top: 0;
+      width: 1064px;
+      height: 620px;
+    }
+
+    .s25-tabs {
+      position: absolute;
+      left: 624px;
+      top: 18px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .s25-tab {
+      position: relative;
+      width: 250px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .s25-tab-hl {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      opacity: 0;
+    }
+
+    .s25-tab-no {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--ink-faint);
+    }
+
+    .s25-tab-name {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 25px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s25-tab-desc {
+      position: relative;
+      font-size: 19px;
+      color: var(--ink-faint);
+    }
+
+    /* 起手提示卡 */
+    .s25-hint {
+      position: absolute;
+      left: 624px;
+      top: 76px;
+      width: 1016px;
+      height: 520px;
+    }
+
+    .s25-key {
+      position: absolute;
+      left: 200px;
+      top: 166px;
+      width: 170px;
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--line-strong);
+      border-radius: 24px;
+      background: #fffdf8;
+      box-shadow: var(--shadow);
+      font-family: var(--font-mono);
+      font-size: 104px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s25-hint-tag {
+      position: absolute;
+      left: 200px;
+      top: 116px;
+      padding: 4px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-family: var(--font-mono);
+      font-size: 21px;
+      letter-spacing: 0.08em;
+      color: var(--accent-text);
+    }
+
+    .s25-hint-title {
+      position: absolute;
+      left: 430px;
+      top: 176px;
+      font-size: 46px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .s25-hint-sub {
+      position: absolute;
+      left: 430px;
+      top: 246px;
+      font-size: 31px;
+      color: var(--ink-soft);
+    }
+
+    .s25-hint-note {
+      position: absolute;
+      left: 430px;
+      top: 318px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      color: var(--accent-text);
+    }
+
+    .s25-hint-logos {
+      position: absolute;
+      left: 200px;
+      top: 406px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .s25-hint-logos img {
+      display: block;
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .s25-hint-logos p {
+      margin-left: 6px;
+      font-size: 24px;
+      color: var(--ink-soft);
+    }
+
+    /* ---------------- 三段小场景共用 ---------------- */
+    .s25-scene {
+      position: absolute;
+      left: 624px;
+      top: 76px;
+      width: 1016px;
+      height: 520px;
+    }
+
+    .s25-card {
+      position: absolute;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .s25-card-head {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 0;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .s25-card-title {
+      font-size: 25px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .s25-card-tag {
+      padding: 3px 12px;
+      border-radius: 7px;
+      background: var(--panel-2);
+      font-family: var(--font-mono);
+      font-size: 19px;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+    }
+
+    .s25-card-tag--accent {
+      background: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    /* /init */
+    .s25-tree-card {
+      left: 0;
+      top: 0;
+      width: 520px;
+      height: 420px;
+    }
+
+    .s25-tree-line {
+      position: absolute;
+      left: 24px;
+      font-family: var(--font-mono);
+      font-size: 23px;
+      color: var(--ink-soft);
+      white-space: pre;
+    }
+
+    .s25-tree-line b {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .s25-scanband {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 56px;
+      height: 46px;
+      background: linear-gradient(180deg, rgba(232, 91, 74, 0) 0%, rgba(232, 91, 74, 0.18) 55%, rgba(232, 91, 74, 0) 100%);
+      border-top: 2px solid var(--accent);
+      opacity: 0;
+    }
+
+    .s25-tree-note {
+      position: absolute;
+      left: 24px;
+      top: 430px;
+      font-size: 23px;
+      color: var(--ink-faint);
+    }
+
+    .s25-file-card {
+      left: 556px;
+      top: 0;
+      width: 460px;
+      height: 300px;
+    }
+
+    .s25-file-line {
+      position: absolute;
+      left: 24px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      line-height: 1.45;
+      color: var(--ink-soft);
+      white-space: pre;
+    }
+
+    .s25-file-line--h {
+      color: var(--accent-text);
+      font-weight: 700;
+    }
+
+    .s25-update {
+      position: absolute;
+      left: 24px;
+      top: 258px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 7px;
+      background: var(--accent-soft);
+      font-size: 21px;
+      font-weight: 600;
+      color: var(--accent-text);
+    }
+
+    .s25-init-real {
+      left: 556px;
+      top: 316px;
+      width: 460px;
+    }
+
+    .s25-init-real img {
+      display: block;
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 6px;
+    }
+
+    /* /goal */
+    .s25-list-card {
+      left: 0;
+      top: 0;
+      width: 620px;
+      height: 470px;
+    }
+
+    .s25-goal-row {
+      position: absolute;
+      left: 26px;
+      right: 22px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .s25-check {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      flex: none;
+      border: 2px solid var(--line-strong);
+      border-radius: 7px;
+      background: #fffdf8;
+    }
+
+    .s25-check svg {
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+    }
+
+    .s25-goal-text {
+      font-size: 25px;
+      color: var(--ink-soft);
+    }
+
+    .s25-goal-cursor {
+      position: absolute;
+      left: 6px;
+      top: 58px;
+      width: 6px;
+      height: 44px;
+      border-radius: 3px;
+      background: var(--accent);
+    }
+
+    .s25-loop-card {
+      left: 664px;
+      top: 0;
+      width: 352px;
+      height: 470px;
+    }
+
+    .s25-loop-svg {
+      position: absolute;
+      left: 96px;
+      top: 58px;
+      width: 160px;
+      height: 160px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+
+    .s25-loop-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 236px;
+      text-align: center;
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .s25-track {
+      position: absolute;
+      left: 36px;
+      top: 300px;
+      width: 280px;
+      height: 12px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      overflow: hidden;
+    }
+
+    .s25-track i {
+      display: block;
+      height: 100%;
+      width: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+    }
+
+    .s25-count {
+      position: absolute;
+      left: 36px;
+      top: 324px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .s25-done {
+      position: absolute;
+      left: 96px;
+      top: 380px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 20px;
+      border: 3px double var(--stamp);
+      border-radius: 8px;
+      color: var(--stamp);
+      font-family: var(--font-mono);
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+    }
+
+    /* /plan */
+    .s25-doc-card {
+      left: 0;
+      top: 0;
+      width: 600px;
+      height: 470px;
+    }
+
+    .s25-plan-step {
+      position: absolute;
+      left: 26px;
+      right: 26px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 24px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .s25-plan-step-no {
+      width: 26px;
+      flex: none;
+      font-family: var(--font-mono);
+      font-size: 21px;
+      color: var(--accent-text);
+    }
+
+    .s25-plan-check {
+      margin-left: auto;
+      width: 24px;
+      height: 24px;
+      flex: none;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s25-review {
+      position: absolute;
+      right: 26px;
+      top: 420px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--accent-text);
+    }
+
+    .s25-review svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s25-ctrl-card {
+      left: 648px;
+      top: 0;
+      width: 368px;
+      height: 470px;
+    }
+
+    .s25-entry {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 18px;
+    }
+
+    .s25-entry-label {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      color: var(--ink-faint);
+    }
+
+    .s25-entry-chips {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .s25-entry-chips span {
+      padding: 4px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: #fffdf8;
+      font-size: 20px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .s25-switch-card {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 108px;
+      height: 124px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+
+    .s25-switch-title {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .s25-switch {
+      position: absolute;
+      right: 16px;
+      top: 14px;
+      width: 60px;
+      height: 32px;
+      border-radius: 16px;
+      border: 1px solid var(--line-strong);
+      background: #ded5c6;
+    }
+
+    .s25-knob {
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fffdf8;
+    }
+
+    .s25-lock {
+      position: absolute;
+      left: 16px;
+      top: 60px;
+      width: 22px;
+      height: 28px;
+      fill: none;
+      stroke: var(--ink-faint);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .s25-switch-note {
+      position: absolute;
+      left: 48px;
+      top: 62px;
+      font-size: 20px;
+      color: var(--ink-faint);
+    }
+
+    .s25-work-count {
+      position: absolute;
+      left: 22px;
+      top: 250px;
+      font-family: var(--font-mono);
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .s25-confirm {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 290px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: #fffdf8;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    .s25-unlock {
+      position: absolute;
+      left: 22px;
+      top: 366px;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--accent-text);
+      opacity: 0;
+    }
+
+    .s25-work-tag {
+      position: absolute;
+      right: 22px;
+      top: 362px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--accent-text);
+      opacity: 0;
+    }
+
+    /* 收尾 */
+    .s25-final {
+      position: absolute;
+      left: 624px;
+      top: 76px;
+      width: 1016px;
+      height: 520px;
+      opacity: 0;
+    }
+
+    .s25-final-q {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 120px;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .s25-final-chip {
+      padding: 6px 20px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: #fffdf8;
+      font-size: 24px;
+      color: var(--ink-soft);
+    }
+
+    .s25-final-arrow {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 174px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 30px;
+      color: var(--accent-text);
+    }
+
+    .s25-final-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 236px;
+      text-align: center;
+      font-size: 76px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
+    .s25-final-line b {
+      color: var(--accent-text);
+    }
+
+    .s25-final-hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 346px;
+      text-align: center;
+      font-size: 26px;
+      color: var(--ink-faint);
+    }
+
+    .s25-final-note {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 346px;
+      text-align: center;
+      font-size: 28px;
+      color: var(--ink-soft);
+    }
+  </style>
+
+  <div
+    id="root"
+    class="scene-root"
+    data-composition-id="s-slash-commands"
+    data-width="1920"
+    data-height="1080"
+    data-theme="paper"
+    data-act="use"
+  >
+    <div class="scene-in">
+      <header class="scene-head">
+        <p class="scene-kicker">
+          <span class="scene-code">S25</span>
+          <span class="scene-act">第五幕 · 用</span>
+        </p>
+        <h1 id="s-slash-commands-title" class="scene-title">斜杠后面的三个命令</h1>
+        <p class="scene-no">25 / 28</p>
+      </header>
+
+      <section id="s-slash-commands-stage" class="stage">
+        <!-- 左栏：输入框敲 / 之后弹出的命令面板。 -->
+        <div id="s25-panel" class="panel s25-panel s25-late">
+          <div class="s25-panel-head">
+            <span class="s25-panel-title">命令面板</span>
+            <span id="s25-panel-hint" class="s25-panel-hint s25-late">输入 / 唤起</span>
+          </div>
+
+          <div id="s25-row-init" class="s25-row s25-late" style="top: 48px">
+            <i id="s25-hl-init" class="s25-hl"></i>
+            <i id="s25-bar-init" class="s25-barline"></i>
+            <span class="s25-row-name">/init</span>
+            <span class="s25-row-desc">初始化 agents.md</span>
+            <span id="s25-num-init" class="s25-num s25-late">①</span>
+          </div>
+          <div id="s25-row-goal" class="s25-row s25-late" style="top: 112px">
+            <i id="s25-hl-goal" class="s25-hl"></i>
+            <i id="s25-bar-goal" class="s25-barline"></i>
+            <span class="s25-row-name">/goal</span>
+            <span class="s25-row-desc">设目标，持续迭代</span>
+            <span id="s25-num-goal" class="s25-num s25-late">②</span>
+          </div>
+          <div id="s25-row-plan" class="s25-row s25-late" style="top: 176px">
+            <i id="s25-hl-plan" class="s25-hl"></i>
+            <i id="s25-bar-plan" class="s25-barline"></i>
+            <span class="s25-row-name">/plan</span>
+            <span class="s25-row-desc">先出计划再动手</span>
+            <span id="s25-num-plan" class="s25-num s25-late">③</span>
+          </div>
+
+          <i class="s25-divider"></i>
+          <div class="s25-gray-row s25-late" style="top: 248px"><span>/help</span><span>查看帮助</span></div>
+          <div class="s25-gray-row s25-late" style="top: 284px"><span>/compact</span><span>压缩上下文</span></div>
+          <div class="s25-gray-row s25-late" style="top: 320px"><span>/clear</span><span>清空会话</span></div>
+        </div>
+
+        <div id="s25-input" class="s25-input s25-late">
+          <p id="s25-input-ph" class="s25-input-ph s25-late">给智能体发消息，输入 / 唤起命令</p>
+          <span id="s25-typed-slash" class="s25-typed s25-late">/</span>
+          <span id="s25-typed-init" class="s25-typed s25-late">/init</span>
+          <span id="s25-typed-goal" class="s25-typed s25-late">/goal</span>
+          <span id="s25-typed-plan" class="s25-typed s25-late">/plan</span>
+          <i id="s25-caret" class="s25-caret s25-late"></i>
+          <span class="s25-send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6 12l6-6 6 6" /></svg></span>
+        </div>
+
+        <figure id="s25-real" class="media s25-real s25-late">
+          <img src="assets/media/shot/dsh-slash.webp" alt="DSH 真实输入框截图：底部输入框与任务条" width="524" height="83" />
+          <figcaption class="media__label"><span>DSH 真实输入框</span><span>截图</span></figcaption>
+        </figure>
+
+        <!-- 右栏：演示台 -->
+        <div id="s25-stage-panel" class="panel s25-stage-panel s25-late"></div>
+
+        <div id="s25-tabs" class="s25-tabs s25-late">
+          <div class="s25-tab">
+            <i id="s25-tabh-init" class="s25-tab-hl"></i>
+            <span class="s25-tab-no">①</span><span class="s25-tab-name">/init</span><span class="s25-tab-desc">初始化</span>
+          </div>
+          <div class="s25-tab">
+            <i id="s25-tabh-goal" class="s25-tab-hl"></i>
+            <span class="s25-tab-no">②</span><span class="s25-tab-name">/goal</span><span class="s25-tab-desc">定目标</span>
+          </div>
+          <div class="s25-tab">
+            <i id="s25-tabh-plan" class="s25-tab-hl"></i>
+            <span class="s25-tab-no">③</span><span class="s25-tab-name">/plan</span><span class="s25-tab-desc">先计划</span>
+          </div>
+        </div>
+
+        <!-- 起手提示：输入框里敲一个斜杠 -->
+        <div id="s25-hint" class="s25-hint s25-late">
+          <span id="s25-hint-tag" class="s25-hint-tag s25-late">隐藏命令</span>
+          <div id="s25-key" class="s25-key s25-late">/</div>
+          <p id="s25-hint-title" class="s25-hint-title s25-late">输入框里敲一个斜杠</p>
+          <p id="s25-hint-sub" class="s25-hint-sub s25-late">会叫出 Agent 的隐藏命令</p>
+          <p id="s25-hint-note" class="s25-hint-note s25-late">看左边：命令面板已经弹出来了</p>
+          <div id="s25-hint-logos" class="s25-hint-logos s25-late">
+            <img src="assets/media/logo/claude.png" alt="Claude 标志" width="34" height="34" />
+            <img src="assets/media/logo/cursor.png" alt="Cursor 标志" width="34" height="34" />
+            <img src="assets/media/logo/dsh.png" alt="DeepSeek Harness 标志" width="34" height="34" />
+            <p>大部分 Agent 工具里都有</p>
+          </div>
+        </div>
+
+        <!-- /init：空目录 → 扫描项目 → 生成 agents.md -->
+        <div id="s25-init" class="s25-scene s25-late">
+          <div id="s25-tree-card" class="s25-card s25-tree-card">
+            <div class="s25-card-head">
+              <span class="s25-card-title">读一遍项目</span>
+              <span id="s25-tree-tag" class="s25-card-tag s25-late">扫描中</span>
+              <span id="s25-tree-tag2" class="s25-card-tag s25-card-tag--accent s25-late" style="position: absolute; right: 0; top: 10px">已读完</span>
+            </div>
+            <p id="s25-tree-root" class="s25-tree-line s25-late" style="top: 64px"><b>my-project/</b></p>
+            <span id="s25-tree-empty" class="s25-card-tag s25-late" style="left: 200px; top: 64px; position: absolute">空目录</span>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 104px">├─ src/</p>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 144px">│   ├─ app.py</p>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 184px">│   └─ models.py</p>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 224px">├─ docs/</p>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 264px">├─ README.md</p>
+            <p class="s25-tree-line s25-branch s25-late" style="top: 304px">└─ package.json</p>
+            <div id="s25-scanband" class="s25-scanband"></div>
+          </div>
+          <p id="s25-tree-note" class="s25-tree-note s25-late">默认提示词先读项目，再写记忆文件</p>
+
+          <div id="s25-file-card" class="s25-card s25-file-card">
+            <div class="s25-card-head">
+              <span class="s25-card-title">AGENTS.md</span>
+              <span id="s25-file-tag" class="s25-card-tag s25-late">生成中</span>
+              <span id="s25-file-tag2" class="s25-card-tag s25-card-tag--accent s25-late" style="position: absolute; right: 0; top: 10px">已生成</span>
+            </div>
+            <p class="s25-file-line s25-file-line--h s25-late" style="top: 66px">## 项目结构</p>
+            <p class="s25-file-line s25-late" style="top: 98px">- src/：应用入口</p>
+            <p class="s25-file-line s25-file-line--h s25-late" style="top: 130px">## 常用命令</p>
+            <p class="s25-file-line s25-late" style="top: 162px">- 安装：pip install -r req.txt</p>
+            <p class="s25-file-line s25-late" style="top: 194px">- 测试：pytest</p>
+            <p class="s25-file-line s25-file-line--h s25-late" style="top: 226px">## 约定</p>
+            <span id="s25-update" class="s25-update s25-late">↻ 老项目也能用它更新</span>
+          </div>
+
+          <figure id="s25-init-real" class="media s25-init-real s25-late">
+            <img src="assets/media/shot/agents-md-site.webp" alt="AGENTS.md 官网截图" width="444" height="150" />
+            <figcaption class="media__label"><span>AGENTS.md</span><span>真实页面</span></figcaption>
+          </figure>
+        </div>
+
+        <!-- /goal：一条长清单，循环推进直到完成 -->
+        <div id="s25-goal" class="s25-scene s25-late">
+          <div id="s25-list-card" class="s25-card s25-list-card">
+            <div class="s25-card-head">
+              <span class="s25-card-title">目标：接口改完，测试跑通</span>
+              <span class="s25-card-tag">6 个步骤</span>
+            </div>
+            <div id="s25-goal-cursor" class="s25-goal-cursor s25-late"></div>
+            <div class="s25-goal-row s25-late" style="top: 64px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">列出要改的接口</span></div>
+            <div class="s25-goal-row s25-late" style="top: 126px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">改接口字段与返回</span></div>
+            <div class="s25-goal-row s25-late" style="top: 188px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">补 3 个测试用例</span></div>
+            <div class="s25-goal-row s25-late" style="top: 250px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">跑测试，修失败</span></div>
+            <div class="s25-goal-row s25-late" style="top: 312px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">更新接口文档</span></div>
+            <div class="s25-goal-row s25-late" style="top: 374px"><span class="s25-check"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></span><span class="s25-goal-text">交一版可合并的改动</span></div>
+          </div>
+          <div id="s25-loop-card" class="s25-card s25-loop-card">
+            <div class="s25-card-head">
+              <span class="s25-card-title">循环推进</span>
+              <span class="s25-card-tag">直到完成</span>
+            </div>
+            <svg id="s25-goal-loop" class="s25-loop-svg s25-late" viewBox="0 0 160 160" aria-hidden="true">
+              <circle cx="80" cy="80" r="56" stroke-dasharray="300 52" />
+              <path d="M108 30 L124 44 L108 56 Z" fill="var(--accent)" stroke="none" />
+            </svg>
+            <p class="s25-loop-label">执行 → 检查 → 继续</p>
+            <span class="s25-track"><i id="s25-goal-fill"></i></span>
+            <p id="s25-goal-count" class="s25-count s25-late">完成 6 / 6</p>
+            <span id="s25-goal-done" class="s25-done s25-late">完成</span>
+          </div>
+        </div>
+
+        <!-- /plan：先写计划、你来审；写文件锁住，确认后才开工 -->
+        <div id="s25-plan" class="s25-scene s25-late">
+          <div id="s25-doc-card" class="s25-card s25-doc-card">
+            <div class="s25-card-head">
+              <span class="s25-card-title">计划</span>
+              <span id="s25-plan-tag" class="s25-card-tag">只读 · 等你审</span>
+            </div>
+            <div class="s25-plan-step s25-late" style="top: 76px"><span class="s25-plan-step-no">1</span><span>读现有实现，列出改动点</span><svg class="s25-plan-check s25-late" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></div>
+            <div class="s25-plan-step s25-late" style="top: 136px"><span class="s25-plan-step-no">2</span><span>改接口：加 2 个字段</span><svg class="s25-plan-check s25-late" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></div>
+            <div class="s25-plan-step s25-late" style="top: 196px"><span class="s25-plan-step-no">3</span><span>补测试：3 个用例</span><svg class="s25-plan-check s25-late" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></div>
+            <div class="s25-plan-step s25-late" style="top: 256px"><span class="s25-plan-step-no">4</span><span>跑测试，修到全绿</span><svg class="s25-plan-check s25-late" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></div>
+            <div class="s25-plan-step s25-late" style="top: 316px"><span class="s25-plan-step-no">5</span><span>更新文档</span><svg class="s25-plan-check s25-late" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11 8 16 17 4" /></svg></div>
+            <span id="s25-review" class="s25-review s25-late">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" /><path d="M15 15 21 21" /></svg>你来审，确认后才动手
+            </span>
+          </div>
+          <div id="s25-ctrl-card" class="s25-card s25-ctrl-card">
+            <div id="s25-entry" class="s25-entry s25-late">
+              <p class="s25-entry-label">入口</p>
+              <div class="s25-entry-chips"><span>按钮「计划模式」</span><span>/plan</span></div>
+            </div>
+            <div class="s25-switch-card">
+              <span class="s25-switch-title">写文件</span>
+              <div id="s25-switch" class="s25-switch"><i id="s25-knob" class="s25-knob"></i></div>
+              <svg id="s25-lock" class="s25-lock" viewBox="0 0 24 28" aria-hidden="true"><rect x="4" y="12" width="16" height="13" rx="3" /><path d="M8 12V9a4 4 0 0 1 8 0v3" /></svg>
+              <p class="s25-switch-note">计划模式下不做写操作</p>
+            </div>
+            <p class="s25-work-count">写操作 0 次</p>
+            <div id="s25-confirm" class="s25-confirm">确认开工</div>
+            <span id="s25-unlock" class="s25-unlock">已解锁，开始写文件</span>
+            <span id="s25-work-tag" class="s25-work-tag">开工</span>
+          </div>
+        </div>
+
+        <!-- 收尾：任务大、没想清楚，就先 /plan -->
+        <div id="s25-final" class="s25-final">
+          <div class="s25-final-q">
+            <span id="s25-final-chip-1" class="s25-final-chip s25-late">任务比较大</span>
+            <span id="s25-final-chip-2" class="s25-final-chip s25-late">自己也没想清楚</span>
+          </div>
+          <p id="s25-final-arrow" class="s25-final-arrow s25-late">↓</p>
+          <p id="s25-final-line" class="s25-final-line s25-late">先 <b>/plan</b>，能省掉很多返工</p>
+          <p id="s25-final-hint" class="s25-final-hint s25-late">先别急着让它动手</p>
+          <p id="s25-final-note" class="s25-final-note s25-late">先看计划，再让它动手</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- CAPTIONS:BEGIN -->
+    <footer class="cap-band">
+      <div class="cap-lines">
+                <p id="s-slash-commands-cap-0" class="cap-line clip" data-start="0.7" data-duration="4.347">再说一个很多新手不知道的技巧：善用斜杠命令。</p>
+        <p id="s-slash-commands-cap-1" class="cap-line clip" data-start="5.047" data-duration="5.847">很多用户，尤其是非编程领域的，一开始并不知道输入框里打一个斜杠，</p>
+        <p id="s-slash-commands-cap-2" class="cap-line clip" data-start="10.934" data-duration="2.263">能叫出 Agent 的隐藏命令。</p>
+        <p id="s-slash-commands-cap-3" class="cap-line clip" data-start="13.237" data-duration="2.685">大部分 Agent 工具都支持。</p>
+        <p id="s-slash-commands-cap-4" class="cap-line clip" data-start="15.962" data-duration="1.885">最常用的有三个。</p>
+        <p id="s-slash-commands-cap-5" class="cap-line clip" data-start="17.887" data-duration="4.398">第一个，/init：给新项目生成 agents.md。</p>
+        <p id="s-slash-commands-cap-6" class="cap-line clip" data-start="22.325" data-duration="4.564">它会用一套默认提示词，把项目读一遍，生成这个文件；</p>
+        <p id="s-slash-commands-cap-7" class="cap-line clip" data-start="26.929" data-duration="3.643">老项目开始用 AI 开发，也可以用它来更新。</p>
+        <p id="s-slash-commands-cap-8" class="cap-line clip" data-start="30.612" data-duration="2.898">第二个，/goal：goal，目标。</p>
+        <p id="s-slash-commands-cap-9" class="cap-line clip" data-start="33.55" data-duration="6.697">任务很大、但目标很明确的时候，用它让 AI 不停迭代，直到完成。</p>
+        <p id="s-slash-commands-cap-10" class="cap-line clip" data-start="40.287" data-duration="2.785">第三个，/plan：计划模式。</p>
+        <p id="s-slash-commands-cap-11" class="cap-line clip" data-start="43.112" data-duration="3.373">有些 Agent 是按钮，有些是斜杠命令。</p>
+        <p id="s-slash-commands-cap-12" class="cap-line clip" data-start="46.525" data-duration="2.885">它让 AI 先写计划、你来审；</p>
+        <p id="s-slash-commands-cap-13" class="cap-line clip" data-start="49.45" data-duration="5.36">这时候它不会做任何写操作，你确认之后，它才开工。</p>
+        <p id="s-slash-commands-cap-14" class="cap-line clip" data-start="54.85" data-duration="4.862">任务比较大，或者你自己也没想清楚要做到什么程度，</p>
+        <p id="s-slash-commands-cap-15" class="cap-line clip" data-start="59.752" data-duration="2.82">就先 /plan，能省掉很多返工。</p>
+      </div>
+      <div class="cap-foot">
+        <span class="cap-code">S25</span>
+        <span class="cap-clock">01:04</span>
+      </div>
+    </footer>
+    <!-- CAPTIONS:END -->
+  </div>
+
+  <script>
+    // TIMING:BEGIN
+    const N = {"code":"S25","id":"slash-commands","index":0,"start":0,"duration":64.27,"audioStart":0.599999999999909,"audioDuration":62.064,"cues":[{"i":0,"t":0.7,"d":4.347,"text":"再说一个很多新手不知道的技巧：善用斜杠命令。","sent":"再说一个很多新手不知道的技巧：善用斜杠命令。"},{"i":1,"t":5.047,"d":5.847,"text":"很多用户，尤其是非编程领域的，一开始并不知道输入框里打一个斜杠，","sent":"很多用户，尤其是非编程领域的，一开始并不知道输入框里打一个斜杠，能叫出 Agent 的隐藏命令。"},{"i":2,"t":10.934,"d":2.263,"text":"能叫出 Agent 的隐藏命令。","sent":"很多用户，尤其是非编程领域的，一开始并不知道输入框里打一个斜杠，能叫出 Agent 的隐藏命令。"},{"i":3,"t":13.237,"d":2.685,"text":"大部分 Agent 工具都支持。","sent":"大部分 Agent 工具都支持。"},{"i":4,"t":15.962,"d":1.885,"text":"最常用的有三个。","sent":"最常用的有三个。"},{"i":5,"t":17.887,"d":4.398,"text":"第一个，/init：给新项目生成 agents.md。","sent":"第一个，/init：给新项目生成 agents.md。"},{"i":6,"t":22.325,"d":4.564,"text":"它会用一套默认提示词，把项目读一遍，生成这个文件；","sent":"它会用一套默认提示词，把项目读一遍，生成这个文件；老项目开始用 AI 开发，也可以用它来更新。"},{"i":7,"t":26.929,"d":3.643,"text":"老项目开始用 AI 开发，也可以用它来更新。","sent":"它会用一套默认提示词，把项目读一遍，生成这个文件；老项目开始用 AI 开发，也可以用它来更新。"},{"i":8,"t":30.612,"d":2.898,"text":"第二个，/goal：goal，目标。","sent":"第二个，/goal：goal，目标。"},{"i":9,"t":33.55,"d":6.697,"text":"任务很大、但目标很明确的时候，用它让 AI 不停迭代，直到完成。","sent":"任务很大、但目标很明确的时候，用它让 AI 不停迭代，直到完成。"},{"i":10,"t":40.287,"d":2.785,"text":"第三个，/plan：计划模式。","sent":"第三个，/plan：计划模式。"},{"i":11,"t":43.112,"d":3.373,"text":"有些 Agent 是按钮，有些是斜杠命令。","sent":"有些 Agent 是按钮，有些是斜杠命令。"},{"i":12,"t":46.525,"d":2.885,"text":"它让 AI 先写计划、你来审；","sent":"它让 AI 先写计划、你来审；这时候它不会做任何写操作，你确认之后，它才开工。"},{"i":13,"t":49.45,"d":5.36,"text":"这时候它不会做任何写操作，你确认之后，它才开工。","sent":"它让 AI 先写计划、你来审；这时候它不会做任何写操作，你确认之后，它才开工。"},{"i":14,"t":54.85,"d":4.862,"text":"任务比较大，或者你自己也没想清楚要做到什么程度，","sent":"任务比较大，或者你自己也没想清楚要做到什么程度，就先 /plan，能省掉很多返工。"},{"i":15,"t":59.752,"d":2.82,"text":"就先 /plan，能省掉很多返工。","sent":"任务比较大，或者你自己也没想清楚要做到什么程度，就先 /plan，能省掉很多返工。"}]};
+    // TIMING:END
+    const tl = gsap.timeline({ paused: true });
+
+    // 入场：从场景底色淡入，切到下一页时像视频一样接上。
+    tl.fromTo(".scene-in", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+
+    // MOTION:BEGIN
+    // 左栏：打出 /，弹出命令面板，三个命令依次高亮；右栏：三段小场景接力。
+    const T = N.cues.map((c) => c.t);
+    const e = "power3.out";
+    const q = "power2.out";
+
+    // 快照会直接 seek：先把进度条、光标、循环箭头压回初始状态。
+    gsap.set("#s25-goal-fill", { scaleX: 0, transformOrigin: "left center" });
+    gsap.set("#s25-goal-loop", { transformOrigin: "center center" });
+    gsap.set("#s25-caret", { x: 24 });
+
+    // ---------------- 起手：输入框 + 敲一个斜杠 ----------------
+    tl.fromTo("#s25-input", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[0] + 0.05);
+    tl.fromTo("#s25-input-ph", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[0] + 0.35);
+    tl.fromTo("#s25-stage-panel", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[0] + 0.1);
+    tl.fromTo("#s25-hint", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: q }, T[0] + 0.25);
+    tl.fromTo("#s25-key", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.6)" }, T[0] + 0.4);
+    tl.fromTo("#s25-hint-tag", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[0] + 0.8);
+    tl.fromTo("#s25-hint-title", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[0] + 0.9);
+    tl.fromTo("#s25-hint-sub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[0] + 1.2);
+    tl.fromTo("#s25-hint-title", { y: 0 }, { y: -4, duration: 0.8, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[0] + 2.6);
+    tl.fromTo("#s25-real", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[0] + 1.7);
+
+    // cue1 · 在输入框里打出 /
+    tl.fromTo("#s25-input-ph", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[1] + 0.35);
+    tl.fromTo("#s25-typed-slash", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, T[1] + 0.6);
+    tl.fromTo("#s25-caret", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: q }, T[1] + 0.65);
+    tl.fromTo("#s25-key", { scale: 1 }, { scale: 0.92, duration: 0.16, ease: "power1.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[1] + 0.45);
+    tl.fromTo("#s25-caret", { opacity: 1 }, { opacity: 0.15, duration: 0.4, yoyo: true, repeat: 3, ease: "sine.inOut", immediateRender: false }, T[1] + 1.1);
+    tl.fromTo("#s25-hint-note", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.45, ease: q }, T[1] + 2.5);
+    tl.fromTo("#s25-caret", { opacity: 1 }, { opacity: 0.2, duration: 0.4, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[1] + 4.2);
+    tl.fromTo("#s25-input", { y: 0 }, { y: 256, duration: 0.5, ease: "power2.inOut", immediateRender: false }, T[1] + 1.75);
+    tl.fromTo(".s25-row-name", { y: 0 }, { y: -3, duration: 0.45, yoyo: true, repeat: 1, stagger: 0.12, ease: "sine.inOut", immediateRender: false }, T[2] + 0.1);
+
+    // cue2 · 命令面板弹出来
+    tl.fromTo("#s25-panel", { opacity: 0, y: 18, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" }, T[1] + 2.05);
+    tl.fromTo("#s25-panel-hint", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[1] + 2.3);
+    tl.fromTo("#s25-row-init", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[1] + 2.2);
+    tl.fromTo("#s25-row-goal", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[1] + 2.34);
+    tl.fromTo("#s25-row-plan", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.4, ease: q }, T[1] + 2.48);
+    tl.fromTo(".s25-gray-row", { opacity: 0, x: -10 }, { opacity: 0.55, x: 0, duration: 0.35, stagger: 0.12, ease: q }, T[1] + 2.65);
+
+    // cue3 · 大部分 Agent 工具都支持
+    tl.fromTo("#s25-hint-logos", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[3] + 0.15);
+
+    // cue4 · 最常用的有三个
+    tl.fromTo("#s25-hint", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, T[4] + 0.05);
+    tl.fromTo("#s25-tabs", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[4] + 0.3);
+    tl.fromTo(".s25-num", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.35, stagger: 0.15, ease: "back.out(2)" }, T[4] + 0.55);
+    tl.fromTo(".s25-gray-row", { opacity: 0.55 }, { opacity: 0.32, duration: 0.4, immediateRender: false }, T[4] + 0.9);
+
+    // ---------------- /init：空目录 → 扫描 → AGENTS.md ----------------
+    tl.fromTo("#s25-tabh-init", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.1);
+    tl.fromTo("#s25-hl-init", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.15);
+    tl.fromTo("#s25-bar-init", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.15);
+    tl.fromTo("#s25-typed-slash", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[5] + 0.3);
+    tl.fromTo("#s25-typed-init", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: q }, T[5] + 0.35);
+    tl.fromTo("#s25-caret", { x: 24 }, { x: 116, duration: 0.35, ease: "power2.inOut", immediateRender: false }, T[5] + 0.35);
+    tl.fromTo("#s25-init", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[5] + 0.2);
+    tl.fromTo("#s25-tree-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[5] + 0.3);
+    tl.fromTo("#s25-file-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[5] + 0.5);
+    tl.fromTo("#s25-tree-root", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[5] + 0.65);
+    tl.fromTo("#s25-tree-empty", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, T[5] + 0.95);
+    tl.fromTo("#s25-tree-note", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[5] + 1.5);
+
+    // cue6 · 把项目读一遍：文件树逐层亮起，生成 AGENTS.md
+    tl.fromTo("#s25-tree-empty", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[6] + 0.05);
+    tl.fromTo(".s25-branch", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.22, ease: q }, T[6] + 0.1);
+    tl.fromTo("#s25-tree-tag", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[6] + 0.5);
+    tl.fromTo("#s25-scanband", { opacity: 0, y: 0 }, { opacity: 1, y: 290, duration: 2.0, ease: "power1.inOut" }, T[6] + 0.1);
+    tl.fromTo("#s25-scanband", { opacity: 1 }, { opacity: 0, duration: 0.4, immediateRender: false }, T[6] + 2.05);
+    tl.fromTo("#s25-file-tag", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[6] + 2.0);
+    tl.fromTo(".s25-file-line", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.2, ease: q }, T[6] + 2.2);
+    tl.fromTo("#s25-tree-tag", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[6] + 2.15);
+    tl.fromTo("#s25-tree-tag2", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[6] + 2.25);
+    tl.fromTo("#s25-file-tag", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[6] + 2.7);
+    tl.fromTo("#s25-file-tag2", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[6] + 2.8);
+
+    // cue7 · 老项目也能用它更新
+    tl.fromTo("#s25-update", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[7] + 0.1);
+    tl.fromTo("#s25-init-real", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[7] + 1.3);
+    tl.fromTo(".s25-file-line", { y: 0 }, { y: -2, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, T[7] + 2.2);
+
+    // ---------------- /goal：长清单，循环推进直到完成 ----------------
+    tl.fromTo("#s25-init", { opacity: 1 }, { opacity: 0, y: -16, duration: 0.4, ease: "power2.in", immediateRender: false }, T[8] - 0.3);
+    tl.fromTo("#s25-tabh-init", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[8] + 0.05);
+    tl.fromTo("#s25-hl-init", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[8] + 0.05);
+    tl.fromTo("#s25-bar-init", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[8] + 0.05);
+    tl.fromTo("#s25-tabh-goal", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[8] + 0.15);
+    tl.fromTo("#s25-hl-goal", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[8] + 0.2);
+    tl.fromTo("#s25-bar-goal", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[8] + 0.2);
+    tl.fromTo("#s25-typed-init", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[8] + 0.1);
+    tl.fromTo("#s25-typed-goal", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: q }, T[8] + 0.15);
+    tl.fromTo("#s25-goal", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[8] + 0.1);
+    tl.fromTo("#s25-list-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[8] + 0.25);
+    tl.fromTo(".s25-goal-row", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.12, ease: q }, T[8] + 0.4);
+    tl.fromTo("#s25-loop-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[8] + 0.55);
+    tl.fromTo("#s25-goal-cursor", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[8] + 0.9);
+
+    // cue9 · 不停迭代，逐项打勾，直到完成
+    tl.fromTo("#s25-goal-loop", { opacity: 0, rotation: 0 }, { opacity: 1, rotation: 720, duration: 2.8, ease: "power1.inOut" }, T[9] + 0.2);
+    tl.fromTo(".s25-check svg", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, stagger: 0.45, ease: "back.out(2)" }, T[9] + 0.9);
+    tl.fromTo("#s25-goal-cursor", { y: 0 }, { y: 62, duration: 0.4, ease: q }, T[9] + 0.65);
+    tl.fromTo("#s25-goal-cursor", { y: 62 }, { y: 124, duration: 0.4, ease: q, immediateRender: false }, T[9] + 1.1);
+    tl.fromTo("#s25-goal-cursor", { y: 124 }, { y: 186, duration: 0.4, ease: q, immediateRender: false }, T[9] + 1.55);
+    tl.fromTo("#s25-goal-cursor", { y: 186 }, { y: 248, duration: 0.4, ease: q, immediateRender: false }, T[9] + 2.0);
+    tl.fromTo("#s25-goal-cursor", { y: 248 }, { y: 310, duration: 0.4, ease: q, immediateRender: false }, T[9] + 2.45);
+    tl.fromTo("#s25-goal-fill", { scaleX: 0 }, { scaleX: 1, duration: 2.6, ease: "power1.inOut" }, T[9] + 0.5);
+    tl.fromTo("#s25-goal-done", { opacity: 0, scale: 0.8, rotation: -6 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.8)" }, T[9] + 5.0);
+    tl.fromTo("#s25-goal-count", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: q }, T[9] + 5.2);
+
+    // ---------------- /plan：先写计划、你来审、写文件锁住 ----------------
+    tl.fromTo("#s25-goal", { opacity: 1 }, { opacity: 0, y: -16, duration: 0.4, ease: "power2.in", immediateRender: false }, T[10] - 0.3);
+    tl.fromTo("#s25-tabh-goal", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[10] + 0.05);
+    tl.fromTo("#s25-hl-goal", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[10] + 0.05);
+    tl.fromTo("#s25-bar-goal", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[10] + 0.05);
+    tl.fromTo("#s25-tabh-plan", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[10] + 0.15);
+    tl.fromTo("#s25-hl-plan", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[10] + 0.2);
+    tl.fromTo("#s25-bar-plan", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: q }, T[10] + 0.2);
+    tl.fromTo("#s25-typed-goal", { opacity: 1 }, { opacity: 0, duration: 0.25, immediateRender: false }, T[10] + 0.1);
+    tl.fromTo("#s25-typed-plan", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: q }, T[10] + 0.15);
+    tl.fromTo("#s25-plan", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[10] + 0.1);
+    tl.fromTo("#s25-doc-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[10] + 0.25);
+    tl.fromTo(".s25-plan-step", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.35, ease: q }, T[10] + 0.5);
+    tl.fromTo("#s25-ctrl-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: e }, T[10] + 0.7);
+
+    // cue11 · 有的 Agent 是按钮，有的是斜杠命令
+    tl.fromTo("#s25-entry", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[11] + 0.1);
+
+    // cue12 · 它先写计划，你来审
+    tl.fromTo("#s25-review", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, T[12] + 0.1);
+    tl.fromTo(".s25-plan-check", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.35, stagger: 0.35, ease: "back.out(2)" }, T[12] + 0.6);
+    tl.fromTo("#s25-plan-tag", { opacity: 1 }, { opacity: 0.6, duration: 0.7, yoyo: true, repeat: 1, immediateRender: false }, T[12] + 1.8);
+
+    // cue13 · 写文件锁住，确认之后才开工
+    tl.fromTo("#s25-lock", { scale: 1 }, { scale: 1.16, duration: 0.4, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[13] + 0.3);
+    tl.fromTo("#s25-confirm", { scale: 1 }, { scale: 0.95, duration: 0.15, ease: "power1.inOut" }, T[13] + 2.2);
+    tl.fromTo("#s25-confirm", { scale: 0.95 }, { scale: 1, duration: 0.2, ease: q, immediateRender: false }, T[13] + 2.35);
+    tl.fromTo("#s25-unlock", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[13] + 2.5);
+    tl.fromTo("#s25-switch", { backgroundColor: "#ded5c6" }, { backgroundColor: "#e85b4a", duration: 0.4, ease: q }, T[13] + 2.5);
+    tl.fromTo("#s25-knob", { x: 0 }, { x: 28, duration: 0.35, ease: "power2.inOut" }, T[13] + 2.5);
+    tl.fromTo("#s25-lock", { opacity: 1, scale: 1 }, { opacity: 0, scale: 0.7, duration: 0.35, ease: q, immediateRender: false }, T[13] + 2.5);
+    tl.fromTo("#s25-work-tag", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[13] + 2.8);
+
+    // ---------------- 收尾：任务大、没想清楚，就先 /plan ----------------
+    tl.fromTo("#s25-plan", { opacity: 1 }, { opacity: 0, y: -16, duration: 0.45, ease: "power2.in", immediateRender: false }, T[14] + 0.05);
+    tl.fromTo("#s25-final", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: q }, T[14] + 0.15);
+    tl.fromTo("#s25-final-chip-1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[14] + 0.3);
+    tl.fromTo("#s25-final-chip-2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[14] + 0.6);
+    tl.fromTo("#s25-final-arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.35, ease: q }, T[14] + 1.1);
+    tl.fromTo("#s25-final-hint", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: q }, T[14] + 1.5);
+    tl.fromTo("#s25-tabh-plan", { opacity: 1 }, { opacity: 0.55, duration: 0.8, yoyo: true, repeat: 1, immediateRender: false }, T[14] + 2.2);
+
+    // cue15 · 先 /plan，能省掉很多返工
+    tl.fromTo("#s25-final-hint", { opacity: 1 }, { opacity: 0, duration: 0.3, immediateRender: false }, T[15] + 0.05);
+    tl.fromTo("#s25-final-line", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: e }, T[15] + 0.1);
+    tl.fromTo("#s25-final-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: q }, T[15] + 0.65);
+    tl.fromTo("#s25-final-line", { scale: 1 }, { scale: 1.02, duration: 0.7, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, T[15] + 1.3);
+    // MOTION:END
+
+    window.__timelines["s-slash-commands"] = tl;
+  </script>
+</template>

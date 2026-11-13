@@ -631,7 +631,7 @@ def _report_venv(worktree: Path) -> None:
     if not python.is_file():
         _warn(
             "主工作树没有可用的 .venv；新工作树暂时不能跑测试。"
-            '先在主工作树准备环境（双击 star.cmd 或 pip install -e ".[dev]"），再运行 link'
+            '先在主工作树准备环境（双击 start.cmd 或 pip install -e ".[dev]"），再运行 link'
         )
         return
     try:

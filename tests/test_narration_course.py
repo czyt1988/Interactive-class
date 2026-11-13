@@ -1,7 +1,7 @@
 """Contract tests for the long-form narrated course `courses/ai-first-sees`.
 
 These tests do not regenerate narration (no network). They pin the shape the
-generator must keep producing: 22 narration-driven scenes, continuous playback,
+generator must keep producing: 28 narration-driven scenes, continuous playback,
 one voice track per scene in the root composition, captions inside the
 1920x1080 canvas, and the light-only visual rule the author asked for.
 """
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 COURSE = ROOT / "courses" / "ai-first-sees"
 COMPOSITION = COURSE / "composition"
 
-SCENE_COUNT = 22
+SCENE_COUNT = 28
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +33,7 @@ def test_long_form_contract(resolved) -> None:
     assert resolved.audio is True
     assert resolved.playback == "continuous"
     assert len(resolved.screens) == SCENE_COUNT
-    # 旁白语速从 -15% 调到 +0% 后全片约 18:38；这里只确认它仍是长课，不是短课。
+    # 旁白语速从 -15% 调到 +0%，新增 S21-S27 后全片约 29 分钟；这里只确认它仍是长课，不是短课。
     assert resolved.composition.duration > 15 * 60
     assert resolved.stats.estimatedMinutes >= 16
     for screen in resolved.screens:

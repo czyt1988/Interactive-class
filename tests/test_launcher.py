@@ -13,12 +13,12 @@ def _write_config(path: Path, text: str, encoding: str = "gbk") -> None:
 
 
 def test_config_defaults_when_launcher_missing(tmp_path: Path) -> None:
-    endpoint = launcher.endpoint_from_config(tmp_path / "star.cmd")
+    endpoint = launcher.endpoint_from_config(tmp_path / "start.cmd")
     assert endpoint == launcher.Endpoint(host="0.0.0.0", port=8081)
 
 
 def test_config_reads_gbk_launcher(tmp_path: Path) -> None:
-    path = tmp_path / "star.cmd"
+    path = tmp_path / "start.cmd"
     _write_config(
         path,
         'REM 中文注释\r\nset "APP_PORT=9091"\r\nset "APP_HOST=127.0.0.1"\r\n',
@@ -28,7 +28,7 @@ def test_config_reads_gbk_launcher(tmp_path: Path) -> None:
 
 
 def test_config_reads_utf8_launcher_after_editor_save(tmp_path: Path) -> None:
-    path = tmp_path / "star.cmd"
+    path = tmp_path / "start.cmd"
     _write_config(
         path,
         "REM 编辑器另存为 UTF-8\r\nset APP_PORT=9092\r\nset APP_HOST=0.0.0.0\r\n",
@@ -39,7 +39,7 @@ def test_config_reads_utf8_launcher_after_editor_save(tmp_path: Path) -> None:
 
 
 def test_command_line_override_wins(tmp_path: Path) -> None:
-    path = tmp_path / "star.cmd"
+    path = tmp_path / "start.cmd"
     _write_config(path, 'set "APP_PORT=8081"\r\nset "APP_HOST=0.0.0.0"\r\n')
 
     endpoint = launcher.endpoint_from_config(
@@ -53,7 +53,7 @@ def test_command_line_override_wins(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("port", ["", "abc", "0", "65536", "80.5"])
 def test_invalid_port_is_rejected(tmp_path: Path, port: str) -> None:
-    path = tmp_path / "star.cmd"
+    path = tmp_path / "start.cmd"
     _write_config(path, f'set "APP_PORT={port}"\r\n')
 
     with pytest.raises(launcher.LauncherError):
@@ -61,7 +61,7 @@ def test_invalid_port_is_rejected(tmp_path: Path, port: str) -> None:
 
 
 def test_ipv6_host_keeps_url_readable(tmp_path: Path) -> None:
-    path = tmp_path / "star.cmd"
+    path = tmp_path / "start.cmd"
     _write_config(path, 'set "APP_PORT=8081"\r\nset "APP_HOST=[::]"\r\n')
 
     endpoint = launcher.endpoint_from_config(path)
