@@ -8,6 +8,8 @@ evidence. This script is the only place those files enter
 - logos: trim transparent padding, cap at 256 px, keep brand colour;
 - screenshots: RGB WebP, max 1280 px wide, quality 80 (card evidence, not a
   background), hard cap 420 KB per file;
+- cropped trace strips (S22): crop the band that carries the meaning, resize to
+  1400x380 (twice the 700x190 evidence card) so interface text stays crisp;
 - photos: WebP, max 1000 px on the long side;
 - generated samples (``gen/``): official image / video-model examples, same
   rules as screenshots.
@@ -99,14 +101,23 @@ SCREENSHOTS = {
     "agents-md-site": "screenshot/agents-md-site.png",
     "claude-code-permission": "screenshot/claude-code-permission.png",
     # S21-S27 (reproducible from 素材/)
-    "dsh-context": "screenshot/dsh-context.webp",
-    "dsh-tools": "screenshot/dsh-tools.webp",
     "dsh-skills": "screenshot/dsh-skills.webp",
     "dsh-slash": "screenshot/dsh-slash-input.webp",
     "superpowers-star": "screenshot/superpowers-star-history.png",
     "huashu-ppt": "screenshot/huashu-case-qianli-pages.jpg",
     "huashu-ppt-science": "screenshot/huashu-case-blackhole-pages.jpg",
 }
+
+# S22 evidence strips: the DSH trace panel is shown as three wide cards, each
+# cropped to the band that carries the meaning (selected trace row on the left,
+# detail panel on the right) and encoded at twice the 700x190 card size so the
+# interface text stays crisp on the 1920x1080 canvas.
+CROPPED_SHOTS = {
+    "dsh-trace-system": ("screenshot/dsh-系统提示词.png", (0, 158, 989, 428)),
+    "dsh-trace-user": ("screenshot/dsh-用户输入.png", (0, 165, 1004, 435)),
+    "dsh-trace-agentsmd": ("screenshot/dsh-读取项目Agents.md.png", (0, 205, 1002, 475)),
+}
+CROP_TARGET_SIZE = (1400, 380)
 
 # Official image / video model samples (S24). Video files are not kept, only a
 # representative still extracted with ffmpeg from the official release video.
@@ -119,8 +130,9 @@ GEN = {
 
 # Entries added for S21-S27 must be reproducible; missing source is fatal.
 REQUIRED_SOURCES = {
-    "screenshot/dsh-context.webp",
-    "screenshot/dsh-tools.webp",
+    "screenshot/dsh-系统提示词.png",
+    "screenshot/dsh-用户输入.png",
+    "screenshot/dsh-读取项目Agents.md.png",
     "screenshot/dsh-skills.webp",
     "screenshot/dsh-slash-input.webp",
     "screenshot/superpowers-star-history.png",
@@ -203,6 +215,23 @@ def prepare_compressed(name: str, relative: str, folder: str, quality: int = 80)
         raise SystemExit(f"{name}: still {target.stat().st_size} bytes at quality {quality}")
 
 
+def prepare_cropped(name: str, relative: str, box: tuple[int, int, int, int]) -> None:
+    """Crop one meaningful band out of a screenshot, encode at 2x card size."""
+    source = _resolve(relative)
+    if source is None:
+        return
+    image = Image.open(source).convert("RGB").crop(box)
+    image = image.resize(CROP_TARGET_SIZE, Image.LANCZOS)
+    target = TARGET / "shot" / f"{name}.webp"
+    quality = 85
+    _save_webp(image, target, quality)
+    while target.stat().st_size > MAX_SHOT_BYTES and quality > 45:
+        quality -= 8
+        _save_webp(image, target, quality)
+    if target.stat().st_size > MAX_SHOT_BYTES:
+        raise SystemExit(f"{name}: still {target.stat().st_size} bytes at quality {quality}")
+
+
 def main() -> None:
     for name, relative in LOGOS.items():
         prepare_logo(name, relative)
@@ -210,6 +239,8 @@ def main() -> None:
         prepare_photo(name, relative)
     for name, relative in SCREENSHOTS.items():
         prepare_compressed(name, relative, "shot")
+    for name, (relative, box) in CROPPED_SHOTS.items():
+        prepare_cropped(name, relative, box)
     for name, relative in GEN.items():
         prepare_compressed(name, relative, "gen", quality=82)
 

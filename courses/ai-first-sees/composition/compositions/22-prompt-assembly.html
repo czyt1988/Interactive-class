@@ -1,9 +1,10 @@
 <template>
   <style>
     /* S22 ·「你只问一句，模型读的是一大本」
-       拍1：左边输入框只有一句话；拍2：右边 Agent 内部组装台像聊天窗口，一层层滚入；
-       拍3：聊天缩成长卷轴，装成笔记本第 1 页，放上纸飞机飞给右边戴眼镜的专家；
-       拍4：切到 DSH 真实轨迹面板，四层证据 + 最后一句「Harness = 提示词组装器」。 */
+       拍1：左边输入框只有一句话；拍2：右边 Agent 内部组装台像聊天窗口，一层层滚入，
+            底部 token 计数跟着每一块注入滚上去；
+       拍3：聊天缩成长卷轴，装成笔记本第 1 页，一只折纸飞机沿弧线把它送进右边专家手里；
+       拍4：切到 DSH 真实轨迹面板，系统提示 / 用户输入 / AGENTS.md 三张证据卡逐层展开。 */
 
     /* ---------------------------------------------------------- 拍1：输入框 */
     .s22-input {
@@ -235,8 +236,7 @@
     .s22-b1 { top: 0; width: 1128px; height: 168px; }
     .s22-b2 { top: 180px; width: 1174px; height: 170px; }
     .s22-b3 { top: 362px; width: 1068px; height: 132px; }
-    .s22-b4 { top: 506px; width: 1012px; height: 120px; }
-    .s22-b5 { top: 638px; width: 944px; height: 100px; }
+    .s22-b4 { top: 506px; width: 1012px; height: 150px; }
 
     .s22-block-no {
       position: absolute;
@@ -379,6 +379,13 @@
       opacity: 0;
     }
 
+    .s22-b4-diff {
+      position: absolute;
+      right: 24px;
+      top: 58px;
+      opacity: 0;
+    }
+
     .s22-b4-line {
       position: absolute;
       left: 70px;
@@ -395,7 +402,7 @@
     .s22-user {
       position: absolute;
       left: 574px;
-      top: 750px;
+      top: 668px;
       width: 600px;
       height: 80px;
       padding: 12px 22px;
@@ -462,11 +469,7 @@
       font-variant-numeric: tabular-nums;
       color: var(--ink);
       white-space: nowrap;
-    }
-
-    .s22-tok--b,
-    .s22-tok--c {
-      color: var(--accent-text);
+      transform-origin: left center;
     }
 
     .s22-tok-unit {
@@ -515,18 +518,28 @@
 
     .s22-plane {
       position: absolute;
-      left: 560px;
-      top: 452px;
-      width: 560px;
-      height: 162px;
+      left: 596px;
+      top: 402px;
+      width: 232px;
+      height: 126px;
       opacity: 0;
     }
 
     .s22-plane svg {
       display: block;
-      width: 560px;
-      height: 162px;
-      transform: rotate(-6deg);
+      width: 232px;
+      height: 126px;
+    }
+
+    .s22-puff {
+      position: absolute;
+      left: 1358px;
+      top: 168px;
+      width: 84px;
+      height: 84px;
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+      opacity: 0;
     }
 
     .s22-notebook {
@@ -594,7 +607,7 @@
       left: 56px;
       top: 46px;
       width: 664px;
-      height: 412px;
+      height: 356px;
       padding: 14px 24px;
       border: 1.5px solid #514b40;
       border-radius: 4px;
@@ -671,7 +684,7 @@
       position: absolute;
       left: 14px;
       right: 14px;
-      top: 345px;
+      top: 287px;
       height: 58px;
       border: 2px solid var(--accent);
       border-radius: 8px;
@@ -682,7 +695,7 @@
     .s22-scroll-tag {
       position: absolute;
       right: 24px;
-      top: 351px;
+      top: 293px;
       font-size: 20px;
       opacity: 0;
     }
@@ -699,10 +712,10 @@
 
     .s22-trail {
       position: absolute;
-      left: 60px;
-      top: 330px;
-      width: 1400px;
-      height: 300px;
+      left: 640px;
+      top: 120px;
+      width: 700px;
+      height: 400px;
       pointer-events: none;
       opacity: 0;
     }
@@ -805,58 +818,37 @@
       color: var(--ink-faint);
     }
 
-    .s22-shot {
+    .s22-card {
       position: absolute;
       left: 0;
-      top: 52px;
-      width: 708px;
+      width: 700px;
+      height: 190px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 12px 22px -20px rgba(22, 20, 15, 0.55);
       opacity: 0;
     }
 
-    .s22-shot img {
+    .s22-card img {
       display: block;
-      width: 690px;
-      height: 367px;
-      object-fit: cover;
-      object-position: left top;
-      border-radius: 6px;
+      width: 700px;
+      height: 190px;
     }
 
-    .s22-shot .media__label {
-      font-size: 21px;
-    }
+    .s22-card--1 { top: 52px; }
+    .s22-card--2 { top: 258px; }
+    .s22-card--3 { top: 464px; }
 
-    .s22-shot-scan {
+    .s22-card-scan {
       position: absolute;
       left: 9px;
       right: 9px;
-      top: 60px;
+      top: 8px;
       height: 3px;
       border-radius: 2px;
       background: var(--accent);
       opacity: 0;
-    }
-
-    .s22-zoom {
-      position: absolute;
-      left: 452px;
-      top: 300px;
-      width: 336px;
-      opacity: 0;
-      z-index: 6;
-    }
-
-    .s22-zoom img {
-      display: block;
-      width: 302px;
-      height: 305px;
-      object-fit: cover;
-      object-position: left top;
-      border-radius: 6px;
-    }
-
-    .s22-zoom .media__label {
-      font-size: 20px;
     }
 
     .s22-leaders {
@@ -890,10 +882,9 @@
       opacity: 0;
     }
 
-    .s22-callout--1 { top: 76px; }
-    .s22-callout--2 { top: 176px; }
-    .s22-callout--3 { top: 276px; }
-    .s22-callout--4 { top: 376px; }
+    .s22-callout--1 { top: 60px; }
+    .s22-callout--2 { top: 240px; }
+    .s22-callout--3 { top: 420px; }
 
     .s22-callout-no {
       position: absolute;
@@ -927,7 +918,7 @@
     .s22-fourtag {
       position: absolute;
       left: 800px;
-      top: 480px;
+      top: 566px;
       opacity: 0;
     }
 
@@ -1018,9 +1009,11 @@
     .s22-b2-load,
     .s22-b3-load,
     .s22-b4-join,
+    .s22-b4-diff,
     .s22-b4-line,
     .s22-user,
     .s22-plane,
+    .s22-puff,
     .s22-trail,
     .s22-notebook,
     .s22-scroll,
@@ -1031,9 +1024,8 @@
     .s22-expert-sub,
     .s22-flight-note,
     .s22-dsh-head,
-    .s22-shot,
-    .s22-shot-scan,
-    .s22-zoom,
+    .s22-card,
+    .s22-card-scan,
     .s22-callout,
     .s22-fourtag,
     .s22-fin-text,
@@ -1137,14 +1129,9 @@
                 <p class="s22-block-title">AGENTS.md / 全局记忆</p>
                 <p class="s22-block-sub">工作区里的 markdown 与个人记忆</p>
                 <span id="s-prompt-b4-join" class="s22-tag s22-b4-join">拼接进来</span>
+                <span id="s-prompt-b4-diff" class="s22-tag s22-b4-diff">不同 Agent 拼法不同</span>
                 <span id="s-prompt-b4-l1" class="s22-b4-line s22-b4-line--1">AGENTS.md · 项目背景 / 目录结构 / 禁止事项</span>
                 <span id="s-prompt-b4-l2" class="s22-b4-line s22-b4-line--2">~/.agent/memory.md · 个人偏好与习惯</span>
-              </div>
-
-              <div id="s-prompt-b5" class="s22-block s22-b5">
-                <span class="s22-block-no">05</span>
-                <p class="s22-block-title">历史消息</p>
-                <p class="s22-block-sub">上一轮你说过的话、工具返回的结果，原样带着走</p>
               </div>
 
               <div id="s-prompt-user" class="s22-user">
@@ -1156,9 +1143,7 @@
           <div class="s22-foot">
             <p class="s22-foot-label">本次请求<br />发给模型</p>
             <div class="s22-tok">
-              <span id="s-prompt-tok-a">80</span>
-              <span id="s-prompt-tok-b" class="s22-tok--b">≈ 1 万</span>
-              <span id="s-prompt-tok-c" class="s22-tok--c">≈ 10 万</span>
+              <span id="s-prompt-toknum">0</span>
             </div>
             <span class="s22-tok-unit">token</span>
             <div class="s22-tok-bar"><i id="s-prompt-barfill" class="s22-barfill"></i></div>
@@ -1187,26 +1172,25 @@
             <div class="s22-srow"><b>02</b><span>技能目录</span><i>24 个技能的描述，拼成一段话</i></div>
             <div class="s22-srow"><b>03</b><span>MCP 工具说明</span><i>db · calendar · browser</i></div>
             <div class="s22-srow"><b>04</b><span>AGENTS.md / 全局记忆</span><i>项目背景 · 禁止事项 · 个人偏好</i></div>
-            <div class="s22-srow"><b>05</b><span>历史消息</span><i>上一轮对话与工具返回</i></div>
-            <div class="s22-srow s22-srow--you"><b>06</b><span>你这句话</span><i>帮我做个 PPT</i></div>
+            <div class="s22-srow s22-srow--you"><b>05</b><span>你这句话</span><i>帮我做个 PPT</i></div>
             <span id="s-prompt-scroll-hl" class="s22-scroll-hl"></span>
             <span id="s-prompt-scroll-tag" class="s22-tag s22-scroll-tag">最后一页</span>
           </div>
 
           <div id="s-prompt-plane" class="s22-plane">
-            <svg viewBox="0 0 900 260" aria-hidden="true">
-              <polygon points="880,130 40,10 430,130" fill="#f0e8da" stroke="#514b40" stroke-width="3.5" stroke-linejoin="round" />
-              <polygon points="880,130 40,250 430,130" fill="#e6dbc8" stroke="#514b40" stroke-width="3.5" stroke-linejoin="round" />
-              <path d="M 40 10 L 430 130 L 40 250" fill="none" stroke="#514b40" stroke-width="2.5" stroke-linejoin="round" />
-              <line x1="430" y1="130" x2="880" y2="130" stroke="#514b40" stroke-width="2.5" />
-              <path d="M 430 130 L 540 118" stroke="#514b40" stroke-width="1.5" opacity="0.5" />
+            <svg viewBox="0 0 232 126" aria-hidden="true">
+              <polygon points="214,52 16,18 52,62" fill="#f4ecdd" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+              <polygon points="214,52 52,62 28,100" fill="#e6dbc8" stroke="#514b40" stroke-width="3" stroke-linejoin="round" />
+              <polygon points="214,52 52,62 66,78" fill="#d9cbb2" stroke="#514b40" stroke-width="2" stroke-linejoin="round" />
+              <path d="M 214 52 L 40 40" fill="none" stroke="#514b40" stroke-width="1.5" opacity="0.3" />
             </svg>
           </div>
+          <span id="s-prompt-puff" class="s22-puff"></span>
         </div>
 
         <!-- 飞行轨迹：一道浅浅的虚线，说明它要飞向右边 -->
-        <svg id="s-prompt-trail" class="s22-trail" viewBox="0 0 1400 300" aria-hidden="true">
-          <path d="M 20 226 Q 420 96 760 132 T 1340 52" />
+        <svg id="s-prompt-trail" class="s22-trail" viewBox="0 0 700 400" aria-hidden="true">
+          <path d="M 188 345 Q 300 100 540 93" />
         </svg>
 
         <!-- 右边的大模型：戴眼镜的纸面专家 -->
@@ -1244,59 +1228,61 @@
           <p class="s22-dsh-badge">真实界面截图 · 局部</p>
         </div>
 
-        <div id="s-prompt-shot" class="media s22-shot">
+        <div id="s-prompt-card1" class="s22-card s22-card--1">
           <img
-            src="assets/media/shot/dsh-context.webp"
-            alt="DSH 轨迹面板截图：SYSTEM、CONTEXT、USER、ASSISTANT、TOOL 逐层列出，右侧是工具详情"
-            width="690"
-            height="367"
+            src="assets/media/shot/dsh-trace-system.webp"
+            alt="DSH 轨迹面板：选中初始系统提示词，右侧展开系统提示词全文"
+            width="700"
+            height="190"
           />
-          <p class="media__label"><span>dsh-context · 轨迹面板</span><span>真实截图</span></p>
-          <span id="s-prompt-shot-scan" class="s22-shot-scan"></span>
+          <span id="s-prompt-scan1" class="s22-card-scan"></span>
         </div>
 
-        <div id="s-prompt-zoom" class="media s22-zoom">
+        <div id="s-prompt-card2" class="s22-card s22-card--2">
           <img
-            src="assets/media/shot/dsh-tools.webp"
-            alt="DSH 工具面板截图：Summary、Payload、Result、Schema、Timing"
-            width="302"
-            height="305"
+            src="assets/media/shot/dsh-trace-user.webp"
+            alt="DSH 轨迹面板：选中用户消息，右侧是你这句话的原文"
+            width="700"
+            height="190"
           />
-          <p class="media__label"><span>TOOL · Schema</span><span>局部放大</span></p>
+          <span id="s-prompt-scan2" class="s22-card-scan"></span>
+        </div>
+
+        <div id="s-prompt-card3" class="s22-card s22-card--3">
+          <img
+            src="assets/media/shot/dsh-trace-agentsmd.webp"
+            alt="DSH 轨迹面板：选中上下文注入，右侧来源是项目 AGENTS.md"
+            width="700"
+            height="190"
+          />
+          <span id="s-prompt-scan3" class="s22-card-scan"></span>
         </div>
 
         <svg id="s-prompt-leaders" class="s22-leaders" viewBox="0 0 1664 664" aria-hidden="true">
-          <path id="s-prompt-leader1" class="s22-leader" d="M 695 152 L 800 118" />
-          <path id="s-prompt-leader2" class="s22-leader" d="M 695 196 L 800 218" />
-          <path id="s-prompt-leader3" class="s22-leader" d="M 695 285 L 800 318" />
-          <path id="s-prompt-leader4" class="s22-leader" d="M 788 340 L 800 418" />
-          <circle id="s-prompt-dot1" class="s22-leader-dot" cx="695" cy="152" r="4" />
-          <circle id="s-prompt-dot2" class="s22-leader-dot" cx="695" cy="196" r="4" />
-          <circle id="s-prompt-dot3" class="s22-leader-dot" cx="695" cy="285" r="4" />
-          <circle id="s-prompt-dot4" class="s22-leader-dot" cx="788" cy="340" r="4" />
+          <path id="s-prompt-leader1" class="s22-leader" d="M 700 147 L 795 102" />
+          <path id="s-prompt-leader2" class="s22-leader" d="M 700 353 L 795 282" />
+          <path id="s-prompt-leader3" class="s22-leader" d="M 700 559 L 795 462" />
+          <circle id="s-prompt-dot1" class="s22-leader-dot" cx="700" cy="147" r="4" />
+          <circle id="s-prompt-dot2" class="s22-leader-dot" cx="700" cy="353" r="4" />
+          <circle id="s-prompt-dot3" class="s22-leader-dot" cx="700" cy="559" r="4" />
         </svg>
 
         <div id="s-prompt-callout1" class="s22-callout s22-callout--1">
           <span class="s22-callout-no">01</span>
-          <p class="s22-callout-title">系统提示</p>
+          <p class="s22-callout-title">系统提示词</p>
           <p class="s22-callout-sub">你是谁、能做什么、不能做什么</p>
         </div>
         <div id="s-prompt-callout2" class="s22-callout s22-callout--2">
           <span class="s22-callout-no">02</span>
-          <p class="s22-callout-title">技能说明</p>
-          <p class="s22-callout-sub">扫描结果拼成目录，注入在开头</p>
+          <p class="s22-callout-title">你这句话</p>
+          <p class="s22-callout-sub">「帮我做个 PPT」，只占八十来个 token</p>
         </div>
         <div id="s-prompt-callout3" class="s22-callout s22-callout--3">
           <span class="s22-callout-no">03</span>
-          <p class="s22-callout-title">消息历史</p>
-          <p class="s22-callout-sub">用户、助手、工具返回，原文都在</p>
+          <p class="s22-callout-title">AGENTS.md / 全局记忆</p>
+          <p class="s22-callout-sub">项目约定与个人偏好，原样拼进来</p>
         </div>
-        <div id="s-prompt-callout4" class="s22-callout s22-callout--4">
-          <span class="s22-callout-no">04</span>
-          <p class="s22-callout-title">工具 schema</p>
-          <p class="s22-callout-sub">参数与返回格式，右侧放大看</p>
-        </div>
-        <span id="s-prompt-fourtag" class="s22-tag s22-fourtag">四层，最后都拼进同一段文本</span>
+        <span id="s-prompt-fourtag" class="s22-tag s22-fourtag">系统提示、技能、工具、历史，每一层都能看到</span>
 
         <div id="s-prompt-fin" class="s22-fin">
           <p id="s-prompt-fin-text" class="s22-fin-text">我们能控制的，只有 <b>提示词</b>，也就是文本</p>
@@ -1370,9 +1356,30 @@
     const E = "power3.out";
     const Q = "power2.out";
 
+    // token 计数：每一块注入时数字滚上去并闪一下强调色，而不是最后生硬替换。
+    const tokEl = document.querySelector("#s-prompt-toknum");
+    const tokState = { v: 0 };
+    const rootStyle = getComputedStyle(document.getElementById("root"));
+    const INK = (rootStyle.getPropertyValue("--ink") || "#16140f").trim();
+    const ACC = (rootStyle.getPropertyValue("--accent") || "#e85b4a").trim();
+    const renderTok = () => {
+      tokEl.textContent = Math.round(tokState.v).toLocaleString("en-US");
+    };
+    const tokPulse = (t, peak) => {
+      tl.fromTo("#s-prompt-toknum", { scale: 1 }, { scale: peak, duration: 0.16, ease: "power2.out", immediateRender: false }, t);
+      tl.fromTo("#s-prompt-toknum", { scale: peak }, { scale: 1, duration: 0.32, ease: "power2.inOut", immediateRender: false }, t + 0.16);
+      tl.fromTo("#s-prompt-toknum", { color: INK }, { color: ACC, duration: 0.16, ease: "none", immediateRender: false }, t);
+      tl.fromTo("#s-prompt-toknum", { color: ACC }, { color: INK, duration: 0.5, ease: "power1.out", immediateRender: false }, t + 0.16);
+    };
+    const tokJump = (t, from, to, dur) => {
+      tl.fromTo(tokState, { v: from }, { v: to, duration: dur, ease: "power2.out", onUpdate: renderTok, immediateRender: false }, t);
+      tokPulse(t, 1.14);
+    };
+
     // 快照会直接 seek：需要位移/缩放的元素先显式归零，避免提前露出来。
     gsap.set("#s-prompt-thread", { y: 0 });
     gsap.set("#s-prompt-notstamp", { rotate: -6 });
+    gsap.set("#s-prompt-toknum", { transformOrigin: "left center" });
 
     // ---------------------------------------------------------- 拍1：输入框
     tl.fromTo("#s-prompt-input", { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.7, ease: E }, T[0] + 0.1);
@@ -1397,24 +1404,31 @@
     // 「按下回车之前，Agent 已经帮你组装好了一大段文本」
     tl.fromTo("#s-prompt-input", { opacity: 1 }, { opacity: 0.62, duration: 0.6, ease: Q, immediateRender: false }, T[3] + 0.1);
     tl.fromTo("#s-prompt-wait", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[4] + 0.02);
-    tl.fromTo("#s-prompt-tok-a", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[3] + 0.3);
+    tl.fromTo("#s-prompt-toknum", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[3] + 0.3);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0 }, { scaleX: 0.02, duration: 0.4, ease: Q }, T[3] + 0.3);
     tl.fromTo("#s-prompt-prog", { scaleX: 0 }, { scaleX: 0.08, duration: 0.6, ease: Q }, T[3] + 0.3);
 
-    // cue4 · 系统提示词：第一块从左边滚进聊天
+    // cue4 · 系统提示词：第一块从左边滚进聊天，token 计数跟着跳
     tl.fromTo("#s-prompt-b1", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[4] + 0.12);
     tl.fromTo("#s-prompt-prog", { scaleX: 0.08 }, { scaleX: 0.2, duration: 6.4, ease: "none", immediateRender: false }, T[4] + 0.6);
+    tokJump(T[4] + 0.5, 0, 3600, 0.9);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.02 }, { scaleX: 0.3, duration: 0.9, ease: Q, immediateRender: false }, T[4] + 0.5);
 
-    // cue5 · 往往很长：多出一行
+    // cue5 · 往往很长：多出一行，计数再涨一截
     tl.fromTo("#s-prompt-b1-more", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[5] + 0.15);
     tl.fromTo("#s-prompt-b1", { scale: 1 }, { scale: 1.006, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[5] + 1.0);
     tl.fromTo("#s-prompt-b1", { scale: 1.006 }, { scale: 1, duration: 0.4, ease: "power1.inOut", immediateRender: false }, T[5] + 1.4);
+    tokJump(T[5] + 0.6, 3600, 4400, 0.7);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.3 }, { scaleX: 0.36, duration: 0.7, ease: Q, immediateRender: false }, T[5] + 0.6);
 
     // cue6 · 不同 Agent 写得也不一样
     tl.fromTo("#s-prompt-b1-diff", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[6] + 0.15);
 
-    // cue7 · 技能列表
+    // cue7 · 技能列表：第二块滚入，计数再跳
     tl.fromTo("#s-prompt-b2", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[7] + 0.12);
     tl.fromTo("#s-prompt-prog", { scaleX: 0.2 }, { scaleX: 0.34, duration: 3.6, ease: "none", immediateRender: false }, T[7] + 0.5);
+    tokJump(T[7] + 0.5, 4400, 6900, 0.8);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.36 }, { scaleX: 0.52, duration: 0.8, ease: Q, immediateRender: false }, T[7] + 0.5);
 
     // cue8 · agents/skills 目录被扫到
     tl.fromTo("#s-prompt-b2-tag", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[8] + 0.15);
@@ -1439,38 +1453,39 @@
     tl.fromTo("#s-prompt-b3", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[12] + 0.12);
     tl.fromTo("#s-prompt-thread", { y: 0 }, { y: -36, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[12] + 0.42);
     tl.fromTo("#s-prompt-prog", { scaleX: 0.46 }, { scaleX: 0.62, duration: 5.2, ease: "none", immediateRender: false }, T[12] + 0.5);
+    tokJump(T[12] + 0.5, 6900, 9100, 0.8);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.52 }, { scaleX: 0.64, duration: 0.8, ease: Q, immediateRender: false }, T[12] + 0.5);
 
     // cue13 · 工作区 AGENTS.md 与全局记忆
     tl.fromTo("#s-prompt-b4", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[13] + 0.12);
     tl.fromTo("#s-prompt-b4-l1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: Q }, T[13] + 0.55);
     tl.fromTo("#s-prompt-b4-l2", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4, ease: Q }, T[13] + 0.85);
-    tl.fromTo("#s-prompt-thread", { y: -36 }, { y: -168, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[13] + 0.42);
+    tl.fromTo("#s-prompt-thread", { y: -36 }, { y: -198, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[13] + 0.42);
     tl.fromTo("#s-prompt-prog", { scaleX: 0.62 }, { scaleX: 0.72, duration: 5.0, ease: "none", immediateRender: false }, T[13] + 0.5);
+    tokJump(T[13] + 0.6, 9100, 11800, 0.8);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.64 }, { scaleX: 0.76, duration: 0.8, ease: Q, immediateRender: false }, T[13] + 0.6);
 
     // cue14 · markdown 文本也拼接进来
     tl.fromTo("#s-prompt-b4-join", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[14] + 0.15);
 
-    // cue15 · 历史消息
-    tl.fromTo("#s-prompt-b5", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.55, ease: E }, T[15] + 0.12);
-    tl.fromTo("#s-prompt-thread", { y: -168 }, { y: -280, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[15] + 0.42);
-    tl.fromTo("#s-prompt-prog", { scaleX: 0.72 }, { scaleX: 0.86, duration: 3.0, ease: "none", immediateRender: false }, T[15] + 0.5);
+    // cue15 · 不同 Agent 的拼接方式不一样
+    tl.fromTo("#s-prompt-b4-diff", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[15] + 0.15);
 
     // cue16 · 最后才轮到用户这句话：从右边切成发件人气泡
     tl.fromTo("#s-prompt-user", { opacity: 0, x: 130 }, { opacity: 1, x: 0, duration: 0.6, ease: E }, T[16] + 0.12);
-    tl.fromTo("#s-prompt-thread", { y: -280 }, { y: -372, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[16] + 0.42);
+    tl.fromTo("#s-prompt-thread", { y: -198 }, { y: -290, duration: 0.6, ease: "power2.inOut", immediateRender: false }, T[16] + 0.42);
     tl.fromTo("#s-prompt-send", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[16] + 0.2);
     tl.fromTo("#s-prompt-sent", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: Q }, T[16] + 0.3);
     tl.fromTo("#s-prompt-prog", { scaleX: 0.86 }, { scaleX: 1, duration: 2.6, ease: "none", immediateRender: false }, T[16] + 0.5);
-    // 计数器从 80 开始，条也跟着涨
-    tl.fromTo("#s-prompt-barfill", { scaleX: 0 }, { scaleX: 0.14, duration: 0.8, ease: Q }, T[16] + 0.45);
+    // 你这句话只加八十个 token：计数小跳一下，和前面几千一跳形成对比
+    tokJump(T[16] + 0.5, 11800, 11880, 0.5);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.76 }, { scaleX: 0.78, duration: 0.5, ease: Q, immediateRender: false }, T[16] + 0.5);
 
     // cue17 · 真正发出去的请求，接近一万、甚至十万
-    tl.fromTo("#s-prompt-tok-a", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[17] + 0.3);
-    tl.fromTo("#s-prompt-tok-b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.42, ease: E }, T[17] + 0.35);
-    tl.fromTo("#s-prompt-barfill", { scaleX: 0.14 }, { scaleX: 0.66, duration: 0.7, ease: Q, immediateRender: false }, T[17] + 0.35);
-    tl.fromTo("#s-prompt-tok-b", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power1.in", immediateRender: false }, T[17] + 2.5);
-    tl.fromTo("#s-prompt-tok-c", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.44, ease: E }, T[17] + 2.55);
-    tl.fromTo("#s-prompt-barfill", { scaleX: 0.66 }, { scaleX: 1, duration: 0.8, ease: Q, immediateRender: false }, T[17] + 2.55);
+    tokPulse(T[17] + 0.3, 1.1);
+    tl.fromTo(tokState, { v: 11880 }, { v: 100000, duration: 1.1, ease: "power2.in", onUpdate: renderTok, immediateRender: false }, T[17] + 2.5);
+    tl.fromTo("#s-prompt-barfill", { scaleX: 0.78 }, { scaleX: 1, duration: 1.1, ease: "power2.in", immediateRender: false }, T[17] + 2.5);
+    tokPulse(T[17] + 2.5, 1.18);
 
     // ------------------------------------ 拍3：镜头拉开，聊天缩成长卷轴
     tl.fromTo("#s-prompt-input", { opacity: 0.62, x: 0 }, { opacity: 0, x: -26, duration: 0.6, ease: "power2.in", immediateRender: false }, T[18] + 0.05);
@@ -1482,11 +1497,22 @@
     tl.fromTo("#s-prompt-scroll-hl", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: Q }, T[18] + 1.45);
     tl.fromTo("#s-prompt-scroll-tag", { opacity: 0, x: 10 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[18] + 1.7);
 
-    // cue19 · 前面几页是 Agent 提前写好的：装进笔记本第 1 页，放上纸飞机
+    // cue19 · 前面几页是 Agent 提前写好的：装进笔记本第 1 页，纸飞机起飞送达
     tl.fromTo("#s-prompt-notebook", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.6, ease: E }, T[19] + 0.08);
-    tl.fromTo("#s-prompt-plane", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[19] + 0.42);
-    tl.fromTo("#s-prompt-trail", { opacity: 0 }, { opacity: 0.9, duration: 0.4, ease: Q }, T[19] + 0.6);
-    tl.fromTo("#s-prompt-flight", { x: 0, y: 0, scale: 1, rotate: 0 }, { x: 860, y: 70, scale: 0.58, rotate: -2, duration: 1.6, ease: "power2.inOut", immediateRender: false }, T[19] + 0.9);
+    // 纸飞机先停在页角，像刚折好
+    tl.fromTo("#s-prompt-plane", { opacity: 0, y: 26, rotate: -10 }, { opacity: 1, y: 0, rotate: -10, duration: 0.45, ease: Q }, T[19] + 0.42);
+    // 起飞：抬头、加速，再沿弧线巡航到专家面前
+    tl.fromTo("#s-prompt-plane", { y: 0, rotate: -10, scale: 1 }, { y: -40, rotate: -16, scale: 1.05, duration: 0.3, ease: "power2.out", immediateRender: false }, T[19] + 0.85);
+    tl.fromTo("#s-prompt-plane", { x: 0 }, { x: 584, duration: 0.95, ease: "power1.inOut", immediateRender: false }, T[19] + 1.15);
+    tl.fromTo("#s-prompt-plane", { y: -40 }, { y: -252, duration: 0.95, ease: "power1.out", immediateRender: false }, T[19] + 1.15);
+    tl.fromTo("#s-prompt-plane", { rotate: -16, scale: 1.05 }, { rotate: -6, scale: 0.92, duration: 0.95, ease: "power1.inOut", immediateRender: false }, T[19] + 1.15);
+    tl.fromTo("#s-prompt-trail", { opacity: 0 }, { opacity: 0.9, duration: 0.25, ease: "none", immediateRender: false }, T[19] + 1.15);
+    // 送达：机头轻点一下，纸飞机收进专家手里，留一圈涟漪
+    tl.fromTo("#s-prompt-plane", { rotate: -6 }, { rotate: 2, duration: 0.25, ease: "power2.out", immediateRender: false }, T[19] + 2.1);
+    tl.fromTo("#s-prompt-puff", { opacity: 0, scale: 0.4 }, { opacity: 0.85, scale: 1, duration: 0.35, ease: "power2.out", immediateRender: false }, T[19] + 2.2);
+    tl.fromTo("#s-prompt-plane", { opacity: 1, scale: 0.92 }, { opacity: 0, scale: 0.6, duration: 0.4, ease: "power1.in", immediateRender: false }, T[19] + 2.35);
+    tl.fromTo("#s-prompt-puff", { opacity: 0.85, scale: 1 }, { opacity: 0, scale: 1.5, duration: 0.45, ease: "power1.out", immediateRender: false }, T[19] + 2.55);
+    tl.fromTo("#s-prompt-trail", { opacity: 0.9 }, { opacity: 0, duration: 0.5, ease: "power1.in", immediateRender: false }, T[19] + 2.6);
     tl.fromTo("#s-prompt-expert", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.7, ease: E }, T[19] + 1.5);
     tl.fromTo("#s-prompt-expert-cap", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[19] + 1.75);
     tl.fromTo("#s-prompt-expert-sub", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: Q }, T[19] + 2.0);
@@ -1499,38 +1525,42 @@
     tl.fromTo("#s-prompt-trail", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[20] + 0.05);
 
     tl.fromTo("#s-prompt-dsh-head", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[20] + 0.15);
-    tl.fromTo("#s-prompt-shot", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[20] + 0.25);
-    // 证据卡上的扫描线：一层层往下看
-    tl.fromTo("#s-prompt-shot-scan", { opacity: 0 }, { opacity: 0.55, duration: 0.35, ease: Q }, T[20] + 0.85);
-    tl.fromTo("#s-prompt-shot-scan", { y: 0 }, { y: 300, duration: 6.6, ease: "none", immediateRender: false }, T[20] + 1.0);
-    tl.fromTo("#s-prompt-shot-scan", { opacity: 0.55 }, { opacity: 0, duration: 0.5, ease: "power1.in", immediateRender: false }, T[20] + 7.2);
+    // 三张真实轨迹截图逐层落下，扫描线一张张看过去
+    tl.fromTo("#s-prompt-card1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[20] + 0.25);
+    tl.fromTo("#s-prompt-scan1", { opacity: 0 }, { opacity: 0.55, duration: 0.35, ease: Q }, T[20] + 0.85);
+    tl.fromTo("#s-prompt-scan1", { y: 0 }, { y: 174, duration: 1.4, ease: "none", immediateRender: false }, T[20] + 1.0);
+    tl.fromTo("#s-prompt-scan1", { opacity: 0.55 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[20] + 2.4);
 
-    // cue21 · 「摊开给你看」：系统提示 + 技能说明
+    // cue21 · 「摊开给你看」：系统提示词 + 你这句话
     tl.fromTo("#s-prompt-callout1", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[20] + 1.05);
     tl.fromTo("#s-prompt-leader1", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[20] + 1.2);
     tl.fromTo("#s-prompt-dot1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[20] + 1.2);
-    tl.fromTo("#s-prompt-callout2", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[21] + 0.15);
-    tl.fromTo("#s-prompt-leader2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[21] + 0.3);
-    tl.fromTo("#s-prompt-dot2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[21] + 0.3);
-    tl.fromTo("#s-prompt-zoom", { opacity: 0, y: 26, rotate: -3 }, { opacity: 1, y: 0, rotate: -1.5, duration: 0.6, ease: E }, T[21] + 0.8);
+    tl.fromTo("#s-prompt-card2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[21] + 0.1);
+    tl.fromTo("#s-prompt-scan2", { opacity: 0 }, { opacity: 0.55, duration: 0.35, ease: Q }, T[21] + 0.6);
+    tl.fromTo("#s-prompt-scan2", { y: 0 }, { y: 174, duration: 1.4, ease: "none", immediateRender: false }, T[21] + 0.75);
+    tl.fromTo("#s-prompt-scan2", { opacity: 0.55 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[21] + 2.15);
+    tl.fromTo("#s-prompt-callout2", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[21] + 0.55);
+    tl.fromTo("#s-prompt-leader2", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[21] + 0.7);
+    tl.fromTo("#s-prompt-dot2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[21] + 0.7);
 
     // cue22 · 系统提示、技能、工具、历史，每一层都能看到
-    tl.fromTo("#s-prompt-callout3", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[22] + 0.15);
-    tl.fromTo("#s-prompt-leader3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[22] + 0.3);
-    tl.fromTo("#s-prompt-dot3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[22] + 0.3);
-    tl.fromTo("#s-prompt-callout4", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[22] + 0.65);
-    tl.fromTo("#s-prompt-leader4", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[22] + 0.8);
-    tl.fromTo("#s-prompt-dot4", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[22] + 0.8);
+    tl.fromTo("#s-prompt-card3", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.65, ease: E }, T[22] + 0.1);
+    tl.fromTo("#s-prompt-scan3", { opacity: 0 }, { opacity: 0.55, duration: 0.35, ease: Q }, T[22] + 0.5);
+    tl.fromTo("#s-prompt-scan3", { y: 0 }, { y: 174, duration: 1.4, ease: "none", immediateRender: false }, T[22] + 0.65);
+    tl.fromTo("#s-prompt-scan3", { opacity: 0.55 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T[22] + 2.05);
+    tl.fromTo("#s-prompt-callout3", { opacity: 0, x: 18 }, { opacity: 1, x: 0, duration: 0.45, ease: Q }, T[22] + 0.55);
+    tl.fromTo("#s-prompt-leader3", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: Q }, T[22] + 0.7);
+    tl.fromTo("#s-prompt-dot3", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, T[22] + 0.7);
     tl.fromTo("#s-prompt-fourtag", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: Q }, T[22] + 2.0);
     tl.fromTo("#s-prompt-fourtag", { scale: 1 }, { scale: 1.04, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[22] + 3.6);
     tl.fromTo("#s-prompt-fourtag", { scale: 1.04 }, { scale: 1, duration: 0.35, ease: "power1.inOut", immediateRender: false }, T[22] + 3.95);
 
     // cue23 · 我们唯一能控制的，是提示词，也就是文本
-    tl.fromTo(["#s-prompt-shot", "#s-prompt-zoom"], { opacity: 1 }, { opacity: 0.4, duration: 0.6, ease: "power1.out", immediateRender: false }, T[23] + 0.1);
-    ["#s-prompt-callout1", "#s-prompt-callout2", "#s-prompt-callout3", "#s-prompt-callout4"].forEach((sel, i) => {
+    tl.fromTo(["#s-prompt-card1", "#s-prompt-card2", "#s-prompt-card3"], { opacity: 1 }, { opacity: 0.4, duration: 0.6, ease: "power1.out", immediateRender: false }, T[23] + 0.1);
+    ["#s-prompt-callout1", "#s-prompt-callout2", "#s-prompt-callout3"].forEach((sel, i) => {
       tl.fromTo(sel, { opacity: 1 }, { opacity: 0, x: 14, duration: 0.4, ease: "power1.in", immediateRender: false }, T[23] + 0.1 + i * 0.07);
     });
-    ["#s-prompt-leader1", "#s-prompt-leader2", "#s-prompt-leader3", "#s-prompt-leader4", "#s-prompt-dot1", "#s-prompt-dot2", "#s-prompt-dot3", "#s-prompt-dot4"].forEach((sel) => {
+    ["#s-prompt-leader1", "#s-prompt-leader2", "#s-prompt-leader3", "#s-prompt-dot1", "#s-prompt-dot2", "#s-prompt-dot3"].forEach((sel) => {
       tl.fromTo(sel, { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, T[23] + 0.12);
     });
     tl.fromTo("#s-prompt-fourtag", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, T[23] + 0.1);
