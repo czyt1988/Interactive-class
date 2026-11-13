@@ -62,7 +62,7 @@
 - **不要写 `start` / `duration` / `index`**，这些由平台从 composition 解析后生成。
 - `status` 开发期保持 `draft`，**交付前改成 `published`**（平台默认只构建 published）。
 - `credits.author` 写真实作者；`credits.sources` 写事实来源。
-- 需要课程水印时按 `COURSE-CONTRACT.md` 4.7 写 `watermark`；不需要就省略或写 `null`。水印是展示配置，不影响时间和 composition。
+- 需要课程水印时按 `COURSE-CONTRACT.md` 4.7 写 `watermark`；不需要就省略或写 `null`。水印是展示配置，不影响时间和 composition，构建时会写进 composition 的内层，网页播放和导出的视频都带。
 
 ### 第 4 步：逐屏写 scene
 

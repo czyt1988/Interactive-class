@@ -105,7 +105,7 @@
 | D17 | 课程播放页全视口：舞台区占满控制条以上高度，16:9 画布在可用区域等比最大化，控制条在画布外通栏；当前屏进度可拖动，并提供「跳到最后」（`End`） | 用户需要快速看到最终画面，也要像视频一样拖动定位。16:9 画布嵌在阅读列里太小，两侧留白浪费空间；控制条与画布分离后，画布可以吃满屏幕高度 | 控制条不再与画布同宽，16:9 两侧出现纸色留边；末帧成为必须可读的验收项（拖动、跳到最后都会直接停在那里）；封面、完成页与播放页的高度策略不同 | 出现逐帧编辑、分支互动，或需要移动端竖屏专门版式时重新考虑 |
 | D18 | 本机双击启动器自带环境准备：`scripts\env.cmd` 找系统 Python，`scripts\bootstrap.py` 创建 `.venv`、`pip install -e ".[dev]"`、`npm install` + `sync_runtime.py --skip-fonts` 同步播放器资源、构建 `dist/`、`alembic upgrade head`，然后交给 `scripts/launcher.py` 起服务 | 用户是新手，第一次双击 `star.cmd` 只看到「没有找到虚拟环境」，照着 README 逐条敲命令不现实。把准备做成幂等的检查，缺什么补什么，双击一个文件就能从空仓库跑到可访问的站点；准备逻辑放在 Python 里可以测试，批处理只做引导 | 启动器第一次接触网络和 Node.js（之后不需要）；仓库多一层需要随依赖、构建步骤同步维护的准备逻辑；`--skip-fonts` 意味着字体子集仍由作者改动后手动重建 | 出现安装包 / 桌面 app 形态，或需要完全离线的一次性分发时，把准备逻辑换成安装器 |
 | D19 | 并行开发任务各自在 `.worktree/` 下的独立 git 工作树里进行，完成后合并回 `main`；`scripts/worktree.py` 负责创建/查看/合并/删除工作树，并把主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`、`courses/*/narration/cache/` 以目录联接共享，把 `runtime/vendor` 与 `.env` 复制进工作树（`link` 负责刷新副本）；根 `conftest.py` 与构建脚本把仓库根放进 `sys.path`，避免共享虚拟环境的 editable install 把导入劫持到主工作树；删除前校验未提交改动，合并冲突自动回滚 | 多个 Agent 会话并行开发时，共用工作区会互相污染（切分支、暂存区、未提交改动）；共享已装依赖与创作工具让新工作树几秒内可跑测试、构建课程，不重复联网安装；复制写侧生成物保证工作树里重跑同步脚本或改本地配置不影响主工作树；删除/合并的安全检查避免误丢未提交改动或把主工作树留在冲突态 | 依赖目录共享意味着在工作树里 `pip install` / `npm install` / 重做旁白会写主工作树或共享缓存，必须串行处理（启动器对重装会直接拒绝）；`dist/`、`data/` 与主工作树各自独立，需要各自构建与迁移；多一层需要在任务收尾时合并与清理的流程 | 需要每个任务独立依赖版本、跨机器分发生成物，或迁移到 CI/容器化并行时 |
-| D20 | 课程水印是课程内容：配置写在 `course.json` 的 `watermark` 字段，构建时由 `runtime/shell.html.j2` 渲染进课程包；后台 `/admin/courses/<slug>/watermark` 编辑源文件并同步重新构建，不写数据库、不在运行期向站点 API 取配置 | 独立部署的课程包必须自带水印；水印属于课程的展示配置，和封面、强调色一样应随课程版本化。把配置放在 `dist/` 会被下次构建覆盖，放在 SQLite 则静态包丢水印，也违反 D5。后台页复用 `/import` 的「同步编辑 + 重建」模式，不引入新任务队列 | 后台写课程源文件需要 `courses/` 与 `scripts/`，生产镜像若只部署 `app/` 和 `dist/`，配置页只能只读；同一时间多人保存会互相覆盖（单实例、串行写保护，不做乐观锁） | 水印需要按观看者动态生成（用户名、时间戳）时，改为运行期渲染或图片服务，并重新评估权限与缓存 |
+| D20 | 课程水印是课程内容：配置写在 `course.json` 的 `watermark` 字段，构建时由 `scripts/build_courses.py` 把水印层写进构建产物的 composition 入口；后台 `/admin/courses/<slug>/watermark` 编辑源文件并同步重新构建，不写数据库、不在运行期向站点 API 取配置 | 独立部署的课程包必须自带水印；水印属于课程的展示配置，和封面、强调色一样应随课程版本化。把配置放在 `dist/` 会被下次构建覆盖，放在 SQLite 则静态包丢水印，也违反 D5。写进 composition 而不是页面外壳，是因为网页播放器和 MP4 渲染器消费同一份 composition，水印在播放和导出里天然一致。后台页复用 `/import` 的「同步编辑 + 重建」模式，不引入新任务队列 | 后台写课程源文件需要 `courses/` 与 `scripts/`，生产镜像若只部署 `app/` 和 `dist/`，配置页只能只读；同一时间多人保存会互相覆盖（单实例、串行写保护，不做乐观锁）；水印文本随构建进入 composition，改水印后旧视频会因内容哈希变化被标记为过期 | 水印需要按观看者动态生成（用户名、时间戳）时，改为运行期渲染或图片服务，并重新评估权限与缓存 |
 
 ### 3.1 三个需要展开的决定
 
@@ -518,7 +518,7 @@ app/
 │  ├─ composition.py       # 解析根 composition 的 screen host
 │  ├─ resolver.py          # 合并 course.json + composition，校验
 │  ├─ importing.py         # 外部课程导入：校验、staging 构建、原子落盘、来源记录
-│  ├─ watermark.py         # 课程水印：表单解析、源 course.json 读写、重建
+│  ├─ watermark.py         # 课程水印：表单解析、源 course.json 读写、构建时注入 composition、重建
 │  └─ loader.py            # 扫描 dist/、缓存、错误收集
 ├─ api/
 │  ├─ courses.py           # 只读课程 JSON API
@@ -627,11 +627,14 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 
 | 路径 | 缓存 |
 | --- | --- |
-| `/courses/<slug>/` 和 `index.html` | `no-cache` 或短缓存 + ETag |
-| `/courses/<slug>/course.json` | 短缓存 |
-| `/courses/<slug>/composition/assets/*` | 中等缓存（例如 1 天），构建时用查询参数破坏缓存 |
-| `/courses/<slug>/runtime/vendor/*` | 长缓存（1 年，immutable） |
+| `/courses/<slug>/` 和 `index.html` | `no-cache`（ETag + Last-Modified 重校验） |
+| `/courses/<slug>/course.json` | `no-cache` |
+| `/courses/<slug>/composition/**`（含 `index.html`） | `no-cache` |
+| `/courses/<slug>/runtime/**`（vendor 之外） | `no-cache` |
+| `/courses/<slug>/runtime/vendor/*` | 长缓存（1 年，immutable，URL 带 `?v=` 破坏缓存） |
 | `/static/*` | 中等缓存 |
+
+课程包是**原地重建**的：同一个 URL 下的 HTML、清单、composition 和外壳脚本都会在保存水印或重新构建后变化，所以除固定版本的 player vendor 之外都必须重校验。漏掉 `Cache-Control` 时浏览器会按 `Last-Modified` 做启发式缓存（约为已过时长的 10%，可长达一个多小时），普通导航直接复用旧页面，看起来就像“水印没生效”。`app/main.py` 的中间件统一给 `/courses/*` 设置上表策略，ETag 让重复访问只花一次 304。
 
 生产环境可以把这个 mount 换成 Nginx/CDN；FastAPI 的行为作为本地开发和单机部署的默认值。
 
@@ -779,7 +782,7 @@ SQLite 的限制也要写清楚：
 主链路不变：网页仍是课程主形态，MP4 只是后台按需导出的附属产物。
 
 - **入口。** `/admin` 后台设置页列出全部课程、屏数、时长、视频是否已生成，以及生成和下载按钮。页脚有一个「后台设置」文字入口。
-- **渲染源。** `dist/courses/<slug>/composition/`，也就是站点播放的同一份构建产物。视频渲染不读 `courses/` 源，也不需要创作期的 `package.json` 或 `hyperframes.json`；后台水印配置页是另一个写路径，见 7.12。
+- **渲染源。** `dist/courses/<slug>/composition/`，也就是站点播放的同一份构建产物。课程水印在构建时已经写进这份 composition，所以导出的 MP4 和网页播放画面带同一层水印。视频渲染不读 `courses/` 源，也不需要创作期的 `package.json` 或 `hyperframes.json`；后台水印配置页是另一个写路径，见 7.12。
 - **渲染器。** 固定版本 HyperFrames CLI。发现顺序：`VIDEO_HYPERFRAMES_CLI` → 仓库内 `tools/node_modules/hyperframes/bin/hyperframes.mjs` → PATH 上的 `hyperframes` → `npx --yes hyperframes@<版本>`。需要 Node 22+、Chromium（`npx hyperframes browser ensure`）和 FFmpeg/FFprobe。
 - **任务模型。** 进程内单任务：同一时间只渲染一个视频，重复请求返回「已有视频正在生成」。渲染前把 composition 复制到 `VIDEO_WORK_DIR` 下的临时目录，避免污染 `dist/`（它可能是只读挂载）并隔离并发；结束后清理工作目录。
 - **产物。** `data/videos/<slug>.mp4` 与元数据 `data/videos/<slug>.json`（生成时间、大小、时长、质量档、内容哈希、上次尝试结果）。失败时保留 `data/videos/<slug>.render.log` 供运维排查，页面只给可执行的说明。`data/` 不进 Git，视频不进构建产物。
@@ -790,7 +793,7 @@ SQLite 的限制也要写清楚：
 
 ### 7.12 课程水印配置（后台）
 
-水印是课程内容，不是站点运行态：配置写在 `courses/<slug>/course.json` 的 `watermark` 字段，构建时由 shell 模板渲染进课程包，独立部署也保留（D20）。
+水印是课程内容，不是站点运行态：配置写在 `courses/<slug>/course.json` 的 `watermark` 字段，构建时把水印层写进构建产物的 composition 入口，独立部署也保留（D20）。写进 composition 而不是课程页外壳，是因为网页播放器和 MP4 渲染器消费的是同一份 composition：一个层同时覆盖播放与导出。
 
 - **入口。** `/admin` 每门课的登记行有「水印配置」链接；页面是 `/admin/courses/<slug>/watermark`，复用后台「登记表」版式，带 16:9 预览。
 - **读取。** 优先读源 `courses/<slug>/course.json`；源不存在时读 `dist/courses/<slug>/course.json`，页面只读并提示在持有课程源的机器上配置。
@@ -798,7 +801,7 @@ SQLite 的限制也要写清楚：
 - **为什么不用数据库。** 水印属于课程的展示配置，应该随课程版本化、可评审、可回滚；独立部署的课程包不能依赖站点 API。代价是生产镜像只装 `app/` 和 `dist/` 时配置页只读。
 - **为什么同步重建。** 单门课重建是复制文件 + 渲染 Jinja，耗时在秒级；和 `/import` 一样用同步表单，省掉任务队列与轮询状态。渲染超过这个量级（大素材或视频）时再抽任务系统。
 - **安全。** 与后台其他写接口一致：`ADMIN_TOKEN`、后台 Cookie 或 `X-Admin-Token`、同源 `Origin` 检查、`no-store`、`noindex`；slug 必须是合法课程且只允许写 `courses/<slug>/course.json`。
-- **视觉。** 角标水印贴画布四角，满屏平铺水印按 16:9 网格重复；两者都只覆盖播放画布，`pointer-events: none`、无动画、不挡控制条，全屏保留。字号以 1920×1080 画布的设计像素表示，用 `cqw` 随画布等比缩放。
+- **视觉。** 角标水印贴画布四角，满屏平铺水印按 16:9 网格重复；两者都只覆盖播放画布，`pointer-events: none`、无动画、不挡控制条，全屏保留，导出的 MP4 里同样存在。字号以 1920×1080 画布的设计像素表示；水印层写在 composition 内层，播放器缩放画布时等比缩放，渲染器按 1:1 输出。
 
 ---
 
@@ -841,7 +844,7 @@ SQLite 的限制也要写清楚：
 5. **讲义抽屉**：当前屏的完整文本，键盘可访问，支持前后屏切换。
 6. **完成页**：要点回顾、重看、返回课程库。
 7. **错误页**：错误说明、重试、返回封面。
-8. **水印层**（可选）：构建时按 `course.json.watermark` 渲染进 16:9 画布内层；角标贴四角，满屏平铺按网格重复。水印不拦截指针事件、不参与时间轴、不遮控制条，进入全屏仍然可见。
+8. **水印层**（可选）：构建时按 `course.json.watermark` 写进 composition 内层；角标贴四角，满屏平铺按网格重复。水印不拦截指针事件、不参与时间轴、不遮控制条，进入全屏仍然可见，导出的 MP4 也带同一层。
 
 封面和大纲是无 JS 也能读的静态 HTML；播放器部分才是 JS 增强。这样即使脚本加载失败，学习者至少能看到课程讲什么、每屏标题是什么。
 

@@ -548,12 +548,21 @@ def test_save_rebuilds_a_real_bundle(source_site: Site) -> None:
         follow_redirects=False,
     )
     assert response.status_code == 303, response.text
+    # The watermark is baked into the built composition (the artifact both the
+    # player and the MP4 renderer consume), not into the shell page.
     built = (
-        Path(source_site.settings.courses_dist_dir) / SLUG / "index.html"
+        Path(source_site.settings.courses_dist_dir)
+        / SLUG
+        / "composition"
+        / "index.html"
     ).read_text(encoding="utf-8")
     assert "作者：张三" in built
     assert "内部资料，请勿外传" in built
-    assert "watermark__corner--bottom-right" in built
+    assert "course-watermark__corner--bottom-right" in built
+    shell = (
+        Path(source_site.settings.courses_dist_dir) / SLUG / "index.html"
+    ).read_text(encoding="utf-8")
+    assert "data-course-watermark" not in shell
 
     admin_page = source_site.client.get("/admin")
     assert "水印已配置" in admin_page.text

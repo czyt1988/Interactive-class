@@ -465,59 +465,68 @@ def watermark_page(
     context.close()
 
 
+def _watermark_frame(page: Page):
+    """The composition iframe; the watermark layer lives inside it."""
+
+    frame = page.frame_locator("hyperframes-player iframe").first
+    frame.locator(".course-watermark").wait_for(state="attached", timeout=25_000)
+    return frame
+
+
 def test_plain_bundle_has_no_watermark_layer(page: Page) -> None:
-    assert page.locator(".watermark").count() == 0
+    composition = page.request.get(page.url.rstrip("/") + "/composition/index.html")
+    assert composition.ok
+    assert "data-course-watermark" not in composition.text()
+    assert page.locator(".course-watermark").count() == 0
 
 
-def test_watermark_layer_covers_the_canvas_without_blocking_the_player(
-    watermark_page: Page,
-) -> None:
+def test_watermark_layer_is_baked_into_the_composition(watermark_page: Page) -> None:
+    """The layer must be inside the composition, because the MP4 renderer only
+    reads the composition. A shell-only layer would play in the browser but be
+    missing from the exported video."""
+
     _start_playing(watermark_page)
-    info = watermark_page.evaluate(
+    frame = _watermark_frame(watermark_page)
+    info = frame.locator("body").evaluate(
         """
-        () => {
-          const layer = document.querySelector('.watermark');
-          const canvas = document.querySelector('.stage__canvas');
-          const tile = document.querySelector('.watermark__tile');
-          const canvasRect = canvas.getBoundingClientRect();
-          const layerRect = layer.getBoundingClientRect();
-          const hit = document.elementFromPoint(
-            canvasRect.x + canvasRect.width / 2,
-            canvasRect.y + canvasRect.height / 2,
-          );
+        (body) => {
+          const layer = body.querySelector('.course-watermark');
+          const tile = body.querySelector('.course-watermark__tile');
+          const rect = layer.getBoundingClientRect();
+          const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
           return {
             exists: Boolean(layer),
-            parentClass: layer.parentElement.className,
-            insideCanvas: layer.closest('.stage__canvas') === canvas,
+            insideBody: body.contains(layer),
             pointerEvents: getComputedStyle(layer).pointerEvents,
-            corners: [...document.querySelectorAll('.watermark__corner')].map(
+            corners: [...body.querySelectorAll('.course-watermark__corner')].map(
               (el) => el.textContent,
             ),
-            tileCount: document.querySelectorAll('.watermark__tile').length,
+            tileCount: body.querySelectorAll('.course-watermark__tile').length,
             tileText: tile ? tile.textContent : null,
-            fillsCanvas:
-              layerRect.width >= canvasRect.width - 1 &&
-              layerRect.height >= canvasRect.height - 1,
-            hitIsOnPlayer: Boolean(hit && hit.closest('#hf-player')),
+            coversViewport:
+              rect.width >= innerWidth - 1 && rect.height >= innerHeight - 1,
+            hitBlockedByLayer: Boolean(hit && hit.closest('.course-watermark')),
           };
         }
         """
     )
     assert info["exists"] is True
-    assert info["parentClass"] == "stage__canvas"
-    assert info["insideCanvas"] is True
+    assert info["insideBody"] is True
     assert info["pointerEvents"] == "none"
     assert info["corners"] == ["作者：测试作者", "示例公司"]
     assert info["tileCount"] == 49
     assert info["tileText"] == "内部资料，请勿外传"
-    assert info["fillsCanvas"] is True
-    assert info["hitIsOnPlayer"] is True
+    assert info["coversViewport"] is True
+    assert info["hitBlockedByLayer"] is False
+    # The shell itself must not paint a second copy over the player.
+    assert watermark_page.locator(".course-watermark").count() == 0
     assert watermark_page.external_requests == []  # type: ignore[attr-defined]
     assert watermark_page.console_errors == []  # type: ignore[attr-defined]
 
 
 def test_watermark_layer_survives_fullscreen(watermark_page: Page) -> None:
     _start_playing(watermark_page)
+    frame = _watermark_frame(watermark_page)
     watermark_page.click("#btn-fullscreen")
     watermark_page.wait_for_function(
         "() => document.fullscreenElement?.id === 'stage-wrap'", timeout=10_000
@@ -525,19 +534,21 @@ def test_watermark_layer_survives_fullscreen(watermark_page: Page) -> None:
     state = watermark_page.evaluate(
         """
         () => {
-          const layer = document.querySelector('.watermark');
           const fullscreen = document.fullscreenElement;
-          const rect = layer.getBoundingClientRect();
+          const player = document.querySelector('hyperframes-player');
           return {
-            inFullscreenTree: Boolean(fullscreen && fullscreen.contains(layer)),
-            width: rect.width,
-            height: rect.height,
+            inFullscreenTree: Boolean(fullscreen && player && fullscreen.contains(player)),
           };
         }
         """
     )
     assert state["inFullscreenTree"] is True
-    assert state["width"] > 0
-    assert state["height"] > 0
+    # The layer is inside the composition iframe, so it scales with the canvas
+    # instead of being cut out of the fullscreen element.
+    rect = frame.locator(".course-watermark").evaluate(
+        "(layer) => { const r = layer.getBoundingClientRect(); return { w: r.width, h: r.height }; }"
+    )
+    assert rect["w"] > 0
+    assert rect["h"] > 0
     watermark_page.keyboard.press("Escape")
 

@@ -46,6 +46,17 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "SAMEORIGIN",
 }
 
+# Course bundles are rebuilt in place (same URL) whenever a course or its
+# watermark changes. Without an explicit Cache-Control, browsers apply
+# heuristic freshness from Last-Modified and can keep using the old page and the
+# old composition inside the player iframe for hours after a rebuild. Force
+# revalidation for everything in a bundle; ETag/Last-Modified keep the 304s
+# cheap. Only the pinned player vendor files may be cached hard: their URLs are
+# versioned with ?v= by the build.
+COURSE_BUNDLE_CACHE = "no-cache"
+COURSE_VENDOR_CACHE = "public, max-age=31536000, immutable"
+COURSE_VENDOR_PATH_MARKER = "/runtime/vendor/"
+
 SITE_CSP = (
     "default-src 'self'; "
     "img-src 'self' data:; "
@@ -162,7 +173,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             response.headers.setdefault(header, value)
         # Course pages inject the player, the inline manifest and scene scripts,
         # so they get their own CSP at the static/CDN layer rather than the site one.
-        if not request.url.path.startswith("/courses"):
+        if request.url.path.startswith("/courses"):
+            if COURSE_VENDOR_PATH_MARKER in request.url.path:
+                response.headers.setdefault("Cache-Control", COURSE_VENDOR_CACHE)
+            else:
+                response.headers.setdefault("Cache-Control", COURSE_BUNDLE_CACHE)
+        else:
             response.headers.setdefault("Content-Security-Policy", SITE_CSP)
         return response
 

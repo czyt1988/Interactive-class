@@ -26,6 +26,10 @@ def write_course(dist: Path, *, featured: bool = False, level: str = "beginner",
     (target / "composition" / "index.html").write_text("<!doctype html>", encoding="utf-8")
     (target / "runtime").mkdir(exist_ok=True)
     (target / "runtime" / "course-deck.js").write_text("export {};", encoding="utf-8")
+    (target / "runtime" / "vendor").mkdir(exist_ok=True)
+    (target / "runtime" / "vendor" / "hyperframes-player.global.js").write_text(
+        "/* player */", encoding="utf-8"
+    )
 
 
 @pytest.fixture
@@ -101,6 +105,45 @@ def test_security_headers(site: TestClient) -> None:
 def test_courses_mount_serves_bundle(site: TestClient) -> None:
     response = site.get("/courses/valid-two-screen/")
     assert response.status_code == 200
+
+
+def test_course_bundle_forces_cache_revalidation(site: TestClient) -> None:
+    """A rebuilt course keeps its URL, so the browser must check back.
+
+    Without an explicit Cache-Control, Chrome applies heuristic freshness from
+    Last-Modified and can keep serving the old course page and the old
+    composition inside the player iframe for hours after a watermark save.
+    """
+
+    for path in (
+        "/courses/valid-two-screen/",
+        "/courses/valid-two-screen/index.html",
+        "/courses/valid-two-screen/course.json",
+        "/courses/valid-two-screen/composition/index.html",
+        "/courses/valid-two-screen/runtime/course-deck.js",
+    ):
+        response = site.get(path)
+        assert response.status_code == 200, path
+        assert response.headers.get("cache-control") == "no-cache", path
+
+
+def test_course_page_revalidates_to_a_cheap_304(site: TestClient) -> None:
+    path = "/courses/valid-two-screen/"
+    first = site.get(path)
+    etag = first.headers["etag"]
+    again = site.get(path, headers={"If-None-Match": etag})
+    assert again.status_code == 304
+    assert again.headers.get("cache-control") == "no-cache"
+
+
+def test_course_vendor_is_cached_immutably(site: TestClient) -> None:
+    """Pinned player files are versioned with ?v=, so they can cache hard."""
+
+    response = site.get("/courses/valid-two-screen/runtime/vendor/hyperframes-player.global.js")
+    assert response.status_code == 200
+    cache = response.headers.get("cache-control", "")
+    assert "max-age=31536000" in cache
+    assert "immutable" in cache
 
 
 def test_es_modules_are_served_as_javascript(site: TestClient) -> None:

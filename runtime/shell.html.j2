@@ -149,35 +149,6 @@
               <p>正在准备第一帧…</p>
             </div>
             <div id="transition" class="stage__veil stage__veil--transition" hidden aria-hidden="true"></div>
-
-            {# Course watermark. Rendered server-side and layered inside the canvas
-               so it also stays visible in fullscreen. Pure CSS, no network, no
-               animation; pointer-events stay off so the player still receives
-               clicks. #}
-            {% if course.watermark and course.watermark.enabled %}
-              <div class="watermark" aria-hidden="true" data-watermark>
-                {% if course.watermark.repeating %}
-                  <div
-                    class="watermark__repeat"
-                    style="--wm-font-size: {{ course.watermark.repeating.fontSize }}; --wm-color: {{ course.watermark.repeating.color }}; --wm-opacity: {{ course.watermark.repeating.opacity }}; --wm-gap-x: {{ course.watermark.repeating.gapX }}; --wm-gap-y: {{ course.watermark.repeating.gapY }}; --wm-rotate: {{ course.watermark.repeating.rotate }}deg;"
-                  >
-                    {% for _tile in range(watermark_tiles) %}<span class="watermark__tile">{{ course.watermark.repeating.text | e }}</span>{% endfor %}
-                  </div>
-                {% endif %}
-                {% for mark in course.watermark.corners %}
-                  <span
-                    class="watermark__corner watermark__corner--{{ mark.position }}"
-                    style="--wm-font-size: {{ mark.fontSize }}; --wm-color: {{ mark.color }}; --wm-opacity: {{ mark.opacity }};"
-                  >{{ mark.text | e }}</span>
-                {% endfor %}
-              </div>
-              {% if course.watermark.corners %}
-                {# Corner marks can carry attribution (author/company). The visual
-                   layer is aria-hidden as a whole, so expose that copy once,
-                   without repeating the screenshot-deterrent text. #}
-                <p class="visually-hidden" data-watermark-attribution>课程水印：{% for mark in course.watermark.corners %}{{ mark.text | e }}{% if not loop.last %}；{% endif %}{% endfor %}</p>
-              {% endif %}
-            {% endif %}
           </div>
         </div>
 

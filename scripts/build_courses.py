@@ -31,7 +31,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E40
 from app.catalog.assets import scan_composition  # noqa: E402
 from app.catalog.models import CatalogError, ResolvedCourse  # noqa: E402
 from app.catalog.resolver import CourseResolutionError, resolve_course  # noqa: E402
-from app.catalog.watermark import tile_count  # noqa: E402
+from app.catalog.watermark import inject_watermark  # noqa: E402
 
 DEFAULT_SOURCE = ROOT / "courses"
 DEFAULT_OUT = ROOT / "dist" / "courses"
@@ -347,16 +347,9 @@ def _render_shell(
 
     cover_url = f"./{course.cover}" if course.cover else None
     home_url = course.site.homeUrl
-    watermark = course.watermark
-    watermark_tiles = (
-        tile_count(watermark.repeating)
-        if watermark is not None and watermark.enabled
-        else 0
-    )
     html = template.render(
         course=course_data,
         screens=course_data["screens"],
-        watermark_tiles=watermark_tiles,
         site={
             "title": site_title,
             "homeUrl": home_url,
@@ -429,6 +422,10 @@ def build_course(
     target = out_root / slug
     try:
         _copy_composition(course_dir / "composition", staging / "composition")
+        # The course watermark lives in the composition, not in the shell: the
+        # web player and the MP4 renderer both consume the composition, so one
+        # baked layer keeps playback and export identical.
+        inject_watermark(staging / course.composition.entry, course.watermark)
         font_url = shell_font_url(staging / "composition")
         _copy_runtime(runtime_dir, staging / "runtime")
         if course.cover:

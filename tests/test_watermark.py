@@ -16,6 +16,7 @@ from app.catalog.watermark import (
     PREVIEW_TILES,
     form_values,
     form_values_from_request,
+    inject_watermark,
     parse_form,
     read_manifest,
     save_watermark,
@@ -311,7 +312,9 @@ def test_manifest_path_rejects_traversal(tmp_path: Path) -> None:
 # -- build output ----------------------------------------------------------
 
 
-def _build_with(payload: dict | None, root: Path) -> tuple[str, str]:
+def _build_with(payload: dict | None, root: Path) -> tuple[str, str, str]:
+    """Build one course and return ``(shell html, composition html, hash)``."""
+
     source = root / "courses" / SLUG
     shutil.copytree(FIXTURES / SLUG, source)
     manifest = read_manifest(source / "course.json")
@@ -320,31 +323,44 @@ def _build_with(payload: dict | None, root: Path) -> tuple[str, str]:
     write_manifest(source / "course.json", manifest)
     result = build_course(source, out_root=root / "dist")
     assert result.ok, [error.message for error in result.errors]
-    html = (root / "dist" / SLUG / "index.html").read_text(encoding="utf-8")
-    return html, result.content_hash
+    bundle = root / "dist" / SLUG
+    shell = (bundle / "index.html").read_text(encoding="utf-8")
+    composition = (bundle / "composition" / "index.html").read_text(encoding="utf-8")
+    return shell, composition, result.content_hash
 
 
-def test_build_renders_corner_and_repeating_watermarks(tmp_path: Path) -> None:
-    html, _ = _build_with(_watermark_payload(), tmp_path / "marked")
-    assert 'data-watermark' in html
-    assert "watermark__corner watermark__corner--top-left" in html
-    assert "作者：张三" in html
-    assert "示例公司" in html
-    assert "内部资料，请勿外传" in html
-    assert html.count("watermark__tile") == 49
+def test_build_bakes_corner_and_repeating_watermarks_into_the_composition(
+    tmp_path: Path,
+) -> None:
+    """Playback and MP4 export read the composition, so the layer must live there.
+
+    The shell no longer renders a watermark: a shell-only layer would show up in
+    the browser but be missing from the exported video.
+    """
+
+    shell, composition, _ = _build_with(_watermark_payload(), tmp_path / "marked")
+    assert "data-course-watermark" in composition
+    assert "course-watermark__corner course-watermark__corner--top-left" in composition
+    assert "作者：张三" in composition
+    assert "示例公司" in composition
+    assert "内部资料，请勿外传" in composition
+    assert composition.count('class="course-watermark__tile"') == 49
+    assert "data-course-watermark" not in shell
+    assert "course-watermark" not in shell
 
 
 def test_build_omits_watermark_when_not_configured(tmp_path: Path) -> None:
-    html, _ = _build_with(None, tmp_path / "plain")
-    assert "data-watermark" not in html
-    assert "watermark__corner" not in html
+    shell, composition, _ = _build_with(None, tmp_path / "plain")
+    assert "data-course-watermark" not in composition
+    assert "course-watermark" not in composition
+    assert "data-course-watermark" not in shell
 
 
 def test_disabled_watermark_is_kept_in_manifest_but_not_rendered(tmp_path: Path) -> None:
     payload = _watermark_payload()
     payload["enabled"] = False
-    html, _ = _build_with(payload, tmp_path / "disabled")
-    assert "data-watermark" not in html
+    _, composition, _ = _build_with(payload, tmp_path / "disabled")
+    assert "data-course-watermark" not in composition
     built = json.loads(
         (tmp_path / "disabled" / "dist" / SLUG / "course.json").read_text(
             encoding="utf-8"
@@ -355,8 +371,8 @@ def test_disabled_watermark_is_kept_in_manifest_but_not_rendered(tmp_path: Path)
 
 
 def test_build_changes_content_hash_when_watermark_changes(tmp_path: Path) -> None:
-    _, plain_hash = _build_with(None, tmp_path / "plain")
-    _, marked_hash = _build_with(_watermark_payload(), tmp_path / "marked")
+    _shell, _composition, plain_hash = _build_with(None, tmp_path / "plain")
+    _shell, _composition, marked_hash = _build_with(_watermark_payload(), tmp_path / "marked")
     assert plain_hash != marked_hash
 
 
@@ -373,15 +389,52 @@ def test_watermark_text_is_html_escaped(tmp_path: Path) -> None:
             }
         ],
     }
-    html, _ = _build_with(payload, tmp_path / "escaped")
-    assert "&lt;b&gt;作者&lt;/b&gt;" in html
-    assert "<b>作者</b>" not in html
+    _, composition, _ = _build_with(payload, tmp_path / "escaped")
+    assert "&lt;b&gt;作者&lt;/b&gt;" in composition
+    assert "<b>作者</b>" not in composition
     match = re.search(
-        r'<span[^>]*watermark__corner--top-left[^>]*>(.*?)</span>', html, re.S
+        r'<span[^>]*course-watermark__corner--top-left[^>]*>(.*?)</span>', composition, re.S
     )
     assert match, "corner watermark span not found"
     assert "&lt;b&gt;作者&lt;/b&gt;" in match.group(1)
     assert "<b>" not in match.group(1)
+
+
+def test_inject_watermark_is_idempotent(tmp_path: Path) -> None:
+    """Builds inject into a fresh copy; a second call must not double the layer."""
+
+    entry = tmp_path / "index.html"
+    entry.write_text("<!doctype html><html><body><p>hi</p></body></html>", encoding="utf-8")
+    watermark = WatermarkConfig.model_validate(_watermark_payload())
+    assert inject_watermark(entry, watermark) is True
+    assert inject_watermark(entry, watermark) is False
+    document = entry.read_text(encoding="utf-8")
+    assert document.count("data-course-watermark") == 1
+    assert document.count('id="course-watermark-style"') == 1
+    assert document.index("<p>hi</p>") < document.index("data-course-watermark")
+
+
+def test_inject_watermark_appends_without_a_body_tag(tmp_path: Path) -> None:
+    entry = tmp_path / "fragment.html"
+    entry.write_text("<!-- no body wrapper -->", encoding="utf-8")
+    watermark = WatermarkConfig.model_validate(
+        {
+            "enabled": True,
+            "corners": [
+                {
+                    "position": "bottom-right",
+                    "text": "署名",
+                    "fontSize": 24,
+                    "color": "#16140f",
+                    "opacity": 0.5,
+                }
+            ],
+        }
+    )
+    assert inject_watermark(entry, watermark) is True
+    document = entry.read_text(encoding="utf-8")
+    assert document.startswith("<!-- no body wrapper -->")
+    assert "course-watermark__corner--bottom-right" in document
 
 
 def test_invalid_watermark_fails_the_build(tmp_path: Path) -> None:
