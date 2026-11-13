@@ -47,6 +47,17 @@ def test_home_shows_course_card(site: TestClient) -> None:
     assert "/courses/valid-two-screen/" in response.text
 
 
+def test_home_header_links_to_admin(site: TestClient) -> None:
+    home = site.get("/")
+    assert '<a class="site-nav__admin" href="/admin">后台管理</a>' in home.text
+    assert "后台设置" in home.text  # footer entry stays
+
+    for path in ("/courses", "/about"):
+        page = site.get(path)
+        assert 'class="site-nav__admin"' not in page.text
+        assert "后台设置" in page.text
+
+
 def test_library_lists_and_filters(site: TestClient) -> None:
     assert "两屏测试课" in site.get("/courses").text
 

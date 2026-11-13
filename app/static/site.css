@@ -186,6 +186,21 @@ code {
   font-weight: 600;
 }
 
+/* Homepage-only shortcut into /admin. Same pill rhythm as the nav links, with
+ * a border so it reads as a button rather than a third section link. */
+.site-nav__admin {
+  margin-left: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.site-nav__admin:hover {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
 main {
   width: min(var(--maxw), 100% - var(--gutter) * 2);
   margin-inline: auto;
@@ -786,10 +801,26 @@ main [id] {
 
   .site-header__inner {
     height: 60px;
+    gap: 12px;
   }
 
   .wordmark__text {
     font-size: 17px;
+  }
+
+  .site-nav {
+    gap: 0;
+  }
+
+  .site-nav a {
+    padding: 8px 10px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .site-nav__admin {
+    margin-left: 2px;
+    padding-inline: 10px;
   }
 
   .course-grid {
