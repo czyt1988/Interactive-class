@@ -45,7 +45,7 @@ exit /b %RC%
 
 :prepare_failed
 echo.
-echo 环境准备没有完成，请按上面的提示处理后重新双击 star.cmd。
+echo 环境准备没有完成，请按上面的提示处理后重新双击 start.cmd。
 echo.
 pause
 exit /b 1

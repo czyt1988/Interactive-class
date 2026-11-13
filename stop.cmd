@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 REM ============================================================
 REM  AI Learning 停止脚本
-REM  停止 star.cmd 启动的服务（运行记录在 .run\service.json）。
+REM  停止 start.cmd 启动的服务（运行记录在 .run\service.json）。
 REM ============================================================
 
 set "PYTHON=%~dp0.venv\Scripts\python.exe"
@@ -29,7 +29,7 @@ exit /b %RC%
 :not_initialized
 echo.
 echo 服务没有在运行：这台电脑上还没有创建虚拟环境 .venv。
-echo 直接双击 star.cmd 开始使用即可，它会自动完成环境准备。
+echo 直接双击 start.cmd 开始使用即可，它会自动完成环境准备。
 echo.
 pause
 exit /b 0

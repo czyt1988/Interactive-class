@@ -1,8 +1,8 @@
 """Start, stop and restart the local AI Learning site.
 
-The Windows entry points (``star.cmd``, ``restart.cmd`` and ``stop.cmd``) are
+The Windows entry points (``start.cmd``, ``restart.cmd`` and ``stop.cmd``) are
 double-click wrappers around this module. The port and bind address are
-declared at the top of ``star.cmd`` because that is the file a user opens to
+declared at the top of ``start.cmd`` because that is the file a user opens to
 start the site. The running process is recorded in ``.run/service.json`` so
 restart and stop can find it even after the original console window is gone.
 
@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-LAUNCHER_FILE = "star.cmd"
+LAUNCHER_FILE = "start.cmd"
 RUN_DIR = ".run"
 STATE_FILE = "service.json"
 DEFAULT_HOST = "0.0.0.0"
@@ -569,7 +569,7 @@ def _print_port_conflict(endpoint: Endpoint, pids: set[int]) -> None:
     else:
         print(f"端口 {endpoint.port} 已被占用。")
     print()
-    print(f"请关闭占用端口的程序，或修改 star.cmd 开头的 APP_PORT（当前 {endpoint.port}）后重试。")
+    print(f"请关闭占用端口的程序，或修改 start.cmd 开头的 APP_PORT（当前 {endpoint.port}）后重试。")
 
 
 def _missing_modules() -> list[str]:
@@ -618,7 +618,7 @@ def command_start(root: Path, endpoint: Endpoint, *, banner: bool = True) -> int
                 print(f"  启动时间 {state.started_at}")
             if (state.host, state.port) != (endpoint.host, endpoint.port):
                 print()
-                print(f"注意：star.cmd 现在的配置是 {endpoint.bind_label}。")
+                print(f"注意：start.cmd 现在的配置是 {endpoint.bind_label}。")
                 print("      双击 restart.cmd 可以按新配置重启。")
             return EXIT_ALREADY_RUNNING
         print("清理上次异常退出留下的运行记录。")
@@ -741,7 +741,7 @@ def command_stop(root: Path, endpoint: Endpoint) -> int:
     pids = listener_pids(endpoint.port)
     if pids:
         _print_port_conflict(endpoint, pids)
-        print("这不是 star.cmd 启动的实例，为避免误杀，stop.cmd 没有结束它。")
+        print("这不是 start.cmd 启动的实例，为避免误杀，stop.cmd 没有结束它。")
         print(f"如确认需要结束，请手动执行：taskkill /PID {sorted(pids)[0]} /T /F")
         return EXIT_STOP_FAILED
 
@@ -761,7 +761,7 @@ def command_restart(root: Path, endpoint: Endpoint) -> int:
     if state is not None and process_matches(state):
         print(f"检测到运行中的服务：PID {state.pid}，监听 {state.host}:{state.port}。")
         if (state.host, state.port) != (endpoint.host, endpoint.port):
-            print(f"star.cmd 的配置是 {endpoint.bind_label}，将按新配置启动。")
+            print(f"start.cmd 的配置是 {endpoint.bind_label}，将按新配置启动。")
         print()
         code = stop_state(state, path)
         if code != EXIT_OK:
@@ -785,9 +785,9 @@ def command_restart(root: Path, endpoint: Endpoint) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="AI Learning 本地服务控制")
     parser.add_argument("command", choices=("start", "stop", "restart"))
-    parser.add_argument("--port", help="临时覆盖 star.cmd 里的 APP_PORT")
-    parser.add_argument("--host", help="临时覆盖 star.cmd 里的 APP_HOST")
-    parser.add_argument("--config", type=Path, help="启动脚本路径（默认 star.cmd）")
+    parser.add_argument("--port", help="临时覆盖 start.cmd 里的 APP_PORT")
+    parser.add_argument("--host", help="临时覆盖 start.cmd 里的 APP_HOST")
+    parser.add_argument("--config", type=Path, help="启动脚本路径（默认 start.cmd）")
     parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     return parser
 

@@ -1,7 +1,7 @@
 """One-step environment preparation for the double-click launchers.
 
 A fresh checkout has no ``.venv``, no pinned player assets and no built course
-bundles, so ``star.cmd`` used to stop with "没有找到虚拟环境" and ask the user to
+bundles, so ``start.cmd`` used to stop with "没有找到虚拟环境" and ask the user to
 run a chain of commands by hand. ``scripts\\env.cmd`` now calls this module
 first, so a beginner only ever double-clicks one file:
 
@@ -105,17 +105,17 @@ def _run(
     except FileNotFoundError as exc:
         raise SetupError(
             f"无法运行 {command[0]}。",
-            "重新双击 star.cmd；如果仍然失败，请确认这个程序还在 PATH 上。",
+            "重新双击 start.cmd；如果仍然失败，请确认这个程序还在 PATH 上。",
         ) from exc
     except subprocess.TimeoutExpired as exc:
         raise SetupError(
             f"{command[0]} 运行超过 {int(timeout or 0)} 秒，已停止。",
-            "检查网络后重新双击 star.cmd。",
+            "检查网络后重新双击 start.cmd。",
         ) from exc
     except (OSError, subprocess.SubprocessError) as exc:
         raise SetupError(
             f"无法运行 {command[0]}：{exc}",
-            "重新双击 star.cmd；如果问题仍在，请把这一行发给维护者。",
+            "重新双击 start.cmd；如果问题仍在，请把这一行发给维护者。",
         ) from exc
     return CommandResult(completed.returncode, _decode(completed.stdout), _decode(completed.stderr))
 
@@ -215,7 +215,7 @@ def ensure_venv(reporter: _Reporter, root: Path = ROOT) -> Path:
             raise SetupError(
                 "虚拟环境 .venv 已经损坏，或者里面的 Python 版本太旧。",
                 "关闭所有 AI Learning 窗口，删除仓库根目录的 .venv 文件夹，"
-                "然后重新双击 star.cmd 让它自动重建。",
+                "然后重新双击 start.cmd 让它自动重建。",
             )
         reporter.info("  虚拟环境 .venv 已就绪")
         return target
@@ -233,7 +233,7 @@ def _create_venv(root: Path) -> None:
     if not result.ok or not venv_python(root).is_file():
         raise SetupError(
             "创建虚拟环境失败。",
-            "确认 Python 安装完整（安装时勾选 Add python.exe to PATH），然后重新双击 star.cmd。",
+            "确认 Python 安装完整（安装时勾选 Add python.exe to PATH），然后重新双击 start.cmd。",
             _tail(result),
         )
 
@@ -262,7 +262,7 @@ def _pip_install(root: Path, python: Path) -> None:
     if _is_shared_venv_link(root):
         raise SetupError(
             "依赖缺失，但当前工作树复用主工作树的 .venv。",
-            "请到主工作树安装依赖（双击主工作树的 star.cmd，或执行 "
+            "请到主工作树安装依赖（双击主工作树的 start.cmd，或执行 "
             'pip install -e ".[dev]"）；工作树里的 .venv 是共享联接，'
             "在这里重装会改写所有并行会话的环境。",
         )
@@ -283,7 +283,7 @@ def _pip_install(root: Path, python: Path) -> None:
     if not result.ok:
         raise SetupError(
             "安装项目依赖失败。",
-            "检查网络后重新双击 star.cmd。国内网络可以先在命令行执行 "
+            "检查网络后重新双击 start.cmd。国内网络可以先在命令行执行 "
             "set PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple 再重试。",
             _tail(result),
         )
@@ -361,20 +361,20 @@ def _require_node() -> tuple[str, str]:
     if node is None:
         raise SetupError(
             "准备播放器资源需要 Node.js 22 或更高版本，这台电脑上没有找到。",
-            "从 https://nodejs.org/zh-cn 安装 Node.js 22，装好后重新双击 star.cmd；"
+            "从 https://nodejs.org/zh-cn 安装 Node.js 22，装好后重新双击 start.cmd；"
             "如果已经装过，把它的安装目录加进 PATH。",
         )
     major = _node_major(node)
     if major is not None and major < MIN_NODE[0]:
         raise SetupError(
             f"Node.js 版本太旧（当前 v{major}），需要 22 或更高版本。",
-            "从 https://nodejs.org/zh-cn 安装新版 Node.js，然后重新双击 star.cmd。",
+            "从 https://nodejs.org/zh-cn 安装新版 Node.js，然后重新双击 start.cmd。",
         )
     npm = _npm_executable(node)
     if npm is None:
         raise SetupError(
             "找到了 Node.js，但没有找到 npm。",
-            "重新安装 Node.js 22（安装包自带 npm），然后重新双击 star.cmd。",
+            "重新安装 Node.js 22（安装包自带 npm），然后重新双击 start.cmd。",
         )
     return node, npm
 
@@ -402,7 +402,7 @@ def ensure_runtime_assets(reporter: _Reporter, root: Path = ROOT) -> bool:
     if not runtime_assets_ready(root):
         raise SetupError(
             "播放器资源没有同步成功。",
-            "重新双击 star.cmd；如果仍然失败，请把上面的错误信息发给维护者。",
+            "重新双击 start.cmd；如果仍然失败，请把上面的错误信息发给维护者。",
         )
     return True
 
@@ -416,7 +416,7 @@ def _npm_install(root: Path, npm: str) -> None:
     if not result.ok:
         raise SetupError(
             "下载播放器资源失败（npm install）。",
-            "检查网络后重新双击 star.cmd；npm 的报错在下面。",
+            "检查网络后重新双击 start.cmd；npm 的报错在下面。",
             _tail(result),
         )
 
@@ -441,7 +441,7 @@ def ensure_courses_built(reporter: _Reporter, root: Path = ROOT) -> bool:
     if not (root / "dist" / "courses").is_dir():
         raise SetupError(
             "课程页面没有构建成功。",
-            "重新双击 star.cmd；如果仍然失败，请把上面的错误信息发给维护者。",
+            "重新双击 start.cmd；如果仍然失败，请把上面的错误信息发给维护者。",
         )
     return True
 
@@ -474,7 +474,7 @@ def _run_python(
     if not result.ok:
         raise SetupError(
             f"{title}失败。",
-            "按上面的提示处理后重新双击 star.cmd。",
+            "按上面的提示处理后重新双击 start.cmd。",
             _tail(result),
         )
 
@@ -505,7 +505,7 @@ def _check_interpreter() -> None:
             f"当前 Python 是 {sys.version.split()[0]}，版本太旧。",
             f"安装 Python {MIN_PYTHON[0]}.{MIN_PYTHON[1]} 或更高版本"
             "（https://www.python.org/downloads/，安装时勾选 Add python.exe to PATH），"
-            "然后重新双击 star.cmd。",
+            "然后重新双击 start.cmd。",
         )
 
 

@@ -308,7 +308,7 @@ def test_dangling_shared_venv_gets_actionable_hint(
 
 
 def test_star_cmd_prepares_environment_before_starting() -> None:
-    star = (bootstrap.ROOT / "star.cmd").read_bytes().decode("gbk")
+    star = (bootstrap.ROOT / "start.cmd").read_bytes().decode("gbk")
     assert "scripts\\env.cmd" in star
     assert "scripts\\launcher.py" in star
     assert 'set "APP_PORT=' in star
@@ -321,7 +321,7 @@ def test_star_cmd_prepares_environment_before_starting() -> None:
         assert candidate in env
     assert "没有找到 Python" in env
 
-    endpoint = launcher.endpoint_from_config(bootstrap.ROOT / "star.cmd")
+    endpoint = launcher.endpoint_from_config(bootstrap.ROOT / "start.cmd")
     assert 1 <= endpoint.port <= 65535
 
 
@@ -335,4 +335,4 @@ def test_stop_cmd_handles_a_machine_that_was_never_prepared() -> None:
     stop = (bootstrap.ROOT / "stop.cmd").read_bytes().decode("gbk")
     assert ":not_initialized" in stop
     assert "服务没有在运行" in stop
-    assert "star.cmd" in stop
+    assert "start.cmd" in stop

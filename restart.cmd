@@ -5,8 +5,8 @@ cd /d "%~dp0"
 
 REM ============================================================
 REM  AI Learning 重启脚本
-REM  先停掉正在运行的服务，再按 star.cmd 的配置重新启动。
-REM  APP_PORT / APP_HOST 在 star.cmd 开头修改。
+REM  先停掉正在运行的服务，再按 start.cmd 的配置重新启动。
+REM  APP_PORT / APP_HOST 在 start.cmd 开头修改。
 REM ============================================================
 
 call "%~dp0scripts\env.cmd"
