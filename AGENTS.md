@@ -151,7 +151,7 @@ v0.8：课程水印可配置：每门课可在后台配置四角角标水印和�
 - 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `courses-outline/ai-first-sees/outline.md` 的 29 镜头长版落地，共 28 屏 / 29:54（旁白 `rate +0%`；原 S28 safety 并入 S27，收尾为 S28）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源（`--rate` 控语速，当前 `+0%`，必须带符号；`narration/cache/` 按 voice + rate + 旁白文本指纹失效）。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
-- 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程控制条第一个按钮是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
+- 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程页封面顶部另有吸顶的「返回课程库」入口，播放时控制条第一个按钮也是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
 - 还没做：CI、Docker/部署、登录、搜索。
 
 先跑一遍这三条，确认环境是通的：
