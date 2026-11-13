@@ -120,6 +120,89 @@ a {
   padding-block: clamp(20px, 4vh, 44px) 40px;
 }
 
+/* The top bar adds its own height above the shell; trim the shell's top padding
+   so the cover's start control keeps its old distance from the fold. */
+body.deck[data-deck-nav] .deck-shell {
+  padding-top: clamp(10px, 1.8vh, 20px);
+}
+
+/* --------------------------------------------------------------- top bar */
+/* Leaving must be possible before a course starts. The cover is a long reading
+   page (its outline column collapses under the main column below 1080px), so
+   the way back lives in a sticky bar at the very top instead of at the bottom
+   of the outline. Hidden while a course plays: the control bar's exit control
+   leads there, and the two must not compete.
+
+   Sticky, not fixed: it takes its own space in the flow, so it never covers the
+   cover title, and it stays reachable after the user scrolls the cover. */
+
+.deck-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--stage) 86%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--stage-line) 70%, transparent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .deck-topbar {
+    backdrop-filter: none;
+    background: var(--stage);
+  }
+}
+
+.deck-topbar__inner {
+  display: flex;
+  align-items: center;
+  width: min(1440px, 100% - 48px);
+  min-height: 56px;
+  margin-inline: auto;
+}
+
+.deck-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px 0 14px;
+  border: 1px solid var(--stage-line);
+  border-radius: var(--radius-pill);
+  background: var(--stage-raised);
+  color: var(--stage-ink);
+  font-size: 13.5px;
+  text-decoration: none;
+  transition:
+    background 150ms var(--ease, ease),
+    border-color 150ms var(--ease, ease);
+}
+
+.deck-topbar__back:hover {
+  background: var(--deck-ink-wash);
+  border-color: var(--stage-line-strong);
+}
+
+/* Short windows: the sticky bar costs the cover height, so tighten the cover
+ * rhythm and keep the start control above the fold. The bar itself keeps its
+ * 56px so the control looks the same at every size. */
+@media (max-height: 800px) {
+  body.deck[data-deck-nav] .cover__inner {
+    padding-top: 4px;
+  }
+
+  body.deck[data-deck-nav] .cover__actions {
+    margin-top: 20px;
+  }
+}
+
+/* 720p-class windows (1280x720 at 150% display scaling) need the headline one
+ * step smaller as well. */
+@media (max-height: 760px) {
+  body.deck[data-deck-nav] .cover__title {
+    font-size: clamp(30px, 4vw, 52px);
+  }
+}
+
 /* ----------------------------------------------------------------- cover */
 
 .cover__inner {
@@ -330,20 +413,6 @@ a {
   font-size: 11px;
   color: var(--stage-muted);
   padding-top: 3px;
-}
-
-.cover__back {
-  display: inline-block;
-  margin-top: 22px;
-  font-size: 13.5px;
-  color: var(--stage-muted);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-}
-
-.cover__back:hover {
-  color: var(--stage-ink);
-  border-color: var(--stage-line);
 }
 
 /* ----------------------------------------------------------------- stage */
@@ -1004,6 +1073,16 @@ body.deck-drawer-open {
  * the stage takes all height left by the control deck, and the deck spans the
  * full viewport width with no page scroll. */
 
+/* The sticky top bar belongs to the cover reading surface. Playing, loading,
+ * completion and error states already carry their own exit control, so the bar
+ * must not take 56px from the stage or duplicate that control. */
+body.deck[data-deck-state="playing"] .deck-topbar,
+body.deck[data-deck-state="loading"] .deck-topbar,
+body.deck[data-deck-state="complete"] .deck-topbar,
+body.deck[data-deck-state="error"] .deck-topbar {
+  display: none;
+}
+
 body.deck[data-deck-state="playing"],
 body.deck[data-deck-state="loading"] {
   overflow: hidden;
@@ -1162,6 +1241,10 @@ body.deck[data-deck-state="error"] .deck-shell {
     padding-top: 16px;
   }
 
+  .deck-topbar__inner {
+    width: min(1440px, 100% - 28px);
+  }
+
   .cover__title {
     font-size: 32px;
   }
@@ -1235,6 +1318,7 @@ body.deck[data-deck-state="error"] .deck-shell {
   .stage-wrap,
   .controls,
   .deck-hint,
+  .deck-topbar,
   .deck-skip {
     display: none !important;
   }

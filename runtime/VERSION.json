@@ -4,11 +4,11 @@
   "gsap": "3.15.0",
   "player": "hyperframes-player.global.js",
   "runtime": "hyperframe.runtime.iife.js",
-  "deckVersion": "1.6.0",
+  "deckVersion": "1.7.0",
   "fonts": {
-    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "1320a8090298b7fbd3d7026407c1e507f3c26270dcc2ac80ff37caa562e545c7",
+    "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "abd17e4f50151e27ffaa391da0979b7e784207baf6dcca75c300e68527c5afcb",
     "app/static/fonts/NotoSansSC-VF.woff2": "567f0f34dbf8b7063cdb6247f3c49310cf40baa20e041994ee3caac6bebe0ad7",
-    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "ae869ff7325c9eeb6ceda41e1c542d629cd4868dc9bc919c49abfd894ce710d4"
+    "courses/ai-first-sees/composition/assets/fonts/NotoSansSC-VF.woff2": "ca011904bb3a0080ed58e4967faed6a5afd584e724b9632036bf1e973b4cf722"
   },
   "tokens": {
     "runtime/tokens.css": "f3dc7933f2289b3a61beff6acc8e65cb74ac673796db7dd53dc6c055ea16a4f5",

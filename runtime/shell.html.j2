@@ -53,8 +53,20 @@
       }
     </script>
   </head>
-  <body data-deck-state="cover" class="deck">
+  <body data-deck-state="cover" class="deck"{% if site.homeUrl %} data-deck-nav="true"{% endif %}>
     <a class="deck-skip" href="#cover">跳到课程封面</a>
+
+    {# Leaving must be possible before the first screen starts: the cover is a
+       long reading page, so the way back sits in a sticky bar at the very top
+       instead of at the bottom of the outline. Hidden while a course plays; the
+       control bar's exit control takes over there. #}
+    {% if site.homeUrl %}
+      <nav id="deck-topnav" class="deck-topbar" aria-label="课程导航">
+        <div class="deck-topbar__inner">
+          <a id="deck-back" class="deck-topbar__back" href="{{ site.homeUrl }}"><span aria-hidden="true">←</span><span>{{ site.backLabel }}</span></a>
+        </div>
+      </nav>
+    {% endif %}
 
     <div class="deck-shell">
       {# ---------------------------------------------------------------- cover #}
@@ -123,9 +135,6 @@
                 </li>
               {% endfor %}
             </ol>
-            {% if site.homeUrl %}
-              <a class="cover__back" href="{{ site.homeUrl }}">← {{ site.backLabel }}</a>
-            {% endif %}
           </div>
         </div>
       </section>

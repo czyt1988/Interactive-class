@@ -12,7 +12,7 @@ import re
 import shutil
 import socket
 import threading
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -229,6 +229,115 @@ def test_exit_control_ends_viewing_and_returns_to_library(page: Page) -> None:
     assert page.evaluate("() => location.pathname") == "/"
     # A fresh document, not the deck mid-play: the cover is showing again.
     assert page.evaluate("() => document.body.dataset.deckState") == "cover"
+
+
+# -- top bar: the way back, visible before the first screen -----------------
+# Feedback: once inside a course there was no obvious way back until the
+# control bar appeared. The cover therefore carries a sticky top bar; it must
+# yield to the control bar while a course plays so the two exits never compete.
+
+TOP_BAR_VIEWPORTS = [
+    pytest.param(1280, 900, id="1280x900"),
+    pytest.param(1024, 640, id="1024x640-single-column"),
+    pytest.param(390, 844, id="390x844-narrow"),
+]
+
+
+@pytest.fixture
+def open_course(
+    browser: Browser, server: tuple[str, int]
+) -> Iterator[Callable[..., Page]]:
+    """Open the course cover at a viewport of the test's choosing."""
+
+    host, port = server
+    contexts: list[object] = []
+
+    def _open(width: int = 1280, height: int = 900) -> Page:
+        context = browser.new_context(viewport={"width": width, "height": height})
+        contexts.append(context)
+        page = context.new_page()
+        page.console_errors = []  # type: ignore[attr-defined]
+        page.on(
+            "console",
+            lambda message: page.console_errors.append(message.text)  # type: ignore[attr-defined]
+            if message.type == "error"
+            else None,
+        )
+        page.goto(f"http://{host}:{port}/", wait_until="load")
+        page.wait_for_function("document.body.dataset.deckReady === 'true'", timeout=25_000)
+        return page
+
+    yield _open
+    for context in contexts:
+        context.close()
+
+
+def test_cover_offers_a_single_top_bar_exit_to_the_library(page: Page) -> None:
+    assert page.evaluate("() => document.body.dataset.deckState") == "cover"
+    assert page.locator(".deck-topbar").is_visible()
+
+    top_bar = page.locator(".deck-topbar")
+    back = top_bar.locator(".deck-topbar__inner > #deck-back.deck-topbar__back")
+    assert back.count() == 1
+    assert back.is_visible()
+    assert back.get_attribute("href") == "/"
+    # No aria-label by design: the visible text is the accessible name.
+    named_link = page.get_by_role("link", name="返回课程库")
+    assert named_link.count() == 1
+    assert "返回课程库" in back.inner_text()
+    # The old outline footer link is gone: exactly one visible exit on the cover.
+    assert page.locator(".cover__back").count() == 0
+    assert page.locator("a[href='/']:visible").count() == 1
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+@pytest.mark.parametrize(("width", "height"), TOP_BAR_VIEWPORTS)
+def test_top_bar_exit_is_above_the_fold_without_scrolling(
+    open_course: Callable[..., Page], width: int, height: int
+) -> None:
+    page = open_course(width, height)
+    assert page.evaluate("() => window.scrollY") == 0
+    assert page.locator(".deck-topbar").is_visible()
+
+    box = page.locator("#deck-back").bounding_box()
+    assert box is not None, "the back control must have a layout box"
+    assert box["y"] >= 0, box
+    assert box["y"] + box["height"] <= height, (box, height)
+    assert box["x"] >= 0 and box["x"] + box["width"] <= width, (box, width)
+    # The top bar must not introduce horizontal overflow at any width.
+    assert (
+        page.evaluate("() => document.documentElement.scrollWidth - window.innerWidth") <= 1
+    )
+    assert page.console_errors == []  # type: ignore[attr-defined]
+
+
+def test_top_bar_exit_returns_to_the_library_and_restarts_the_cover(page: Page) -> None:
+    back = page.locator("#deck-back")
+    assert back.is_visible()
+
+    with page.expect_navigation(wait_until="load", timeout=15_000):
+        back.click()
+    page.wait_for_function("document.body.dataset.deckReady === 'true'", timeout=25_000)
+    assert page.evaluate("() => location.pathname") == "/"
+    # A fresh document, not the deck mid-play: the cover is showing again.
+    assert page.evaluate("() => document.body.dataset.deckState") == "cover"
+    assert page.locator("#cover").is_visible()
+
+
+def test_top_bar_yields_to_the_control_bar_while_playing(page: Page) -> None:
+    page.click("#btn-start")
+    page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=25_000)
+
+    assert page.locator(".deck-topbar").is_visible() is False
+    display = page.evaluate(
+        "() => getComputedStyle(document.querySelector('.deck-topbar')).display"
+    )
+    assert display == "none"
+
+    # The control bar's exit is now the only visible way back.
+    assert page.locator("#btn-exit").is_visible()
+    assert page.locator("a[href='/']:visible").count() == 1
+    assert page.console_errors == []  # type: ignore[attr-defined]
 
 
 def _start_playing(page: Page) -> None:
