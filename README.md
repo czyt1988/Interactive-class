@@ -189,7 +189,8 @@ ai-learning/
 │  ├─ new_course.py              # 从课程模板生成新课程脚手架
 │  ├─ import_course.py           # 导入外部课程文件夹
 │  ├─ bootstrap.py               # 双击启动器的环境准备：.venv、依赖、资源、构建、迁移
-│  ├─ env.cmd                    # start.cmd / restart.cmd 调用的环境检查（GBK）
+│  ├─ build.py                   # build.cmd 的一键重建：后端检查、运行时/字体、迁移、课程
+│  ├─ env.cmd                    # start.cmd / restart.cmd / build.cmd 调用的环境检查（GBK）
 │  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
 │  ├─ launcher.py                # star / restart / stop 的实现
 │  └─ worktree.py                # 并行开发：git 工作树 + 复用依赖
@@ -222,15 +223,16 @@ alembic upgrade head                   # 建 SQLite 表
 python -m uvicorn app.main:app --reload          # http://127.0.0.1:8000
 ```
 
-Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会把上面的准备自动做完再启动（见下面「Windows 双击启动」）。
+Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会把上面的准备自动做完再启动；改完项目后双击 `build.cmd` 重新构建，再双击 `start.cmd` 就是最新版本（见下面「Windows 双击启动」）。
 
 ### Windows 双击启动
 
-仓库根目录下的三个脚本面向双击使用（文件以 GBK 保存，匹配中文 Windows 控制台；编辑时请保持 GBK/ANSI 编码，不要另存为 UTF-8）：
+仓库根目录下的四个脚本面向双击使用（文件以 GBK 保存，匹配中文 Windows 控制台；编辑时请保持 GBK/ANSI 编码，不要另存为 UTF-8）：
 
 | 脚本 | 作用 |
 | --- | --- |
 | `start.cmd` | 启动站点，默认监听 `0.0.0.0:8081`；第一次双击会自动准备环境 |
+| `build.cmd` | 重新构建整个项目：后端导入检查、运行时/字体/令牌同步、数据库迁移、全部课程包 |
 | `restart.cmd` | 先停掉正在运行的实例，再按 `start.cmd` 的配置重启 |
 | `stop.cmd` | 停止服务 |
 
@@ -244,6 +246,15 @@ Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会
 6. 建好或升级 SQLite 表结构（`alembic upgrade head`）。
 
 这一步要联网，第一次通常几分钟；之后每次双击只做几秒钟的检查，已经就绪的步骤会跳过。开始之前需要 Python 3.11+，第 4 步还需要 Node.js 22+（只在第一次下载播放器资源时用到，之后就绪后启动不再需要 Node）。任何一步失败都会用中文说明原因和下一步怎么做，窗口不会立刻关掉，可以照着提示处理后重新双击。
+
+**改完项目后只需要双击 `build.cmd`。** 它和 `start.cmd` 共用同一套环境检查，然后每次都完整重建，不会因为上次的产物还在就跳过：
+
+1. 检查后端依赖与代码（`import app.main`，缺依赖或模块坏了会先报出来）；
+2. 运行完整的 `python scripts/sync_runtime.py`（播放器/运行时/GSAP、设计令牌、按最新课程文案重新生成字体子集）；
+3. 执行 `alembic upgrade head` 更新 SQLite 表结构（课程构建要读水印配置）；
+4. 运行 `python scripts/build_courses.py --all`，重建全部已发布课程到 `dist/`；课程页里的站点地址自动对齐 `start.cmd` 的 `APP_PORT`，所以本地进度同步仍然有效。
+
+看到「构建完成」后，双击 `start.cmd` 启动最新版本；站点正在运行就双击 `restart.cmd`。构建只写 `dist/`、SQLite 和字体子集这些生成物，不会把产物提交进 Git。
 
 端口和绑定地址写在 `start.cmd` 开头，改这两行后保存即可：
 

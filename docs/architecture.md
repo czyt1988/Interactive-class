@@ -1060,16 +1060,17 @@ HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程
 
 如果契约测试失败，不要改课程外壳去适配；先在适配层做兼容，或者停留在旧版本。升级不是例行公事，是一次有回归风险的依赖变更。
 
-### 9.9 本机一键启动
+### 9.9 本机一键启动与重建
 
-双击脚本是第一次接触这个仓库的人唯一会用的入口，所以它不能停在「没有找到虚拟环境」。三层各管一件事：
+双击脚本是第一次接触这个仓库的人唯一会用的入口，所以它不能停在「没有找到虚拟环境」；启动、重启和重建共用同一套环境准备。三层各管一件事：
 
 ```text
-start.cmd / restart.cmd            GBK 编码的批处理，只负责：
-  └─ call scripts\env.cmd           1. 找系统 Python 3.11+（py -3.13 / -3.12 / -3.11 / python / python3）
-                                    2. 调 bootstrap.py：没有 .venv 时用系统 Python，有 .venv 时用虚拟环境 Python
+start.cmd / restart.cmd / build.cmd   GBK 编码的批处理，只负责：
+  └─ call scripts\env.cmd             1. 找系统 Python 3.11+（py -3.13 / -3.12 / -3.11 / python / python3）
+                                      2. 调 bootstrap.py：没有 .venv 时用系统 Python，有 .venv 时用虚拟环境 Python
   └─ .venv\Scripts\python.exe
-       └─ scripts\launcher.py       端口、进程、运行记录；准备环境必须在它之前完成
+       ├─ scripts\launcher.py         start / restart：端口、进程、运行记录；准备环境必须在它之前完成
+       └─ scripts\build.py            build：每次完整重建（后端检查、运行时/字体、迁移、课程）
 ```
 
 `scripts/env.cmd` 只管「找到能跑 Python 的解释器」；`scripts/bootstrap.py` 用标准库实现全部检查，每一步先看产物是否就绪，再决定是否执行：
@@ -1089,6 +1090,15 @@ start.cmd / restart.cmd            GBK 编码的批处理，只负责：
 - `--skip-fonts` 沿用 `runtime/VERSION.json` 里已记录的字体哈希：双击启动不是创作流程，字体子集仍由作者改完文案后手动跑 `sync_runtime.py` 重建。
 - 本机迁移只属于双击启动器；生产仍然在部署时执行 `alembic upgrade head`，不在应用启动时迁移（见 12.3）。
 - 失败一律以「原因 + 一条下一步」的中文提示收尾，批处理让窗口停住，不闪退。
+
+`build.cmd` 是「改完之后重建」的双击入口，和 `start.cmd` 共用同一套环境检查：先 `call scripts\env.cmd` 保证 `.venv` 与依赖可用，再由 `scripts/build.py` 每次都完整执行四步：
+
+1. `import app.main` 检查后端依赖与模块导入，尽早暴露坏代码；
+2. 完整版 `sync_runtime.py`（不带 `--skip-fonts`，按最新课程/站点文案重新生成字体子集，并同步令牌与 vendor）；
+3. `alembic upgrade head`，让随后的课程构建读到当前的水印表；
+4. `build_courses.py --all`，重建全部已发布课程包；`--site-url` 取自 `start.cmd` 的 `APP_PORT`/`APP_HOST`，保证本地端口上的进度同步同源。
+
+与 `bootstrap.py` 的「缺什么补什么」相反，它每次都重建，因为目标就是拾取改动；构建本身仍只写 `dist/`、SQLite 和字体子集等生成物。`python scripts/build.py --course <slug>` 可以只重建一门课，`--site-url` 可以覆盖部署地址。
 
 ---
 
@@ -1206,6 +1216,7 @@ course_imports（导入来源登记，与用户/进度无关）
 12. `test_course_template`：模板包结构齐全、无外部资源、复制并改 slug 后可解析与构建、作者文档指引齐全。
 13. `test_import_web`：`/import` 的 GET/POST、收件箱候选与校验状态、路径逃逸拒绝、prod/未启用时 404、导入后目录与数据库记录。
 14. `test_bootstrap`：就绪机器只跑一次迁移、不重复安装；缺 `.venv` / 依赖 / 播放器资源 / `dist/` 时分别补齐；缺 Python 3.11+ 或 Node.js 22+ 时给出带下载地址的中文提示；`start.cmd` / `restart.cmd` / `stop.cmd` 保持 GBK 并走同一套环境准备。
+15. `test_build_script`：一键构建的后端检查 → 字体/令牌同步 → 迁移 → 课程构建四步顺序；`--site-url` 默认取自 `start.cmd`、可显式覆盖；`--course` 只重建指定课程；任一步失败即中止；`build.cmd` 以 GBK 包装 `env.cmd` 与 `build.py`。
 
 ### 11.3 测试数据
 

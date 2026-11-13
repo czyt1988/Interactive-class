@@ -6,7 +6,7 @@ set "ROOT=%CD%"
 set "VENV_PY=%ROOT%\.venv\Scripts\python.exe"
 
 REM ============================================================
-REM  AI Learning 环境准备（由 start.cmd / restart.cmd 调用）
+REM  AI Learning 环境准备（由 start.cmd / restart.cmd / build.cmd 调用）
 REM  已经就绪时什么都不做；缺什么补什么：
 REM    虚拟环境 .venv、项目依赖、播放器资源、课程构建、数据库表结构
 REM  成功返回 0，失败返回 1；具体原因由 bootstrap.py 打印。

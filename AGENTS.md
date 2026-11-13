@@ -170,4 +170,4 @@ python scripts/build_narration.py --no-tts   # 复用缓存重建时间/根 comp
 python scripts/worktree.py add feat/<域>-<主题>   # 建工作树并复用 .venv / node_modules，不联网
 ```
 
-Windows 上不用逐条敲：双击 `start.cmd` 时，`scripts/bootstrap.py` 会自动建 `.venv`、装依赖、同步运行时（`--skip-fonts`，字体子集用仓库里已提交的）、构建课程并迁移数据库；改了课程或设计令牌后仍按上面的命令手动重建。
+Windows 上不用逐条敲：双击 `start.cmd` 时，`scripts/bootstrap.py` 会自动建 `.venv`、装依赖、同步运行时（`--skip-fonts`，字体子集用仓库里已提交的）、构建课程并迁移数据库；改完项目（课程、设计令牌、站点代码、数据库迁移）后双击 `build.cmd`，它调用 `scripts/build.py` 每次都完整跑「后端导入检查 → 完整 `sync_runtime.py`（含字体子集）→ `alembic upgrade head` → `build_courses.py --all`」，完成后再双击 `start.cmd`（站点正在运行就双击 `restart.cmd`）。
