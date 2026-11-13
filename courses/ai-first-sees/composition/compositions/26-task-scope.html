@@ -254,75 +254,7 @@
   border-radius: 12px;
 }
 
-/* 一拍：交付回执 */
-.s26-cardlabel {
-  font-family: var(--font-mono);
-  font-size: 23px;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-}
-
-.s26-deliver {
-  position: absolute;
-  left: 0;
-  top: 206px;
-  width: 520px;
-  padding: 20px 24px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.s26-deliver-num {
-  margin-top: 8px;
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.s26-deliver-num b {
-  font-family: var(--font-mono);
-  font-size: 58px;
-  color: var(--accent-text);
-  letter-spacing: -0.03em;
-}
-
-.s26-deliver-note {
-  margin-top: 10px;
-  font-size: 28px;
-  line-height: 1.4;
-  color: var(--ink-soft);
-}
-
-.s26-p1line {
-  position: absolute;
-  left: 580px;
-  top: 206px;
-  width: 1084px;
-  font-size: 48px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.s26-p1note {
-  position: absolute;
-  left: 580px;
-  top: 276px;
-  width: 1060px;
-  font-size: 34px;
-  line-height: 1.45;
-  color: var(--ink-soft);
-}
-
-.s26-see {
-  position: absolute;
-  left: 580px;
-  top: 356px;
-  display: flex;
-  gap: 14px;
-}
-
+/* 一拍：一口气跑完，中间漏掉的格子 */
 .s26-losttag {
   position: absolute;
   left: 580px;
@@ -772,10 +704,6 @@
 #s26-end0,
 #s26-end100,
 #s26-goal,
-.s26-deliver,
-.s26-p1line,
-.s26-p1note,
-.s26-see,
 .s26-losttag,
 .s26-p2line,
 .s26-lane,
@@ -919,18 +847,7 @@
 
         <p id="s26-runhint" class="s26-runhint">一口气跑完</p>
 
-        <!-- 一拍：100 到了，中间是空的 -->
-        <div id="s26-deliver" class="s26-deliver">
-          <p class="s26-cardlabel">交付回执</p>
-          <p class="s26-deliver-num">结果 <b>100</b></p>
-          <p class="s26-deliver-note">过程：没有交付</p>
-        </div>
-        <p id="s26-p1line" class="s26-p1line">任务写得太大</p>
-        <p id="s26-p1note" class="s26-p1note">你只看得见「100 到了」，中间丢了多少细节，你不一定知道。</p>
-        <p id="s26-see" class="s26-see">
-          <span class="chip chip--solid">看得见：结果</span>
-          <span class="chip">看不见：过程</span>
-        </p>
+        <!-- 一拍：一口气跑完 0→100，中间漏掉的格子在回放里点出来 -->
         <p id="s26-losttag" class="s26-losttag">中间 4 格：细节丢了</p>
 
         <!-- 二拍：切成三段，三条进度条从长条上拉下来，一段一段跑 -->
@@ -1038,26 +955,24 @@
     <footer class="cap-band">
       <div class="cap-lines">
                 <p id="s-task-scope-cap-0" class="cap-line clip" data-start="0.7" data-duration="4.147">使用 Agent 进行任务的时候，要把握任务范围的「度」。</p>
-        <p id="s-task-scope-cap-1" class="cap-line clip" data-start="4.847" data-duration="3.665">Agent 能完成你描述的任务，但任务写得太大，</p>
-        <p id="s-task-scope-cap-2" class="cap-line clip" data-start="8.552" data-duration="5.445">交付时你只能看到「100 到了」，中间丢了多少细节，你不一定知道。</p>
-        <p id="s-task-scope-cap-3" class="cap-line clip" data-start="14.037" data-duration="2.41">如果任务是 0 到 100 的进度。</p>
-        <p id="s-task-scope-cap-4" class="cap-line clip" data-start="16.487" data-duration="6.185">一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，</p>
-        <p id="s-task-scope-cap-5" class="cap-line clip" data-start="22.712" data-duration="2.223">但中途的细节就不好说了。</p>
-        <p id="s-task-scope-cap-6" class="cap-line clip" data-start="24.975" data-duration="6.047">更好的做法是切成三段：0 到 35、35 到 70、70 到 100。</p>
-        <p id="s-task-scope-cap-7" class="cap-line clip" data-start="31.062" data-duration="5.223">做 0 到 35 的时候，它只需要想这一段，细节会完整得多。</p>
-        <p id="s-task-scope-cap-8" class="cap-line clip" data-start="36.325" data-duration="1.847">但也不能切得太碎。</p>
-        <p id="s-task-scope-cap-9" class="cap-line clip" data-start="38.212" data-duration="5.21">切成十段、二十段，时间成本也是成本，没有必要。</p>
-        <p id="s-task-scope-cap-10" class="cap-line clip" data-start="43.462" data-duration="4.516">这个「度」没有标准答案，要看你用的 Agent、搭配的模型，</p>
-        <p id="s-task-scope-cap-11" class="cap-line clip" data-start="48.018" data-duration="1.479">还有你自己的经验。</p>
-        <p id="s-task-scope-cap-12" class="cap-line clip" data-start="49.537" data-duration="5.425">另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：</p>
-        <p id="s-task-scope-cap-13" class="cap-line clip" data-start="55.002" data-duration="4.332">刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，</p>
-        <p id="s-task-scope-cap-14" class="cap-line clip" data-start="59.374" data-duration="1.473">再针对评审结果修。</p>
-        <p id="s-task-scope-cap-15" class="cap-line clip" data-start="60.887" data-duration="6.673">开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。</p>
-        <p id="s-task-scope-cap-16" class="cap-line clip" data-start="67.6" data-duration="4.46">只往前走、不回头看，问题会一直留在里面。</p>
+        <p id="s-task-scope-cap-1" class="cap-line clip" data-start="4.847" data-duration="2.4">如果任务是 0 到 100 的进度。</p>
+        <p id="s-task-scope-cap-2" class="cap-line clip" data-start="7.287" data-duration="6.185">一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，</p>
+        <p id="s-task-scope-cap-3" class="cap-line clip" data-start="13.512" data-duration="2.223">但中途的细节就不好说了。</p>
+        <p id="s-task-scope-cap-4" class="cap-line clip" data-start="15.775" data-duration="6.047">更好的做法是切成三段：0 到 35、35 到 70、70 到 100。</p>
+        <p id="s-task-scope-cap-5" class="cap-line clip" data-start="21.862" data-duration="5.223">做 0 到 35 的时候，它只需要想这一段，细节会完整得多。</p>
+        <p id="s-task-scope-cap-6" class="cap-line clip" data-start="27.125" data-duration="1.847">但也不能切得太碎。</p>
+        <p id="s-task-scope-cap-7" class="cap-line clip" data-start="29.012" data-duration="5.21">切成十段、二十段，时间成本也是成本，没有必要。</p>
+        <p id="s-task-scope-cap-8" class="cap-line clip" data-start="34.262" data-duration="4.516">这个「度」没有标准答案，要看你用的 Agent、搭配的模型，</p>
+        <p id="s-task-scope-cap-9" class="cap-line clip" data-start="38.818" data-duration="1.479">还有你自己的经验。</p>
+        <p id="s-task-scope-cap-10" class="cap-line clip" data-start="40.337" data-duration="5.425">另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：</p>
+        <p id="s-task-scope-cap-11" class="cap-line clip" data-start="45.802" data-duration="4.332">刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，</p>
+        <p id="s-task-scope-cap-12" class="cap-line clip" data-start="50.174" data-duration="1.473">再针对评审结果修。</p>
+        <p id="s-task-scope-cap-13" class="cap-line clip" data-start="51.687" data-duration="6.673">开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。</p>
+        <p id="s-task-scope-cap-14" class="cap-line clip" data-start="58.4" data-duration="4.46">只往前走、不回头看，问题会一直留在里面。</p>
       </div>
       <div class="cap-foot">
         <span class="cap-code">S26</span>
-        <span class="cap-clock">01:14</span>
+        <span class="cap-clock">01:05</span>
       </div>
     </footer>
     <!-- CAPTIONS:END -->
@@ -1065,7 +980,7 @@
 
   <script>
     // TIMING:BEGIN
-    const N = {"code":"S26","id":"task-scope","index":0,"start":0,"duration":73.77,"audioStart":0.6000000000001364,"audioDuration":71.568,"cues":[{"i":0,"t":0.7,"d":4.147,"text":"使用 Agent 进行任务的时候，要把握任务范围的「度」。","sent":"使用 Agent 进行任务的时候，要把握任务范围的「度」。"},{"i":1,"t":4.847,"d":3.665,"text":"Agent 能完成你描述的任务，但任务写得太大，","sent":"Agent 能完成你描述的任务，但任务写得太大，交付时你只能看到「100 到了」，中间丢了多少细节，你不一定知道。"},{"i":2,"t":8.552,"d":5.445,"text":"交付时你只能看到「100 到了」，中间丢了多少细节，你不一定知道。","sent":"Agent 能完成你描述的任务，但任务写得太大，交付时你只能看到「100 到了」，中间丢了多少细节，你不一定知道。"},{"i":3,"t":14.037,"d":2.41,"text":"如果任务是 0 到 100 的进度。","sent":"如果任务是 0 到 100 的进度。"},{"i":4,"t":16.487,"d":6.185,"text":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，","sent":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，但中途的细节就不好说了。"},{"i":5,"t":22.712,"d":2.223,"text":"但中途的细节就不好说了。","sent":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，但中途的细节就不好说了。"},{"i":6,"t":24.975,"d":6.047,"text":"更好的做法是切成三段：0 到 35、35 到 70、70 到 100。","sent":"更好的做法是切成三段：0 到 35、35 到 70、70 到 100。"},{"i":7,"t":31.062,"d":5.223,"text":"做 0 到 35 的时候，它只需要想这一段，细节会完整得多。","sent":"做 0 到 35 的时候，它只需要想这一段，细节会完整得多。"},{"i":8,"t":36.325,"d":1.847,"text":"但也不能切得太碎。","sent":"但也不能切得太碎。"},{"i":9,"t":38.212,"d":5.21,"text":"切成十段、二十段，时间成本也是成本，没有必要。","sent":"切成十段、二十段，时间成本也是成本，没有必要。"},{"i":10,"t":43.462,"d":4.516,"text":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，","sent":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，还有你自己的经验。"},{"i":11,"t":48.018,"d":1.479,"text":"还有你自己的经验。","sent":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，还有你自己的经验。"},{"i":12,"t":49.537,"d":5.425,"text":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":13,"t":55.002,"d":4.332,"text":"刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":14,"t":59.374,"d":1.473,"text":"再针对评审结果修。","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":15,"t":60.887,"d":6.673,"text":"开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。","sent":"开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。"},{"i":16,"t":67.6,"d":4.46,"text":"只往前走、不回头看，问题会一直留在里面。","sent":"只往前走、不回头看，问题会一直留在里面。"}]};
+    const N = {"code":"S26","id":"task-scope","index":0,"start":0,"duration":64.56,"audioStart":0.6000000000001364,"audioDuration":62.352,"cues":[{"i":0,"t":0.7,"d":4.147,"text":"使用 Agent 进行任务的时候，要把握任务范围的「度」。","sent":"使用 Agent 进行任务的时候，要把握任务范围的「度」。"},{"i":1,"t":4.847,"d":2.4,"text":"如果任务是 0 到 100 的进度。","sent":"如果任务是 0 到 100 的进度。"},{"i":2,"t":7.287,"d":6.185,"text":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，","sent":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，但中途的细节就不好说了。"},{"i":3,"t":13.512,"d":2.223,"text":"但中途的细节就不好说了。","sent":"一口气让它从 0 做到 100，Agent 最终给你呈现的的确是 100 这个数字，但中途的细节就不好说了。"},{"i":4,"t":15.775,"d":6.047,"text":"更好的做法是切成三段：0 到 35、35 到 70、70 到 100。","sent":"更好的做法是切成三段：0 到 35、35 到 70、70 到 100。"},{"i":5,"t":21.862,"d":5.223,"text":"做 0 到 35 的时候，它只需要想这一段，细节会完整得多。","sent":"做 0 到 35 的时候，它只需要想这一段，细节会完整得多。"},{"i":6,"t":27.125,"d":1.847,"text":"但也不能切得太碎。","sent":"但也不能切得太碎。"},{"i":7,"t":29.012,"d":5.21,"text":"切成十段、二十段，时间成本也是成本，没有必要。","sent":"切成十段、二十段，时间成本也是成本，没有必要。"},{"i":8,"t":34.262,"d":4.516,"text":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，","sent":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，还有你自己的经验。"},{"i":9,"t":38.818,"d":1.479,"text":"还有你自己的经验。","sent":"这个「度」没有标准答案，要看你用的 Agent、搭配的模型，还有你自己的经验。"},{"i":10,"t":40.337,"d":5.425,"text":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":11,"t":45.802,"d":4.332,"text":"刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":12,"t":50.174,"d":1.473,"text":"再针对评审结果修。","sent":"另外，如果你 token 比较富裕，我建议每做完一段，让它回头评审一下：刚才哪里做得不好、架构有没有埋雷、有没有遗漏的 bug，再针对评审结果修。"},{"i":13,"t":51.687,"d":6.673,"text":"开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。","sent":"开发、评审、修复，再开发、再评审——就像我们做完一个项目要复盘一样。"},{"i":14,"t":58.4,"d":4.46,"text":"只往前走、不回头看，问题会一直留在里面。","sent":"只往前走、不回头看，问题会一直留在里面。"}]};
     // TIMING:END
     const tl = gsap.timeline({ paused: true });
 
@@ -1157,56 +1072,40 @@
       C[0].t + 0.1
     );
 
-    // cue1 · 任务写得太大：Agent 一口气冲到 100，中间几格是空的
-    rush(C[1].t + 0.3, 2.1);
-    tl.fromTo("#s26-runhint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[1].t + 0.35);
-    tl.fromTo("#s26-losttag", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, C[1].t + 2.85);
+    // cue1 · 如果任务是 0 到 100 的进度：先挂「一口气跑完」的提示
+    tl.fromTo("#s26-runhint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, C[1].t + 0.85);
+    tl.fromTo("#s26-runhint", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[2].t + 2.55);
 
-    // cue2 · 交付回执：只看到 100 到了，长条末端插上红旗
-    plantGoal(C[1].t + 2.45);
-    tl.fromTo("#s26-runhint", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[1].t + 2.6);
-    tl.fromTo("#s26-deliver", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, C[2].t + 0.15);
-    tl.fromTo("#s26-p1line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[2].t + 0.45);
-    tl.fromTo("#s26-p1note", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[2].t + 0.85);
-    tl.fromTo("#s26-see", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[2].t + 1.35);
+    // cue2 · 一口气从 0 做到 100：游标冲完，中间几格是空的，末端插红旗
+    rush(C[2].t + 0.3, 2.3);
+    plantGoal(C[2].t + 2.65);
 
-    // cue3 · 如果任务是 0 到 100 的进度：长条清空，红旗收起，准备第二次
-    fadeOut(["#s26-deliver", "#s26-p1line", "#s26-p1note", "#s26-see", "#s26-losttag"], C[3].t + 0.08, 0.35);
-    retractGoal(C[3].t + 0.1);
-    resetBar(C[3].t + 0.45);
-    tl.fromTo("#s26-runhint", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, C[3].t + 0.85);
-    tl.fromTo("#s26-runhint", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[4].t + 2.55);
-
-    // cue4 · 一口气从 0 做到 100
-    rush(C[4].t + 0.3, 2.3);
-    plantGoal(C[4].t + 2.65);
-
-    // cue5 · 回放：空掉的格子被高亮
-    tl.fromTo("#s26-replay", { opacity: 1, x: -2 }, { x: 1554, duration: 1.45, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.15);
-    tl.fromTo("#s26-replay", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[5].t + 1.6);
+    // cue3 · 回放：空掉的格子被高亮，细节丢了
+    tl.fromTo("#s26-replay", { opacity: 1, x: -2 }, { x: 1554, duration: 1.45, ease: "power1.inOut", immediateRender: false }, C[3].t + 0.15);
+    tl.fromTo("#s26-replay", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[3].t + 1.6);
     HOLES.forEach((i) => {
-      const arrive = C[5].t + 0.15 + ((cellX(i) / 1556) * 1.45);
+      const arrive = C[3].t + 0.15 + ((cellX(i) / 1556) * 1.45);
       tl.fromTo(GAP[i], { backgroundColor: "rgba(22,20,15,0.03)" }, { backgroundColor: "rgba(184,69,43,0.34)", duration: 0.35, ease: "power2.out", immediateRender: false }, arrive);
     });
-    tl.fromTo("#s26-losttag", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, C[5].t + 1.25);
+    tl.fromTo("#s26-losttag", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, C[3].t + 1.25);
 
-    // cue6 · 切成三段：三段进度条从长条上拉下来，一段一段跑满
-    fadeOut(["#s26-losttag", "#s26-replay"], C[6].t + 0.05, 0.3);
-    tl.fromTo("#s26-cut35", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[6].t + 0.2);
-    tl.fromTo("#s26-cut70", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[6].t + 0.28);
-    tl.fromTo(".s26-seg", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out", stagger: 0.12 }, C[6].t + 0.36);
+    // cue4 · 切成三段：三段进度条从长条上拉下来，一段一段跑满
+    fadeOut(["#s26-losttag", "#s26-replay"], C[4].t + 0.05, 0.3);
+    tl.fromTo("#s26-cut35", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[4].t + 0.2);
+    tl.fromTo("#s26-cut70", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power3.out" }, C[4].t + 0.28);
+    tl.fromTo(".s26-seg", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out", stagger: 0.12 }, C[4].t + 0.36);
     LANE.forEach((lane, k) => {
       tl.fromTo(
         lane,
         { x: LANE_ORIGIN_X[k], y: -(LANE_TOP[k] - 44), opacity: 0 },
         { x: 0, y: 0, opacity: 1, duration: 0.55, ease: "power3.out", immediateRender: false },
-        C[6].t + 0.55 + k * 0.1
+        C[4].t + 0.55 + k * 0.1
       );
     });
-    tl.fromTo("#s26-p2line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, C[6].t + 1.3);
-    tl.fromTo(".s26-lanelabel", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.1 }, C[6].t + 1.35);
+    tl.fromTo("#s26-p2line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, C[4].t + 1.3);
+    tl.fromTo(".s26-lanelabel", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.1 }, C[4].t + 1.35);
     SEG_CELLS.forEach((cells, s) => {
-      const at = C[6].t + 2.2 + s * 1.05;
+      const at = C[4].t + 2.2 + s * 1.05;
       const dur = 0.78;
       const cursor = LFRONT[s];
       tl.fromTo(cursor, { x: 0, opacity: 0 }, { opacity: 1, duration: 0.1, ease: "power1.out" }, at);
@@ -1223,14 +1122,14 @@
       tl.fromTo(LOK[s], { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.32, ease: "power2.out" }, at + dur + 0.1);
     });
 
-    // cue7 · 做 0 到 35 的时候，它只需要想这一段
-    tl.fromTo("#s26-seg1box", { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.45, ease: "power3.out", transformOrigin: "left center" }, C[7].t + 0.08);
-    tl.fromTo("#s26-call", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[7].t + 0.32);
-    tl.fromTo([LANE[1], LANE[2]], { opacity: 1 }, { opacity: 0.32, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.3);
-    tl.fromTo(FILL.slice(7), { opacity: 1 }, { opacity: 0.42, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[7].t + 0.36);
+    // cue5 · 做 0 到 35 的时候，它只需要想这一段
+    tl.fromTo("#s26-seg1box", { opacity: 0, scaleX: 0.92 }, { opacity: 1, scaleX: 1, duration: 0.45, ease: "power3.out", transformOrigin: "left center" }, C[5].t + 0.08);
+    tl.fromTo("#s26-call", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, C[5].t + 0.32);
+    tl.fromTo([LANE[1], LANE[2]], { opacity: 1 }, { opacity: 0.32, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.3);
+    tl.fromTo(FILL.slice(7), { opacity: 1 }, { opacity: 0.42, duration: 0.4, ease: "power1.inOut", immediateRender: false }, C[5].t + 0.36);
 
     // 三段都做完了：三条进度条升回去，和上面的长条合并
-    const MERGE = C[7].t + 3.5;
+    const MERGE = C[5].t + 3.5;
     fadeOut(["#s26-call", "#s26-seg1box"], MERGE - 0.16, 0.24);
     tl.fromTo([LANE[1], LANE[2]], { opacity: 0.32 }, { opacity: 1, duration: 0.22, ease: "power1.out", immediateRender: false }, MERGE - 0.12);
     tl.fromTo(FILL.slice(7), { opacity: 0.42 }, { opacity: 1, duration: 0.28, ease: "power1.out", immediateRender: false }, MERGE - 0.12);
@@ -1247,79 +1146,79 @@
     tl.fromTo("#s26-goal-flag", { scale: 1 }, { scale: 1.1, duration: 0.16, ease: "power2.out", transformOrigin: "50% 100%", immediateRender: false }, MERGE + 0.38);
     tl.fromTo("#s26-goal-flag", { scale: 1.1 }, { scale: 1, duration: 0.36, ease: "power2.inOut", transformOrigin: "50% 100%", immediateRender: false }, MERGE + 0.56);
 
-    // cue8 · 但也不能切得太碎：三段收掉，换成十段标尺
-    fadeOut(["#s26-cut35", "#s26-cut70", ".s26-seg", "#s26-p2line"], C[8].t + 0.05, 0.3);
-    tl.fromTo("#s26-p3line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[8].t + 0.3);
-    tl.fromTo(".s26-cut10", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power2.out", stagger: 0.055 }, C[8].t + 0.55);
-    tl.fromTo("#s26-hand1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[8].t + 1.1);
+    // cue6 · 但也不能切得太碎：三段收掉，换成十段标尺
+    fadeOut(["#s26-cut35", "#s26-cut70", ".s26-seg", "#s26-p2line"], C[6].t + 0.05, 0.3);
+    tl.fromTo("#s26-p3line", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[6].t + 0.3);
+    tl.fromTo(".s26-cut10", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power2.out", stagger: 0.055 }, C[6].t + 0.55);
+    tl.fromTo("#s26-hand1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[6].t + 1.1);
 
-    // cue9 · 切成十段、二十段：交接次数涨上去，不值得
-    tl.fromTo(".s26-cut20", { scaleY: 0 }, { scaleY: 1, duration: 0.42, ease: "power2.out", stagger: 0.04 }, C[9].t + 0.15);
-    tl.fromTo("#s26-hand2", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[9].t + 1.15);
-    tl.fromTo("#s26-worth", { opacity: 0, scale: 1.7, rotation: -2 }, { opacity: 1, scale: 1, rotation: -8, duration: 0.4, ease: "power3.in" }, C[9].t + 2.35);
+    // cue7 · 切成十段、二十段：交接次数涨上去，不值得
+    tl.fromTo(".s26-cut20", { scaleY: 0 }, { scaleY: 1, duration: 0.42, ease: "power2.out", stagger: 0.04 }, C[7].t + 0.15);
+    tl.fromTo("#s26-hand2", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, C[7].t + 1.15);
+    tl.fromTo("#s26-worth", { opacity: 0, scale: 1.7, rotation: -2 }, { opacity: 1, scale: 1, rotation: -8, duration: 0.4, ease: "power3.in" }, C[7].t + 2.35);
 
-    // cue10 · 这个「度」没有标准答案
-    fadeOut([".s26-cut10", ".s26-cut20", "#s26-hand1", "#s26-hand2", "#s26-worth", "#s26-p3line"], C[10].t + 0.05, 0.3);
-    retractGoal(C[10].t + 0.3);
-    resetBar(C[10].t + 0.4);
-    tl.fromTo("#s26-degree", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, C[10].t + 0.25);
-    tl.fromTo("#s26-dchip1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[10].t + 0.9);
-    tl.fromTo("#s26-dchip2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[10].t + 2.4);
-    tl.fromTo("#s26-degreenote", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[10].t + 2.9);
-    // cue11 · 还有你自己的经验
-    tl.fromTo("#s26-dchip3", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[11].t + 0.1);
+    // cue8 · 这个「度」没有标准答案
+    fadeOut([".s26-cut10", ".s26-cut20", "#s26-hand1", "#s26-hand2", "#s26-worth", "#s26-p3line"], C[8].t + 0.05, 0.3);
+    retractGoal(C[8].t + 0.3);
+    resetBar(C[8].t + 0.4);
+    tl.fromTo("#s26-degree", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, C[8].t + 0.25);
+    tl.fromTo("#s26-dchip1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[8].t + 0.9);
+    tl.fromTo("#s26-dchip2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[8].t + 2.4);
+    tl.fromTo("#s26-degreenote", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[8].t + 2.9);
+    // cue9 · 还有你自己的经验
+    tl.fromTo("#s26-dchip3", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[9].t + 0.1);
 
-    // cue12 · 每做完一段，回头评审：长条重新长出来，带着三色缺陷
-    fadeOut(["#s26-degree", "#s26-dchips", "#s26-degreenote"], C[12].t + 0.05, 0.3);
+    // cue10 · 每做完一段，回头评审：长条重新长出来，带着三色缺陷
+    fadeOut(["#s26-degree", "#s26-dchips", "#s26-degreenote"], C[10].t + 0.05, 0.3);
     FILL.forEach((f, i) => {
       tl.fromTo(
         f,
         { scaleX: 0, backgroundColor: DEF[i] },
         { scaleX: 1, backgroundColor: DEF[i], duration: 0.34, ease: "power2.out", immediateRender: false },
-        C[12].t + 0.25 + i * 0.028
+        C[10].t + 0.25 + i * 0.028
       );
     });
-    tl.fromTo("#s26-legend", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[12].t + 0.9);
-    tl.fromTo("#s26-back", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" }, C[12].t + 1.7);
-    tl.fromTo("#s26-backlabel", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, C[12].t + 2.3);
+    tl.fromTo("#s26-legend", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[10].t + 0.9);
+    tl.fromTo("#s26-back", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" }, C[10].t + 1.7);
+    tl.fromTo("#s26-backlabel", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, C[10].t + 2.3);
 
-    // cue13 · 刚才哪里做得不好：放大镜扫一遍，把缺陷挑出来
-    tl.fromTo("#s26-mag", { opacity: 0, x: -54 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, C[13].t + 0.15);
-    tl.fromTo("#s26-mag", { x: -54 }, { x: 1465, duration: 2.9, ease: "power1.inOut", immediateRender: false }, C[13].t + 0.35);
-    tl.fromTo("#s26-mag", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[13].t + 3.35);
-    tl.fromTo("#s26-tag1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[13].t + 1.05);
-    tl.fromTo("#s26-tag2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[13].t + 1.8);
-    tl.fromTo("#s26-stat1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[13].t + 2.85);
+    // cue11 · 刚才哪里做得不好：放大镜扫一遍，把缺陷挑出来
+    tl.fromTo("#s26-mag", { opacity: 0, x: -54 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, C[11].t + 0.15);
+    tl.fromTo("#s26-mag", { x: -54 }, { x: 1465, duration: 2.9, ease: "power1.inOut", immediateRender: false }, C[11].t + 0.35);
+    tl.fromTo("#s26-mag", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, C[11].t + 3.35);
+    tl.fromTo("#s26-tag1", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[11].t + 1.05);
+    tl.fromTo("#s26-tag2", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, C[11].t + 1.8);
+    tl.fromTo("#s26-stat1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[11].t + 2.85);
 
-    // cue14 · 再针对评审结果修：放大镜回扫，红黄逐格变绿
-    tl.fromTo("#s26-mag", { opacity: 0, x: 1465 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, C[14].t + 0.1);
-    tl.fromTo("#s26-mag", { x: 1465 }, { x: -54, duration: 1.35, ease: "power1.inOut", immediateRender: false }, C[14].t + 0.2);
-    tl.fromTo("#s26-mag", { opacity: 1 }, { opacity: 0, duration: 0.25, ease: "power1.out", immediateRender: false }, C[14].t + 1.62);
-    fadeOut(["#s26-tag1", "#s26-tag2"], C[14].t + 0.12, 0.28);
+    // cue12 · 再针对评审结果修：放大镜回扫，红黄逐格变绿
+    tl.fromTo("#s26-mag", { opacity: 0, x: 1465 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, C[12].t + 0.1);
+    tl.fromTo("#s26-mag", { x: 1465 }, { x: -54, duration: 1.35, ease: "power1.inOut", immediateRender: false }, C[12].t + 0.2);
+    tl.fromTo("#s26-mag", { opacity: 1 }, { opacity: 0, duration: 0.25, ease: "power1.out", immediateRender: false }, C[12].t + 1.62);
+    fadeOut(["#s26-tag1", "#s26-tag2"], C[12].t + 0.12, 0.28);
     BUGS.concat(RISKS).forEach((i) => {
-      const arrive = C[14].t + 0.2 + ((1465 - (cellX(i) - 54)) / 1519) * 1.35;
+      const arrive = C[12].t + 0.2 + ((1465 - (cellX(i) - 54)) / 1519) * 1.35;
       tl.fromTo(FILL[i], { backgroundColor: DEF[i] }, { backgroundColor: "#2f8f68", duration: 0.34, ease: "power2.out", immediateRender: false }, arrive);
     });
-    tl.fromTo("#s26-stat2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[14].t + 1.15);
+    tl.fromTo("#s26-stat2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C[12].t + 1.15);
     // 修完以后长条重新一片绿，红旗再插上
-    plantGoal(C[14].t + 1.4);
+    plantGoal(C[12].t + 1.4);
 
-    // cue15 · 开发、评审、修复，再开发、再评审：像做完一个项目要复盘
-    tl.fromTo(".s26-node", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.26 }, C[15].t + 0.2);
-    tl.fromTo(".s26-looparrow", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", stagger: 0.26 }, C[15].t + 0.4);
-    tl.fromTo("#s26-stamp", { opacity: 0, scale: 1.7, rotation: -16 }, { opacity: 1, scale: 1, rotation: -8, duration: 0.42, ease: "power3.in" }, C[15].t + 2.35);
+    // cue13 · 开发、评审、修复，再开发、再评审：像做完一个项目要复盘
+    tl.fromTo(".s26-node", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.26 }, C[13].t + 0.2);
+    tl.fromTo(".s26-looparrow", { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", stagger: 0.26 }, C[13].t + 0.4);
+    tl.fromTo("#s26-stamp", { opacity: 0, scale: 1.7, rotation: -16 }, { opacity: 1, scale: 1, rotation: -8, duration: 0.42, ease: "power3.in" }, C[13].t + 2.35);
     // 五步依次亮一下，停在稳定帧
     [ "#s26-node1", "#s26-node2", "#s26-node3", "#s26-node4", "#s26-node5" ].forEach((sel, k) => {
-      const at = C[15].t + 3.6 + k * 0.55;
+      const at = C[13].t + 3.6 + k * 0.55;
       tl.fromTo(sel, { scale: 1 }, { scale: 1.07, duration: 0.22, ease: "power2.out", immediateRender: false }, at);
       tl.fromTo(sel, { scale: 1.07 }, { scale: 1, duration: 0.3, ease: "power2.inOut", immediateRender: false }, at + 0.24);
     });
 
-    // cue16 · 只往前走、不回头看，问题会一直留在里面
-    tl.fromTo("#s26-final", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, C[16].t + 0.15);
-    tl.fromTo("#s26-finalnote", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[16].t + 0.75);
-    tl.fromTo("#s26-stamp", { scale: 1 }, { scale: 1.05, duration: 0.3, ease: "power2.out", immediateRender: false }, C[16].t + 1.25);
-    tl.fromTo("#s26-stamp", { scale: 1.05 }, { scale: 1, duration: 0.35, ease: "power2.inOut", immediateRender: false }, C[16].t + 1.58);
+    // cue14 · 只往前走、不回头看，问题会一直留在里面
+    tl.fromTo("#s26-final", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, C[14].t + 0.15);
+    tl.fromTo("#s26-finalnote", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, C[14].t + 0.75);
+    tl.fromTo("#s26-stamp", { scale: 1 }, { scale: 1.05, duration: 0.3, ease: "power2.out", immediateRender: false }, C[14].t + 1.25);
+    tl.fromTo("#s26-stamp", { scale: 1.05 }, { scale: 1, duration: 0.35, ease: "power2.inOut", immediateRender: false }, C[14].t + 1.58);
     // MOTION:END
 
     window.__timelines["s-task-scope"] = tl;
