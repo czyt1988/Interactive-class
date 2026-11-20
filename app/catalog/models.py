@@ -29,6 +29,11 @@ Level = Literal["beginner", "intermediate", "advanced"]
 Status = Literal["draft", "published", "archived"]
 Playback = Literal["screens", "continuous"]
 CornerPosition = Literal["top-left", "top-right", "bottom-left", "bottom-right"]
+# A screen is lesson content unless a site-side clip inserted it. Intro/outro
+# pages are ordinary scenes, so the player treats them as chapters; the kind only
+# tells the shell how to label them (片头/片尾 instead of 01, 02, …).
+ScreenKind = Literal["lesson", "intro", "outro"]
+ClipKind = Literal["intro", "outro"]
 
 
 class StrictModel(BaseModel):
@@ -160,8 +165,34 @@ class WatermarkConfig(StrictModel):
         return value
 
 
+class ClipSelection(StrictModel):
+    """Which intro/outro clip a course plays, or ``None`` for no clip.
+
+    Stored in the site database next to the watermark, never in
+    ``course.json``: the clip library is deployment-side content shared by every
+    course, and a course bundle must stay playable without the site.
+    """
+
+    intro: str | None = None
+    outro: str | None = None
+
+    @field_validator("intro", "outro")
+    @classmethod
+    def _clip_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not SCREEN_ID_PATTERN.match(value) or len(value) > 32:
+            raise ValueError("片头/片尾 id 必须匹配 ^[a-z][a-z0-9-]*$ 且为 1–32 个字符")
+        return value
+
+    @property
+    def is_empty(self) -> bool:
+        return self.intro is None and self.outro is None
+
+
 class ScreenMeta(StrictModel):
     id: str
+    kind: ScreenKind = "lesson"
     kicker: str | None = None
     title: str
     summary: str

@@ -16,7 +16,7 @@
 - 课程必须能作为独立静态包部署；没有 API、数据库或登录态也能完整播放。
 - 主链路不输出 MP4，不使用 SPA 框架。
 - 视频仍不是主链路；后台设置页可以按需生成课程视频，产物留在服务器 `data/videos/`，不进 Git、不进构建产物。
-- 课程内容放在文件里；用户、会话、进度和课程水印配置放在 SQLite。数据库属于站点，不属于课程包。水印文字是部署方身份信息，不进 Git、不写 `course.json`。
+- 课程内容放在文件里；用户、会话、进度、课程水印和片头片尾选择放在 SQLite。数据库属于站点，不属于课程包。水印文字是部署方身份信息，不进 Git、不写 `course.json`；片头片尾模板是全站共享文件（`clips/`），选哪一个是部署配置，同样不写 `course.json`。
 - 课程模板包 `course-template/` 是独立交付物：它不在 `courses/` 下参与构建；改课程字段、目录或时间规则时，同一任务内同步更新模板包里的作者文档和骨架。
 - 导入只做三件事：校验、把课程源文件复制进 `courses/<slug>/`、构建；数据库只在 `course_imports` 表登记来源，课程内容不写库。
 - 运行时不引用 CDN；player、runtime、GSAP、字体全部本地。
@@ -144,10 +144,10 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 
 ## 当前状态
 
-v0.10：课程水印改为站点部署配置：每门课可在后台配置四角角标水印和满屏平铺水印，配置保存在 SQLite 的 `course_watermarks` 表（不进 Git、不写课程源文件），保存后重新构建；构建从数据库读配置并把水印层写进课程 composition，所以网页播放和导出的 MP4 带同一层。播放页仍是全视口舞台 + 通栏控制条，课程模板仍是独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
+v0.11：片头/片尾可配置：全站共享模板库在 `clips/`（自带「课程扉页」片头和「项目落款」片尾），后台按课程选择，存在 SQLite 的 `course_clips` 表（不进 Git、不写课程源文件），保存后重新构建；构建把模板渲染成课程 composition 的一屏插在最前/最后，所以网页播放、目录、导出的 MP4 都是同一屏。片头用 `{{course.title}}`、`{{project.label}}` 等占位符带入课程信息和 `PROJECT_URL`。课程水印仍是站点部署配置（`course_watermarks` 表）。播放页仍是全视口舞台 + 通栏控制条，课程模板仍是独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
 
 - 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、目录与讲义抽屉、字幕/配音开关、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
-- 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。每门课还有「水印配置」页 `/admin/courses/<slug>/watermark`：角标水印 + 满屏平铺水印，16:9 预览，保存时写站点数据库 `course_watermarks` 表（不进 Git）并重新构建（见课程契约 3.7、7.8 与架构 7.12）。
+- 已有后台：`/admin` 列出课程与屏数、显示视频是否已生成、在线调用 HyperFrames CLI 渲染 MP4 并下载；产物在 `data/videos/`，可用 `ADMIN_TOKEN` 加访问密码（见架构 7.11 与 README「在线生成课程视频」）。每门课还有「水印配置」页 `/admin/courses/<slug>/watermark`：角标水印 + 满屏平铺水印，16:9 预览，保存时写站点数据库 `course_watermarks` 表（不进 Git）并重新构建（见课程契约 3.7、7.8 与架构 7.12）；以及「片头片尾」页 `/admin/courses/<slug>/clips`：从共享模板库 `clips/` 选片头/片尾，写 `course_clips` 表并重新构建（见课程契约 3.8、7.9 与架构 7.13）。
 - 已有模板与导入：`course-template/` 是独立交付包（`AGENTS.md` 给 AI、`COURSE-CONTRACT.md`/`STYLE.md` 给作者）；`scripts/new_course.py` 生成脚手架；`scripts/import_course.py` 和开发环境 `/import` 页面把外部课程校验、复制到 `courses/<slug>/`、构建并登记 `course_imports` 来源（见课程契约 7.7）。
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `courses-outline/ai-first-sees/outline.md` 的 29 镜头长版落地，共 28 屏 / 29:54（旁白 `rate +0%`；原 S28 safety 并入 S27，收尾为 S28）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源（`--rate` 控语速，当前 `+0%`，必须带符号；`narration/cache/` 按 voice + rate + 旁白文本指纹失效）。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。

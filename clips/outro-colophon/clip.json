@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "outro-colophon",
+  "kind": "outro",
+  "title": "片尾：项目落款",
+  "summary": "再留一次项目地址和制作方式",
+  "description": "课程落款：结束语、开源项目地址、制作工具。约 9 秒，接在课程最后。",
+  "kicker": "片尾",
+  "transcript": "课程结束。本课开源发布，项目地址和制作方式留在这里：课程由 DeepSeek Harness 生成，使用的模型是 DeepSeek-V4.1 Flash。",
+  "duration": 9,
+  "scene": "scene.html"
+}

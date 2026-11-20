@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}片头片尾 · {{ course.title }} · {{ site.title }}{% endblock %}
+{% block description %}给《{{ course.title }}》选择片头和片尾。片头/片尾是课程 composition 的额外一屏，构建时插入，网页播放和导出的 MP4 都会带上。{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/static/admin.css" />
+{% endblock %}
+
+{% block content %}
+<section class="page-head page-head--narrow">
+  <p class="eyebrow">后台 / 片头片尾</p>
+  <h1>给《{{ course.title }}》插片头片尾</h1>
+  <p class="lede">片头和片尾就是课程 composition 里的额外一屏：构建时插到课程最前面或最后面，网页播放和导出的 MP4 都会带上。这里只选「用哪一个」；模板放在仓库 <code>clips/</code> 目录里，全站共用。片头适合讲清课程主题、开源项目地址和制作方式。</p>
+  <p class="admin-watermark__back"><a href="/admin">← 返回课程后台</a></p>
+</section>
+
+{% if notice %}
+  <div class="admin-notice" role="status">
+    <p>{{ notice }}</p>
+  </div>
+{% endif %}
+
+{% if errors %}
+  <div class="admin-notice admin-notice--warn" role="alert">
+    <p class="admin-watermark__error-label">没有保存成功</p>
+    <ul class="admin-watermark__errors">
+      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if not source_available %}
+  <div class="admin-notice admin-notice--warn" role="note">
+    <p>这台机器上没有 <code>{{ source_label }}</code>，无法重新构建课程包。片头/片尾配置保存在站点数据库里，不写课程源文件；但构建需要课程源，请在持有课程源的机器上打开本页配置。</p>
+  </div>
+{% endif %}
+
+{% if library_issues %}
+  <div class="admin-notice admin-notice--warn" role="note">
+    <p class="admin-watermark__error-label">有模板没有通过校验</p>
+    <ul class="admin-watermark__errors">
+      {% for issue in library_issues %}<li><code>{{ issue.clip_id or "clips/" }}</code>：{{ issue.message }}</li>{% endfor %}
+    </ul>
+    <p>这些模板不会出现在下面的选项里。按 <code>clips/README.md</code> 修好后再刷新本页。</p>
+  </div>
+{% endif %}
+
+<section class="admin-clips-current" aria-labelledby="clips-current-title">
+  <h2 id="clips-current-title">当前</h2>
+  <div class="admin-clip-current-grid">
+    <article class="admin-clip-current">
+      <p class="admin-clip-current__label">片头</p>
+      {% if current.intro %}
+        <h3>{{ current.intro.title }}</h3>
+        <p>{{ "%g"|format(current.intro.duration) }} 秒 · {{ current.intro.summary }}</p>
+        <div class="admin-clip-thumb admin-clip-thumb--wide">
+          <iframe src="{{ current.intro_frame }}" title="当前片头的最后一帧" loading="lazy"></iframe>
+        </div>
+      {% elif current.intro_id %}
+        <p class="admin-clip-current__missing">已配置 {{ current.intro_id }}，但 clips/ 里找不到这个模板。</p>
+      {% else %}
+        <p class="admin-clip-current__empty">未插入片头。课程会直接从第一屏开始。</p>
+      {% endif %}
+    </article>
+
+    <article class="admin-clip-current">
+      <p class="admin-clip-current__label">片尾</p>
+      {% if current.outro %}
+        <h3>{{ current.outro.title }}</h3>
+        <p>{{ "%g"|format(current.outro.duration) }} 秒 · {{ current.outro.summary }}</p>
+        <div class="admin-clip-thumb admin-clip-thumb--wide">
+          <iframe src="{{ current.outro_frame }}" title="当前片尾的最后一帧" loading="lazy"></iframe>
+        </div>
+      {% elif current.outro_id %}
+        <p class="admin-clip-current__missing">已配置 {{ current.outro_id }}，但 clips/ 里找不到这个模板。</p>
+      {% else %}
+        <p class="admin-clip-current__empty">未插入片尾。课程播完直接进完成页。</p>
+      {% endif %}
+    </article>
+  </div>
+  <p class="admin-clip-current__hint">预览是这个模板按本课标题、摘要和项目地址渲染出来的最后一帧，不是动画。</p>
+</section>
+
+<form class="admin-clips-form" method="post" action="{{ posted_url }}" autocomplete="off">
+  <section class="admin-wm-block" aria-labelledby="clips-intro-title">
+    <h2 id="clips-intro-title">片头</h2>
+    <p class="admin-wm-help">插在课程最前面，播完自动接第一屏。片头会成为播放器目录里的第一项，标着「片头」，不会改变正课的编号。</p>
+    <div class="admin-clip-options">
+      <div class="admin-clip-option">
+        <input class="admin-clip-option__radio" type="radio" id="intro-none" name="intro" value="" {% if not values.intro %}checked{% endif %} />
+        <label class="admin-clip-option__main" for="intro-none">
+          <span class="admin-clip-option__title">不插入片头</span>
+          <span class="admin-clip-option__meta">课程直接从第一屏开始</span>
+        </label>
+      </div>
+      {% for clip in intro_clips %}
+        <div class="admin-clip-option">
+          <input class="admin-clip-option__radio" type="radio" id="intro-{{ clip.id }}" name="intro" value="{{ clip.id }}" {% if values.intro == clip.id %}checked{% endif %} />
+          <label class="admin-clip-option__main" for="intro-{{ clip.id }}">
+            <span class="admin-clip-option__title">{{ clip.title }}</span>
+            <span class="admin-clip-option__meta">{{ clip.duration }} 秒 · {{ clip.summary }}</span>
+            {% if clip.description %}<span class="admin-clip-option__desc">{{ clip.description }}</span>{% endif %}
+          </label>
+          <span class="admin-clip-thumb" aria-hidden="true">
+            <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+          </span>
+        </div>
+      {% else %}
+        <p class="admin-clip-empty">还没有可用的片头模板。在仓库 <code>clips/</code> 下新建一个 <code>intro-*</code> 文件夹，写 <code>clip.json</code> 和 <code>scene.html</code>，刷新本页即可选择。</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-wm-block" aria-labelledby="clips-outro-title">
+    <h2 id="clips-outro-title">片尾</h2>
+    <p class="admin-wm-help">接在最后一屏之后，播完再进完成页。适合再留一次项目地址和制作方式。</p>
+    <div class="admin-clip-options">
+      <div class="admin-clip-option">
+        <input class="admin-clip-option__radio" type="radio" id="outro-none" name="outro" value="" {% if not values.outro %}checked{% endif %} />
+        <label class="admin-clip-option__main" for="outro-none">
+          <span class="admin-clip-option__title">不插入片尾</span>
+          <span class="admin-clip-option__meta">课程播完直接进完成页</span>
+        </label>
+      </div>
+      {% for clip in outro_clips %}
+        <div class="admin-clip-option">
+          <input class="admin-clip-option__radio" type="radio" id="outro-{{ clip.id }}" name="outro" value="{{ clip.id }}" {% if values.outro == clip.id %}checked{% endif %} />
+          <label class="admin-clip-option__main" for="outro-{{ clip.id }}">
+            <span class="admin-clip-option__title">{{ clip.title }}</span>
+            <span class="admin-clip-option__meta">{{ clip.duration }} 秒 · {{ clip.summary }}</span>
+            {% if clip.description %}<span class="admin-clip-option__desc">{{ clip.description }}</span>{% endif %}
+          </label>
+          <span class="admin-clip-thumb" aria-hidden="true">
+            <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+          </span>
+        </div>
+      {% else %}
+        <p class="admin-clip-empty">还没有可用的片尾模板。在仓库 <code>clips/</code> 下新建一个 <code>outro-*</code> 文件夹，写 <code>clip.json</code> 和 <code>scene.html</code>，刷新本页即可选择。</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="admin-wm-actions">
+    <button class="button button--primary" type="submit" name="action" value="save"{% if not source_available %} disabled{% endif %}>保存并重新构建</button>
+    <button class="button button--ghost" type="submit" name="action" value="clear"{% if not source_available %} disabled{% endif %}>清除片头片尾</button>
+  </div>
+</form>
+
+<p class="admin-footnote">片头/片尾的选择保存在站点数据库的 <code>course_clips</code> 表里，不写课程源文件、不进 Git；保存后构建时把模板渲染成课程 composition 里的一屏，所以独立部署也保留，导出的 MP4 也带。模板本身在 <code>clips/</code>，改模板后重新保存一次即可重建。</p>
+{% endblock %}

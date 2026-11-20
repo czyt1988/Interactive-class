@@ -271,15 +271,37 @@ function setBodyState(state) {
   if (state === "cover") el.cover.removeAttribute("aria-hidden");
 }
 
+function lessonNumber(index) {
+  // Clip screens are playable chapters but not lesson numbers: with a 片头 at
+  // index 0, the first lesson still reads 01, matching the cover and the TOC.
+  let n = 0;
+  for (let i = 0; i <= index && i < data.screens.length; i += 1) {
+    if ((data.screens[i].kind || "lesson") === "lesson") n += 1;
+  }
+  return n;
+}
+
+function screenLabel(screen, index) {
+  // Intro/outro clips are screens in the playback order but not numbered
+  // chapters; show 片头/片尾 where a lesson shows "07".
+  if (screen?.kind === "intro") return "片头";
+  if (screen?.kind === "outro") return "片尾";
+  return String(lessonNumber(index)).padStart(2, "0");
+}
+
 function renderChapter() {
   const screen = currentScreen();
   if (!screen) return;
 
-  el.kicker.textContent = screen.kicker || `第 ${deck.index + 1} 屏`;
+  el.kicker.textContent =
+    screen.kicker ||
+    ((screen.kind || "lesson") === "lesson"
+      ? `第 ${lessonNumber(deck.index)} 屏`
+      : screenLabel(screen, deck.index));
   el.title.textContent = screen.title;
   el.summary.textContent = screen.summary;
 
-  el.counter.textContent = `${String(deck.index + 1).padStart(2, "0")} / ${String(
+  el.counter.textContent = `${screenLabel(screen, deck.index)} / ${String(
     data.screens.length,
   ).padStart(2, "0")}`;
 
@@ -289,7 +311,7 @@ function renderChapter() {
   el.prev.disabled = deck.index === 0;
   // The last screen keeps "next" enabled: that click is how the learner reaches
   // the completion page, so it becomes "完成" instead of disappearing.
-  const isLast = deck.index === total - 1;
+  const isLast = deck.index === data.screens.length - 1;
   el.next.disabled = false;
   el.next.setAttribute("aria-label", isLast ? "完成课程，查看总结" : "下一屏");
   const nextLabel = $(".control__label", el.next);
@@ -341,7 +363,11 @@ function renderChapter() {
 function updateAnnouncer() {
   const screen = currentScreen();
   if (!screen) return;
-  el.announcer.textContent = `第 ${deck.index + 1} 屏，共 ${data.screens.length} 屏：${screen.title}`;
+  const label =
+    screen.kind === "intro" || screen.kind === "outro"
+      ? screenLabel(screen, deck.index)
+      : `第 ${lessonNumber(deck.index)} 屏`;
+  el.announcer.textContent = `${label}，共 ${data.screens.length} 屏：${screen.title}`;
 }
 
 /** Mark the current screen in the directory, mirroring the cover outline. */

@@ -603,6 +603,172 @@
   overflow-wrap: anywhere;
 }
 
+/* ------------------------------------------------------ intro/outro clips */
+/* Same registration-ledger family as the watermark page. A clip option is a
+ * radio plus a small still of its last frame, rendered by the server; there is
+ * no player and no animation in the admin page. */
+
+.admin-clips-current {
+  margin-bottom: clamp(32px, 5vw, 56px);
+}
+
+.admin-clips-current > h2 {
+  margin-bottom: 16px;
+  font-size: clamp(20px, 2.2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.admin-clip-current-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.admin-clip-current {
+  min-width: 0;
+  padding: clamp(18px, 2.4vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--paper-raised);
+}
+
+.admin-clip-current__label {
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.admin-clip-current h3 {
+  font-size: clamp(18px, 2vw, 22px);
+  letter-spacing: -0.02em;
+}
+
+.admin-clip-current p {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.admin-clip-current__missing {
+  color: var(--accent-text);
+}
+
+.admin-clip-current__empty {
+  color: var(--ink-faint);
+}
+
+.admin-clip-current__hint {
+  max-width: 58em;
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.admin-clip-thumb {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 232px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-mini);
+  background: var(--paper-deep);
+}
+
+.admin-clip-thumb iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+}
+
+.admin-clip-thumb--wide {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.admin-clips-form {
+  display: grid;
+  gap: clamp(20px, 3vw, 32px);
+}
+
+.admin-clip-options {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-clip-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-mini);
+  background: var(--paper);
+}
+
+.admin-clip-option:has(.admin-clip-option__radio:checked) {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.admin-clip-option__radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.admin-clip-option__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+}
+
+.admin-clip-option__title {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-clip-option__meta {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.admin-clip-option__desc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.admin-clip-option__radio:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.admin-clip-empty {
+  padding: 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-mini);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
 @media (max-width: 680px) {
   .wm-preview__canvas {
     max-width: none;
@@ -610,5 +776,9 @@
 
   .admin-wm-field-row {
     grid-template-columns: 1fr;
+  }
+
+  .admin-clip-thumb {
+    display: none;
   }
 }

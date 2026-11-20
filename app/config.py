@@ -15,6 +15,9 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Open-source project address printed by the shipped intro template. Override
+# with PROJECT_URL when a fork or a deployment lives somewhere else.
+DEFAULT_PROJECT_URL = "https://gitee.com/czyt1988/interactive-class"
 
 
 class Settings(BaseSettings):
@@ -35,6 +38,13 @@ class Settings(BaseSettings):
     runtime_dir: Path = Field(default=BASE_DIR / "runtime")
     design_dir: Path = Field(default=BASE_DIR / "design")
     database_url: str = "sqlite:///./data/app.db"
+
+    # Shared intro/outro clip library (``clips/<clip-id>/``). A clip is one more
+    # scene injected at build time; the selection per course lives in SQLite, not
+    # in the course source. This URL is printed by the shipped intro template and
+    # identifies the open-source project, so it is deployment config as well.
+    clips_dir: Path = Field(default=BASE_DIR / "clips")
+    project_url: str = DEFAULT_PROJECT_URL
 
     strict_catalog: bool | None = None
     include_drafts: bool | None = None
@@ -67,6 +77,7 @@ class Settings(BaseSettings):
         "courses_dist_dir",
         "runtime_dir",
         "design_dir",
+        "clips_dir",
         "video_output_dir",
         "video_work_dir",
         "courses_inbox_dir",
@@ -74,6 +85,14 @@ class Settings(BaseSettings):
     @classmethod
     def _absolute_path(cls, value: Path) -> Path:
         return value if value.is_absolute() else (BASE_DIR / value).resolve()
+
+    @field_validator("project_url")
+    @classmethod
+    def _project_url(cls, value: str) -> str:
+        url = value.strip().rstrip("/")
+        if not url.startswith(("http://", "https://")):
+            raise ValueError("PROJECT_URL 必须是 http:// 或 https:// 开头的地址")
+        return url
 
     @field_validator("video_hyperframes_cli", "video_ffmpeg_dir", mode="before")
     @classmethod

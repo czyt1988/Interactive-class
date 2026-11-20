@@ -29,15 +29,31 @@ if str(ROOT) not in sys.path:
 from jinja2 import Environment, FileSystemLoader, select_autoescape  # noqa: E402
 
 from app.catalog.assets import scan_composition  # noqa: E402
-from app.catalog.models import CatalogError, ResolvedCourse, WatermarkConfig  # noqa: E402
+from app.catalog.clip_store import load_all as load_clips  # noqa: E402
+from app.catalog.clips import (  # noqa: E402
+    ClipBuildError,
+    ClipLibrary,
+    apply_plan,
+    build_context,
+    inject_clips,
+    plan_clips,
+    plan_fingerprint,
+)
+from app.catalog.models import (  # noqa: E402
+    CatalogError,
+    ClipSelection,
+    ResolvedCourse,
+    WatermarkConfig,
+)
 from app.catalog.resolver import CourseResolutionError, resolve_course  # noqa: E402
 from app.catalog.watermark import inject_watermark  # noqa: E402
 from app.catalog.watermark_store import load_all as load_watermarks  # noqa: E402
-from app.config import get_settings  # noqa: E402
+from app.config import DEFAULT_PROJECT_URL, get_settings  # noqa: E402
 
 DEFAULT_SOURCE = ROOT / "courses"
 DEFAULT_OUT = ROOT / "dist" / "courses"
 DEFAULT_RUNTIME = ROOT / "runtime"
+DEFAULT_CLIPS = ROOT / "clips"
 
 SKIP_COMPOSITION = {
     "node_modules",
@@ -151,13 +167,16 @@ def _iter_composition_files(root: Path) -> list[Path]:
 
 
 def content_hash(
-    course_dir: Path, course: ResolvedCourse, watermark: WatermarkConfig | None = None
+    course_dir: Path,
+    course: ResolvedCourse,
+    watermark: WatermarkConfig | None = None,
+    clip_fingerprint: str = "",
 ) -> str:
-    """Hash the course source plus the site-side watermark config.
+    """Hash the course source plus the site-side watermark and clip selection.
 
-    The watermark lives in the database, not in ``courses/``, so it has to be
-    mixed in explicitly: that keeps ``contentHash`` changing when the watermark
-    changes, which is what marks an already exported video as stale.
+    The watermark and the clip choice live in the database, not in ``courses/``,
+    so they have to be mixed in explicitly: that keeps ``contentHash`` changing
+    when either changes, which is what marks an already exported video as stale.
     """
 
     digest = hashlib.sha256()
@@ -181,6 +200,9 @@ def content_hash(
                 sort_keys=True,
             ).encode("utf-8")
         )
+    if clip_fingerprint:
+        digest.update(b"\0clips\0")
+        digest.update(clip_fingerprint.encode("utf-8"))
     return digest.hexdigest()
 
 
@@ -404,11 +426,17 @@ def build_course(
     course_base_url: str = "/courses",
     progress_sync: bool = True,
     watermark: WatermarkConfig | None = None,
+    clip_selection: ClipSelection | None = None,
+    clip_library: ClipLibrary | None = None,
+    project_url: str = DEFAULT_PROJECT_URL,
 ) -> BuildResult:
     """Build one course bundle.
 
-    ``watermark`` comes from the site database (see ``watermark_store``), never
-    from ``course.json``: the text must not travel with the course source.
+    ``watermark`` and ``clip_selection`` come from the site database (see
+    ``watermark_store`` and ``clip_store``), never from ``course.json``: neither
+    deployment choice may travel with the course source. Selected clips are
+    rendered into the composition here, as ordinary scenes, so the web player
+    and the MP4 renderer both show them.
     """
 
     course_dir = course_dir.resolve()
@@ -425,12 +453,28 @@ def build_course(
     if errors:
         return BuildResult(slug=slug, output_dir=out_root / slug, errors=errors)
 
-    digest = content_hash(course_dir, course, watermark)
+    library = clip_library or ClipLibrary(DEFAULT_CLIPS)
+    context = build_context(
+        course,
+        site_title=site_title,
+        project_url=project_url,
+        course_url=course_url(course_base_url, site_url, slug),
+    )
+    try:
+        clip_plan = plan_clips(course, course_dir, clip_selection, library, context)
+    except ClipBuildError as exc:
+        return BuildResult(slug=slug, output_dir=out_root / slug, errors=exc.errors)
+    adjusted = apply_plan(course, clip_plan)
+
+    fingerprint = (
+        plan_fingerprint(clip_plan, clip_selection) if clip_selection is not None else ""
+    )
+    digest = content_hash(course_dir, course, watermark, clip_fingerprint=fingerprint)
     result = BuildResult(
         slug=slug,
         output_dir=out_root / slug,
-        screens=len(course.screens),
-        duration=course.composition.duration,
+        screens=len(adjusted.screens),
+        duration=adjusted.composition.duration,
         content_hash=digest,
     )
     if check_only:
@@ -449,17 +493,21 @@ def build_course(
     target = out_root / slug
     try:
         _copy_composition(course_dir / "composition", staging / "composition")
-        # The course watermark lives in the composition, not in the shell: the
-        # web player and the MP4 renderer both consume the composition, so one
-        # baked layer keeps playback and export identical. The config comes from
-        # the site database so the text never enters the course source or git.
+        # The watermark and the intro/outro clips live in the composition, not in
+        # the shell: the web player and the MP4 renderer both consume the
+        # composition, so one baked copy keeps playback and export identical.
         inject_watermark(staging / course.composition.entry, watermark)
+        try:
+            inject_clips(staging / course.composition.entry, clip_plan)
+        except ClipBuildError as exc:
+            shutil.rmtree(staging, ignore_errors=True)
+            return BuildResult(slug=slug, output_dir=target, errors=exc.errors)
         font_url = shell_font_url(staging / "composition")
         _copy_runtime(runtime_dir, staging / "runtime")
         if course.cover:
             shutil.copy2(course_dir / course.cover, staging / course.cover)
 
-        payload = course.model_dump()
+        payload = adjusted.model_dump()
         payload["build"] = {
             "runtimeVersion": runtime_version,
             "contentHash": digest,
@@ -469,7 +517,7 @@ def build_course(
             json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         _render_shell(
-            course=course,
+            course=adjusted,
             runtime_dir=runtime_dir,
             build_hash=digest,
             site_url=site_url,
@@ -533,10 +581,15 @@ def build_all(
     course_base_url: str = "/courses",
     progress_sync: bool = True,
     watermarks: dict[str, WatermarkConfig] | None = None,
+    clips: dict[str, ClipSelection] | None = None,
+    clip_library: ClipLibrary | None = None,
+    project_url: str = DEFAULT_PROJECT_URL,
 ) -> list[BuildResult]:
     selected = set(courses or [])
     results: list[BuildResult] = []
     configs = watermarks or {}
+    clip_configs = clips or {}
+    library = clip_library or ClipLibrary(DEFAULT_CLIPS)
     for course_dir in discover_courses(source_root):
         if selected and course_dir.name not in selected:
             continue
@@ -552,6 +605,9 @@ def build_all(
                 course_base_url=course_base_url,
                 progress_sync=progress_sync,
                 watermark=configs.get(course_dir.name),
+                clip_selection=clip_configs.get(course_dir.name),
+                clip_library=library,
+                project_url=project_url,
             )
         )
 
@@ -606,6 +662,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--runtime-dir", type=Path, default=DEFAULT_RUNTIME)
+    parser.add_argument("--clips-dir", type=Path, default=DEFAULT_CLIPS)
+    parser.add_argument("--project-url", default=None, help="片头里印的开源项目地址")
     parser.add_argument("--site-url", default="http://127.0.0.1:8000")
     parser.add_argument("--site-title", default="AI Learning")
     parser.add_argument("--course-base-url", default="/courses")
@@ -614,6 +672,11 @@ def main(argv: list[str] | None = None) -> int:
         "--no-watermarks",
         action="store_true",
         help="不读数据库里的课程水印（可复现的干净构建）",
+    )
+    parser.add_argument(
+        "--no-clips",
+        action="store_true",
+        help="不读数据库里的片头/片尾配置（可复现的干净构建）",
     )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
@@ -624,7 +687,9 @@ def main(argv: list[str] | None = None) -> int:
     if not courses and not args.all:
         parser.error("需要 --course <slug> 或 --all")
 
-    watermarks = {} if args.no_watermarks else load_watermarks(get_settings())
+    settings = get_settings()
+    watermarks = {} if args.no_watermarks else load_watermarks(settings)
+    clip_configs = {} if args.no_clips else load_clips(settings)
     results = build_all(
         source_root=args.source_dir,
         out_root=args.out_dir,
@@ -637,6 +702,9 @@ def main(argv: list[str] | None = None) -> int:
         course_base_url=args.course_base_url,
         progress_sync=not args.no_progress_sync,
         watermarks=watermarks,
+        clips=clip_configs,
+        clip_library=ClipLibrary(args.clips_dir),
+        project_url=args.project_url or settings.project_url,
     )
     if not results:
         print("没有找到可构建的课程", file=sys.stderr)

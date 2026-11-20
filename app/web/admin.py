@@ -24,9 +24,11 @@ from fastapi.responses import (
 )
 from starlette.concurrency import run_in_threadpool
 
+from app.catalog import clip_store, watermark_store
+from app.catalog import clips as clip_edit
 from app.catalog import watermark as watermark_edit
-from app.catalog import watermark_store
-from app.catalog.models import Catalog, ResolvedCourse, WatermarkConfig
+from app.catalog.clips import ClipBuildError, ClipLibrary, build_context, clip_frame_html
+from app.catalog.models import Catalog, ClipKind, ClipSelection, ResolvedCourse, WatermarkConfig
 from app.catalog.watermark import (
     POSITION_FIELD_KEYS,
     POSITION_LABELS,
@@ -79,6 +81,26 @@ WATERMARK_FORM_FIELDS = (
         "repeat_gapY",
         "repeat_rotate",
     }
+)
+
+CLIP_NOTICES = {
+    "saved": "片头片尾已保存，课程包已重新构建，刷新课程页即可看到。",
+    "cleared": "片头片尾已清除，课程包已重新构建。",
+}
+CLIP_SOURCE_HINT = (
+    "这台机器上没有课程源文件 {path}，无法重新构建课程包。片头/片尾配置保存在站点数据库里、"
+    "不写课程源文件，但构建需要课程源，请在持有课程源的机器上配置。"
+)
+CLIP_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded"
+CLIP_FORM_FIELDS = {"action", "intro", "outro"}
+MAX_CLIP_BODY_BYTES = 16 * 1024
+CLIP_FRAME_CSP = (
+    "default-src 'self'; "
+    "img-src 'self' data:; "
+    "style-src 'self' 'unsafe-inline'; "
+    "font-src 'self'; "
+    "script-src 'self'; "
+    "frame-ancestors 'self'"
 )
 
 
@@ -200,6 +222,14 @@ def _status_label(status: VideoStatus) -> tuple[str, str | None]:
     return "未生成", None
 
 
+def _clip_label(selection: ClipSelection | None) -> str:
+    if selection is None or selection.is_empty:
+        return "未配置片头片尾"
+    if selection.intro and selection.outro:
+        return "片头片尾已配置"
+    return "片头已配置" if selection.intro else "片尾已配置"
+
+
 def _row(
     course: ResolvedCourse,
     status: VideoStatus,
@@ -207,6 +237,7 @@ def _row(
     busy: bool,
     ready: bool,
     watermark: WatermarkConfig | None,
+    clips: ClipSelection | None,
 ) -> dict[str, Any]:
     label, elapsed_label = _status_label(status)
     artifact = status.artifact
@@ -240,6 +271,8 @@ def _row(
         "duration_label": format_duration(course.stats.durationSeconds),
         "watermark_label": watermark_label,
         "watermark_url": f"/admin/courses/{course.slug}/watermark",
+        "clips_label": _clip_label(clips),
+        "clips_url": f"/admin/courses/{course.slug}/clips",
         "status": status.state,
         "status_label": label,
         "elapsed_label": elapsed_label,
@@ -260,6 +293,7 @@ def _rows(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     manager = _manager(request)
     settings = _settings(request)
     watermarks = watermark_store.load_all(settings)
+    clip_configs = clip_store.load_all(settings)
     busy = manager.is_busy()
     rows: list[dict[str, Any]] = []
     for course in _catalog(request).courses:
@@ -270,6 +304,7 @@ def _rows(request: Request) -> tuple[list[dict[str, Any]], dict[str, Any]]:
             busy=busy,
             ready=bool(environment["ready"]),
             watermark=watermarks.get(course.slug),
+            clips=clip_configs.get(course.slug),
         )
         if manager.project_dir(course) is None and not row["reason"]:
             row["reason"] = "服务器上找不到这门课的 composition，不能生成。"
@@ -561,6 +596,334 @@ async def save_watermark_page(slug: str, request: Request) -> Response:
     notice = "cleared" if action == "clear" or watermark is None else "saved"
     return _no_store(
         RedirectResponse(f"{_watermark_url(slug)}?notice={notice}", status_code=303)
+    )
+
+
+# -- intro / outro clips ---------------------------------------------------
+
+
+def _clips_url(slug: str) -> str:
+    return f"/admin/courses/{slug}/clips"
+
+
+def _course_page_url(settings: Settings, slug: str) -> str:
+    base = settings.course_base_url.rstrip("/")
+    if base.startswith(("http://", "https://")):
+        return f"{base}/{slug}/"
+    return f"{settings.site_url.rstrip('/')}{base}/{slug}/"
+
+
+def _clip_library(settings: Settings) -> ClipLibrary:
+    return ClipLibrary(Path(settings.clips_dir))
+
+
+def _clip_values(selection: ClipSelection | None) -> dict[str, str]:
+    return {
+        "intro": (selection.intro or "") if selection else "",
+        "outro": (selection.outro or "") if selection else "",
+    }
+
+
+def _first_field(fields: dict[str, list[str]], key: str) -> str:
+    values = fields.get(key) or [""]
+    return values[0].strip()
+
+
+def _parse_clip_form(
+    fields: dict[str, list[str]], library: ClipLibrary
+) -> tuple[ClipSelection | None, dict[str, str], list[str]]:
+    """Turn the two radio values into a validated selection."""
+
+    values = {
+        "intro": _first_field(fields, "intro"),
+        "outro": _first_field(fields, "outro"),
+    }
+    errors: list[str] = []
+    for slot, label in (("intro", "片头"), ("outro", "片尾")):
+        clip_id = values[slot]
+        if not clip_id:
+            continue
+        clip = library.get(clip_id)
+        if clip is None:
+            errors.append(f"找不到{label}模板 {clip_id!r}，刷新页面后重试。")
+        elif clip.kind != slot:
+            errors.append(f"{label}位置不能使用 {clip.kind} 类型的模板 {clip_id!r}。")
+    if errors:
+        return None, values, errors
+    try:
+        selection = ClipSelection(
+            intro=values["intro"] or None, outro=values["outro"] or None
+        )
+    except ValueError as exc:  # pydantic ValidationError is a ValueError
+        return None, values, [f"片头/片尾 id 不合法：{exc}"]
+    return selection, values, []
+
+
+def _clip_choices(
+    library: ClipLibrary, kind: ClipKind, *, course_slug: str
+) -> list[dict[str, Any]]:
+    choices: list[dict[str, Any]] = []
+    for clip in library.for_kind(kind):
+        choices.append(
+            {
+                "id": clip.id,
+                "title": clip.title,
+                "summary": clip.summary,
+                "description": clip.description,
+                "duration": f"{clip.duration:g}",
+                "frame_url": f"/admin/clips/{clip.id}/frame?course={course_slug}",
+            }
+        )
+    return choices
+
+
+def _clips_page(
+    request: Request,
+    course: ResolvedCourse,
+    *,
+    values: dict[str, str] | None = None,
+    errors: list[str] | None = None,
+    status_code: int = 200,
+) -> Response:
+    settings = _settings(request)
+    library = _clip_library(settings)
+    selection = clip_store.load(settings, course.slug)
+    problems = list(errors or [])
+    if values is None:
+        values = _clip_values(selection)
+
+    current_intro = library.get(selection.intro) if selection and selection.intro else None
+    current_outro = library.get(selection.outro) if selection and selection.outro else None
+    for clip_id, label, defined in (
+        (selection.intro if selection else None, "片头", current_intro),
+        (selection.outro if selection else None, "片尾", current_outro),
+    ):
+        if clip_id and defined is None:
+            problems.append(
+                f"已配置的{label} {clip_id!r} 在 clips/ 里找不到：补齐模板或重选一个。"
+            )
+
+    context = {
+        **_base_context(
+            request,
+            canonical=f"{settings.site_url.rstrip('/')}{_clips_url(course.slug)}",
+        ),
+        "course": course,
+        "values": values,
+        "intro_clips": _clip_choices(library, "intro", course_slug=course.slug),
+        "outro_clips": _clip_choices(library, "outro", course_slug=course.slug),
+        "current": {
+            "intro": current_intro,
+            "outro": current_outro,
+            "intro_id": selection.intro if selection else None,
+            "outro_id": selection.outro if selection else None,
+            "intro_frame": (
+                f"/admin/clips/{current_intro.id}/frame?course={course.slug}"
+                if current_intro
+                else None
+            ),
+            "outro_frame": (
+                f"/admin/clips/{current_outro.id}/frame?course={course.slug}"
+                if current_outro
+                else None
+            ),
+        },
+        "library_issues": [
+            {"code": issue.code, "message": issue.message, "clip_id": issue.clip_id}
+            for issue in library.issues()
+        ],
+        "errors": problems,
+        "notice": CLIP_NOTICES.get(request.query_params.get("notice") or ""),
+        "source_available": _source_available(settings, course.slug),
+        "source_label": _source_label(settings, course.slug),
+        "posted_url": _clips_url(course.slug),
+    }
+    response = _templates(request).TemplateResponse(
+        request=request,
+        name="admin_clips.html",
+        context=context,
+        status_code=status_code,
+    )
+    return _no_store(response)
+
+
+@router.get("/courses/{slug}/clips")
+def clips_page(slug: str, request: Request) -> Response:
+    if not _authenticated(request):
+        return _login_page(request, error=None, status_code=401)
+    course = _catalog(request).by_slug(slug)
+    if course is None:
+        return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
+    return _clips_page(request, course)
+
+
+@router.post("/courses/{slug}/clips")
+async def save_clips_page(slug: str, request: Request) -> Response:
+    if not _authenticated(request):
+        return _no_store(RedirectResponse("/admin?notice=auth", status_code=303))
+    _require_same_origin(request)
+
+    course = _catalog(request).by_slug(slug)
+    if course is None:
+        return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
+
+    settings = _settings(request)
+    library = _clip_library(settings)
+    selection = clip_store.load(settings, course.slug)
+    if not _source_available(settings, slug):
+        return _clips_page(
+            request,
+            course,
+            values=_clip_values(selection),
+            errors=[CLIP_SOURCE_HINT.format(path=_source_label(settings, slug))],
+            status_code=409,
+        )
+
+    content_type = (
+        request.headers.get("content-type", "").split(";")[0].strip().lower()
+    )
+    if content_type != CLIP_FORM_CONTENT_TYPE:
+        return _clips_page(
+            request,
+            course,
+            values=_clip_values(selection),
+            errors=["片头片尾只接受表单提交，设置没有改动。"],
+            status_code=415,
+        )
+
+    declared = request.headers.get("content-length")
+    if declared is not None:
+        try:
+            declared_length = int(declared)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Content-Length 不合法") from exc
+        if declared_length > MAX_CLIP_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="请求体过大")
+
+    body = await request.body()
+    if len(body) > MAX_CLIP_BODY_BYTES:
+        raise HTTPException(status_code=413, detail="请求体过大")
+    fields = _decode_form(body)
+    if not set(fields) & CLIP_FORM_FIELDS:
+        return _clips_page(
+            request,
+            course,
+            values=_clip_values(selection),
+            errors=["表单内容为空或字段无法识别，设置没有改动。"],
+            status_code=400,
+        )
+
+    action = _first_field(fields, "action")
+    if action not in {"save", "clear"}:
+        return _clips_page(
+            request,
+            course,
+            values=_clip_values(selection),
+            errors=["表单动作无法识别，设置没有改动。"],
+            status_code=400,
+        )
+
+    if action == "clear":
+        selection = None
+        values = {"intro": "", "outro": ""}
+    else:
+        selection, values, errors = _parse_clip_form(fields, library)
+        if errors or selection is None:
+            return _clips_page(
+                request,
+                course,
+                values=values,
+                errors=errors or ["片头/片尾设置不合法，没有保存。"],
+                status_code=422,
+            )
+
+    try:
+        result = await run_in_threadpool(
+            clip_edit.apply_selection, settings, slug, selection
+        )
+    except Exception as exc:  # noqa: BLE001 - report the failure on the page
+        return _clips_page(
+            request,
+            course,
+            values=values,
+            errors=[f"保存或重新构建课程包时出现意外错误：{exc}"],
+            status_code=500,
+        )
+
+    request.app.state.catalog_loader.invalidate()
+
+    if getattr(result, "skipped", False):
+        return _clips_page(
+            request,
+            course,
+            values=values,
+            errors=[
+                "片头/片尾已保存到数据库，但课程是草稿，构建被跳过。"
+                "把 status 改成 published 后重新保存。"
+            ],
+            status_code=422,
+        )
+    build_errors = watermark_edit.build_error_messages(result)
+    if build_errors:
+        return _clips_page(
+            request,
+            course,
+            values=values,
+            errors=[
+                "片头/片尾已保存到数据库，但重新构建课程包失败，修好后重新保存：",
+                *build_errors,
+            ],
+            status_code=422,
+        )
+
+    notice = "cleared" if action == "clear" or selection is None else "saved"
+    return _no_store(
+        RedirectResponse(f"{_clips_url(slug)}?notice={notice}", status_code=303)
+    )
+
+
+@router.get("/clips/{clip_id}/frame")
+def clip_frame(clip_id: str, request: Request, course: str | None = None) -> Response:
+    """One still of a clip's final frame, rendered for this course.
+
+    The preview runs the clip's CSS layout and a tiny local script that scales
+    the 1920×1080 surface into the iframe; it never boots the player or the clip
+    timeline. It is only reachable from the authenticated admin page, so the
+    response gets its own CSP: inline styles for the scene, one same-origin
+    script, no images or fonts from anywhere else.
+    """
+
+    if not _authenticated(request):
+        return _login_page(request, error=None, status_code=401)
+    settings = _settings(request)
+    library = _clip_library(settings)
+    clip = library.get(clip_id)
+    if clip is None:
+        raise HTTPException(status_code=404, detail="没有找到这个片头/片尾模板")
+    target = _catalog(request).by_slug(course or "")
+    if target is None:
+        raise HTTPException(status_code=404, detail="没有找到这门课")
+    context = build_context(
+        target,
+        site_title=settings.site_title,
+        project_url=settings.project_url,
+        course_url=_course_page_url(settings, target.slug),
+    )
+    source = library.scene_path(clip).read_text(encoding="utf-8")
+    try:
+        html = clip_frame_html(clip, source, context)
+    except ClipBuildError as exc:
+        raise HTTPException(
+            status_code=500, detail=exc.errors[0].message if exc.errors else "预览失败"
+        ) from exc
+    return _no_store(
+        HTMLResponse(
+            html,
+            headers={
+                "Content-Security-Policy": CLIP_FRAME_CSP,
+                "X-Robots-Tag": "noindex",
+            },
+        )
     )
 
 

@@ -31,7 +31,15 @@ def test_empty_database_upgrades_to_head(alembic_config: Config, tmp_path: Path)
     engine = create_engine(url)
     inspector = inspect(engine)
     tables = set(inspector.get_table_names())
-    assert {"users", "sessions", "course_progress", "screen_progress", "course_imports", "course_watermarks"} <= tables
+    assert {
+        "users",
+        "sessions",
+        "course_progress",
+        "screen_progress",
+        "course_imports",
+        "course_watermarks",
+        "course_clips",
+    } <= tables
 
     index_names = {index["name"] for index in inspector.get_indexes("sessions")}
     assert "ix_sessions_user_id" in index_names
@@ -44,7 +52,7 @@ def test_empty_database_upgrades_to_head(alembic_config: Config, tmp_path: Path)
 
     with engine.connect() as connection:
         version = connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one()
-    assert version == "0003_course_watermarks"
+    assert version == "0004_course_clips"
     engine.dispose()
 
 
@@ -97,7 +105,7 @@ def test_backup_copy_is_readable(alembic_config: Config, tmp_path: Path) -> None
             row[0]
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
-    assert {"users", "sessions", "course_progress", "screen_progress", "course_imports", "course_watermarks"} <= tables
+    assert {"users", "sessions", "course_progress", "screen_progress", "course_imports", "course_watermarks", "course_clips"} <= tables
 
 
 def test_upgrade_creates_a_missing_database_directory(
@@ -120,4 +128,4 @@ def test_upgrade_creates_a_missing_database_directory(
     assert db_path.is_file()
     with sqlite3.connect(db_path) as connection:
         version = connection.execute("SELECT version_num FROM alembic_version").fetchone()
-    assert version == ("0003_course_watermarks",)
+    assert version == ("0004_course_clips",)

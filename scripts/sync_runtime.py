@@ -28,6 +28,7 @@ APP_TEMPLATES = APP / "templates"
 TEMPLATE_ROOT = ROOT / "course-template"
 TEMPLATE_ASSETS = TEMPLATE_ROOT / "composition" / "assets"
 COURSE_ROOT = ROOT / "courses"
+CLIPS_ROOT = ROOT / "clips"
 
 # Copy drawn by the course shell (cover, control bar, transcript drawer). The
 # shell shares one font with the composition, so its copy belongs in the subset.
@@ -60,7 +61,7 @@ PLAYER_FILES = ("hyperframes-player.global.js", "hyperframe.runtime.iife.js")
 
 # The deck shell (course-deck.js/.css, shell.html.j2) is versioned separately from
 # the pinned vendor runtime. Bump this whenever the shell or its CSS changes.
-DECK_VERSION = "1.8.0"
+DECK_VERSION = "1.9.0"
 
 
 class SyncError(Exception):
@@ -138,6 +139,28 @@ def shell_text() -> str:
         path = RUNTIME / name
         if path.is_file():
             parts.append(path.read_text(encoding="utf-8"))
+    return "".join(parts)
+
+
+def clips_text() -> str:
+    """Copy drawn by intro/outro clips.
+
+    A clip is rendered into whatever course selects it, and the admin page prints
+    its title and description. The course font subset is generated per course
+    from its own text, so it has to know the shared clip copy as well; otherwise
+    a character that appears only in a clip (扉, 落款) falls back to a system face
+    in the middle of the page.
+    """
+
+    parts: list[str] = []
+    if not CLIPS_ROOT.is_dir():
+        return ""
+    for path in sorted(CLIPS_ROOT.rglob("*")):
+        relative = path.relative_to(CLIPS_ROOT)
+        if any(part.startswith(".") for part in relative.parts):
+            continue
+        if path.is_file() and path.suffix.lower() in {".html", ".json"}:
+            parts.append(path.read_text(encoding="utf-8", errors="ignore"))
     return "".join(parts)
 
 
@@ -246,17 +269,22 @@ def sync_fonts() -> dict[str, str]:
     source = require(DESIGN / "fonts" / "NotoSansSC-VF.ttf", "见 design/README.md 的字体下载步骤")
     hashes: dict[str, str] = {}
     shell_copy = shell_text()
+    clips_copy = clips_text()
 
     # The template ships visible copy of its own, so its font subset must cover it
     # exactly like a real course does. It is no longer under COURSE_ROOT, so it
-    # needs this explicit pass.
+    # needs this explicit pass. A selected clip is printed with the course font.
     template_font = TEMPLATE_ASSETS / "fonts" / "NotoSansSC-VF.woff2"
-    subset_font(source, template_font, extra_text=course_text(TEMPLATE_ROOT) + shell_copy)
+    subset_font(
+        source,
+        template_font,
+        extra_text=course_text(TEMPLATE_ROOT) + shell_copy + clips_copy,
+    )
     hashes[template_font.relative_to(ROOT).as_posix()] = sha256(template_font)
 
     # The site font serves every page plus the course metadata printed on them.
     app_font = APP_STATIC / "fonts" / "NotoSansSC-VF.woff2"
-    subset_font(source, app_font, extra_text=site_text())
+    subset_font(source, app_font, extra_text=site_text() + clips_copy)
     hashes[app_font.relative_to(ROOT).as_posix()] = sha256(app_font)
 
     for course_dir in sorted(COURSE_ROOT.iterdir()) if COURSE_ROOT.is_dir() else []:
@@ -265,7 +293,11 @@ def sync_fonts() -> dict[str, str]:
         assets = course_dir / "composition" / "assets"
         if (assets / "course.css").is_file():
             target = assets / "fonts" / "NotoSansSC-VF.woff2"
-            subset_font(source, target, extra_text=course_text(course_dir) + shell_copy)
+            subset_font(
+                source,
+                target,
+                extra_text=course_text(course_dir) + shell_copy + clips_copy,
+            )
             hashes[target.relative_to(ROOT).as_posix()] = sha256(target)
     return hashes
 

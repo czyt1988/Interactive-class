@@ -62,7 +62,7 @@
 - **不要写 `start` / `duration` / `index`**，这些由平台从 composition 解析后生成。
 - `status` 开发期保持 `draft`，**交付前改成 `published`**（平台默认只构建 published）。
 - `credits.author` 写真实作者；`credits.sources` 写事实来源。
-- 课程水印**不是课程字段**：它由需求方在平台后台按部署配置（见 `COURSE-CONTRACT.md` 4.7），不要写进 `course.json`，写了会被当作未知字段拒绝。水印不影响时间和 composition。
+- 课程水印**不是课程字段**：它由需求方在平台后台按部署配置（见 `COURSE-CONTRACT.md` 4.7），不要写进 `course.json`，写了会被当作未知字段拒绝。水印不影响时间和 composition。片头/片尾同理（4.8）：模板由平台维护，需求方在后台选择，作者不需要写任何字段。
 
 ### 第 4 步：逐屏写 scene
 
@@ -154,6 +154,7 @@
 - [ ] 讲义和屏幕文字一致；事实都有来源。
 - [ ] 每屏 `title` 简短、能独立看懂：它会出现在播放器目录里。目录/导航由平台外壳提供，composition 里不要自己实现。
 - [ ] `course.json` 里没有 `watermark` 字段：水印由平台部署配置，不是课程内容（见 `COURSE-CONTRACT.md` 4.7）。
+- [ ] `course.json` 里没有 `clip` / `intro` / `outro` 字段：片头/片尾由平台配置（见 `COURSE-CONTRACT.md` 4.8）。
 
 **composition 与资源**
 

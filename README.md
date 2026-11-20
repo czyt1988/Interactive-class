@@ -4,7 +4,7 @@
 
 AI Learning 是一个用网页动画讲 AI 的教学网站。每一屏只讲一个概念；短课点一下进入下一屏，长视频课程会随旁白自动接续。一门课是一串可以直接在浏览器里播放的动画，而不是一段被锁在播放器里的视频。
 
-当前状态：**v0.10，平台骨架可用，播放页撑满视口，播放器可打开目录直接跳屏，课程水印可配置且不进 Git，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳（全视口播放、逐屏进度可拖动、跳到最后、目录跳屏）、匿名进度、后台设置页、课程水印配置（水印存站点数据库，构建时写进课程 composition，网页播放和导出的 MP4 都带）、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 28 屏 / 29:54，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
+当前状态：**v0.11，平台骨架可用，播放页撑满视口，播放器可打开目录直接跳屏，课程水印和片头片尾可配置且不进 Git，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳（全视口播放、逐屏进度可拖动、跳到最后、目录跳屏）、匿名进度、后台设置页、课程水印配置（水印存站点数据库，构建时写进课程 composition，网页播放和导出的 MP4 都带）、片头片尾（共享模板选进课程，构建时作为一屏插入，播放与 MP4 都带）、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 28 屏 / 29:54，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
 
 ## 为什么要做
 
@@ -144,20 +144,20 @@ ai-learning/
 │  ├─ main.py                    # create_app、健康检查、错误模型、静态挂载
 │  ├─ config.py                  # 路径、环境变量、站点信息
 │  ├─ db.py                      # SQLite / SQLAlchemy engine + pragmas
-│  ├─ models.py                  # users / sessions / progress / course_imports / course_watermarks
+│  ├─ models.py                  # users / sessions / progress / course_imports / course_watermarks / course_clips
 │  ├─ schemas.py                 # 进度 API 的请求/响应
 │  ├─ deps.py                    # settings / catalog / db 依赖
 │  ├─ auth/sessions.py           # 匿名会话、HttpOnly Cookie
 │  ├─ repositories/progress.py   # 进度读写
-│  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载、导入、水印
+│  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载、导入、水印、片头片尾
 │  ├─ videos/                    # 后台视频渲染：工具链发现、进程渲染、任务与产物
 │  ├─ api/                       # /api/courses、/api/progress、/api/health
 │  ├─ web/routes.py              # 首页、课程库、关于、sitemap
-│  ├─ web/admin.py               # 后台设置、视频生成/下载、状态轮询、水印配置
+│  ├─ web/admin.py               # 后台设置、视频生成/下载、状态轮询、水印与片头片尾配置
 │  ├─ web/import_routes.py       # /import 课程导入页（仅开发环境）
-│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页、水印配置页、导入页与登录页）
+│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页、水印/片头片尾配置页、导入页与登录页）
 │  └─ static/                    # 站点 CSS、字体、favicon、后台与导入样式
-├─ migrations/                   # Alembic 迁移（0001_initial、0002_course_imports、0003_course_watermarks）
+├─ migrations/                   # Alembic 迁移（0001_initial … 0004_course_clips）
 ├─ data/                         # SQLite 文件与后台生成的视频，不提交
 │  └─ videos/                    # 在线生成的 MP4 与元数据
 ├─ runtime/                      # 课程外壳运行时（所有课程共用）
@@ -175,6 +175,9 @@ ai-learning/
 │  ├─ STORYBOARD.md              # 分镜脚手架
 │  └─ composition/               # 两屏骨架 + 本地字体 / GSAP
 ├─ course-inbox/                 # 外部课程收件箱，供导入使用（不进 Git）
+├─ clips/                        # 全站共享的片头/片尾模板（后台按课选择）
+│  ├─ intro-title-page/          # 片头：课程扉页 + 开源项目地址 + 制作工具
+│  └─ outro-colophon/            # 片尾：项目落款
 ├─ courses/
 │  ├─ ai-first-sees/             # 第一门课：AI 第一次看懂世界
 │  └─ <slug>/                    # 每门课一个目录
@@ -253,7 +256,7 @@ Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会
 
 1. 检查后端依赖与代码（`import app.main`，缺依赖或模块坏了会先报出来）；
 2. 运行完整的 `python scripts/sync_runtime.py`（播放器/运行时/GSAP、设计令牌、按最新课程文案重新生成字体子集）；
-3. 执行 `alembic upgrade head` 更新 SQLite 表结构（课程构建要读水印配置）；
+3. 执行 `alembic upgrade head` 更新 SQLite 表结构（课程构建要读水印与片头片尾配置）；
 4. 运行 `python scripts/build_courses.py --all`，重建全部已发布课程到 `dist/`；课程页里的站点地址自动对齐 `start.cmd` 的 `APP_PORT`，所以本地进度同步仍然有效。
 
 看到「构建完成」后，双击 `start.cmd` 启动最新版本；站点正在运行就双击 `restart.cmd`。构建只写 `dist/`、SQLite 和字体子集这些生成物，不会把产物提交进 Git。
@@ -293,7 +296,7 @@ python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回
 
 ## 在线生成课程视频
 
-视频不提交进 Git：项目部署到服务器后，打开 `/admin`（首页右上角有「后台管理」按钮，页脚也有「后台设置」入口），即可看到课程列表、每门课的屏数和视频状态。点「生成视频」，服务器会用构建产物里同一份 composition 渲染 MP4；完成后再点「下载视频」。页面不需要额外的前端构建。课程配置了水印时，水印在构建时已写进 composition，导出的 MP4 里也有，和网页播放画面一致。
+视频不提交进 Git：项目部署到服务器后，打开 `/admin`（首页右上角有「后台管理」按钮，页脚也有「后台设置」入口），即可看到课程列表、每门课的屏数和视频状态。点「生成视频」，服务器会用构建产物里同一份 composition 渲染 MP4；完成后再点「下载视频」。页面不需要额外的前端构建。课程配置了水印时，水印在构建时已写进 composition，导出的 MP4 里也有，和网页播放画面一致；配了片头/片尾时，它们也是 composition 的一屏，导出的视频同样带。
 
 生成发生在服务器上，工作方式如下：
 
@@ -353,6 +356,25 @@ python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回
 - 水印是署名和截图威慑，**不是访问控制**：它不能阻止截图、下载或查看页面源码。需要权限控制时用登录和访问策略。
 - 站点给课程包发 `Cache-Control: no-cache`：保存并重建后，普通刷新或从课程库重新进入就会拿到新版本，只有固定版本的 player 文件是长缓存。
 - 改水印会让内容哈希变化，已生成的旧视频会被标记为过期，需要重新生成。
+
+## 配置片头片尾
+
+每门课可以在最前面插一个片头、在最后插一个片尾。片头/片尾不是课程字段，而是**全站共享的模板**：构建时渲染成课程 composition 里的一屏，网页播放和导出的 MP4 都会带上。打开 `/admin`，在课程行点「片头片尾」，各选一个模板（或选「不插入」），保存后会写入站点数据库的 `course_clips` 表并自动重新构建这门课。
+
+仓库自带两个模板，默认都不插入：
+
+- `clips/intro-title-page/`：课程扉页，讲清课程标题与一句话摘要、开源项目地址、制作工具。
+- `clips/outro-colophon/`：课程落款，再留一次项目地址和制作方式。
+
+模板目录结构、`clip.json` 字段、`{{course.title}}` 等占位符见 [clips/README.md](clips/README.md)。片头/片尾的画面就是课程的一屏：1920×1080、亮色纸面，静默无旁白，目录里标成「片头」「片尾」，正课编号不变。
+
+前提与边界：
+
+- 片头里印的开源项目地址来自 `.env` 的 `PROJECT_URL`（默认是本仓库的 Gitee 地址）；换 fork 或部署时改这里，重新保存一次片头即可。
+- 选择存数据库（`data/app.db`，已 gitignore），不写 `course.json`；构建产物自带渲染后的 scene，独立部署的课程包不依赖数据库。
+- 没有选择时构建输出与旧版一致。`--no-clips` 可做完全不读库的干净构建。
+- 保存需要在持有 `courses/<slug>/` 源文件的机器上做；只部署 `app/` 与 `dist/` 时页面只读。
+- 片头/片尾是静默的一屏（不配旁白/音乐）；插入后正课时间整体后移，内容哈希会变，已生成的旧视频会被标记为过期。
 
 ## 添加一门课程
 
@@ -424,7 +446,8 @@ course-template/
 - **v0.7**：播放页撑满视口，16:9 画布按可用区域等比最大化、控制条通栏；当前屏进度可拖动，新增「跳到最后」（`End`），课程总进度按全课时间连续增长。
 - **v0.8**：课程水印可配置，后台按课配置角标与满屏平铺水印，写进课程 composition，网页播放和 MP4 导出一致。
 - **v0.9**：课程扩到 28 屏 / 29:54，新增 AGENTS.md 写法、上下文组装、Skill 取舍、选模型、斜杠命令、任务粒度、密钥安全七个使用场景；删除独立的安全场景（并入 S27），收尾顺延为 S28。
-- **v0.10（当前）**：课程水印改为站点部署配置，存 SQLite 的 `course_watermarks` 表，不再写 `course.json`、不进 Git；构建从数据库读配置并注入课程 composition，播放与 MP4 导出一致。
+- **v0.10**：课程水印改为站点部署配置，存 SQLite 的 `course_watermarks` 表，不再写 `course.json`、不进 Git；构建从数据库读配置并注入课程 composition，播放与 MP4 导出一致。
+- **v0.11（当前）**：新增片头/片尾。共享模板库 `clips/`（自带课程扉页片头和项目落款片尾），后台按课选择并存入 `course_clips` 表；构建时作为 composition 的一屏插入（正课时间整体后移），网页播放、目录和导出的 MP4 都带；片头用 `{{course.title}}` 等占位符带入每门课的信息和 `PROJECT_URL`。
 - **v1.0**：课程库规模化、质量门、账号与跨设备进度。
 
 没有日期承诺。先把结构做对，再往上加课程。

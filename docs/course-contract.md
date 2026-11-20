@@ -276,6 +276,18 @@ courses/<slug>/
 - 水印文字的字体与课程 composition 共用；字体子集不包含的生僻字会回退到系统字体，不影响可读性。
 - 后台 `/admin/courses/<slug>/watermark` 可以可视化编辑，保存到站点数据库并自动重新构建。水印文字只出现在站点数据库和构建产物里，源 `courses/<slug>/` 不含它。
 
+### 3.8 片头 / 片尾（站点配置，不属于 `course.json`）
+
+片头/片尾是站点共享模板库 `clips/<id>/` 里的一屏，由部署方在后台按课程选择，存在 SQLite 的 `course_clips` 表；不写 `course.json`、不进 Git。构建时 `scripts/build_courses.py` 把模板渲染成 composition 里的一屏（插在最前或最后），再把这一屏写进构建后的清单。独立部署的课程包因此自带片头/片尾，播放时不依赖数据库。
+
+- **片头**插在课程第一屏之前：host 的 `data-start` 是 0；原有所有 host 与 `<audio>` 的 `data-start` 整体后移片头时长；根 `data-duration` 加上片头、片尾的时长。**片尾**接在原根时长之后。
+- 构建后的 `screens[]` 包含这两屏：`kind` 为 `intro` / `outro`，`id` 是模板 id。正课屏幕的编号不变；课程页目录把它们显示为「片头」「片尾」，`data-screen-kind` 也带在目录项上。
+- `stats.screenCount` 与 `stats.durationSeconds` 包含片头/片尾（它们是可播放的屏），所以后台和课程页显示的屏数、时长是真实播放长度。
+- 片头/片尾**不配旁白**：课程页的字幕、配音开关只跟课程的 `audio` 走；`clip.json` 的 `transcript` 进入讲义抽屉。模板必须自包含，不能加载图片、字体文件、CDN 或任何外部资源。
+- 模板的目录结构、`clip.json` 字段和 `{{course.title}}` / `{{project.label}}` 等占位符见 `clips/README.md`。改模板后重新保存一次片头/片尾即可重建课程包。
+- 模板默认不插入（`course_clips` 表没有行）。后台 `/admin/courses/<slug>/clips` 选择、清除并同步重建。
+- 构建错误：`clip_missing`（数据库选的模板被删）、`clip_kind_mismatch`（片头位置选了片尾模板）、`clip_screen_collision`（模板 id 与课程屏幕 id 或 scene 文件名重名）、`clip_scene_invalid`、`clip_placeholder_unknown`、`clip_injection_failed`。
+
 ## 4. composition 约定
 
 ### 4.1 工程根
@@ -638,6 +650,8 @@ courses/<slug>/
 
 **作者不要手写这个文件。** 它由构建生成，放在 `dist/courses/<slug>/course.json`，同时内联进课程页。上面的示例只列关键字段；实际产物会保留 `status`、`featured`、`order`、`level`、`tags`、`outcomes` 等所有编辑字段，供站点和 API 使用。
 
+`screens[].kind` 默认是 `lesson`。后台给这门课选了片头/片尾时，构建会在最前/最后追加 `kind: "intro"` / `"outro"` 的屏，并把正课的 `start/index` 后移；见 3.8。
+
 ## 6. 生成的课程页
 
 课程页 `dist/courses/<slug>/index.html` 由 `runtime/shell.html.j2` 渲染，包含：
@@ -647,6 +661,7 @@ courses/<slug>/
 - 舞台：`<hyperframes-player>`、加载遮罩、转场遮罩；播放态下页面占满视口（`100dvh`、无页面滚动），16:9 画布按可用区域等比最大化，控制条在画布外通栏；有封面时才设置 player 的 `poster`。
 - 控制条：退出课程（返回课程库）、上一屏、播放/暂停、下一屏、跳到最后（`End`）、重播、目录、讲义、字幕（有音频时）、配音（有音频时）、全屏、当前屏进度；
 - 水印：可选，按站点数据库里的部署配置构建时写进 composition 内层，渲染角标和满屏平铺水印，只覆盖 16:9 画布，全屏可见；
+- 片头/片尾：可选，后台按课程选择；构建时作为 composition 的一屏插在最前/最后，目录里标成「片头」「片尾」，网页播放和导出的 MP4 都会带上；见 3.8；
 - 进度：课程总进度按全课时间连续增长；当前屏进度是可拖动的 range，拖动时暂停、松手恢复，拖到末端等同于「跳到最后」；
 - 章节信息：当前屏 kicker、标题、摘要；
 - 目录抽屉：从右侧滑出，按顺序列出每屏的序号、标题和起始时间，当前屏高亮；点任意一屏先关抽屉，再跳到那一屏并播放；与讲义抽屉互斥，共用遮罩、焦点进入/返回和 Esc 关闭；深链与连续播放课程同样适用；条目由平台外壳用 `screens[].title` 服务端渲染，作者不用在 composition 里做导航；
@@ -810,6 +825,17 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - 生产环境如果只部署了 `dist/` 和 `app/`，没有 `courses/` 源文件，配置页会变成只读；此时在持有课程源的机器上配置，并让构建产物随部署一起发布。
 - 改水印会让内容哈希变化，已生成的旧视频会被标记为过期，需要重新生成。
 - 水印用于署名和降低截图外传的可读性，**不是访问控制**：它不阻止截图、下载或查看源码。需要权限控制时用登录和访问策略。
+
+### 7.9 配置片头片尾
+
+片头/片尾是部署配置，不写课程源文件：模板在仓库根的 `clips/`，后台 `/admin/courses/<slug>/clips`（需要 `ADMIN_TOKEN`）按课程选择，保存在站点数据库的 `course_clips` 表。保存会重新构建该课程包，把模板渲染成 composition 的一屏。
+
+- 片头插在第一屏之前、片尾接在最后一屏之后；原有屏幕和音频的时间整体后移。网页播放、目录和后台导出的 MP4 都会带这两屏。
+- 播放器目录把它们标成「片头」「片尾」，正课编号不变；清单的 `screenCount` 和时长包含它们，所以显示的是真实播放长度。
+- 模板用 `{{course.title}}`、`{{course.lead}}`、`{{project.label}}` 等占位符带入每门课的信息，项目地址来自 `.env` 的 `PROJECT_URL`。换一门课或换 fork 不需要改模板，见 `clips/README.md`。
+- 片头/片尾是静默的一屏，不配旁白；讲义抽屉里的文字来自 `clip.json` 的 `transcript`。模板必须自包含，不能加载图片、字体文件或 CDN。
+- 改选择、改模板或改 `PROJECT_URL` 都会让内容哈希变化，已生成的旧视频会被标记为过期。
+- 生产环境只部署 `dist/` 和 `app/` 时没有课程源，配置页只读；在没有选择时构建输出与旧版一致。
 
 ## 8. 验收清单
 

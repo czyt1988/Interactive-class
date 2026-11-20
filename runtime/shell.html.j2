@@ -116,16 +116,22 @@
 
           <div class="cover__aside">
             <h2 class="cover__label">这门课讲什么</h2>
+            {# Intro/outro clips are ordinary screens, but they are not course
+               chapters: print 片头/片尾 instead of a lesson number so the
+               numbered outline still reads 01..28. #}
+            {% set ns = namespace(lesson=0) %}
             <ol class="outline" aria-label="章节大纲">
               {% for screen in screens %}
+                {% if screen.kind == "lesson" %}{% set ns.lesson = ns.lesson + 1 %}{% endif %}
                 <li>
                   <button
                     type="button"
                     class="outline__item"
                     data-screen-id="{{ screen.id }}"
                     data-index="{{ screen.index }}"
+                    data-screen-kind="{{ screen.kind }}"
                   >
-                    <span class="outline__num">{{ "%02d"|format(screen.index + 1) }}</span>
+                    <span class="outline__num">{% if screen.kind == "intro" %}片头{% elif screen.kind == "outro" %}片尾{% else %}{{ "%02d"|format(ns.lesson) }}{% endif %}</span>
                     <span class="outline__text">
                       <span class="outline__title">{{ screen.title }}</span>
                       <span class="outline__summary">{{ screen.summary }}</span>
@@ -317,15 +323,18 @@
           </button>
         </header>
         <ol id="toc-list" class="toc" aria-label="课程目录">
+          {% set ns = namespace(lesson=0) %}
           {% for screen in screens %}
+            {% if screen.kind == "lesson" %}{% set ns.lesson = ns.lesson + 1 %}{% endif %}
             <li class="toc__row">
               <button
                 type="button"
                 class="toc__item"
                 data-index="{{ screen.index }}"
                 data-screen-id="{{ screen.id }}"
+                data-screen-kind="{{ screen.kind }}"
               >
-                <span class="toc__num">{{ "%02d"|format(screen.index + 1) }}</span>
+                <span class="toc__num">{% if screen.kind == "intro" %}片头{% elif screen.kind == "outro" %}片尾{% else %}{{ "%02d"|format(ns.lesson) }}{% endif %}</span>
                 <span class="toc__name">{{ screen.title }}</span>
                 <span class="toc__time">{{ mmss(screen.start) }}</span>
               </button>

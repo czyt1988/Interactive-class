@@ -106,6 +106,7 @@
 | D18 | 本机双击启动器自带环境准备：`scripts\env.cmd` 找系统 Python，`scripts\bootstrap.py` 创建 `.venv`、`pip install -e ".[dev]"`、`npm install` + `sync_runtime.py --skip-fonts` 同步播放器资源、构建 `dist/`、`alembic upgrade head`，然后交给 `scripts/launcher.py` 起服务 | 用户是新手，第一次双击 `start.cmd` 只看到「没有找到虚拟环境」，照着 README 逐条敲命令不现实。把准备做成幂等的检查，缺什么补什么，双击一个文件就能从空仓库跑到可访问的站点；准备逻辑放在 Python 里可以测试，批处理只做引导 | 启动器第一次接触网络和 Node.js（之后不需要）；仓库多一层需要随依赖、构建步骤同步维护的准备逻辑；`--skip-fonts` 意味着字体子集仍由作者改动后手动重建 | 出现安装包 / 桌面 app 形态，或需要完全离线的一次性分发时，把准备逻辑换成安装器 |
 | D19 | 并行开发任务各自在 `.worktree/` 下的独立 git 工作树里进行，完成后合并回 `main`；`scripts/worktree.py` 负责创建/查看/合并/删除工作树，并把主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`、`courses/*/narration/cache/` 以目录联接共享，把 `runtime/vendor` 与 `.env` 复制进工作树（`link` 负责刷新副本）；根 `conftest.py` 与构建脚本把仓库根放进 `sys.path`，避免共享虚拟环境的 editable install 把导入劫持到主工作树；删除前校验未提交改动，合并冲突自动回滚 | 多个 Agent 会话并行开发时，共用工作区会互相污染（切分支、暂存区、未提交改动）；共享已装依赖与创作工具让新工作树几秒内可跑测试、构建课程，不重复联网安装；复制写侧生成物保证工作树里重跑同步脚本或改本地配置不影响主工作树；删除/合并的安全检查避免误丢未提交改动或把主工作树留在冲突态 | 依赖目录共享意味着在工作树里 `pip install` / `npm install` / 重做旁白会写主工作树或共享缓存，必须串行处理（启动器对重装会直接拒绝）；`dist/`、`data/` 与主工作树各自独立，需要各自构建与迁移；多一层需要在任务收尾时合并与清理的流程 | 需要每个任务独立依赖版本、跨机器分发生成物，或迁移到 CI/容器化并行时 |
 | D20 | 课程水印是站点部署配置，不是课程内容：配置存在 SQLite 的 `course_watermarks` 表（`data/` 已 gitignore，不进 Git、不写 `courses/<slug>/course.json`），构建时由 `scripts/build_courses.py` 读库并把水印层写进构建产物的 composition 入口；后台 `/admin/courses/<slug>/watermark` 编辑数据库行并同步重新构建 | 水印文字通常是作者/公司/部门等身份信息，用户明确要求它不被 Git 跟踪，历史里已有的旧水印也要清理；数据库属于站点、`data/` 不进版本库，正好承载这类「这台部署给谁看」的配置。构建产物仍把水印烘进 composition，所以独立部署的课程包自带水印、运行时不依赖数据库，D5 的「课程包不依赖数据库」仍然成立。写进 composition 而不是页面外壳，是因为网页播放器和 MP4 渲染器消费同一份 composition | 构建（含 `build_courses.py` 命令行）需要能访问站点数据库；库或表缺失时构建按「未配置水印」继续，所以新克隆的仓库默认没有水印。后台保存仍需要 `courses/` 与 `scripts/` 才能重建，生产镜像只装 `app/` 和 `dist/` 时配置页只读。换库/迁移数据会丢水印，需要重新配置；改水印后旧视频会因内容哈希变化被标记为过期 | 水印需要按观看者动态生成（用户名、时间戳）时，改为运行期渲染或图片服务，并重新评估权限与缓存 |
+| D21 | 片头/片尾是站点共享模板库 `clips/<id>/` 里的一屏：构建时由 `scripts/build_courses.py` 渲染模板（`{{course.title}}` 等占位符带入每门课的信息）并插入构建产物的 composition，片头在最前、片尾在最后，原有 host 与 `<audio>` 的 `data-start` 整体后移；选择存在 SQLite 的 `course_clips` 表，后台 `/admin/courses/<slug>/clips` 选择并同步重建 | 用户要在每门课开始/结尾讲清课程主题、开源项目地址和制作方式，视频导出也要带。做成 composition 的一屏，网页播放与 MP4 消费同一份，独立部署的课程包自带这些屏、不需要数据库，D1/D5 仍然成立；模板全站共用、占位符带入课程信息，避免每门课复制一份；选择存站点库，课程源文件不含部署选择 | 片头/片尾是静默的（不配旁白、音乐），需要声音时要扩展 `clip.json` 与渲染；插入会让正课时间整体后移，`contentHash` 必须把选择和渲染后的模板算进去，否则视频过期判断会漏；模板在构建期校验，无效模板让构建失败而不是静默跳过 | 片头需要旁白/音乐、按观看者动态生成，或模板多到需要独立的模板管理界面时 |
 
 ### 3.1 三个需要展开的决定
 
@@ -810,6 +811,19 @@ SQLite 的限制也要写清楚：
 - **为什么同步重建。** 单门课重建是复制文件 + 渲染 Jinja，耗时在秒级；和 `/import` 一样用同步表单，省掉任务队列与轮询状态。
 - **安全。** 与后台其他写接口一致：`ADMIN_TOKEN`、后台 Cookie 或 `X-Admin-Token`、同源 `Origin` 检查、`no-store`、`noindex`；slug 必须是合法课程，配置只写这一门课的行。
 - **视觉。** 角标水印贴画布四角，满屏平铺水印按 16:9 网格重复；两者都只覆盖播放画布，`pointer-events: none`、无动画、不挡控制条，全屏保留，导出的 MP4 里同样存在。字号以 1920×1080 画布的设计像素表示；水印层写在 composition 内层，播放器缩放画布时等比缩放，渲染器按 1:1 输出。
+
+### 7.13 片头 / 片尾（后台）
+
+片头/片尾是**站点共享模板 + 每门课的选择**，不是课程字段：模板放在仓库根的 `clips/<id>/`（`clip.json` + `<template>` scene），选择存在 SQLite 的 `course_clips` 表；构建时把模板渲染成课程 composition 的一屏。设计决策见 D21，视觉规则见 DESIGN.md 8.6。
+
+- **入口。** `/admin` 每门课的登记行有「片头片尾」链接；页面是 `/admin/courses/<slug>/clips`，复用后台「登记表」版式。片头、片尾各一组单选（不插入 + 模板），每个模板带标题、时长和按本课渲染的 16:9 末帧预览。
+- **读取。** `app/catalog/clip_store.py` 按 slug 读 `course_clips`；库/表缺失按「未配置」处理，新克隆也能构建。`app/catalog/clips.py` 扫描 `clips/`，校验 `clip.json`、scene 的 `<template>`/composition id/时间轴、禁用时钟和「不加载外部资源」，无效模板只在后台列表里报告，不参与构建。
+- **注入。** `scripts/build_courses.py` 解析课程后运行 `plan_clips()`（只校验、算时间、算 hash），复制 composition 后再 `inject_clips()`：写 `compositions/clip-<id>.html`，把 host 插到 `#root` 的最前/最后，原 host 和 `<audio>` 的 `data-start` 加片头时长，根 `data-duration` 加总时长。构建后的清单把这两屏作为 `kind: intro/outro` 的普通屏写进 `screens[]`，课程页目录据此标「片头/片尾」。
+- **选择存数据库的理由。** 模板是全站共享的部署内容，不是某门课写的；存在 `course_clips`（`data/` 不进 Git）让课程源文件保持干净。构建产物自带渲染后的 scene，独立部署的课程包播放时不需要数据库。
+- **内容哈希。** `contentHash` 混入选择、渲染后的模板（含占位符结果）以及站点的 `PROJECT_URL`；换片头、改模板或改项目地址都会让旧视频被标记为过期。
+- **重建。** 保存先写库、再延迟导入 `build_course` 重建这一门课；同一进程内模块级锁串行化。构建失败时页面列出 `code / file / field` 级错误，库里的选择保留，下一次构建仍会尝试。
+- **字体。** `scripts/sync_runtime.py` 把 `clips/` 的文案并入站点、模板和每门课的字体子集；片头里的字不会因为不在课程正文里而回退到系统字体。
+- **限制。** 片头/片尾是静默的一屏（不配旁白/音乐），插入时正课时间整体后移；没有选择时构建输出与旧版逐字节一致。生产镜像只装 `app/` 和 `dist/` 时没有课程源，页面只读；预览是静态末帧，不启动播放器。
 
 ---
 

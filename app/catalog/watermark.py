@@ -19,7 +19,6 @@ because production images ship only the ``app`` package.
 from __future__ import annotations
 
 import math
-import threading
 from collections.abc import Mapping
 from html import escape
 from pathlib import Path
@@ -27,7 +26,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app.catalog import watermark_store
+from app.catalog import rebuild_lock, watermark_store
 from app.catalog.models import (
     ACCENT_PATTERN,
     SLUG_PATTERN,
@@ -77,7 +76,7 @@ REPEAT_DEFAULTS: dict[str, Any] = {
 # ceil(1080/80) = 224 cells); 255 is the build's over-provisioned tile count.
 PREVIEW_TILES = 255
 
-_WRITE_LOCK = threading.Lock()
+_WRITE_LOCK = rebuild_lock.WRITE_LOCK
 
 
 # -- form values -----------------------------------------------------------
@@ -534,9 +533,13 @@ def rebuild_course(
 
     Imported lazily: production deployments install only ``app`` and never run
     the authoring pipeline. The web process calls this only from the admin page.
-    The watermark comes from the database and is baked into the built bundle.
+    The watermark comes from the caller and is baked into the built bundle; the
+    intro/outro selection is read from the database so saving a watermark never
+    silently drops a course's clips.
     """
 
+    from app.catalog import clip_store
+    from app.catalog.clips import ClipLibrary
     from scripts.build_courses import build_course
 
     return build_course(
@@ -549,6 +552,9 @@ def rebuild_course(
         course_base_url=settings.course_base_url,
         progress_sync=True,
         watermark=watermark,
+        clip_selection=clip_store.load(settings, slug),
+        clip_library=ClipLibrary(Path(settings.clips_dir)),
+        project_url=settings.project_url,
     )
 
 

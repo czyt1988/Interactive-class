@@ -121,6 +121,24 @@ class CourseWatermark(Base):
     )
 
 
+class CourseClipConfig(Base):
+    """Which intro/outro clips a course plays, kept out of the course source.
+
+    A clip is shared site content, not part of a portable course manifest: the
+    build injects the rendered scene into the built composition and the source
+    ``course.json`` stays free of deployment choices. ``config`` is the validated
+    ``ClipSelection`` JSON (``{"intro": "...", "outro": "..."}``).
+    """
+
+    __tablename__ = "course_clips"
+
+    course_slug: Mapped[str] = mapped_column(String(80), primary_key=True)
+    config: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+
 class CourseImport(Base):
     """Where an imported course came from.
 
