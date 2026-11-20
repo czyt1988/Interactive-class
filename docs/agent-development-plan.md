@@ -860,7 +860,7 @@ pytest tests/e2e -q
 可以把下面这段直接交给后续 Agent：
 
 ```text
-你要为 AI Learning 新增一门课程：<课程名>。
+你要为页间课堂新增一门课程：<课程名>。
 
 先读：
 - docs/course-contract.md

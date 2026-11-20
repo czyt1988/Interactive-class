@@ -204,7 +204,7 @@ def _print_error(exc: BuildError) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="重新构建 AI Learning 全项目")
+    parser = argparse.ArgumentParser(description="重新构建页间课堂全项目")
     parser.add_argument(
         "--course",
         action="append",
@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print("=" * 60)
-    print("  AI Learning - 一键构建")
+    print("  页间课堂 - 一键构建")
     print("=" * 60)
     print(f"  项目目录  {ROOT}")
     print(f"  站点地址  {site_url(ROOT, args.site_url)}")

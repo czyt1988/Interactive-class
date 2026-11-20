@@ -21,8 +21,8 @@ LEVELS: tuple[tuple[str, str], ...] = (
 LEVEL_LABELS = dict(LEVELS)
 
 SITE_DESCRIPTION = (
-    "AI Learning 是一个用网页动画讲 AI 的课程站。每屏只讲一个概念，"
-    "可以暂停、回看、读讲义，也可以在任意静态服务器上独立播放。"
+    "页间课堂是一个交互式视频课站点：课程像视频一样连续播放，"
+    "翻开来是一页一页的动态幻灯片，每一页都能停。当前 AI Learning 系列讲 AI。"
 )
 
 
