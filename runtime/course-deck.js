@@ -28,6 +28,7 @@ const deck = {
   mode: "screens",
   soundOn: true,
   captionsOn: true,
+  preview: null,
   progress: { screenId: null, updatedAt: null },
   completed: new Set(),
 };
@@ -91,6 +92,28 @@ function readHashScreen() {
   return screenById(match[1]) ? match[1] : null;
 }
 
+/**
+ * Admin classroom preview: ?preview=<screen-id>&back=<admin path>.
+ *
+ * The page is a disposable course bundle built with exactly one clip selected.
+ * Only same-origin admin paths are accepted as the return link.
+ */
+function readPreview() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get("preview");
+  if (!id) return null;
+  const screen = screenById(id);
+  if (!screen) return null;
+  const back = params.get("back") || "";
+  return {
+    screenId: id,
+    index: data.screens.findIndex((item) => item.id === id),
+    back: back.startsWith("/admin/") ? back : "/admin",
+    kind: screen.kind === "outro" ? "片尾" : "片头",
+    title: screen.title,
+  };
+}
+
 /* ----------------------------------------------------------------- progress */
 
 const progressKey = () => `ai-learning:progress:${data.slug}`;
@@ -127,6 +150,8 @@ function writeLocalProgress(screenId, completed) {
 }
 
 function canSyncProgress() {
+  // A classroom preview must not write the learner's real progress.
+  if (deck.preview) return false;
   const endpoint =
     (window.__COURSE_PROGRESS__ && window.__COURSE_PROGRESS__.endpoint) || data.progress?.endpoint || null;
   const origin =
@@ -167,6 +192,7 @@ function pushServerProgress(screenId, completed) {
 }
 
 function rememberScreen(screenId, completed) {
+  if (deck.preview) return;
   deck.progress = { screenId, updatedAt: new Date().toISOString() };
   if (completed) deck.completed.add(screenId);
   writeLocalProgress(screenId, completed);
@@ -439,12 +465,14 @@ function courseDuration() {
 }
 
 function applyRange(index) {
-  if (isContinuous()) {
+  if (isContinuous() && !deck.preview) {
     // Continuous mode plays the whole root timeline, exactly like a video.
     // Screens are only UI anchors on top of that single clock.
     player.setRange(0, courseDuration());
     return;
   }
+  // A preview plays only the clip it was opened for, even on a continuous
+  // course: it is a clip preview, not the start of the course.
   const { start, end } = rangeFor(index);
   player.setRange(start, end);
 }
@@ -580,6 +608,23 @@ function replay() {
   updatePlayState();
 }
 
+/** Replay only the clip this preview was opened for. */
+function replayPreview() {
+  if (!deck.preview || !player || !player.ready) return;
+  const index = deck.preview.index;
+  deck.index = index;
+  deck.ended = false;
+  deck.seeking = false;
+  deck.resumeAfterSeek = false;
+  applyRange(index);
+  renderChapter();
+  showTransition();
+  player.seek(rangeFor(index).start);
+  player.play();
+  setBodyState("playing");
+  updatePlayState();
+}
+
 function markScreenEnded() {
   const screen = currentScreen();
   if (!screen) return;
@@ -706,6 +751,19 @@ function renderTakeaways() {
 }
 
 /* ------------------------------------------------------------------- start */
+
+function showPreviewBar(preview) {
+  if (!el.previewBar) return;
+  el.previewBar.hidden = false;
+  if (el.previewKind) el.previewKind.textContent = `${preview.kind}预览`;
+  if (el.previewLabel) el.previewLabel.textContent = preview.title;
+  if (el.previewBack) el.previewBack.href = preview.back;
+  if (el.exit) {
+    el.exit.href = preview.back;
+    const exitLabel = $(".control__label", el.exit);
+    if (exitLabel) exitLabel.textContent = "返回设置";
+  }
+}
 
 function startDeck({ fromHash = false } = {}) {
   if (deck.state !== "cover") return;
@@ -990,6 +1048,13 @@ function wirePlayer() {
     const endedRange = rangeFor(deck.index);
     if (Math.abs(player.time - endedRange.end) > 0.25) return;
 
+    if (deck.preview) {
+      // Stop at the end of the previewed clip instead of walking into the course
+      // or opening the completion page.
+      markScreenEnded();
+      return;
+    }
+
     if (isContinuous()) {
       deck.ended = true;
       finish();
@@ -1072,6 +1137,7 @@ function wireControls() {
   el.fullscreen.addEventListener("click", toggleFullscreen);
   if (el.sound) el.sound.addEventListener("click", toggleMute);
   if (el.captions) el.captions.addEventListener("click", toggleCaptions);
+  if (el.previewReplay) el.previewReplay.addEventListener("click", replayPreview);
   el.retry.addEventListener("click", () => {
     el.error.hidden = true;
     player.destroy();
@@ -1262,6 +1328,11 @@ async function boot() {
     start: $("#btn-start"),
     resume: $("#btn-resume"),
     deepHint: $("#deck-deep-hint"),
+    previewBar: $("#deck-preview"),
+    previewKind: $("#deck-preview-kind"),
+    previewLabel: $("#deck-preview-label"),
+    previewReplay: $("#deck-preview-replay"),
+    previewBack: $("#deck-preview-back"),
   };
 
   wirePlayer();
@@ -1295,12 +1366,26 @@ async function boot() {
     deck.index = data.screens.findIndex((screen) => screen.id === hashScreen);
   }
 
+  const preview = readPreview();
+  if (preview) {
+    deck.preview = preview;
+    deck.index = preview.index;
+    showPreviewBar(preview);
+    document.body.dataset.deckPreview = "true";
+  }
+
   renderChapter();
   setBodyState("cover");
   el.cover.hidden = false;
   el.loading.hidden = true;
 
-  const server = canSyncProgress() ? await fetchServerProgress() : null;
+  if (preview) {
+    // An explicit preview click is the user gesture; go straight into the
+    // classroom at the clip instead of showing the cover first.
+    startDeck({ fromHash: true });
+  }
+
+  const server = !preview && canSyncProgress() ? await fetchServerProgress() : null;
   if (server) {
     const completed = new Set(server.completedScreens || []);
     for (const id of completed) deck.completed.add(id);
@@ -1309,7 +1394,7 @@ async function boot() {
     }
   }
 
-  if (hashScreen) {
+  if (hashScreen && !preview) {
     // Deep links land on the first frame of that screen, paused.
     deck.index = data.screens.findIndex((screen) => screen.id === hashScreen);
     renderChapter();

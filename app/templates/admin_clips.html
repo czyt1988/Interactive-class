@@ -11,7 +11,7 @@
 <section class="page-head page-head--narrow">
   <p class="eyebrow">后台 / 片头片尾</p>
   <h1>给《{{ course.title }}》插片头片尾</h1>
-  <p class="lede">片头和片尾就是课程 composition 里的额外一屏：构建时插到课程最前面或最后面，网页播放和导出的 MP4 都会带上。这里只选「用哪一个」；模板放在仓库 <code>clips/</code> 目录里，全站共用。片头适合讲清课程主题、开源项目地址和制作方式。</p>
+  <p class="lede">片头和片尾就是课程 composition 里的额外一屏：构建时插到课程最前面或最后面，网页播放和导出的 MP4 都会带上。这里只选「用哪一个」；模板放在仓库 <code>clips/</code> 目录里，全站共用。点「预览」会另建一份临时课程包，在真实课堂页面里播放这个模板，不会保存设置。片头适合讲清课程主题、开源项目地址和制作方式。</p>
   <p class="admin-watermark__back"><a href="/admin">← 返回课程后台</a></p>
 </section>
 
@@ -54,6 +54,11 @@
       {% if current.intro %}
         <h3>{{ current.intro.title }}</h3>
         <p>{{ "%g"|format(current.intro.duration) }} 秒 · {{ current.intro.summary }}</p>
+        {% if source_available %}
+          <p class="admin-clip-current__actions">
+            <a class="button button--ghost" href="{{ current.intro_preview }}" target="_blank" rel="noopener">预览片头</a>
+          </p>
+        {% endif %}
         <div class="admin-clip-thumb admin-clip-thumb--wide">
           <iframe src="{{ current.intro_frame }}" title="当前片头的最后一帧" loading="lazy"></iframe>
         </div>
@@ -69,6 +74,11 @@
       {% if current.outro %}
         <h3>{{ current.outro.title }}</h3>
         <p>{{ "%g"|format(current.outro.duration) }} 秒 · {{ current.outro.summary }}</p>
+        {% if source_available %}
+          <p class="admin-clip-current__actions">
+            <a class="button button--ghost" href="{{ current.outro_preview }}" target="_blank" rel="noopener">预览片尾</a>
+          </p>
+        {% endif %}
         <div class="admin-clip-thumb admin-clip-thumb--wide">
           <iframe src="{{ current.outro_frame }}" title="当前片尾的最后一帧" loading="lazy"></iframe>
         </div>
@@ -79,7 +89,7 @@
       {% endif %}
     </article>
   </div>
-  <p class="admin-clip-current__hint">预览是这个模板按本课标题、摘要和项目地址渲染出来的最后一帧，不是动画。</p>
+  <p class="admin-clip-current__hint">缩略图是这个模板按本课标题、摘要和项目地址渲染出来的最后一帧，不是动画。点「预览片头」「预览片尾」会在新的课堂页面里播放，预览不会保存设置，也不会写入学习进度。</p>
 </section>
 
 <form class="admin-clips-form" method="post" action="{{ posted_url }}" autocomplete="off">
@@ -102,8 +112,13 @@
             <span class="admin-clip-option__meta">{{ clip.duration }} 秒 · {{ clip.summary }}</span>
             {% if clip.description %}<span class="admin-clip-option__desc">{{ clip.description }}</span>{% endif %}
           </label>
-          <span class="admin-clip-thumb" aria-hidden="true">
-            <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+          <span class="admin-clip-option__actions">
+            {% if source_available %}
+              <a class="button button--ghost admin-clip-option__preview" href="{{ clip.preview_url }}" target="_blank" rel="noopener">预览</a>
+            {% endif %}
+            <span class="admin-clip-thumb" aria-hidden="true">
+              <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+            </span>
           </span>
         </div>
       {% else %}
@@ -131,8 +146,13 @@
             <span class="admin-clip-option__meta">{{ clip.duration }} 秒 · {{ clip.summary }}</span>
             {% if clip.description %}<span class="admin-clip-option__desc">{{ clip.description }}</span>{% endif %}
           </label>
-          <span class="admin-clip-thumb" aria-hidden="true">
-            <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+          <span class="admin-clip-option__actions">
+            {% if source_available %}
+              <a class="button button--ghost admin-clip-option__preview" href="{{ clip.preview_url }}" target="_blank" rel="noopener">预览</a>
+            {% endif %}
+            <span class="admin-clip-thumb" aria-hidden="true">
+              <iframe src="{{ clip.frame_url }}" title="{{ clip.title }} 的最后一帧" loading="lazy" tabindex="-1"></iframe>
+            </span>
           </span>
         </div>
       {% else %}

@@ -12,7 +12,7 @@ import os
 import secrets
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import (
@@ -24,7 +24,7 @@ from fastapi.responses import (
 )
 from starlette.concurrency import run_in_threadpool
 
-from app.catalog import clip_store, watermark_store
+from app.catalog import clip_preview, clip_store, watermark_store
 from app.catalog import clips as clip_edit
 from app.catalog import watermark as watermark_edit
 from app.catalog.clips import ClipBuildError, ClipLibrary, build_context, clip_frame_html
@@ -672,6 +672,9 @@ def _clip_choices(
                 "description": clip.description,
                 "duration": f"{clip.duration:g}",
                 "frame_url": f"/admin/clips/{clip.id}/frame?course={course_slug}",
+                "preview_url": (
+                    f"/admin/courses/{course_slug}/clips/preview/{kind}/{clip.id}"
+                ),
             }
         )
     return choices
@@ -724,6 +727,16 @@ def _clips_page(
             ),
             "outro_frame": (
                 f"/admin/clips/{current_outro.id}/frame?course={course.slug}"
+                if current_outro
+                else None
+            ),
+            "intro_preview": (
+                f"/admin/courses/{course.slug}/clips/preview/intro/{current_intro.id}"
+                if current_intro
+                else None
+            ),
+            "outro_preview": (
+                f"/admin/courses/{course.slug}/clips/preview/outro/{current_outro.id}"
                 if current_outro
                 else None
             ),
@@ -879,6 +892,80 @@ async def save_clips_page(slug: str, request: Request) -> Response:
     notice = "cleared" if action == "clear" or selection is None else "saved"
     return _no_store(
         RedirectResponse(f"{_clips_url(slug)}?notice={notice}", status_code=303)
+    )
+
+
+@router.get("/courses/{slug}/clips/preview/{kind}/{clip_id}")
+async def preview_clip(slug: str, kind: str, clip_id: str, request: Request) -> Response:
+    """Build a disposable course page with one clip and open it in the player."""
+
+    if not _authenticated(request):
+        return _no_store(RedirectResponse("/admin?notice=auth", status_code=303))
+    course = _catalog(request).by_slug(slug)
+    if course is None:
+        return _no_store(RedirectResponse("/admin?notice=notfound", status_code=303))
+    if kind not in {"intro", "outro"}:
+        raise HTTPException(status_code=404, detail="预览类型只能是 intro 或 outro")
+
+    settings = _settings(request)
+    library = _clip_library(settings)
+    clip = library.get(clip_id)
+    if clip is None or clip.kind != kind:
+        raise HTTPException(status_code=404, detail="没有找到这个片头/片尾模板")
+    if not _source_available(settings, slug):
+        return _clips_page(
+            request,
+            course,
+            errors=[CLIP_SOURCE_HINT.format(path=_source_label(settings, slug))],
+            status_code=409,
+        )
+
+    try:
+        token, result = await run_in_threadpool(
+            clip_preview.build, settings, slug, kind, clip_id
+        )
+    except Exception as exc:  # noqa: BLE001 - report the failure on the page
+        return _clips_page(
+            request,
+            course,
+            errors=[f"生成预览课程包时出现意外错误：{exc}"],
+            status_code=500,
+        )
+
+    build_errors = watermark_edit.build_error_messages(result)
+    if build_errors:
+        return _clips_page(
+            request,
+            course,
+            errors=["预览课程包构建失败，修好后再试：", *build_errors],
+            status_code=422,
+        )
+
+    query = urlencode({"preview": clip_id, "back": _clips_url(slug)})
+    return _no_store(
+        RedirectResponse(
+            f"/admin/clip-previews/{token}/{slug}/index.html?{query}",
+            status_code=303,
+        )
+    )
+
+
+@router.get("/clip-previews/{token}/{path:path}")
+def clip_preview_asset(token: str, path: str, request: Request) -> Response:
+    """Serve one file of an authenticated clip preview bundle."""
+
+    if not _authenticated(request):
+        return Response(
+            "需要后台访问密码。",
+            status_code=401,
+            media_type="text/plain; charset=utf-8",
+        )
+    target = clip_preview.resolve_asset(_settings(request), token, path)
+    if target is None:
+        raise HTTPException(status_code=404)
+    return FileResponse(
+        target,
+        headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"},
     )
 
 

@@ -56,6 +56,10 @@ SECURITY_HEADERS = {
 COURSE_BUNDLE_CACHE = "no-cache"
 COURSE_VENDOR_CACHE = "public, max-age=31536000, immutable"
 COURSE_VENDOR_PATH_MARKER = "/runtime/vendor/"
+# Disposable admin preview bundles are real course pages: they need the same CSP
+# exemption as /courses (the player and composition use inline scripts). They
+# are never indexed and never cached.
+CLIP_PREVIEW_PATH = "/admin/clip-previews/"
 
 SITE_CSP = (
     "default-src 'self'; "
@@ -178,6 +182,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 response.headers.setdefault("Cache-Control", COURSE_VENDOR_CACHE)
             else:
                 response.headers.setdefault("Cache-Control", COURSE_BUNDLE_CACHE)
+        elif request.url.path.startswith(CLIP_PREVIEW_PATH):
+            # Same document shape as a course page, but private and disposable.
+            response.headers.setdefault("Cache-Control", "no-store")
+            response.headers.setdefault("X-Robots-Tag", "noindex")
         else:
             response.headers.setdefault("Content-Security-Policy", SITE_CSP)
         return response

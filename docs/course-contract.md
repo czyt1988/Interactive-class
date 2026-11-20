@@ -834,6 +834,7 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 - 播放器目录把它们标成「片头」「片尾」，正课编号不变；清单的 `screenCount` 和时长包含它们，所以显示的是真实播放长度。
 - 模板用 `{{course.title}}`、`{{course.lead}}`、`{{project.label}}` 等占位符带入每门课的信息，项目地址来自 `.env` 的 `PROJECT_URL`。换一门课或换 fork 不需要改模板，见 `clips/README.md`。
 - 片头/片尾是静默的一屏，不配旁白；讲义抽屉里的文字来自 `clip.json` 的 `transcript`。模板必须自包含，不能加载图片、字体文件或 CDN。
+- 页面上的「预览」不保存选择：它另建一份临时课程包（`data/clip-previews/`），用真实课堂页从这一屏开始播放，预览页不写学习进度，播到这一屏结束就停。缩略图只是按本课渲染的静态末帧。
 - 改选择、改模板或改 `PROJECT_URL` 都会让内容哈希变化，已生成的旧视频会被标记为过期。
 - 生产环境只部署 `dist/` 和 `app/` 时没有课程源，配置页只读；在没有选择时构建输出与旧版一致。
 

@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     # identifies the open-source project, so it is deployment config as well.
     clips_dir: Path = Field(default=BASE_DIR / "clips")
     project_url: str = DEFAULT_PROJECT_URL
+    # Disposable classroom bundles built for the admin clip preview. They carry
+    # the real course page and player with one intro/outro inserted; they are
+    # never part of dist/ and never selected in the database.
+    clip_preview_dir: Path = Field(default=BASE_DIR / "data" / "clip-previews")
 
     strict_catalog: bool | None = None
     include_drafts: bool | None = None
@@ -78,6 +82,7 @@ class Settings(BaseSettings):
         "runtime_dir",
         "design_dir",
         "clips_dir",
+        "clip_preview_dir",
         "video_output_dir",
         "video_work_dir",
         "courses_inbox_dir",

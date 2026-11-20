@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.catalog import clip_store
+from app.catalog import clip_preview, clip_store
 from app.catalog.clips import (
     ClipBuildError,
     ClipContext,
@@ -44,6 +44,7 @@ def _settings(tmp_path: Path, *, clips_dir: Path = CLIPS) -> Settings:
         courses_src_dir=tmp_path / "courses",
         courses_dist_dir=tmp_path / "dist" / "courses",
         clips_dir=clips_dir,
+        clip_preview_dir=tmp_path / "data" / "clip-previews",
         project_url="https://gitee.com/czyt1988/interactive-class",
         database_url=f"sqlite:///{(tmp_path / 'test.db').as_posix()}",
         include_drafts=True,
@@ -430,6 +431,28 @@ def test_clip_store_forgives_missing_table(tmp_path: Path) -> None:
     assert clip_store.load_all(settings) == {}
 
 
+def test_preview_tokens_and_asset_paths_are_confined(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    token = clip_preview.token_for(SLUG, "intro", "intro-title-page")
+    assert clip_preview.is_token(token)
+    assert not clip_preview.is_token("../escape")
+    assert not clip_preview.is_token("UPPER")
+
+    bundle = clip_preview.bundle_dir(settings, token, SLUG)
+    bundle.mkdir(parents=True)
+    (bundle / "index.html").write_text("<html></html>", encoding="utf-8")
+    relative = f"{SLUG}/index.html"
+    assert clip_preview.resolve_asset(settings, token, relative) == (
+        bundle / "index.html"
+    ).resolve()
+    assert clip_preview.resolve_asset(settings, token, "") is None
+    assert (
+        clip_preview.resolve_asset(settings, token, "../../secret.txt") is None
+    )
+    assert clip_preview.resolve_asset(settings, "not a token", "index.html") is None
+    assert clip_preview.resolve_asset(settings, "missing", "index.html") is None
+
+
 def test_clip_selection_rejects_bad_slug() -> None:
     with pytest.raises(ValueError, match="id"):
         ClipSelection(intro="Not A Clip")
@@ -465,6 +488,9 @@ def test_admin_clips_page_lists_templates(tmp_path: Path, monkeypatch) -> None:
     assert "片头：课程扉页" in text
     assert "片尾：项目落款" in text
     assert "/admin/clips/intro-title-page/frame?course=valid-two-screen" in text
+    assert (
+        "/admin/courses/valid-two-screen/clips/preview/intro/intro-title-page" in text
+    )
 
 
 def test_admin_saves_and_rebuilds_with_clips(tmp_path: Path, monkeypatch) -> None:
@@ -553,6 +579,61 @@ def test_admin_frame_renders_the_clip_for_the_course(tmp_path: Path, monkeypatch
         assert "script-src 'self'" in response.headers["content-security-policy"]
         missing = client.get("/admin/clips/intro-nope/frame?course=valid-two-screen")
         assert missing.status_code == 404
+
+
+def test_admin_preview_builds_a_playable_classroom_page(
+    tmp_path: Path, monkeypatch
+) -> None:
+    client, settings, _source_dir = _admin_site(tmp_path, monkeypatch)
+    token = clip_preview.token_for(SLUG, "intro", "intro-title-page")
+    with client:
+        response = client.get(
+            f"/admin/courses/{SLUG}/clips/preview/intro/intro-title-page",
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        location = response.headers["location"]
+        assert location.startswith(f"/admin/clip-previews/{token}/{SLUG}/index.html?")
+        assert "preview=intro-title-page" in location
+        assert "back=%2Fadmin%2Fcourses%2Fvalid-two-screen%2Fclips" in location
+
+        page = client.get(location)
+        assert page.status_code == 200
+        assert "deck-preview" in page.text
+        assert "片头：课程扉页" in page.text
+
+        manifest = json.loads(
+            (settings.clip_preview_dir / token / SLUG / "course.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert [(screen["id"], screen["kind"]) for screen in manifest["screens"]] == [
+            ("intro-title-page", "intro"),
+            ("hook", "lesson"),
+            ("split", "lesson"),
+        ]
+
+        composition = client.get(
+            location.replace("/index.html", "/composition/index.html")
+        )
+        assert composition.status_code == 200
+        assert "content-security-policy" not in composition.headers
+        assert composition.headers["cache-control"] == "no-store"
+
+        # A preview is disposable: it never selects the clip for the course and
+        # never touches the published bundle.
+        assert clip_store.load(settings, SLUG) is None
+        published = json.loads(
+            (settings.courses_dist_dir / SLUG / "course.json").read_text(encoding="utf-8")
+        )
+        assert len(published["screens"]) == 2
+
+        wrong_kind = client.get(
+            f"/admin/courses/{SLUG}/clips/preview/outro/intro-title-page"
+        )
+        assert wrong_kind.status_code == 404
+        unknown = client.get(f"/admin/courses/{SLUG}/clips/preview/intro/intro-nope")
+        assert unknown.status_code == 404
 
 
 def test_frame_html_reveals_the_final_layout(tmp_path: Path) -> None:

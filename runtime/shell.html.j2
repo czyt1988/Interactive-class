@@ -56,6 +56,20 @@
   <body data-deck-state="cover" class="deck"{% if site.homeUrl %} data-deck-nav="true"{% endif %}>
     <a class="deck-skip" href="#cover">跳到课程封面</a>
 
+    {# Admin-only preview chrome. It stays hidden on a normal course page and is
+       revealed by the deck when the URL carries ?preview=<screen-id>. #}
+    <div id="deck-preview" class="deck-preview" hidden>
+      <p class="deck-preview__text">
+        <span id="deck-preview-kind" class="deck-preview__tag">预览</span>
+        <span id="deck-preview-label" class="deck-preview__label">片头</span>
+        <span class="deck-preview__hint">不会保存设置</span>
+      </p>
+      <div class="deck-preview__actions">
+        <button id="deck-preview-replay" class="deck-preview__button" type="button">重新播放</button>
+        <a id="deck-preview-back" class="deck-preview__button" href="/admin">返回设置</a>
+      </div>
+    </div>
+
     {# Leaving must be possible before the first screen starts: the cover is a
        long reading page, so the way back sits in a sticky bar at the very top
        instead of at the bottom of the outline. Hidden while a course plays; the

@@ -182,6 +182,102 @@ body.deck[data-deck-nav] .deck-shell {
   border-color: var(--stage-line-strong);
 }
 
+/* ------------------------------------------------------------- clip preview */
+/* Shown only when the admin preview opened the page with ?preview=<screen-id>.
+   It floats over the classroom, above the stage but below the drawers, and is
+   the one route back to the clip settings without leaving the preview. */
+
+.deck-preview {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 10px 8px 14px;
+  border: 1px solid var(--stage-line-strong);
+  border-radius: var(--radius-stage);
+  background: var(--stage-raised);
+  box-shadow: var(--shadow-card);
+  color: var(--stage-ink);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.deck-preview[hidden] {
+  display: none;
+}
+
+.deck-preview__text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.deck-preview__tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--deck-accent-wash);
+  color: var(--deck-accent-ink);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+}
+
+.deck-preview__label {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-preview__hint {
+  color: var(--stage-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.deck-preview__actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.deck-preview__button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--stage-line);
+  border-radius: var(--radius-pill);
+  background: var(--stage);
+  color: var(--stage-ink);
+  font: inherit;
+  font-size: 12.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 150ms var(--ease, ease),
+    border-color 150ms var(--ease, ease);
+}
+
+.deck-preview__button:hover {
+  background: var(--deck-ink-wash);
+  border-color: var(--stage-line-strong);
+}
+
+.deck-preview__button:focus-visible {
+  outline: 2px solid var(--deck-accent-ink);
+  outline-offset: 2px;
+}
+
 /* Short windows: the sticky bar costs the cover height, so tighten the cover
  * rhythm and keep the start control above the fold. The bar itself keeps its
  * 56px so the control looks the same at every size. */
@@ -1415,6 +1511,17 @@ body.deck[data-deck-state="error"] .deck-shell {
   }
 }
 
+@media (max-width: 680px) {
+  .deck-preview {
+    right: 12px;
+    justify-content: space-between;
+  }
+
+  .deck-preview__hint {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1440,6 +1547,7 @@ body.deck[data-deck-state="error"] .deck-shell {
   .controls,
   .deck-hint,
   .deck-topbar,
+  .deck-preview,
   .deck-skip {
     display: none !important;
   }

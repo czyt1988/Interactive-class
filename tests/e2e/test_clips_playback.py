@@ -113,6 +113,7 @@ def test_cover_lists_clips_without_renumbering_lessons(page: Page) -> None:
     assert page.locator(".outline__item").count() == 4
     labels = page.locator(".outline__num").all_inner_texts()
     assert labels == ["片头", "01", "02", "片尾"]
+    assert page.locator("#deck-preview").is_hidden()
     assert page.console_errors == []
     assert page.external_requests == []
 
@@ -146,3 +147,33 @@ def test_outro_is_last_and_next_finishes(page: Page) -> None:
     page.click("#btn-next")
     page.wait_for_function("document.body.dataset.deckState === 'complete'", timeout=15_000)
     assert page.locator("#complete").is_visible()
+
+
+def test_preview_query_opens_the_clip_in_the_classroom(
+    page: Page, server: tuple[str, int]
+) -> None:
+    host, port = server
+    page.goto(
+        f"http://{host}:{port}/?preview=intro-title-page"
+        "&back=/admin/courses/valid-two-screen/clips"
+    )
+    page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=30_000)
+    assert page.inner_text("#chapter-title") == "片头：课程扉页"
+    assert page.inner_text("#chapter-counter").startswith("片头")
+
+    bar = page.locator("#deck-preview")
+    assert bar.is_visible()
+    assert page.get_attribute("#deck-preview-back", "href") == (
+        "/admin/courses/valid-two-screen/clips"
+    )
+    assert page.inner_text("#deck-preview-kind") == "片头预览"
+    assert page.evaluate("localStorage.getItem('ai-learning:progress:valid-two-screen')") is None
+
+    # The preview stops on the clip's final frame instead of walking into the
+    # course or opening the completion page.
+    page.wait_for_function(
+        "() => document.querySelector('#stage-wrap').classList.contains('is-ended')",
+        timeout=25_000,
+    )
+    assert page.locator("#complete").is_hidden()
+    assert page.inner_text("#deck-preview-kind") == "片头预览"
