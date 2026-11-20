@@ -422,7 +422,7 @@ def build_course(
     include_drafts: bool = False,
     check_only: bool = False,
     site_url: str = "http://127.0.0.1:8000",
-    site_title: str = "AI Learning",
+    site_title: str = "页间课堂",
     course_base_url: str = "/courses",
     progress_sync: bool = True,
     watermark: WatermarkConfig | None = None,
@@ -577,7 +577,7 @@ def build_all(
     check_only: bool = False,
     runtime_dir: Path = DEFAULT_RUNTIME,
     site_url: str = "http://127.0.0.1:8000",
-    site_title: str = "AI Learning",
+    site_title: str = "页间课堂",
     course_base_url: str = "/courses",
     progress_sync: bool = True,
     watermarks: dict[str, WatermarkConfig] | None = None,
@@ -654,7 +654,7 @@ def _print_result(result: BuildResult) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="构建 AI Learning 课程包")
+    parser = argparse.ArgumentParser(description="构建页间课堂课程包")
     parser.add_argument("--course", action="append", default=None, help="只构建指定 slug，可重复")
     parser.add_argument("--all", action="store_true", help="构建全部已发布课程")
     parser.add_argument("--check-only", action="store_true", help="只校验，不写产物")
@@ -665,7 +665,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--clips-dir", type=Path, default=DEFAULT_CLIPS)
     parser.add_argument("--project-url", default=None, help="片头里印的开源项目地址")
     parser.add_argument("--site-url", default="http://127.0.0.1:8000")
-    parser.add_argument("--site-title", default="AI Learning")
+    parser.add_argument("--site-title", default="页间课堂")
     parser.add_argument("--course-base-url", default="/courses")
     parser.add_argument("--no-progress-sync", action="store_true")
     parser.add_argument(

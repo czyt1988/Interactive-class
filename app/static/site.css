@@ -152,9 +152,10 @@ code {
   border-radius: var(--radius-mini);
   background: var(--ink);
   color: var(--paper);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 13px;
-  letter-spacing: 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .wordmark__text {

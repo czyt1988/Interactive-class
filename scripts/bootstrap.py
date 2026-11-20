@@ -214,7 +214,7 @@ def ensure_venv(reporter: _Reporter, root: Path = ROOT) -> Path:
         if version is None or version < MIN_PYTHON:
             raise SetupError(
                 "虚拟环境 .venv 已经损坏，或者里面的 Python 版本太旧。",
-                "关闭所有 AI Learning 窗口，删除仓库根目录的 .venv 文件夹，"
+                "关闭所有页间课堂窗口，删除仓库根目录的 .venv 文件夹，"
                 "然后重新双击 start.cmd 让它自动重建。",
             )
         reporter.info("  虚拟环境 .venv 已就绪")
@@ -525,7 +525,7 @@ def _print_error(exc: SetupError) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="准备 AI Learning 的本地运行环境")
+    parser = argparse.ArgumentParser(description="准备页间课堂的本地运行环境")
     parser.add_argument("--quiet", action="store_true", help="已就绪时不打印任何内容")
     return parser
 
@@ -537,7 +537,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.quiet:
         print()
         print("=" * 60)
-        print("  AI Learning - 准备运行环境")
+        print("  页间课堂 - 准备运行环境")
         print("=" * 60)
         print("  第一次需要联网下载依赖，可能要几分钟；只做一次。")
         print()

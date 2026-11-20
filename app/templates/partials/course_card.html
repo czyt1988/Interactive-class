@@ -8,14 +8,27 @@
       <span class="course-card__level">{{ level_label(course.level) }}</span>
     </div>
 
+    {% set title_parts = course.title.split('：', 1) %}
     {% if course.coverUrl %}
       <div class="course-card__poster course-card__poster--image">
         <img src="{{ course.coverUrl }}" alt="" loading="lazy" width="1600" height="900" />
-        <h3 class="course-card__title course-card__title--overlay">{{ course.title }}</h3>
+        <h3 class="course-card__title course-card__title--overlay">
+          {%- if title_parts|length > 1 -%}
+            {{ title_parts[0] }}<br />{{ title_parts[1] }}
+          {%- else -%}
+            {{ course.title }}
+          {%- endif -%}
+        </h3>
       </div>
     {% else %}
       <div class="course-card__poster course-card__poster--type">
-        <h3 class="course-card__title">{{ course.title }}</h3>
+        <h3 class="course-card__title">
+          {%- if title_parts|length > 1 -%}
+            {{ title_parts[0] }}<br />{{ title_parts[1] }}
+          {%- else -%}
+            {{ course.title }}
+          {%- endif -%}
+        </h3>
       </div>
     {% endif %}
 

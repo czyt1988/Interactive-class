@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     )
 
     env: Literal["dev", "prod"] = "dev"
-    site_title: str = "AI Learning"
+    site_title: str = "页间课堂"
     site_url: str = "http://127.0.0.1:8000"
     course_base_url: str = "/courses"
 

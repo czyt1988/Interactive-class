@@ -416,7 +416,7 @@ def import_course(
     build: bool = True,
     include_drafts: bool = True,
     site_url: str = "http://127.0.0.1:8000",
-    site_title: str = "AI Learning",
+    site_title: str = "页间课堂",
     course_base_url: str = "/courses",
     progress_sync: bool = True,
 ) -> ImportResult:

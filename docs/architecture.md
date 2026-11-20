@@ -1,4 +1,4 @@
-# 架构设计：AI Learning
+# 架构设计：页间课堂
 
 > 版本 v0.1 · 2026-11
 > 本文基于 HyperFrames 0.9.19 的 composition、player 和 runtime 能力设计。升级 HyperFrames 前，先读第 9.8 节。
@@ -652,7 +652,7 @@ Web 进程的**目录部分**只读构建产物，不解析 `courses/` 源，也
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
 | `ENV` | `dev` | `dev` / `prod` |
-| `SITE_TITLE` | `AI Learning` | 站点标题 |
+| `SITE_TITLE` | `页间课堂` | 站点标题 |
 | `SITE_URL` | `http://127.0.0.1:8000` | 生成绝对 URL、OG、canonical |
 | `COURSES_SRC_DIR` | `<repo>/courses` | 课程源；构建脚本使用；Web 只在后台水印配置页重建课程包时按需读 |
 | `COURSES_DIST_DIR` | `<repo>/dist/courses` | 构建产物；Web/API 的数据源 |
@@ -1332,7 +1332,7 @@ Nginx / Caddy
 
 | 问题 | 默认建议 |
 | --- | --- |
-| 项目正式名称和视觉识别 | 先用 “AI Learning”，视觉方向在 Phase 4 定 |
+| 项目正式名称和视觉识别 | 已定：站点叫「页间课堂」，AI Learning 是第一个课程系列；视觉沿用暖纸印刷系统 |
 | 第一门样板课的主题 | “什么是 token”，6–8 屏，2–3 分钟 |
 | 是否需要语音讲解 | v1 不做；先保证文字和动画；音频能力保留 |
 | 是否需要账号/登录 | v1 只做匿名会话和进度；“注册/登录/跨设备”作为下一阶段，SQLite schema 已按可登录设计 |

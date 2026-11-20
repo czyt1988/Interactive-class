@@ -1,4 +1,4 @@
-"""Start, stop and restart the local AI Learning site.
+"""Start, stop and restart the local 页间课堂 site.
 
 The Windows entry points (``start.cmd``, ``restart.cmd`` and ``stop.cmd``) are
 double-click wrappers around this module. The port and bind address are
@@ -534,7 +534,7 @@ def _print_addresses(endpoint: Endpoint) -> None:
 def print_banner(root: Path, endpoint: Endpoint, action: str) -> None:
     print()
     print("=" * 60)
-    print(f"  AI Learning - {action}")
+    print(f"  页间课堂 - {action}")
     print("=" * 60)
     print(f"  项目目录  {root}")
     print(f"  监听地址  {endpoint.bind_label}")
@@ -783,7 +783,7 @@ def command_restart(root: Path, endpoint: Endpoint) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="AI Learning 本地服务控制")
+    parser = argparse.ArgumentParser(description="页间课堂本地服务控制")
     parser.add_argument("command", choices=("start", "stop", "restart"))
     parser.add_argument("--port", help="临时覆盖 start.cmd 里的 APP_PORT")
     parser.add_argument("--host", help="临时覆盖 start.cmd 里的 APP_HOST")

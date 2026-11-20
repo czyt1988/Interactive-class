@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------ home
-   Landing page for AI Learning. Everything here is light paper: the site
-   never enters a dark mode. The signature object is the slide stack: a pile
-   of course slides that fans out on hover and cycles on its own until the
-   pointer arrives. Layout: asymmetric hero, specimen grid, album-style course
-   shelf. No framework, no CDN. */
+   Landing page for 页间课堂. Everything here is light paper: the site never
+   enters a dark mode. The page has two jobs: the hero says what an interactive
+   video course is, and the shelf opens the first series. The signature object
+   is still the slide stack: a pile of course slides that fans out on hover and
+   cycles on its own until the pointer arrives. No framework, no CDN. */
 
 body.page-home {
   overflow-x: clip;
@@ -30,7 +30,7 @@ body.page-home::before {
   grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
   align-items: center;
   gap: clamp(32px, 5vw, 72px);
-  padding-block: clamp(44px, 6vw, 88px) clamp(52px, 7vw, 104px);
+  padding-block: clamp(44px, 6vw, 88px) clamp(36px, 2.8vw, 44px);
 }
 
 .hero__copy {
@@ -38,7 +38,7 @@ body.page-home::before {
 }
 
 .hero__title {
-  margin: 22px 0 26px;
+  margin: 0 0 26px;
   font-size: clamp(42px, 5.7vw, 78px);
   line-height: 1.06;
   letter-spacing: -0.045em;
@@ -387,326 +387,19 @@ body.page-home::before {
   transform: rotate(-11deg);
 }
 
-/* --------------------------------------------------------------- sections */
+/* --------------------------------------------------------------- the shelf */
 
-.format,
 .shelf {
-  padding-block: clamp(56px, 7vw, 96px);
+  padding-block: clamp(48px, 5vw, 72px) clamp(56px, 7vw, 96px);
   border-top: 1px solid var(--line);
 }
 
-.section-intro {
-  max-width: 46em;
-  margin-bottom: clamp(30px, 4.4vw, 52px);
-}
-
-.section-intro h2 {
-  font-size: clamp(30px, 3.8vw, 50px);
-  line-height: 1.16;
-  letter-spacing: -0.032em;
-}
-
-.section-intro__lede {
-  max-width: 40em;
-  margin-top: 18px;
-  font-size: clamp(16px, 1.5vw, 18px);
-  line-height: 1.8;
-  color: var(--ink-soft);
-}
-
-/* ------------------------------------------------------------- specimens */
-
-.specimens {
-  display: grid;
-  grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
-  grid-template-rows: auto auto;
-  gap: clamp(16px, 2.2vw, 26px);
-}
-
-.specimen {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  overflow: hidden;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-}
-
-.specimen--scene {
-  grid-row: 1 / span 2;
-}
-
-.specimen__plate {
-  position: relative;
-  border-bottom: 1px solid var(--line);
-  background: var(--paper-deep);
-}
-
-.specimen--scene .specimen__plate {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: clamp(16px, 2.4vw, 32px);
-  background:
-    radial-gradient(120% 120% at 100% 0%, rgba(184, 69, 43, 0.09), transparent 58%),
-    var(--paper-deep);
-}
-
-.specimen__plate--notes,
-.specimen__plate--rhythm {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 22px;
-  min-height: 148px;
-  background: var(--paper-raised);
-}
-
-.specimen figcaption {
-  padding: 18px 22px 22px;
-}
-
-.specimen__index {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  color: var(--accent-text);
-}
-
-.specimen figcaption h3 {
-  margin: 8px 0 6px;
-  font-size: 19px;
-  letter-spacing: -0.02em;
-}
-
-.specimen figcaption p {
+.section-head__note {
+  max-width: 30em;
+  margin-top: 8px;
   font-size: 14.5px;
-  line-height: 1.68;
+  line-height: 1.65;
   color: var(--ink-soft);
-}
-
-/* mini slide inside the big specimen */
-
-.mini-slide {
-  width: 100%;
-  max-width: 560px;
-  aspect-ratio: 16 / 9;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: clamp(12px, 1.8vw, 22px);
-  background: var(--paper-raised);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-mini);
-  box-shadow: 0 30px 60px -46px rgba(22, 20, 15, 0.65);
-}
-
-.mini-slide__top,
-.mini-slide__caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-}
-
-
-.mini-slide__grid {
-  position: relative;
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  overflow: hidden;
-  border-radius: var(--radius-inline);
-}
-
-.mini-slide__cell {
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--accent) 13%, var(--paper-deep));
-}
-
-.mini-slide__cell:nth-child(3n) {
-  background: color-mix(in srgb, var(--accent) 22%, var(--paper-deep));
-}
-
-.mini-slide__sweep {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 34%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--accent) 30%, transparent),
-    transparent
-  );
-  animation: slide-sweep 3.8s var(--ease) infinite;
-}
-
-@keyframes slide-sweep {
-  from {
-    transform: translateX(-110%);
-  }
-  to {
-    transform: translateX(320%);
-  }
-}
-
-.mini-slide__track {
-  display: block;
-  width: 96px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--line);
-  overflow: hidden;
-}
-
-.mini-slide__track i {
-  display: block;
-  width: 46%;
-  height: 100%;
-  background: var(--accent);
-}
-
-/* notes plate */
-
-.mini-notes__kicker {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-}
-
-.mini-notes__strong {
-  font-size: clamp(17px, 1.7vw, 21px);
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
-}
-
-.mini-notes__rule {
-  display: block;
-  height: 7px;
-  border-radius: 4px;
-  background: var(--paper-deep);
-}
-
-.mini-notes__rule--short {
-  width: 58%;
-}
-
-/* rhythm plate */
-
-.mini-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-}
-
-.mini-controls__btn {
-  padding: 5px 11px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper-raised);
-  font-size: 11px;
-  color: var(--ink-soft);
-  white-space: nowrap;
-}
-
-.mini-controls__btn--primary {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-}
-
-.mini-keys {
-  display: flex;
-  gap: 6px;
-}
-
-.mini-keys__key {
-  display: inline-grid;
-  place-items: center;
-  min-width: 26px;
-  height: 24px;
-  padding-inline: 6px;
-  border: 1px solid var(--line-strong);
-  border-bottom-width: 2px;
-  border-radius: var(--radius-inline);
-  background: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-soft);
-}
-
-.mini-keys__key--wide {
-  min-width: 44px;
-}
-
-/* ---------------------------------------------------------- format ledger */
-
-.format-ledger {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin: clamp(30px, 4vw, 48px) 0 0;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-}
-
-.format-ledger dt {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.format-ledger dd {
-  margin: 4px 0 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.format-quote {
-  max-width: 46em;
-  margin: clamp(40px, 6vw, 72px) 0 0;
-  padding-left: clamp(18px, 2.4vw, 28px);
-  border-left: 3px solid var(--accent);
-}
-
-.format-quote p {
-  font-size: clamp(21px, 2.6vw, 31px);
-  line-height: 1.46;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-.format-quote cite {
-  display: block;
-  margin-top: 14px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-  font-style: normal;
-}
-
-/* ------------------------------------------------------------ course shelf */
-
-.section-head h2 {
-  font-size: clamp(28px, 3.4vw, 42px);
 }
 
 .shelf-feature {
@@ -1021,14 +714,6 @@ body.page-home::before {
     height: 400px;
   }
 
-  .specimens {
-    grid-template-columns: 1fr;
-  }
-
-  .specimen--scene {
-    grid-row: auto;
-  }
-
   .shelf-feature {
     grid-template-columns: 1fr;
     gap: 34px;
@@ -1052,7 +737,7 @@ body.page-home::before {
 
   .hero__title {
     font-size: clamp(36px, 10.4vw, 46px);
-    margin: 16px 0 20px;
+    margin: 0 0 20px;
   }
 
   .hero__lede {
@@ -1113,18 +798,12 @@ body.page-home::before {
     font-size: 9px;
   }
 
-  .format,
   .shelf {
     padding-block: 44px;
   }
 
-  .format-ledger {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 16px;
-  }
-
-  .section-intro h2 {
-    font-size: 30px;
+  .section-head__note {
+    font-size: 14px;
   }
 
   .poster {
@@ -1144,15 +823,41 @@ body.page-home::before {
   }
 }
 
+/* Very narrow phones: keep the fanned deck inside the viewport. */
+@media (max-width: 360px) {
+  .deck-slide[data-slot="1"] {
+    --x: 16px;
+    --y: 18px;
+  }
+
+  .deck-slide[data-slot="2"] {
+    --x: -18px;
+    --y: 28px;
+  }
+
+  .deck-slide[data-slot="3"] {
+    --x: 4px;
+    --y: 38px;
+  }
+
+  .deck-stamp {
+    right: 0;
+    bottom: 0;
+    width: 74px;
+    height: 74px;
+    font-size: 8.5px;
+  }
+
+  .poster__title h3 {
+    font-size: 26px;
+  }
+}
+
 /* ------------------------------------------------------------- entrance
    Motion is decoration-free: content first, movement only to signal that
    something is a stack / a slide. Scroll-driven where supported. */
 
 @media (prefers-reduced-motion: no-preference) {
-  .hero__copy > .eyebrow {
-    animation: rise-in 620ms var(--ease) both;
-  }
-
   .hero__copy > .hero__title {
     animation: rise-in 680ms var(--ease) 60ms both;
   }
@@ -1207,10 +912,6 @@ body.page-home::before {
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .section-intro,
-    .specimen,
-    .format-ledger,
-    .format-quote,
     .shelf > .section-head,
     .shelf-feature {
       animation: slide-up linear;
@@ -1221,11 +922,6 @@ body.page-home::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mini-slide__sweep {
-    animation: none;
-    opacity: 0.5;
-  }
-
   .deck-slide,
   .shelf-feature__poster::before,
   .shelf-feature__poster::after,
@@ -1242,15 +938,10 @@ body.page-home::before {
 }
 
 @media print {
-  .hero__deck,
-  .format-quote cite {
+  .hero__deck {
     display: none;
   }
 
-  .section-intro,
-  .specimen,
-  .format-ledger,
-  .format-quote,
   .shelf > .section-head,
   .shelf-feature {
     animation: none !important;

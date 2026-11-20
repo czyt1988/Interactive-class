@@ -12,8 +12,12 @@ def test_healthz_returns_ok(client: TestClient) -> None:
 def test_home_renders_site_name(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
-    assert "AI Learning" in response.text
-    assert "把 AI 讲清楚" in response.text
+    assert "页间课堂" in response.text
+    assert "一门可以翻页的" in response.text
+    assert "AI Learning 系列" in response.text
+    assert "动画要承担论证" not in response.text
+    assert "一叠会停的幻灯片" not in response.text
+    assert "不是视频课" not in response.text
 
 
 def test_empty_catalog_has_helpful_state(client: TestClient) -> None:
