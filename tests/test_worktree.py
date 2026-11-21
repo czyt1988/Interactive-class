@@ -118,6 +118,24 @@ def test_add_creates_worktree_and_shares_dependencies(repo, capsys) -> None:
     assert "feat/demo" in out
 
 
+def test_shared_links_do_not_make_the_worktree_dirty(repo, capsys) -> None:
+    """A generated dependency link is not a user change, on any platform.
+
+    ``.gitignore`` 里的 ``.venv/`` 只匹配目录；POSIX 上共享的是符号链接，
+    git 会把它报成未跟踪，``remove`` 就会误判成“有未提交改动”。共享路径必须
+    写进 ``info/exclude``（本地、不进版本库、所有工作树共享）。
+    """
+
+    _local_dependencies(repo)
+    assert _call(capsys, "add", "feat/demo", "--no-build")[0] == 0
+    worktree_dir = repo / ".worktree" / "feat-demo"
+
+    exclude = (repo / ".git" / "info" / "exclude").read_text(encoding="utf-8")
+    for relative in (".venv", "tools/node_modules", "tools/ffmpeg"):
+        assert f"/{relative}" in exclude
+    assert _git(worktree_dir, "status", "--porcelain") == ""
+
+
 def test_remove_keeps_main_dependency_targets(repo, capsys) -> None:
     _local_dependencies(repo)
     assert _call(capsys, "add", "feat/demo", "--no-build")[0] == 0

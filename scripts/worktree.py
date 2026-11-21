@@ -400,6 +400,48 @@ def _share_candidates(root: Path, share: Share) -> list[Path]:
     return [candidate] if (candidate.exists() or is_link(candidate)) else []
 
 
+def _git_common_dir(repo: Repo) -> Path | None:
+    output = git_ok("rev-parse", "--git-common-dir", cwd=repo.main)
+    if output is None:
+        return None
+    raw = output.strip()
+    if not raw:
+        return None
+    path = Path(raw)
+    return path if path.is_absolute() else (repo.main / path).resolve()
+
+
+def exclude_shared_links(repo: Repo, relatives: list[str]) -> None:
+    """Keep the generated dependency links out of ``git status``.
+
+    ``.gitignore`` cannot do this portably: a pattern such as ``.venv/`` matches
+    a directory, but on POSIX the shared ``.venv`` is a symlink, so git reports
+    it as untracked and ``remove`` refuses to delete a "dirty" worktree.
+    ``info/exclude`` is local, unversioned and shared by every worktree, which is
+    exactly the scope of these generated paths.
+    """
+
+    common = _git_common_dir(repo)
+    if common is None:
+        return
+    exclude = common / "info" / "exclude"
+    try:
+        existing = exclude.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        existing = []
+    wanted = [f"/{relative.rstrip('/')}" for relative in relatives]
+    missing = [line for line in wanted if line not in existing]
+    if not missing:
+        return
+    try:
+        exclude.parent.mkdir(parents=True, exist_ok=True)
+        prefix = "\n" if existing and existing[-1].strip() else ""
+        with exclude.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(prefix + "\n".join(missing) + "\n")
+    except OSError:
+        return
+
+
 def apply_shares(
     repo: Repo, worktree: Path, *, refresh: bool = False
 ) -> tuple[list[str], list[str]]:
@@ -454,6 +496,14 @@ def apply_shares(
             done.append(f"共享  {relative.as_posix():<24} {share.note}")
         except (OSError, WorktreeError) as exc:
             problems.append(f"{relative.as_posix()} 共享失败：{exc}")
+    exclude_shared_links(
+        repo,
+        [
+            relative.as_posix()
+            for share, _source, relative in _share_sources(repo)
+            if share.mode == "link"
+        ],
+    )
     return done, problems
 
 
