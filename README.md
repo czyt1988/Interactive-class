@@ -178,7 +178,7 @@ ai-learning/
 ├─ course-inbox/                 # 外部课程收件箱，供导入使用（不进 Git）
 ├─ clips/                        # 全站共享的片头/片尾模板（后台按课选择）
 │  ├─ intro-title-page/          # 片头：通用开源说明 + GitHub / Gitee 地址
-│  └─ outro-colophon/            # 片尾：项目落款
+│  └─ outro-colophon/            # 片尾：开源落款 + 一句收束
 ├─ courses/
 │  ├─ ai-first-sees/             # 第一门课：AI 第一次看懂世界
 │  └─ <slug>/                    # 每门课一个目录
@@ -365,17 +365,19 @@ python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回
 仓库自带两个模板，默认都不插入：
 
 - `clips/intro-title-page/`：通用开源片头，7 秒；说明本视频由 DeepSeek harness + DeepSeek-V4.1 flash 生成，固定列出本仓库的 GitHub 与 Gitee 地址，不印课程标题、屏数或时长。
-- `clips/outro-colophon/`：课程落款，再留一次项目地址和制作方式。
+- `clips/outro-colophon/`：通用开源片尾，9 秒；重复制作方式和两个地址，并用一句「这是一个人人都能动手的时代」收束。
 
 ![开源片头](docs/screenshots/clip-intro.jpg)
 
+![开源片尾](docs/screenshots/clip-outro.jpg)
+
 每个模板旁边有「预览」按钮：点开会临时构建一份只含该模板的课程包，在真实课堂页面里从这一屏开始播放。预览页顶部有「片头预览/片尾预览」条和「返回设置」，播到这一屏结束就停，不会进入正课或完成页，也不会写学习进度、不会改数据库里的选择。临时包放在 `data/clip-previews/`，可以随时删掉，下一次预览会重建。
 
-模板目录结构、`clip.json` 字段、`{{course.title}}` 等占位符见 [clips/README.md](clips/README.md)。自带开源片头不使用课程占位符，所以同一条片头可以贴到任何视频前。片头/片尾的画面就是课程的一屏：1920×1080、亮色纸面，静默无旁白，目录里标成「片头」「片尾」，正课编号不变。
+模板目录结构、`clip.json` 字段、`{{course.title}}` 等占位符见 [clips/README.md](clips/README.md)。自带的通用片头、片尾都不使用课程占位符，所以同一条片头/片尾可以贴到任何视频前。片头/片尾的画面就是课程的一屏：1920×1080、亮色纸面，静默无旁白，目录里标成「片头」「片尾」，正课编号不变。
 
 前提与边界：
 
-- 片头的两个地址写在 `clips/intro-title-page/scene.html` 里，不随课程或 `.env` 变化；换 fork 时改模板并重新保存一次片头。片尾的项目地址仍来自 `.env` 的 `PROJECT_URL`（默认是本仓库的 Gitee 地址）。
+- 片头和片尾的两个地址都写在各自的 `scene.html` 里，不随课程或 `.env` 变化；换 fork 时改模板并重新保存一次。`PROJECT_URL` 仍供使用 `{{project.url}}` 的自定义模板。
 - 选择存数据库（`data/app.db`，已 gitignore），不写 `course.json`；构建产物自带渲染后的 scene，独立部署的课程包不依赖数据库。
 - 没有选择时构建输出与旧版一致。`--no-clips` 可做完全不读库的干净构建。
 - 保存需要在持有 `courses/<slug>/` 源文件的机器上做；只部署 `app/` 与 `dist/` 时页面只读。
@@ -452,7 +454,7 @@ course-template/
 2. 仓库 Settings → Pages → Source 选 **GitHub Actions**。
 3. 推送 `main`，或在 Actions 里手动运行「发布到 GitHub Pages」。
 
-地址按仓库名自动推导：仓库不是 `<owner>.github.io` 时，站点在 `https://<owner>.github.io/<repo>/`，脚本自动加 `/<repo>` 前缀；用户页仓库（`<owner>.github.io`）不加前缀。需要覆盖时，在 Settings → Variables 里设 `SITE_URL`、`SITE_BASE_PATH`、`PROJECT_URL`；自定义域名写成 `SITE_URL=https://learn.example.com` + `SITE_BASE_PATH=/`（`/` 表示根路径）。
+地址按仓库名自动推导：仓库不是 `<owner>.github.io` 时，站点在 `https://<owner>.github.io/<repo>/`，脚本自动加 `/<repo>` 前缀；用户页仓库（`<owner>.github.io`）不加前缀。需要覆盖时，在 Settings → Variables 里设 `SITE_URL`、`SITE_BASE_PATH`；自定义片头/片尾模板的项目地址用 `PROJECT_URL`，自带的通用片头和片尾直接写死 GitHub 与 Gitee 两个地址。自定义域名写成 `SITE_URL=https://learn.example.com` + `SITE_BASE_PATH=/`（`/` 表示根路径）。
 
 本地先看效果：
 

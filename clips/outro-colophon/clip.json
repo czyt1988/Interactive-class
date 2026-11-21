@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "outro-colophon",
   "kind": "outro",
-  "title": "片尾：项目落款",
-  "summary": "再留一次项目地址和制作方式",
-  "description": "课程落款：结束语、开源项目地址、制作工具。约 9 秒，接在课程最后。",
+  "title": "片尾：开源落款",
+  "summary": "制作方式、开源地址，以及一句收束",
+  "description": "通用片尾：说明本视频由 DeepSeek harness + DeepSeek-V4.1 flash 生成，列出 GitHub 与 Gitee 地址，并用一句「人人都能动手」收束。约 9 秒。",
   "kicker": "片尾",
-  "transcript": "课程结束。本课开源发布，项目地址和制作方式留在这里：课程由 DeepSeek Harness 生成，使用的模型是 DeepSeek-V4.1 Flash。",
+  "transcript": "这是一个人人都能动手的时代：过去要一个团队才能做的事，现在一个人也能开始。本视频由 DeepSeek harness + DeepSeek-V4.1 flash 编码生成，本视频是开源项目。源码在 GitHub 与 Gitee：https://github.com/czyt1988/Interactive-class，https://gitee.com/czyt1988/interactive-class。想了解视频如何生成，或需要调整，可以拉取源码自行修改。",
   "duration": 9,
   "scene": "scene.html"
 }

@@ -139,7 +139,7 @@ def test_outro_is_last_and_next_finishes(page: Page) -> None:
     page.wait_for_selector("#toc:not([hidden])")
     page.locator(".toc__item").last.click()
     page.wait_for_function(
-        "() => document.querySelector('#chapter-title').textContent === '片尾：项目落款'",
+        "() => document.querySelector('#chapter-title').textContent === '片尾：开源落款'",
         timeout=15_000,
     )
     assert page.inner_text("#chapter-counter").startswith("片尾")

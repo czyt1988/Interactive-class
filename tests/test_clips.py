@@ -82,6 +82,8 @@ def test_shipped_library_has_one_intro_and_one_outro() -> None:
     assert [clip.id for clip in library.for_kind("outro")] == ["outro-colophon"]
     intro = library.get("intro-title-page")
     assert intro is not None and intro.duration == 7
+    outro = library.get("outro-colophon")
+    assert outro is not None and outro.duration == 9
     assert library.issues() == []
 
 
@@ -203,6 +205,28 @@ def test_shipped_intro_omits_course_specific_copy(tmp_path: Path) -> None:
     assert "https://gitee.com/czyt1988/interactive-class" in rendered
 
 
+def test_shipped_outro_ends_on_the_shared_line(tmp_path: Path) -> None:
+    """The closer repeats the credits and ends on one forward-looking line."""
+
+    library = ClipLibrary(CLIPS)
+    clip = library.get("outro-colophon")
+    assert clip is not None
+    context = _context(tmp_path)
+    rendered = render_scene(
+        library.scene_path(clip).read_text(encoding="utf-8"),
+        context,
+        clip_id=clip.id,
+    )
+    assert context.values["course.title"] not in rendered
+    assert context.values["course.meta"] not in rendered
+    assert "这是一个人人都能动手的时代" in rendered
+    assert "过去要一个团队才能做的事，现在" in rendered
+    assert "一个人也能开始" in rendered
+    assert "本视频由 DeepSeek harness + DeepSeek-V4.1 flash 编码生成" in rendered
+    assert "https://github.com/czyt1988/Interactive-class" in rendered
+    assert "https://gitee.com/czyt1988/interactive-class" in rendered
+
+
 def test_title_size_fits_long_titles() -> None:
     sizes = [title_size("短标题"), title_size("二" * 20), title_size("三" * 40)]
     assert sizes[0] > sizes[1] > sizes[2]
@@ -259,6 +283,15 @@ def test_build_injects_both_clips(tmp_path: Path) -> None:
     assert "https://gitee.com/czyt1988/interactive-class" in scene
     assert "DeepSeek harness" in scene
     assert "本视频是开源项目" in scene
+
+    outro_scene = (bundle / "composition" / "compositions" / "clip-outro-colophon.html").read_text(
+        encoding="utf-8"
+    )
+    assert "两屏测试课" not in outro_scene
+    assert "这是一个人人都能动手的时代" in outro_scene
+    assert "一个人也能开始" in outro_scene
+    assert "https://github.com/czyt1988/Interactive-class" in outro_scene
+    assert "https://gitee.com/czyt1988/interactive-class" in outro_scene
 
 
 def test_shell_labels_clips_as_intro_and_outro(tmp_path: Path) -> None:
@@ -509,7 +542,7 @@ def test_admin_clips_page_lists_templates(tmp_path: Path, monkeypatch) -> None:
     text = response.text
     assert "片头片尾" in text
     assert "片头：开源项目" in text
-    assert "片尾：项目落款" in text
+    assert "片尾：开源落款" in text
     assert "/admin/clips/intro-title-page/frame?course=valid-two-screen" in text
     assert (
         "/admin/courses/valid-two-screen/clips/preview/intro/intro-title-page" in text

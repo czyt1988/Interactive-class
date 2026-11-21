@@ -682,7 +682,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--runtime-dir", type=Path, default=DEFAULT_RUNTIME)
     parser.add_argument("--clips-dir", type=Path, default=DEFAULT_CLIPS)
-    parser.add_argument("--project-url", default=None, help="片头里印的开源项目地址")
+    parser.add_argument("--project-url", default=None, help="自定义片头/片尾模板可用的开源项目地址")
     parser.add_argument("--site-url", default="http://127.0.0.1:8000")
     parser.add_argument("--site-title", default="页间课堂")
     parser.add_argument("--course-base-url", default="/courses")

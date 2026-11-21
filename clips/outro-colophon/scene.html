@@ -1,14 +1,14 @@
 <template>
   <style>
-/* 片尾 · 项目落款
+/* 片尾 · 开源落款
  *
- * One page of the course, inserted at build time from clips/. Self-contained:
- * no images, no font files, no external requests. The values in {{…}} are filled
- * per course by scripts/build_courses.py, HTML-escaped.
+ * The closing counterpart to the generic opener. It repeats what the video was
+ * made with, that the project is open source, and where the source lives, then
+ * ends on one line about what that makes possible. Inserted at build time from
+ * clips/; self-contained, no images, font files or external requests.
  *
- * Layout is CSS; the timeline only animates opacity/transform, so the still
- * preview (no JS) is the same picture as the final frame. The closing line is
- * on screen at 0 s so the first frame already reads as an ending.
+ * Layout is CSS; the timeline only animates opacity/transform. The closing line
+ * is readable at 0 s, so the first frame already carries the thought.
  */
 
 #root {
@@ -18,163 +18,246 @@
   background: #f4efe6;
   color: #16140f;
   font-family: "Noto Sans SC", sans-serif;
+  --oco-mono: Consolas, "Courier New", monospace;
   -webkit-font-smoothing: antialiased;
 }
 
-.ocol-sheet {
+.oco-sheet {
   position: absolute;
   inset: 0;
 }
 
-.ocol-kicker {
+.oco-kicker {
   position: absolute;
   left: 192px;
   top: 104px;
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: 18px;
-  font-family: ui-monospace, Consolas, monospace;
+  font-family: var(--oco-mono);
   font-size: 28px;
   line-height: 1.3;
   letter-spacing: 0.16em;
   color: #a33a20;
 }
 
-.ocol-kicker span {
+.oco-kicker span {
   color: #6b6355;
   letter-spacing: 0.1em;
 }
 
-.ocol-lead {
+.oco-head-rule {
   position: absolute;
   left: 192px;
-  top: 292px;
+  right: 192px;
+  top: 156px;
+  height: 1px;
+  background: #d9cfbf;
+}
+
+.oco-lead {
+  position: absolute;
+  left: 192px;
+  top: 196px;
+  width: 1536px;
   margin: 0;
-  font-size: 96px;
-  line-height: 1.14;
+  font-size: 64px;
+  line-height: 1.3;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #16140f;
 }
 
-.ocol-note {
+.oco-lead > span {
+  display: block;
+}
+
+.oco-key {
+  color: #a33a20;
+}
+
+.oco-credit {
   position: absolute;
   left: 192px;
-  top: 438px;
+  top: 416px;
+}
+
+.oco-credit p {
   margin: 0;
   font-size: 40px;
   line-height: 1.5;
+}
+
+.oco-credit__made {
   color: #514b40;
 }
 
-.ocol-address {
+.oco-credit__open {
+  color: #a33a20;
+  font-weight: 700;
+}
+
+.oco-seal {
   position: absolute;
-  left: 192px;
-  top: 536px;
-  max-width: 1440px;
-  padding-left: 28px;
-  border-left: 3px solid var(--ocol-accent, #b8452b);
+  right: 220px;
+  top: 416px;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #a33a20;
+  color: #a33a20;
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transform: rotate(-6deg);
 }
 
-.ocol-label {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 28px;
-  line-height: 1.4;
-  letter-spacing: 0.14em;
-  color: #6b6355;
-}
-
-.ocol-url {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  margin-top: 12px;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: var(--ocol-url-size, 54px);
-  line-height: 1.3;
-  letter-spacing: -0.02em;
-  color: #16140f;
-  overflow-wrap: anywhere;
-}
-
-.ocol-url-line {
+.oco-seal::before {
+  content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -10px;
-  height: 3px;
-  background: var(--ocol-accent, #b8452b);
-  transform-origin: left center;
+  inset: 8px;
+  border: 1px solid rgba(163, 58, 32, 0.45);
 }
 
-.ocol-credit {
-  position: absolute;
-  left: 192px;
-  top: 700px;
-  margin: 0;
-  max-width: 1400px;
-  font-size: 34px;
-  line-height: 1.6;
-  color: #514b40;
-}
-
-.ocol-foot {
+.oco-source {
   position: absolute;
   left: 192px;
   right: 192px;
-  bottom: 108px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 24px;
-  padding-top: 22px;
+  top: 600px;
+  padding-top: 20px;
   border-top: 1px solid #d9cfbf;
-  font-family: ui-monospace, Consolas, monospace;
+}
+
+.oco-source-label {
+  margin: 0;
+  font-family: var(--oco-mono);
   font-size: 28px;
   line-height: 1.4;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   color: #6b6355;
 }
 
-.ocol-foot span:last-child {
-  letter-spacing: 0.14em;
+.oco-row {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: baseline;
+  padding-top: 12px;
 }
 
-/* Hidden until the timeline reaches each beat; the lead and kicker stay up. */
-.ocol-note,
-.ocol-address,
-.ocol-credit,
-.ocol-foot {
+.oco-row + .oco-row {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #d9cfbf;
+}
+
+.oco-name {
+  font-family: var(--oco-mono);
+  font-size: 28px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: #16140f;
+}
+
+.oco-mirror {
+  margin-left: 10px;
+  color: #6b6355;
+  letter-spacing: 0.04em;
+}
+
+.oco-url {
+  position: relative;
+  display: inline-block;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  padding-bottom: 8px;
+  font-family: var(--oco-mono);
+  font-size: 38px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #16140f;
+  white-space: nowrap;
+}
+
+.oco-url-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #b8452b;
+  transform-origin: left center;
+}
+
+.oco-note {
+  position: absolute;
+  left: 192px;
+  right: 192px;
+  bottom: 84px;
+  padding-top: 20px;
+  border-top: 1px solid #d9cfbf;
+}
+
+.oco-note p {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.7;
+  color: #6b6355;
+}
+
+/* The closing line is already on screen at 0 s. The seal, credits, addresses
+ * and footnote arrive in reading order; the still preview reveals them all. */
+.oco-seal,
+.oco-credit,
+.oco-source,
+.oco-note {
   opacity: 0;
 }
   </style>
 
   <div
     id="root"
-    class="ocol-root"
+    class="oco-root"
     data-composition-id="s-outro-colophon"
     data-width="1920"
     data-height="1080"
     data-theme="paper"
-    data-hold="The colophon holds its final frame until the course ends."
-    style="--ocol-accent: {{course.accent}}; --ocol-url-size: {{project.labelSize}}px"
+    data-hold="The closing card holds its final frame until the video ends."
   >
-    <div class="ocol-sheet">
-      <p class="ocol-kicker">片尾 <span>AI LEARNING</span></p>
+    <div class="oco-sheet">
+      <p class="oco-kicker">片尾 <span>OPEN SOURCE</span></p>
+      <div class="oco-head-rule" aria-hidden="true"></div>
 
-      <h1 class="ocol-lead">这门课讲完了。</h1>
-      <p class="ocol-note">项目地址和制作方式，留在这里。</p>
+      <h1 class="oco-lead">
+        <span>这是一个人人都能动手的时代：</span>
+        <span>过去要一个团队才能做的事，现在<span class="oco-key">一个人也能开始</span>。</span>
+      </h1>
 
-      <div class="ocol-address">
-        <p class="ocol-label">开源项目</p>
-        <p class="ocol-url">{{project.label}}<span class="ocol-url-line" aria-hidden="true"></span></p>
+      <div class="oco-credit">
+        <p class="oco-credit__made">本视频由 DeepSeek harness + DeepSeek-V4.1 flash 编码生成。</p>
+        <p class="oco-credit__open">本视频是开源项目。</p>
       </div>
 
-      <p class="ocol-credit">课程由 DeepSeek Harness 生成，模型 DeepSeek-V4.1 Flash。</p>
+      <div class="oco-seal" aria-hidden="true">开始</div>
 
-      <div class="ocol-foot">
-        <span>{{course.title}}</span>
-        <span>AI LEARNING</span>
+      <div class="oco-source">
+        <p class="oco-source-label">开源地址</p>
+        <div class="oco-row">
+          <span class="oco-name">GitHub</span>
+          <span class="oco-url">https://github.com/czyt1988/Interactive-class<span class="oco-url-line" aria-hidden="true"></span></span>
+        </div>
+        <div class="oco-row">
+          <span class="oco-name">Gitee <span class="oco-mirror">国内镜像</span></span>
+          <span class="oco-url">https://gitee.com/czyt1988/interactive-class<span class="oco-url-line" aria-hidden="true"></span></span>
+        </div>
+      </div>
+
+      <div class="oco-note">
+        <p>如果你想了解如何生成这个视频，或者对本视频需要进行调整，</p>
+        <p>你可以拉取源码并进行调整。</p>
       </div>
     </div>
   </div>
@@ -182,16 +265,29 @@
   <script>
     const tl = gsap.timeline({ paused: true });
 
-    tl.fromTo("#root .ocol-note", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.9);
-    tl.fromTo("#root .ocol-address", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.3);
+    // 收束句从第 0 帧就在：视频最后一屏的第一帧已经给出展望。
+    // 后面按落款顺序补齐：盖章、制作说明、地址、最后一句怎么改。
     tl.fromTo(
-      "#root .ocol-url-line",
+      "#root .oco-head-rule",
       { scaleX: 0 },
-      { scaleX: 1, duration: 0.85, ease: "power2.out", transformOrigin: "left center" },
-      1.78
+      { scaleX: 1, duration: 0.7, ease: "power2.out", transformOrigin: "left center" },
+      0.05
     );
-    tl.fromTo("#root .ocol-credit", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 2.2);
-    tl.fromTo("#root .ocol-foot", { opacity: 0 }, { opacity: 1, duration: 0.55, ease: "power1.out" }, 2.7);
+    tl.fromTo(
+      "#root .oco-seal",
+      { opacity: 0, scale: 1.3, rotation: -14 },
+      { opacity: 1, scale: 1, rotation: -6, duration: 0.4, ease: "power3.out" },
+      0.9
+    );
+    tl.fromTo("#root .oco-credit", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.35);
+    tl.fromTo("#root .oco-source", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.8);
+    tl.fromTo(
+      "#root .oco-url-line",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.75, ease: "power2.out", transformOrigin: "left center", stagger: 0.18 },
+      2.2
+    );
+    tl.fromTo("#root .oco-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power1.out" }, 2.9);
 
     window.__timelines["s-outro-colophon"] = tl;
   </script>

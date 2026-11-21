@@ -15,8 +15,9 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# Open-source project address printed by the shipped intro template. Override
-# with PROJECT_URL when a fork or a deployment lives somewhere else.
+# Open-source project address available to custom clip templates. The shipped
+# intro and outro hardcode the GitHub and Gitee mirrors; set PROJECT_URL only
+# for templates that use ``{{project.url}}``.
 DEFAULT_PROJECT_URL = "https://gitee.com/czyt1988/interactive-class"
 
 
@@ -46,8 +47,8 @@ class Settings(BaseSettings):
 
     # Shared intro/outro clip library (``clips/<clip-id>/``). A clip is one more
     # scene injected at build time; the selection per course lives in SQLite, not
-    # in the course source. This URL is printed by the shipped intro template and
-    # identifies the open-source project, so it is deployment config as well.
+    # in the course source. This URL is available to custom clip templates; the
+    # shipped intro and outro hardcode their GitHub and Gitee addresses.
     clips_dir: Path = Field(default=BASE_DIR / "clips")
     project_url: str = DEFAULT_PROJECT_URL
     # Disposable classroom bundles built for the admin clip preview. They carry
