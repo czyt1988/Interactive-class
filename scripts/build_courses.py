@@ -345,6 +345,20 @@ def _site_origin(site_url: str) -> str:
     return f"{parts.scheme}://{parts.netloc}"
 
 
+def site_home_url(home_url: str | None, base_path: str) -> str | None:
+    """Prefix a site-relative course home link with the deployment base path.
+
+    ``course.json`` stores ``site.homeUrl`` as ``/`` or ``/courses`` because a
+    course cannot know where it is mounted. A site published under a sub-path
+    (``https://<user>.github.io/<repo>/``) needs ``/<repo>/`` as the back link;
+    absolute URLs and ``null`` stay untouched.
+    """
+
+    if not home_url or not base_path or not home_url.startswith("/"):
+        return home_url
+    return f"{base_path}{home_url}"
+
+
 def course_url(course_base_url: str, site_url: str, slug: str) -> str:
     base = course_base_url.rstrip("/")
     if base.startswith(("http://", "https://")):
@@ -360,6 +374,7 @@ def _render_shell(
     site_url: str,
     site_title: str,
     course_base_url: str,
+    base_path: str,
     progress_sync: bool,
     output: Path,
     runtime_version: str,
@@ -388,7 +403,7 @@ def _render_shell(
         progress = {"endpoint": "/api/progress", "origin": origin}
 
     cover_url = f"./{course.cover}" if course.cover else None
-    home_url = course.site.homeUrl
+    home_url = site_home_url(course.site.homeUrl, base_path)
     html = template.render(
         course=course_data,
         screens=course_data["screens"],
@@ -424,6 +439,7 @@ def build_course(
     site_url: str = "http://127.0.0.1:8000",
     site_title: str = "页间课堂",
     course_base_url: str = "/courses",
+    base_path: str = "",
     progress_sync: bool = True,
     watermark: WatermarkConfig | None = None,
     clip_selection: ClipSelection | None = None,
@@ -523,6 +539,7 @@ def build_course(
             site_url=site_url,
             site_title=site_title,
             course_base_url=course_base_url,
+            base_path=base_path,
             progress_sync=progress_sync,
             output=staging,
             runtime_version=runtime_version,
@@ -579,6 +596,7 @@ def build_all(
     site_url: str = "http://127.0.0.1:8000",
     site_title: str = "页间课堂",
     course_base_url: str = "/courses",
+    base_path: str = "",
     progress_sync: bool = True,
     watermarks: dict[str, WatermarkConfig] | None = None,
     clips: dict[str, ClipSelection] | None = None,
@@ -603,6 +621,7 @@ def build_all(
                 site_url=site_url,
                 site_title=site_title,
                 course_base_url=course_base_url,
+                base_path=base_path,
                 progress_sync=progress_sync,
                 watermark=configs.get(course_dir.name),
                 clip_selection=clip_configs.get(course_dir.name),
@@ -667,6 +686,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--site-url", default="http://127.0.0.1:8000")
     parser.add_argument("--site-title", default="页间课堂")
     parser.add_argument("--course-base-url", default="/courses")
+    parser.add_argument(
+        "--base-path",
+        default="",
+        help="站点子路径（如 GitHub Pages 项目页的 /<repo>），用于课程页的返回链接",
+    )
     parser.add_argument("--no-progress-sync", action="store_true")
     parser.add_argument(
         "--no-watermarks",
@@ -700,6 +724,7 @@ def main(argv: list[str] | None = None) -> int:
         site_url=args.site_url,
         site_title=args.site_title,
         course_base_url=args.course_base_url,
+        base_path=args.base_path,
         progress_sync=not args.no_progress_sync,
         watermarks=watermarks,
         clips=clip_configs,

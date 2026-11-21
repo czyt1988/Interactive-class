@@ -1,7 +1,7 @@
 {# One course card. Expects: course (CourseSummary), index (1-based).
    The title is rendered once, either over the cover image or inside the
    typographic poster used when a course has no cover yet. #}
-<article class="course-card" style="--card-accent: {{ course.accent or '#b8452b' }}">
+<article class="course-card" style="--card-accent: {{ course.accent or '#b8452b' }}" data-course-card data-level="{{ course.level }}" data-tags="{{ course.tags|join(',') }}">
   <a class="course-card__link" href="{{ course.courseUrl }}">
     <div class="course-card__top">
       <span class="course-card__index">{{ "%02d"|format(index) }}</span>

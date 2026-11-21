@@ -4,7 +4,7 @@
   "gsap": "3.15.0",
   "player": "hyperframes-player.global.js",
   "runtime": "hyperframe.runtime.iife.js",
-  "deckVersion": "1.10.0",
+  "deckVersion": "1.10.1",
   "fonts": {
     "course-template/composition/assets/fonts/NotoSansSC-VF.woff2": "4c6748779acd19ed27e90bd2330ab1473106b6412043f259c41736d62f1ccc0d",
     "app/static/fonts/NotoSansSC-VF.woff2": "677bef3b60f0125f11ffc36976ebbffa13721f0b243bd2a50c043324bd4ca9be",

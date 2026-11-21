@@ -107,6 +107,7 @@
 | D19 | 并行开发任务各自在 `.worktree/` 下的独立 git 工作树里进行，完成后合并回 `main`；`scripts/worktree.py` 负责创建/查看/合并/删除工作树，并把主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`、`courses/*/narration/cache/` 以目录联接共享，把 `runtime/vendor` 与 `.env` 复制进工作树（`link` 负责刷新副本）；根 `conftest.py` 与构建脚本把仓库根放进 `sys.path`，避免共享虚拟环境的 editable install 把导入劫持到主工作树；删除前校验未提交改动，合并冲突自动回滚 | 多个 Agent 会话并行开发时，共用工作区会互相污染（切分支、暂存区、未提交改动）；共享已装依赖与创作工具让新工作树几秒内可跑测试、构建课程，不重复联网安装；复制写侧生成物保证工作树里重跑同步脚本或改本地配置不影响主工作树；删除/合并的安全检查避免误丢未提交改动或把主工作树留在冲突态 | 依赖目录共享意味着在工作树里 `pip install` / `npm install` / 重做旁白会写主工作树或共享缓存，必须串行处理（启动器对重装会直接拒绝）；`dist/`、`data/` 与主工作树各自独立，需要各自构建与迁移；多一层需要在任务收尾时合并与清理的流程 | 需要每个任务独立依赖版本、跨机器分发生成物，或迁移到 CI/容器化并行时 |
 | D20 | 课程水印是站点部署配置，不是课程内容：配置存在 SQLite 的 `course_watermarks` 表（`data/` 已 gitignore，不进 Git、不写 `courses/<slug>/course.json`），构建时由 `scripts/build_courses.py` 读库并把水印层写进构建产物的 composition 入口；后台 `/admin/courses/<slug>/watermark` 编辑数据库行并同步重新构建 | 水印文字通常是作者/公司/部门等身份信息，用户明确要求它不被 Git 跟踪，历史里已有的旧水印也要清理；数据库属于站点、`data/` 不进版本库，正好承载这类「这台部署给谁看」的配置。构建产物仍把水印烘进 composition，所以独立部署的课程包自带水印、运行时不依赖数据库，D5 的「课程包不依赖数据库」仍然成立。写进 composition 而不是页面外壳，是因为网页播放器和 MP4 渲染器消费同一份 composition | 构建（含 `build_courses.py` 命令行）需要能访问站点数据库；库或表缺失时构建按「未配置水印」继续，所以新克隆的仓库默认没有水印。后台保存仍需要 `courses/` 与 `scripts/` 才能重建，生产镜像只装 `app/` 和 `dist/` 时配置页只读。换库/迁移数据会丢水印，需要重新配置；改水印后旧视频会因内容哈希变化被标记为过期 | 水印需要按观看者动态生成（用户名、时间戳）时，改为运行期渲染或图片服务，并重新评估权限与缓存 |
 | D21 | 片头/片尾是站点共享模板库 `clips/<id>/` 里的一屏：构建时由 `scripts/build_courses.py` 渲染模板（`{{course.title}}` 等占位符带入每门课的信息）并插入构建产物的 composition，片头在最前、片尾在最后，原有 host 与 `<audio>` 的 `data-start` 整体后移；选择存在 SQLite 的 `course_clips` 表，后台 `/admin/courses/<slug>/clips` 选择并同步重建 | 用户要在每门课开始/结尾讲清课程主题、开源项目地址和制作方式，视频导出也要带。做成 composition 的一屏，网页播放与 MP4 消费同一份，独立部署的课程包自带这些屏、不需要数据库，D1/D5 仍然成立；模板全站共用、占位符带入课程信息，避免每门课复制一份；选择存站点库，课程源文件不含部署选择 | 片头/片尾是静默的（不配旁白、音乐），需要声音时要扩展 `clip.json` 与渲染；插入会让正课时间整体后移，`contentHash` 必须把选择和渲染后的模板算进去，否则视频过期判断会漏；模板在构建期校验，无效模板让构建失败而不是静默跳过 | 片头需要旁白/音乐、按观看者动态生成，或模板多到需要独立的模板管理界面时 |
+| D22 | 站点可以额外导出成纯静态目录发布到 GitHub Pages：`scripts/export_site.py` 先构建课程包（`progress_sync=False`，不读数据库水印），再用真实 FastAPI 应用渲染 `/`、`/courses`、`/about`、404、sitemap、robots 一次，复制 `app/static`，最后校验每条站内引用都能落到导出文件；站点子路径由 `SITE_BASE_PATH` / `--base-path` 统一加前缀，片头/片尾选择从提交的 `deploy/publish.json` 读取 | 用户要求用 GitHub 的 Pages 发布。Pages 只托管文件，而站点页面由 FastAPI 按请求渲染，所以需要一份「渲染一次」的产物；用真实应用渲染而不是另写模板逻辑，静态站与动态站不会漂移。课程包本来就是静态的（D1），导出只是补站点外壳。CI 读不到私有 SQLite，所以发布用的片头/片尾选择单独提交；水印是部署方身份信息，永不进入公开产物 | Pages 上没有 `/admin`、进度同步、视频生成和片头预览；课程库的服务端筛选改为浏览器端筛选；Pages 不能设置自定义响应头（站点 CSP、缓存头只存在于 FastAPI 侧）；发布产物是 `dist/site/`，多一份构建产物与一条发布链路要维护 | 需要公开站也有账号进度/后台，或改用能跑容器的托管方式（那是 12.1 的部署，不是 Pages） |
 
 ### 3.1 三个需要展开的决定
 
@@ -1058,7 +1059,7 @@ HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程
 
 必须通过：
 
-1. Python：`ruff check`、`ruff format --check`、`pytest`。
+1. Python：`ruff check`、`pytest`（`ruff format --check` 还没纳入：现有代码尚未统一格式化）。
 2. 构建：全部已发布课程构建成功，产物文件齐全。
 3. HyperFrames：每门课的 `composition/` 通过 `npx hyperframes@0.9.19 check`。
 4. 播放器契约：range/ended 的 Playwright（Python）测试。
@@ -1070,6 +1071,8 @@ HyperFrames 的 `publish` 可以快速托管一个项目预览，但它把课程
 10. 数据库：迁移链可从空库升到 head；进度 API 的 upsert、匿名会话、slug/screen 校验有测试；备份/恢复步骤演练过。
 
 `check` 和快照需要 Node 22、Chrome；CI 里用固定版本，不使用 `latest`。
+
+当前落地的是 `.github/workflows/pages.yml` 的发布链路：它执行 1 的 `ruff check` 与单元/集成测试（`-m "not e2e"`，CI 不装浏览器）、2 的课程构建、5 的静态站冒烟（普通 `http.server`），外加 9.10 的产物链接检查。3、4、6、7 仍是本地验收项，等发布链路稳定后再加。
 
 ### 9.8 升级 HyperFrames
 
@@ -1121,6 +1124,34 @@ start.cmd / restart.cmd / build.cmd   GBK 编码的批处理，只负责：
 4. `build_courses.py --all`，重建全部已发布课程包；`--site-url` 取自 `start.cmd` 的 `APP_PORT`/`APP_HOST`，保证本地端口上的进度同步同源。
 
 与 `bootstrap.py` 的「缺什么补什么」相反，它每次都重建，因为目标就是拾取改动；构建本身仍只写 `dist/`、SQLite 和字体子集等生成物。`python scripts/build.py --course <slug>` 可以只重建一门课，`--site-url` 可以覆盖部署地址。
+
+### 9.10 静态发布（GitHub Pages）
+
+GitHub Pages 只托管文件，而站点页面由 FastAPI 按请求渲染。`scripts/export_site.py`（D22）因此把「站点外壳 + 课程包」导出成一个自包含目录：
+
+```text
+dist/site/
+├─ index.html                  # /
+├─ courses/index.html          # /courses
+├─ about/index.html            # /about
+├─ 404.html
+├─ sitemap.xml  robots.txt  .nojekyll
+├─ static/                     # app/static 原样拷贝
+└─ courses/<slug>/             # 与 dist/courses/<slug>/ 同构，仍可单独部署
+```
+
+顺序固定：
+
+1. 构建课程：`build_all(..., progress_sync=False, watermarks={}, clips=deploy/publish.json)`。课程页不注入 `/api/progress`；片头/片尾选择来自提交的配置（CI 读不到 SQLite）；水印是部署方身份信息，永远不写进公开产物。
+2. 用 `create_app(Settings(env="prod", static_export=True, ...))` + `TestClient` 请求 `/`、`/courses`、`/about`、`/sitemap.xml`、`/robots.txt` 和一个不存在的地址，把响应体写成上面的文件。页面由真实应用渲染，静态站与动态站不会有两套模板逻辑。
+3. 复制 `app/static`，写 `.nojekyll`（GitHub Pages 默认跑 Jekyll，会改写产物）。
+4. 逐页检查：站内引用必须落在导出目录里且带 `--base-path` 前缀，不能残留 `127.0.0.1`/`localhost`，课程页不能引用 `/api/progress`，sitemap/robots 的主机名必须和参数一致。任一失败退出码为 1，CI 不会发布半成品。
+
+子路径：项目页地址是 `https://<owner>.github.io/<repo>/`，`--base-path /<repo>` 会给模板里的 `/courses`、`/static/...` 以及课程页的「返回课程库」统一加前缀；用户页（`<owner>.github.io`）或自定义域名留空。`.github/workflows/pages.yml` 按仓库名自动推导，可用仓库变量 `SITE_BASE_PATH` / `SITE_URL` 覆盖。
+
+课程库筛选：静态站没有服务端，`/courses` 导出全部课程并标记 `data-catalog-static`，`app/static/site.js` 按 `?level=` / `?tag=` 过滤卡片并同步高亮；没有 JS 时显示全部课程。动态部署不标记，仍走服务端筛选。
+
+本地验收：用 `--base-path ""` 导出后跑 `python scripts/serve.py dist/site --port 8081`（它固定了 MIME 类型）；带子路径的产物由导出脚本的链接检查覆盖。
 
 ---
 
@@ -1303,6 +1334,24 @@ Nginx / Caddy
 - 不在日志里打印课程讲义全文、密码、会话 token 或完整进度。
 - 每天备份 SQLite（`VACUUM INTO` 或 backup API），保留 7–30 天；迁移前额外备份一次。
 - 回滚：镜像/`dist/` 回滚 + 数据库迁移只能向前兼容；破坏性迁移先备份，必要时用备份恢复。不要假设“回滚镜像就能回滚 schema”。
+
+### 12.5 静态发布拓扑（GitHub Pages）
+
+```text
+浏览器
+  └─ https://<owner>.github.io/<repo>/  ──▶ GitHub Pages（Fastly）
+                                               └─ dist/site/ 的静态文件
+                                                  ├─ index.html / courses/ / about/ / 404.html
+                                                  ├─ static/*
+                                                  └─ courses/<slug>/*（课程包，自包含）
+```
+
+- 触发：`.github/workflows/pages.yml` 在每次推送 `main` 与手动 `workflow_dispatch` 时执行；`concurrency` 保证同一时间只有一次 Pages 部署。
+- 作业：安装 Python/Node → `npm ci --prefix tools` → `sync_runtime.py` → `ruff check` + `pytest -m "not e2e"` → `export_site.py` → 普通静态服务器冒烟 → 上传 artifact → `actions/deploy-pages`。
+- 一次性准备：仓库必须是公开的（免费计划的 Pages 要求公开仓库）；在 Settings → Pages 把 Source 设为 GitHub Actions。
+- 这份部署**没有** `/admin`、`/api/progress`、视频生成和片头预览；课程页的进度退到 `localStorage`（浏览器本地），后台入口在静态产物里不渲染。需要这些能力时用 12.1 的单机部署。
+- 自定义域名：设仓库变量 `SITE_URL=https://learn.example.com`、`SITE_BASE_PATH=/`（`/` 经 `normalise_base_path` 归一成空字符串，表示根路径），并在 Pages 设置里绑定域名（本项目不写 `CNAME` 文件，由 GitHub 设置管理）。
+- 缓存与安全头：Pages 不支持自定义响应头，`Cache-Control`、CSP 只存在于 FastAPI 侧；静态站是只读、无登录态、无用户数据的公开产物。
 
 ---
 

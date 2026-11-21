@@ -144,6 +144,8 @@ python scripts/worktree.py link                       # 修复/补齐共享目�
 
 ## 当前状态
 
+v0.14：站点可以静态发布。`scripts/export_site.py` 用真实 FastAPI 应用把首页、课程库、关于、404、sitemap、robots 渲染一次，构建 `progress_sync=False` 的课程包，复制 `app/static`，输出 `dist/site/`；`--base-path` 给所有站内链接统一加子路径前缀（GitHub Pages 项目页），`deploy/publish.json` 提供公开站的片头/片尾选择（CI 读不到私有 SQLite），课程水印永不进公开产物。导出脚本逐条检查站内引用、本机地址、`/api/progress` 残留和 sitemap 主机名，失败即退出。`.github/workflows/pages.yml` 在每次推送 `main` 时跑静态检查、测试、同步运行时、导出和静态服务器冒烟，再发布到 GitHub Pages。公开产物没有后台、进度 API、视频生成和片头预览，课程进度退到 `localStorage`（架构 D22、9.10、12.5）。
+
 v0.13：片头/片尾可配置，也可以预览：全站共享模板库在 `clips/`（自带「课程扉页」片头和「项目落款」片尾），后台按课程选择，存在 SQLite 的 `course_clips` 表（不进 Git、不写课程源文件），保存后重新构建；构建把模板渲染成课程 composition 的一屏插在最前/最后，所以网页播放、目录、导出的 MP4 都是同一屏。片头用 `{{course.title}}`、`{{project.label}}` 等占位符带入课程信息和 `PROJECT_URL`。后台的「预览」会临时构建一份只含该屏的课程包（`data/clip-previews/`），在真实课堂页里只播这一屏，不写学习进度、不改选择。课程水印仍是站点部署配置（`course_watermarks` 表）。站点品牌是「页间课堂」，AI Learning 是第一个课程系列。播放页仍是全视口舞台 + 通栏控制条，课程模板仍是独立包，外部作者可以用它让 AI 生成课程并通过导入流程直接加入课程库；视频仍是后台按需生成的附属产物。
 
 - 已有：FastAPI 站点（首页 / 课程库 / 关于 / 404 / API）、课程契约与解析器、构建流水线、课程外壳（封面、切屏、全视口播放页、通栏控制条、逐屏进度拖动与「跳到最后」、目录与讲义抽屉、字幕/配音开关、完成页、错误页）、SQLite + Alembic 匿名进度、Playwright 独立部署与播放器测试。
@@ -152,7 +154,11 @@ v0.13：片头/片尾可配置，也可以预览：全站共享模板库在 `cli
 - 已有课程：`courses/ai-first-sees/`（「从会聊天到会干活：AI Agent 入门」）。按 `courses-outline/ai-first-sees/outline.md` 的 29 镜头长版落地，共 28 屏 / 29:54（旁白 `rate +0%`；原 S28 safety 并入 S27，收尾为 S28）；每屏一页，旁白驱动动画，底部旁白条烧进画面，`playback: "continuous"` 像视频一样自动接续。
 - 旁白流水线：`courses/ai-first-sees/narration/scenes.json` 是文本源（`scripts/curate_narration.py` 从大纲解析），`scripts/build_narration.py` 用 edge-tts 生成音频/时间/字幕并重写根 composition、`course.json` 和 scene 时间块；重跑脚本是唯一的时间来源（`--rate` 控语速，当前 `+0%`，必须带符号；`narration/cache/` 按 voice + rate + 旁白文本指纹失效）。音频是本地 OGG/Opus 静态文件，播放不依赖网络。视频导出在 `composition/` 里跑 `npx hyperframes render`（需要 ffmpeg/ffprobe 在 PATH 上）。
 - 视觉现状：站点与整门课统一浅色纸面，四幕只换强调色（看=青绿、说=暖黄、做=电光蓝、群雄=蓝紫、用=珊瑚红）；真实 logo / 截图 / 历史照片只作为小证据卡出现。课程页封面顶部另有吸顶的「返回课程库」入口，播放时控制条第一个按钮也是「返回课程库」；旁白课程另有「字幕」「配音」两个独立开关，偏好存 localStorage（架构 D11-D13 与 [DESIGN.md](DESIGN.md) 8.4）。
-- 还没做：CI、Docker/部署、登录、搜索。
+- 已有发布：`scripts/export_site.py` 导出 `dist/site/` 并用链接检查兜底；`.github/workflows/pages.yml` 在 push `main` 时发布到 GitHub Pages（公开站无后台/进度 API/视频/水印，`deploy/publish.json` 管片头片尾）。发布前本地验证：
+  ```bash
+  python scripts/export_site.py --site-url https://example.github.io --base-path "" && python scripts/serve.py dist/site --port 8081
+  ```
+- 还没做：Docker/部署、登录、搜索。
 
 先跑一遍这三条，确认环境是通的：
 

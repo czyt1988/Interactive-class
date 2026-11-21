@@ -75,8 +75,8 @@
 | 3b 课程外壳 | ✅ 完成 | 封面、切屏、控制条、目录与讲义抽屉、完成页、错误页、深链、`localStorage` 进度、键盘 |
 | 4 站点外壳 | ✅ 完成 | 首页、课程库（含 level/tag 过滤）、关于、404、sitemap、robots |
 | 5 样板课 | ✅ 完成（长视频版 v2） | `courses/ai-first-sees/` 按新版 `courses-outline/ai-first-sees/outline.md`（29 镜头长版，落地 28 屏）完整落地：28 屏 / 29:54（旁白 `rate +0%`），整门课浅色纸面，旁白驱动、底部字幕烧进画面、连续播放，播放器可暂停/关字幕/关配音；`hyperframes check` 没有 craft error，layout 的 6 条 `content_overlap` 见 3.2 |
-| 6 CI 与质量门 | ⬜ 未开始 | 本地已能跑全部检查（101 个测试、ruff、HyperFrames check），但没有 CI 配置文件 |
-| 7 发布 | ⬜ 未开始 | 无 Dockerfile、无反代配置、无生产 URL |
+| 6 CI 与质量门 | 🟨 部分完成 | `.github/workflows/pages.yml` 在 push `main` 时跑 `ruff check`、`pytest -m "not e2e"`、课程构建、静态导出与静态站冒烟；HyperFrames check、axe、独立部署播放器测试仍未进 CI（见架构 9.7） |
+| 7 发布 | 🟨 部分完成 | GitHub Pages 静态发布链路已可用（无后台/进度 API/视频/水印，见架构 D22、12.5）；Docker 与生产反代仍未做 |
 | 8 课程规模化 | ✅ 完成 | 独立模板包 `course-template/`、`scripts/new_course.py`、`scripts/import_course.py`、开发环境 `/import` 导入页、`course_imports` 来源记录 |
 
 实施中与原计划不同的四处，均已同步到文档：
@@ -96,6 +96,7 @@
 - 课程导入在 TestClient、真实构建流水线和 Playwright 自检（1440px / 390px、真实点击导入、CSP、同源 Origin）中验证过；没有在 TLS 终止的反向代理后验证同源 Origin，也没有在 Safari / Firefox 上打开过 `/import`。
 - 播放页全视口布局与逐屏进度是 2026-11 这轮改的：浏览器验收范围是 Chromium 下 1920×1080 / 1600×900 / 1366×768 / 390×844，用真实鼠标拖动当前屏进度、跳到最后、`End`、确认播放页无滚动；未验证 Safari / Firefox 和真机触摸。
 - 目录抽屉也是 2026-11 这轮加的：控制条「目录」按钮（`O`）打开全部屏的序号、标题和起始时间，点任意一屏跳转并播放；与讲义抽屉互斥，共用遮罩、焦点进入/返回和 `Esc` 关闭；讲义按钮同时换成 CSS 画的纸页图标。
+- GitHub Pages 发布只在本地模拟过：用 `.tmp` 里的 `/interactive-class` 目录联接加 `scripts/serve.py` 复现项目页前缀，Chromium 验证首页/课程页/筛选/播放无控制台错误；真实 Pages 部署（首次启用 Actions Source、自定义域名、Fastly 缓存与 301）以及本仓库的 Actions 工作流还没在 GitHub runner 上跑过（本机只有 Gitee remote）。
 
 ---
 

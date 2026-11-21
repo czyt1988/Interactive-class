@@ -26,17 +26,38 @@ SITE_DESCRIPTION = (
 )
 
 
-def site_context(settings: Settings) -> dict[str, str]:
+def site_link(settings: Settings, path: str) -> str:
+    """Prefix a root-absolute site path with the deployment's base path.
+
+    A site published under ``/<repo>/`` (a GitHub Pages project page) cannot use
+    ``/courses``: the browser resolves it to the domain root, outside the site.
+    The base path is the only deployment-specific part; every template link goes
+    through this helper so root deployments and sub-path deployments share one
+    set of templates.
+    """
+
+    return f"{settings.site_base_path}{path}" if settings.site_base_path else path
+
+
+def site_context(settings: Settings) -> dict[str, Any]:
+    base = settings.site_base_path
     return {
         "title": settings.site_title,
-        "url": settings.site_url.rstrip("/"),
+        "url": f"{settings.site_url.rstrip('/')}{base}",
         "course_base_url": settings.course_base_url,
         "description": SITE_DESCRIPTION,
+        "base_path": base,
+        # Callable, not a string: templates ask for site.link("/courses") and the
+        # current deployment decides the prefix once.
+        "link": lambda path: site_link(settings, path),
+        # The static export has no admin app and no progress API behind it.
+        "admin": not settings.static_export,
+        "static": settings.static_export,
     }
 
 
 def _canonical(settings: Settings, path: str) -> str:
-    return f"{settings.site_url.rstrip('/')}{path}"
+    return f"{settings.site_url.rstrip('/')}{settings.site_base_path}{path}"
 
 
 def _absolute(settings: Settings, url: str) -> str:
@@ -137,7 +158,7 @@ def about(request: Request) -> HTMLResponse:
 @router.get("/sitemap.xml")
 def sitemap(request: Request) -> Response:
     settings: Settings = request.app.state.settings
-    base = settings.site_url.rstrip("/")
+    base = f"{settings.site_url.rstrip('/')}{settings.site_base_path}"
     urls = [
         f"{base}/",
         f"{base}/courses",
@@ -156,10 +177,10 @@ def sitemap(request: Request) -> Response:
 @router.get("/robots.txt", response_class=PlainTextResponse)
 def robots(request: Request) -> PlainTextResponse:
     settings: Settings = request.app.state.settings
-    base = settings.site_url.rstrip("/")
+    base = f"{settings.site_url.rstrip('/')}{settings.site_base_path}"
     return PlainTextResponse(
         "User-agent: *\n"
         "Allow: /\n"
-        "Disallow: /admin\n"
+        f"Disallow: {site_link(settings, '/admin')}\n"
         f"Sitemap: {base}/sitemap.xml\n"
     )

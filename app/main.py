@@ -34,7 +34,7 @@ from app.formatting import format_duration
 from app.videos.manager import RenderManager
 from app.web.admin import router as admin_router
 from app.web.import_routes import router as import_router
-from app.web.routes import LEVEL_LABELS, SITE_DESCRIPTION
+from app.web.routes import LEVEL_LABELS, SITE_DESCRIPTION, site_context
 from app.web.routes import router as web_router
 
 logger = logging.getLogger(__name__)
@@ -215,17 +215,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 status_code=exc.status_code,
             )
         if exc.status_code == 404:
+            # A 404 is served for arbitrary missing URLs, so it cannot have one
+            # canonical address; the page omits the tag instead.
             return templates.TemplateResponse(
                 request=request,
                 name="404.html",
                 context={
-                    "site": {
-                        "title": active.site_title,
-                        "url": active.site_url.rstrip("/"),
-                        "course_base_url": active.course_base_url,
-                        "description": SITE_DESCRIPTION,
-                    },
-                    "canonical": f"{active.site_url.rstrip('/')}{request.url.path}",
+                    "site": site_context(active),
                     "page": "404",
                 },
                 status_code=404,

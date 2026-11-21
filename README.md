@@ -438,6 +438,42 @@ course-template/
 
 ![课程库](docs/screenshots/site-library.jpg)
 
+## 发布到 GitHub Pages
+
+站点主体是 FastAPI 应用，而 GitHub Pages 只能托管静态文件，所以可以发布，但发布的是**静态导出版**：首页、课程库、关于、404，加上每门课的静态包。`scripts/export_site.py` 用真实应用把这几页渲染一次，再逐条检查站内引用；`.github/workflows/pages.yml` 在每次推送 `main` 时构建并发布。
+
+这份产物**没有**：后台 `/admin`、`/api/progress` 进度同步、视频生成、片头预览。课程页的进度存在浏览器 `localStorage`；课程水印是部署方身份信息，不会出现在公开产物里。需要这些能力时用单机部署（见[架构设计](docs/architecture.md) 12.1）。
+
+一次性准备：
+
+1. 在 GitHub 建一个仓库（免费计划的 Pages 要求仓库公开），把 `main` 推上去。
+2. 仓库 Settings → Pages → Source 选 **GitHub Actions**。
+3. 推送 `main`，或在 Actions 里手动运行「发布到 GitHub Pages」。
+
+地址按仓库名自动推导：仓库不是 `<owner>.github.io` 时，站点在 `https://<owner>.github.io/<repo>/`，脚本自动加 `/<repo>` 前缀；用户页仓库（`<owner>.github.io`）不加前缀。需要覆盖时，在 Settings → Variables 里设 `SITE_URL`、`SITE_BASE_PATH`、`PROJECT_URL`；自定义域名写成 `SITE_URL=https://learn.example.com` + `SITE_BASE_PATH=/`（`/` 表示根路径）。
+
+本地先看效果：
+
+```bash
+python scripts/sync_runtime.py
+python scripts/export_site.py --site-url https://example.github.io --base-path ""
+python scripts/serve.py dist/site --port 8081
+```
+
+带子路径的产物（`--base-path /interactive-class`）里，链接以 `/interactive-class/...` 开头，导出脚本会验证每条引用都落在 `dist/site` 里；直接用 `http.server` 服务根目录时这些链接打不开，属于预期。
+
+片头/片尾：后台选择存在 SQLite 的 `course_clips` 表，CI 读不到，所以公开站用提交在 `deploy/publish.json` 里的选择：
+
+```json
+{
+  "clips": {
+    "ai-first-sees": { "intro": "intro-title-page" }
+  }
+}
+```
+
+本地点一次后台预览确认效果，再提交这份配置；不想要片头就删掉对应条目。
+
 ## 项目状态
 
 - **v0.1**：README、架构设计、课程契约、Agent 开发方案。
@@ -452,7 +488,8 @@ course-template/
 - **v0.10**：课程水印改为站点部署配置，存 SQLite 的 `course_watermarks` 表，不再写 `course.json`、不进 Git；构建从数据库读配置并注入课程 composition，播放与 MP4 导出一致。
 - **v0.11**：站点品牌改为「页间课堂」，名字只描述课程形态；首页收成两段，先讲清交互视频课，再开 AI Learning 系列。
 - **v0.12**：新增片头/片尾。共享模板库 `clips/`（自带课程扉页片头和项目落款片尾），后台按课选择并存入 `course_clips` 表；构建时作为 composition 的一屏插入（正课时间整体后移），网页播放、目录和导出的 MP4 都带；片头用 `{{course.title}}` 等占位符带入每门课的信息和 `PROJECT_URL`。
-- **v0.13（当前）**：片头片尾可以在后台点「预览」进入真实课堂页播放：按模板临时构建只含该屏的课程包，从这一屏开始、只播这一屏，顶部有预览条和返回设置，不写学习进度、不改选择。缩略图仍是静态末帧。
+- **v0.13**：片头片尾可以在后台点「预览」进入真实课堂页播放：按模板临时构建只含该屏的课程包，从这一屏开始、只播这一屏，顶部有预览条和返回设置，不写学习进度、不改选择。缩略图仍是静态末帧。
+- **v0.14（当前）**：站点可以导出成静态目录并发布到 GitHub Pages：推送 `main` 自动构建、检查、发布；站点子路径、片头片尾的发布选择和站内链接检查都由 `scripts/export_site.py` 统一处理。
 - **v1.0**：课程库规模化、质量门、账号与跨设备进度。
 
 没有日期承诺。先把结构做对，再往上加课程。

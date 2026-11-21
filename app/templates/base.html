@@ -7,31 +7,31 @@
     <meta name="theme-color" content="#f4efe6" />
     <title>{% block title %}{{ site.title }}{% endblock %}</title>
     <meta name="description" content="{% block description %}{{ site.description }}{% endblock %}" />
-    <link rel="canonical" href="{{ canonical }}" />
+    {% if canonical %}<link rel="canonical" href="{{ canonical }}" />{% endif %}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="{{ site.title }}" />
     <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}" />
     <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}" />
-    <meta property="og:url" content="{{ canonical }}" />
+    {% if canonical %}<meta property="og:url" content="{{ canonical }}" />{% endif %}
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/tokens.css" />
-    <link rel="stylesheet" href="/static/site.css" />
+    <link rel="icon" href="{{ site.link('/static/favicon.svg') }}" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ site.link('/static/tokens.css') }}" />
+    <link rel="stylesheet" href="{{ site.link('/static/site.css') }}" />
     {% block head_extra %}{% endblock %}
   </head>
   <body class="{% block body_class %}{% endblock %}">
     <a class="skip-link" href="#main">跳到正文</a>
     <header class="site-header">
       <div class="site-header__inner">
-        <a class="wordmark" href="/" aria-label="页间课堂 首页">
+        <a class="wordmark" href="{{ site.link('/') }}" aria-label="页间课堂 首页">
           <span class="wordmark__mark" aria-hidden="true">页间</span>
           <span class="wordmark__text">课堂</span>
         </a>
         <nav class="site-nav" aria-label="主导航">
-          <a href="/courses" {% if page == "library" %}aria-current="page"{% endif %}>课程库</a>
-          <a href="/about" {% if page == "about" %}aria-current="page"{% endif %}>关于</a>
-          {% if page == "home" %}
-            <a class="site-nav__admin" href="/admin">后台管理</a>
+          <a href="{{ site.link('/courses') }}" {% if page == "library" %}aria-current="page"{% endif %}>课程库</a>
+          <a href="{{ site.link('/about') }}" {% if page == "about" %}aria-current="page"{% endif %}>关于</a>
+          {% if page == "home" and site.admin %}
+            <a class="site-nav__admin" href="{{ site.link('/admin') }}">后台管理</a>
           {% endif %}
         </nav>
       </div>
@@ -48,10 +48,10 @@
         </p>
         <p class="site-footer__meta">
           交互视频课，无 CDN，可键盘操作，每屏都有讲义
-          <a class="site-footer__admin" href="/admin">后台设置</a>
+          {% if site.admin %}<a class="site-footer__admin" href="{{ site.link('/admin') }}">后台设置</a>{% endif %}
         </p>
       </div>
     </footer>
-    <script src="/static/site.js" defer></script>
+    <script src="{{ site.link('/static/site.js') }}" defer></script>
   </body>
 </html>

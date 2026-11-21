@@ -17,28 +17,30 @@
   {% endif %}
 </section>
 
-<section class="library" aria-labelledby="library-title">
+<section class="library" aria-labelledby="library-title"{% if site.static %} data-catalog-static{% endif %}>
   <h2 id="library-title" class="visually-hidden">课程列表</h2>
 
   <nav class="filters" aria-label="课程筛选">
     <div class="filters__group">
       <span class="filters__label">难度</span>
-      <a class="chip {% if not selected_level %}chip--active{% endif %}" href="/courses{% if selected_tag %}?tag={{ selected_tag }}{% endif %}">全部</a>
+      <a class="chip {% if not selected_level %}chip--active{% endif %}" data-filter-level="" href="{{ site.link('/courses') }}{% if selected_tag %}?tag={{ selected_tag }}{% endif %}">全部</a>
       {% for value, label in levels %}
         <a
           class="chip {% if selected_level == value %}chip--active{% endif %}"
-          href="/courses?level={{ value }}{% if selected_tag %}&amp;tag={{ selected_tag }}{% endif %}"
+          data-filter-level="{{ value }}"
+          href="{{ site.link('/courses') }}?level={{ value }}{% if selected_tag %}&amp;tag={{ selected_tag }}{% endif %}"
         >{{ label }}</a>
       {% endfor %}
     </div>
     {% if tags %}
       <div class="filters__group">
         <span class="filters__label">主题</span>
-        <a class="chip {% if not selected_tag %}chip--active{% endif %}" href="/courses{% if selected_level %}?level={{ selected_level }}{% endif %}">全部</a>
+        <a class="chip {% if not selected_tag %}chip--active{% endif %}" data-filter-tag="" href="{{ site.link('/courses') }}{% if selected_level %}?level={{ selected_level }}{% endif %}">全部</a>
         {% for tag in tags %}
           <a
             class="chip {% if selected_tag == tag %}chip--active{% endif %}"
-            href="/courses?{% if selected_level %}level={{ selected_level }}&amp;{% endif %}tag={{ tag }}"
+            data-filter-tag="{{ tag }}"
+            href="{{ site.link('/courses') }}?{% if selected_level %}level={{ selected_level }}&amp;{% endif %}tag={{ tag }}"
           >{{ tag }}</a>
         {% endfor %}
       </div>
@@ -57,7 +59,7 @@
       <p class="empty-state__kicker">没有匹配的课程</p>
       <h3>这个筛选条件下还没有课程。</h3>
       <p>换一个难度或主题，或者回到全部课程。</p>
-      <a class="button button--ghost" href="/courses">清除筛选</a>
+      <a class="button button--ghost" href="{{ site.link('/courses') }}">清除筛选</a>
     </div>
   {% endif %}
 </section>

@@ -66,7 +66,10 @@
       </p>
       <div class="deck-preview__actions">
         <button id="deck-preview-replay" class="deck-preview__button" type="button">重新播放</button>
-        <a id="deck-preview-back" class="deck-preview__button" href="/admin">返回设置</a>
+        {# Hidden until ?preview= is present; course-deck.js then replaces this
+           href with the admin URL carried by ?back=. A static export has no
+           admin, so the fallback stays inert. #}
+        <a id="deck-preview-back" class="deck-preview__button" href="#">返回设置</a>
       </div>
     </div>
 

@@ -31,7 +31,12 @@ class Settings(BaseSettings):
     env: Literal["dev", "prod"] = "dev"
     site_title: str = "页间课堂"
     site_url: str = "http://127.0.0.1:8000"
-    course_base_url: str = "/courses"
+    # 站点挂在一个子路径下时（GitHub Pages 项目页是 ``/<repo>/``），页面里的
+    # 站内链接和静态资源都要带这个前缀。本地与根域名部署留空。
+    site_base_path: str = ""
+    # 课程卡片链接前缀；留空时由 ``site_base_path + /courses`` 推出，所以
+    # 子路径部署只配置 SITE_BASE_PATH 一处。
+    course_base_url: str | None = None
 
     courses_src_dir: Path = Field(default=BASE_DIR / "courses")
     courses_dist_dir: Path = Field(default=BASE_DIR / "dist" / "courses")
@@ -49,6 +54,10 @@ class Settings(BaseSettings):
     # the real course page and player with one intro/outro inserted; they are
     # never part of dist/ and never selected in the database.
     clip_preview_dir: Path = Field(default=BASE_DIR / "data" / "clip-previews")
+
+    # 静态发布（``scripts/export_site.py``）：没有 /admin、没有进度 API，页面
+    # 里的后台入口要藏起来，筛选改成浏览器端完成。
+    static_export: bool = False
 
     strict_catalog: bool | None = None
     include_drafts: bool | None = None
@@ -99,6 +108,18 @@ class Settings(BaseSettings):
             raise ValueError("PROJECT_URL 必须是 http:// 或 https:// 开头的地址")
         return url
 
+    @field_validator("site_base_path")
+    @classmethod
+    def _site_base_path(cls, value: str) -> str:
+        path = value.strip().rstrip("/")
+        if not path:
+            return ""
+        if not path.startswith("/") or path.startswith("//"):
+            raise ValueError("SITE_BASE_PATH 必须是以单个 / 开头的站内路径，例如 /interactive-class")
+        if ".." in path.split("/") or "//" in path:
+            raise ValueError("SITE_BASE_PATH 不能包含 .. 或重复的 /")
+        return path
+
     @field_validator("video_hyperframes_cli", "video_ffmpeg_dir", mode="before")
     @classmethod
     def _optional_path(cls, value: object) -> Path | None:
@@ -135,6 +156,8 @@ class Settings(BaseSettings):
         if self.database_url.startswith("sqlite:///./"):
             relative = self.database_url.removeprefix("sqlite:///./")
             self.database_url = f"sqlite:///{(BASE_DIR / relative).as_posix()}"
+        if not self.course_base_url:
+            self.course_base_url = f"{self.site_base_path}/courses"
         return self
 
     @property

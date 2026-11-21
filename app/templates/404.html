@@ -8,8 +8,8 @@
   <h1>这一屏不存在。</h1>
   <p class="lede">链接可能写错了，或者课程已经移动。回到首页，或者去课程库找找。</p>
   <div class="hero__actions">
-    <a class="button button--primary" href="/">回到首页</a>
-    <a class="button button--ghost" href="/courses">浏览课程库</a>
+    <a class="button button--primary" href="{{ site.link('/') }}">回到首页</a>
+    <a class="button button--ghost" href="{{ site.link('/courses') }}">浏览课程库</a>
   </div>
 </section>
 {% endblock %}
