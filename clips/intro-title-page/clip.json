@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "intro-title-page",
   "kind": "intro",
-  "title": "片头：课程扉页",
-  "summary": "这门课讲什么、项目在哪、用什么做的",
-  "description": "课程扉页：课程标题与摘要、开源项目地址、制作工具。约 10 秒，占课程最前面一屏。",
+  "title": "片头：开源项目",
+  "summary": "说明制作方式与开源地址，不印课程信息",
+  "description": "通用开源片头：DeepSeek harness + DeepSeek-V4.1 flash 生成，列出 GitHub 与 Gitee 地址。约 7 秒，可贴到任何视频前。",
   "kicker": "片头",
-  "transcript": "这是本课的片头。它先交代这门课讲什么，再留下开源项目地址，并说明这门课由 DeepSeek Harness 生成，使用的模型是 DeepSeek-V4.1 Flash。项目以开源方式发布，欢迎自行部署。",
-  "duration": 10,
+  "transcript": "本视频由 DeepSeek harness + DeepSeek-V4.1 flash 编码生成。本视频是开源项目。源码在 GitHub 与 Gitee：https://github.com/czyt1988/Interactive-class，https://gitee.com/czyt1988/interactive-class。想了解视频如何生成，或需要调整，可以拉取源码自行修改。",
+  "duration": 7,
   "scene": "scene.html"
 }

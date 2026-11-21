@@ -19,6 +19,10 @@ clips/
     scene.html
 ```
 
+自带的 `intro-title-page` 是**通用开源片头**：7 秒，不印课程标题、屏数或时长，只说明
+本视频由 DeepSeek harness + DeepSeek-V4.1 flash 生成，并写出本仓库的 GitHub 与 Gitee
+地址。它不使用占位符；换 fork 或换项目时直接改 `scene.html` 里的两个地址。
+
 新增一个片头/片尾：复制一个文件夹，改 `clip.json` 的 `id`（必须与文件夹同名，且以
 `intro-` 或 `outro-` 开头）、`kind`、`title`、`summary`、`duration`，再写 `scene.html`。
 保存后刷新后台页面即可看到（构建会重新扫描目录）。

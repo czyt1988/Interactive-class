@@ -284,7 +284,7 @@ courses/<slug>/
 - 构建后的 `screens[]` 包含这两屏：`kind` 为 `intro` / `outro`，`id` 是模板 id。正课屏幕的编号不变；课程页目录把它们显示为「片头」「片尾」，`data-screen-kind` 也带在目录项上。
 - `stats.screenCount` 与 `stats.durationSeconds` 包含片头/片尾（它们是可播放的屏），所以后台和课程页显示的屏数、时长是真实播放长度。
 - 片头/片尾**不配旁白**：课程页的字幕、配音开关只跟课程的 `audio` 走；`clip.json` 的 `transcript` 进入讲义抽屉。模板必须自包含，不能加载图片、字体文件、CDN 或任何外部资源。
-- 模板的目录结构、`clip.json` 字段和 `{{course.title}}` / `{{project.label}}` 等占位符见 `clips/README.md`。改模板后重新保存一次片头/片尾即可重建课程包。
+- 模板的目录结构、`clip.json` 字段和 `{{course.title}}` / `{{project.label}}` 等占位符见 `clips/README.md`。自带开源片头不印课程信息，因此不使用占位符。改模板后重新保存一次片头/片尾即可重建课程包。
 - 模板默认不插入（`course_clips` 表没有行）。后台 `/admin/courses/<slug>/clips` 选择、清除并同步重建。
 - 构建错误：`clip_missing`（数据库选的模板被删）、`clip_kind_mismatch`（片头位置选了片尾模板）、`clip_screen_collision`（模板 id 与课程屏幕 id 或 scene 文件名重名）、`clip_scene_invalid`、`clip_placeholder_unknown`、`clip_injection_failed`。
 
@@ -832,10 +832,10 @@ python scripts/import_course.py courses/<slug>      # 课程已在 courses/：�
 
 - 片头插在第一屏之前、片尾接在最后一屏之后；原有屏幕和音频的时间整体后移。网页播放、目录和后台导出的 MP4 都会带这两屏。
 - 播放器目录把它们标成「片头」「片尾」，正课编号不变；清单的 `screenCount` 和时长包含它们，所以显示的是真实播放长度。
-- 模板用 `{{course.title}}`、`{{course.lead}}`、`{{project.label}}` 等占位符带入每门课的信息，项目地址来自 `.env` 的 `PROJECT_URL`。换一门课或换 fork 不需要改模板，见 `clips/README.md`。
+- 模板可用 `{{course.title}}`、`{{course.lead}}`、`{{project.label}}` 等占位符带入每门课的信息，项目地址来自 `.env` 的 `PROJECT_URL`；自带开源片头不印课程信息，固定列出 GitHub 与 Gitee 地址。使用占位符的模板换课不用改；换 fork 时改模板里的地址，使用占位符的模板则改 `PROJECT_URL`，见 `clips/README.md`。
 - 片头/片尾是静默的一屏，不配旁白；讲义抽屉里的文字来自 `clip.json` 的 `transcript`。模板必须自包含，不能加载图片、字体文件或 CDN。
 - 页面上的「预览」不保存选择：它另建一份临时课程包（`data/clip-previews/`），用真实课堂页从这一屏开始播放，预览页不写学习进度，播到这一屏结束就停。缩略图只是按本课渲染的静态末帧。
-- 改选择、改模板或改 `PROJECT_URL` 都会让内容哈希变化，已生成的旧视频会被标记为过期。
+- 改选择、改模板，或改模板用到的 `PROJECT_URL`，都会让内容哈希变化，已生成的旧视频会被标记为过期。
 - 生产环境只部署 `dist/` 和 `app/` 时没有课程源，配置页只读；在没有选择时构建输出与旧版一致。
 
 ## 8. 验收清单

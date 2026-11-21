@@ -121,7 +121,7 @@ def test_cover_lists_clips_without_renumbering_lessons(page: Page) -> None:
 def test_intro_plays_first_then_lessons_start_at_01(page: Page) -> None:
     _start_playing(page)
     page.wait_for_timeout(400)
-    assert page.inner_text("#chapter-title") == "片头：课程扉页"
+    assert page.inner_text("#chapter-title") == "片头：开源项目"
     assert page.inner_text("#chapter-counter").startswith("片头")
     page.click("#btn-next")
     page.wait_for_function(
@@ -158,7 +158,7 @@ def test_preview_query_opens_the_clip_in_the_classroom(
         "&back=/admin/courses/valid-two-screen/clips"
     )
     page.wait_for_function("document.body.dataset.deckState === 'playing'", timeout=30_000)
-    assert page.inner_text("#chapter-title") == "片头：课程扉页"
+    assert page.inner_text("#chapter-title") == "片头：开源项目"
     assert page.inner_text("#chapter-counter").startswith("片头")
 
     bar = page.locator("#deck-preview")

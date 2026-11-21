@@ -1,15 +1,15 @@
 <template>
   <style>
-/* 片头 · 课程扉页
+/* 片头 · 开源项目
  *
- * One page of the course, inserted at build time from clips/. Self-contained:
- * no images, no font files, no external requests. The values in {{…}} are filled
- * per course by scripts/build_courses.py, HTML-escaped.
+ * A generic opener for any video made with this project. It carries no course
+ * title, screen count or runtime: only what the video is made with, that the
+ * project is open source, and where the source lives. Inserted at build time
+ * from clips/; self-contained, no images, font files or external requests.
  *
  * Layout is CSS; the timeline only animates opacity/transform, so the still
- * preview (no JS) is the same picture as the final frame. The title and kicker
- * are on screen at 0 s: the first frame of a video should already say what it
- * is, not start from an empty sheet.
+ * preview (no JS) is the same picture as the final frame. The full statement
+ * is readable at 0 s: the first frame should already say what this is.
  */
 
 #root {
@@ -19,167 +19,242 @@
   background: #f4efe6;
   color: #16140f;
   font-family: "Noto Sans SC", sans-serif;
+  --osi-mono: Consolas, "Courier New", monospace;
   -webkit-font-smoothing: antialiased;
 }
 
-.itp-sheet {
+.osi-sheet {
   position: absolute;
   inset: 0;
 }
 
-.itp-kicker {
+.osi-kicker {
   position: absolute;
   left: 192px;
   top: 104px;
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: 18px;
-  font-family: ui-monospace, Consolas, monospace;
+  font-family: var(--osi-mono);
   font-size: 28px;
   line-height: 1.3;
   letter-spacing: 0.16em;
   color: #a33a20;
 }
 
-.itp-kicker span {
+.osi-kicker span {
   color: #6b6355;
   letter-spacing: 0.1em;
 }
 
-.itp-meta {
+.osi-head-rule {
   position: absolute;
+  left: 192px;
   right: 192px;
-  top: 108px;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 28px;
+  top: 156px;
+  height: 1px;
+  background: #d9cfbf;
+}
+
+.osi-statement {
+  position: absolute;
+  left: 192px;
+  top: 206px;
+  width: 1536px;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.osi-statement > span {
+  display: block;
+}
+
+.osi-by {
+  font-size: 40px;
   line-height: 1.3;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: #6b6355;
 }
 
-.itp-main {
-  position: absolute;
-  left: 192px;
-  top: 214px;
-  width: 1536px;
-}
-
-.itp-title {
-  max-width: 1470px;
-  margin: 0;
-  font-size: var(--itp-title-size, 96px);
-  line-height: 1.12;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+.osi-tools {
+  margin-top: 10px;
+  font-size: 72px;
+  line-height: 1.15;
   color: #16140f;
-  text-wrap: balance;
+  white-space: nowrap;
 }
 
-.itp-rule {
-  width: 184px;
-  height: 3px;
-  margin-top: 40px;
-  background: var(--itp-accent, #b8452b);
-}
-
-.itp-summary {
-  max-width: 1060px;
-  margin-top: 34px;
-  font-size: 40px;
-  line-height: 1.6;
+.osi-made {
+  margin-top: 10px;
+  font-size: 64px;
+  line-height: 1.25;
+  font-weight: 500;
   color: #514b40;
-  text-wrap: pretty;
 }
 
-.itp-colophon {
+.osi-open {
+  color: #a33a20;
+  font-weight: 700;
+}
+
+.osi-seal {
+  position: absolute;
+  right: 220px;
+  top: 390px;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #a33a20;
+  color: #a33a20;
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transform: rotate(-6deg);
+}
+
+.osi-seal::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(163, 58, 32, 0.45);
+}
+
+.osi-source {
   position: absolute;
   left: 192px;
   right: 192px;
-  bottom: 108px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 64px;
-  padding-top: 24px;
+  top: 590px;
+  padding-top: 20px;
   border-top: 1px solid #d9cfbf;
 }
 
-.itp-col {
-  min-width: 0;
-}
-
-.itp-label {
-  font-family: ui-monospace, Consolas, monospace;
+.osi-source-label {
+  margin: 0;
+  font-family: var(--osi-mono);
   font-size: 28px;
   line-height: 1.4;
   letter-spacing: 0.14em;
   color: #6b6355;
 }
 
-.itp-value {
+.osi-row {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: baseline;
+  padding-top: 12px;
+}
+
+.osi-row + .osi-row {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #d9cfbf;
+}
+
+.osi-name {
+  font-family: var(--osi-mono);
+  font-size: 28px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: #16140f;
+}
+
+.osi-mirror {
+  margin-left: 10px;
+  color: #6b6355;
+  letter-spacing: 0.04em;
+}
+
+.osi-url {
   position: relative;
   display: inline-block;
+  justify-self: start;
+  width: fit-content;
   max-width: 100%;
-  margin-top: 12px;
-  font-size: 32px;
-  line-height: 1.4;
-  color: #16140f;
-  overflow-wrap: anywhere;
-}
-
-.itp-value--mono {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 30px;
+  padding-bottom: 8px;
+  font-family: var(--osi-mono);
+  font-size: 38px;
+  line-height: 1.3;
   letter-spacing: -0.01em;
+  color: #16140f;
+  white-space: nowrap;
 }
 
-.itp-url-line {
+.osi-url-line {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -7px;
+  bottom: 0;
   height: 2px;
-  background: var(--itp-accent, #b8452b);
+  background: #b8452b;
   transform-origin: left center;
 }
 
-/* The later beats fade in; the title and kicker are already readable at 0 s. */
-.itp-meta,
-.itp-rule,
-.itp-summary,
-.itp-colophon {
+.osi-note {
+  position: absolute;
+  left: 192px;
+  right: 192px;
+  bottom: 84px;
+  padding-top: 20px;
+  border-top: 1px solid #d9cfbf;
+}
+
+.osi-note p {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.7;
+  color: #6b6355;
+}
+
+/* The statement is already on screen at 0 s. The seal and the address block
+ * arrive in reading order; the still preview reveals them all. */
+.osi-seal,
+.osi-source,
+.osi-note {
   opacity: 0;
 }
   </style>
 
   <div
     id="root"
-    class="itp-root"
+    class="osi-root"
     data-composition-id="s-intro-title-page"
     data-width="1920"
     data-height="1080"
     data-theme="paper"
-    data-hold="The title card holds its final frame until the first lesson starts."
-    style="--itp-accent: {{course.accent}}; --itp-title-size: {{course.titleSize}}px"
+    data-hold="The opener holds its final frame until the video starts."
   >
-    <div class="itp-sheet">
-      <p class="itp-kicker">片头 <span>AI LEARNING</span></p>
-      <p class="itp-meta">{{course.meta}}</p>
+    <div class="osi-sheet">
+      <p class="osi-kicker">片头 <span>OPEN SOURCE</span></p>
+      <div class="osi-head-rule" aria-hidden="true"></div>
 
-      <div class="itp-main">
-        <h1 class="itp-title">{{course.title}}</h1>
-        <div class="itp-rule" aria-hidden="true"></div>
-        <p class="itp-summary">{{course.lead}}</p>
+      <h1 class="osi-statement">
+        <span class="osi-by">本视频由</span>
+        <span class="osi-tools">DeepSeek harness + DeepSeek-V4.1 flash</span>
+        <span class="osi-made">编码生成，<span class="osi-open">本视频是开源项目。</span></span>
+      </h1>
+
+      <div class="osi-seal" aria-hidden="true">开源</div>
+
+      <div class="osi-source">
+        <p class="osi-source-label">开源地址</p>
+        <div class="osi-row">
+          <span class="osi-name">GitHub</span>
+          <span class="osi-url">https://github.com/czyt1988/Interactive-class<span class="osi-url-line" aria-hidden="true"></span></span>
+        </div>
+        <div class="osi-row">
+          <span class="osi-name">Gitee <span class="osi-mirror">国内镜像</span></span>
+          <span class="osi-url">https://gitee.com/czyt1988/interactive-class<span class="osi-url-line" aria-hidden="true"></span></span>
+        </div>
       </div>
 
-      <div class="itp-colophon">
-        <div class="itp-col">
-          <p class="itp-label">开源项目</p>
-          <p class="itp-value itp-value--mono">{{project.label}}<span class="itp-url-line" aria-hidden="true"></span></p>
-        </div>
-        <div class="itp-col">
-          <p class="itp-label">制作</p>
-          <p class="itp-value">DeepSeek Harness × DeepSeek-V4.1 Flash</p>
-        </div>
+      <div class="osi-note">
+        <p>如果你想了解如何生成这个视频，或者对本视频需要进行调整，</p>
+        <p>你可以拉取源码并进行调整。</p>
       </div>
     </div>
   </div>
@@ -187,29 +262,28 @@
   <script>
     const tl = gsap.timeline({ paused: true });
 
-    // 标题和片头标记从第 0 帧就在：视频的第一帧已经说清这是什么课。
-    // 后面几笔按阅读顺序落位，最后一帧停在完整扉页上。
+    // 主文案从第 0 帧就在：视频的第一帧已经说清制作方式和开源属性。
+    // 后面几笔按阅读顺序落位：先盖章，再给地址，最后补一句怎么改。
     tl.fromTo(
-      "#root .itp-rule",
+      "#root .osi-head-rule",
       { scaleX: 0 },
       { scaleX: 1, duration: 0.7, ease: "power2.out", transformOrigin: "left center" },
-      0.85
-    );
-    tl.fromTo("#root .itp-summary", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.15);
-    tl.fromTo("#root .itp-meta", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power1.out" }, 1.45);
-    tl.fromTo("#root .itp-colophon", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, 2.0);
-    tl.fromTo(
-      "#root .itp-col",
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.55, ease: "power2.out", stagger: 0.16 },
-      2.05
+      0.05
     );
     tl.fromTo(
-      "#root .itp-url-line",
+      "#root .osi-seal",
+      { opacity: 0, scale: 1.28, rotation: -14 },
+      { opacity: 1, scale: 1, rotation: -6, duration: 0.42, ease: "power3.out" },
+      0.95
+    );
+    tl.fromTo("#root .osi-source", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.4);
+    tl.fromTo(
+      "#root .osi-url-line",
       { scaleX: 0 },
-      { scaleX: 1, duration: 0.8, ease: "power2.out", transformOrigin: "left center" },
-      2.55
+      { scaleX: 1, duration: 0.75, ease: "power2.out", transformOrigin: "left center", stagger: 0.18 },
+      1.78
     );
+    tl.fromTo("#root .osi-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power1.out" }, 2.55);
 
     window.__timelines["s-intro-title-page"] = tl;
   </script>

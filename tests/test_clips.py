@@ -80,6 +80,8 @@ def test_shipped_library_has_one_intro_and_one_outro() -> None:
     library = ClipLibrary(CLIPS)
     assert [clip.id for clip in library.for_kind("intro")] == ["intro-title-page"]
     assert [clip.id for clip in library.for_kind("outro")] == ["outro-colophon"]
+    intro = library.get("intro-title-page")
+    assert intro is not None and intro.duration == 7
     assert library.issues() == []
 
 
@@ -182,6 +184,25 @@ def test_placeholders_are_filled_and_escaped(tmp_path: Path) -> None:
     assert caught.value.errors[0].code == "clip_placeholder_unknown"
 
 
+def test_shipped_intro_omits_course_specific_copy(tmp_path: Path) -> None:
+    """The opener is attached to any video: no course title, count or runtime."""
+
+    library = ClipLibrary(CLIPS)
+    clip = library.get("intro-title-page")
+    assert clip is not None
+    context = _context(tmp_path)
+    rendered = render_scene(
+        library.scene_path(clip).read_text(encoding="utf-8"),
+        context,
+        clip_id=clip.id,
+    )
+    assert context.values["course.title"] not in rendered
+    assert context.values["course.meta"] not in rendered
+    assert "DeepSeek harness + DeepSeek-V4.1 flash" in rendered
+    assert "https://github.com/czyt1988/Interactive-class" in rendered
+    assert "https://gitee.com/czyt1988/interactive-class" in rendered
+
+
 def test_title_size_fits_long_titles() -> None:
     sizes = [title_size("短标题"), title_size("二" * 20), title_size("三" * 40)]
     assert sizes[0] > sizes[1] > sizes[2]
@@ -205,7 +226,7 @@ def test_build_injects_both_clips(tmp_path: Path) -> None:
     )
     assert result.ok, result.errors
     assert result.screens == 4
-    assert result.duration == 23
+    assert result.duration == 20
 
     bundle = out / SLUG
     manifest = json.loads((bundle / "course.json").read_text(encoding="utf-8"))
@@ -215,17 +236,17 @@ def test_build_injects_both_clips(tmp_path: Path) -> None:
         ("split", "lesson"),
         ("outro-colophon", "outro"),
     ]
-    assert [screen["start"] for screen in manifest["screens"]] == [0, 10, 12, 14]
-    assert manifest["composition"]["duration"] == 23
+    assert [screen["start"] for screen in manifest["screens"]] == [0, 7, 9, 11]
+    assert manifest["composition"]["duration"] == 20
     assert manifest["stats"]["screenCount"] == 4
-    assert manifest["stats"]["durationSeconds"] == 23
+    assert manifest["stats"]["durationSeconds"] == 20
 
     root = (bundle / "composition" / "index.html").read_text(encoding="utf-8")
-    assert 'data-duration="23"' in root
+    assert 'data-duration="20"' in root
     assert 'data-screen-id="intro-title-page"' in root
     assert 'data-screen-id="outro-colophon"' in root
     assert root.count("data-screen-id=") == 4
-    assert 'data-start="10"' in root and 'data-start="12"' in root and 'data-start="14"' in root
+    assert 'data-start="7"' in root and 'data-start="9"' in root and 'data-start="11"' in root
     assert "compositions/clip-intro-title-page.html" in root
     assert (bundle / "composition" / "compositions" / "clip-intro-title-page.html").is_file()
     assert (bundle / "composition" / "compositions" / "clip-outro-colophon.html").is_file()
@@ -233,9 +254,11 @@ def test_build_injects_both_clips(tmp_path: Path) -> None:
     scene = (bundle / "composition" / "compositions" / "clip-intro-title-page.html").read_text(
         encoding="utf-8"
     )
-    assert "两屏测试课" in scene
-    assert "gitee.com/czyt1988/interactive-class" in scene
-    assert "DeepSeek Harness" in scene
+    assert "两屏测试课" not in scene
+    assert "https://github.com/czyt1988/Interactive-class" in scene
+    assert "https://gitee.com/czyt1988/interactive-class" in scene
+    assert "DeepSeek harness" in scene
+    assert "本视频是开源项目" in scene
 
 
 def test_shell_labels_clips_as_intro_and_outro(tmp_path: Path) -> None:
@@ -292,10 +315,10 @@ def test_intro_only_and_outro_only_timings(tmp_path: Path) -> None:
     )
     assert [(s["id"], s["start"]) for s in intro_manifest["screens"]] == [
         ("intro-title-page", 0),
-        ("hook", 10),
-        ("split", 12),
+        ("hook", 7),
+        ("split", 9),
     ]
-    assert intro_manifest["composition"]["duration"] == 14
+    assert intro_manifest["composition"]["duration"] == 11
     intro_root = (intro_out / SLUG / "composition" / "index.html").read_text(encoding="utf-8")
     assert "outro-colophon" not in intro_root
 
@@ -485,7 +508,7 @@ def test_admin_clips_page_lists_templates(tmp_path: Path, monkeypatch) -> None:
     assert response.status_code == 200
     text = response.text
     assert "片头片尾" in text
-    assert "片头：课程扉页" in text
+    assert "片头：开源项目" in text
     assert "片尾：项目落款" in text
     assert "/admin/clips/intro-title-page/frame?course=valid-two-screen" in text
     assert (
@@ -574,8 +597,9 @@ def test_admin_frame_renders_the_clip_for_the_course(tmp_path: Path, monkeypatch
     with client:
         response = client.get("/admin/clips/intro-title-page/frame?course=valid-two-screen")
         assert response.status_code == 200
-        assert "两屏测试课" in response.text
-        assert "gitee.com/czyt1988/interactive-class" in response.text
+        assert "本视频是开源项目" in response.text
+        assert "https://github.com/czyt1988/Interactive-class" in response.text
+        assert "两屏测试课" not in response.text
         assert "script-src 'self'" in response.headers["content-security-policy"]
         missing = client.get("/admin/clips/intro-nope/frame?course=valid-two-screen")
         assert missing.status_code == 404
@@ -600,7 +624,7 @@ def test_admin_preview_builds_a_playable_classroom_page(
         page = client.get(location)
         assert page.status_code == 200
         assert "deck-preview" in page.text
-        assert "片头：课程扉页" in page.text
+        assert "片头：开源项目" in page.text
 
         manifest = json.loads(
             (settings.clip_preview_dir / token / SLUG / "course.json").read_text(
