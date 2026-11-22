@@ -28,6 +28,7 @@
 
 相关文档：
 
+- [文档导航](README.md)：按任务找文档的入口；根目录 README 只保留产品入口和快速开始。
 - [课程契约](course-contract.md)：一门课具体长什么样，字段、目录、时间规则和验收清单。
 - [Agent 开发方案](agent-development-plan.md)：按阶段执行的任务和完成标准。
 

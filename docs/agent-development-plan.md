@@ -119,7 +119,7 @@
 5. 创建 `app/main.py`：`create_app()`、Jinja2 模板、静态目录、`GET /healthz`、`GET /` 占位页。
 6. 创建 `app/templates/base.html`、`home.html`；`app/static/site.css` 只放基础 reset 和排版。
 7. 创建 `tests/test_health.py`：`/healthz` 返回 200 和 `{status: "ok"}`；`/` 返回 200 且包含站点名。
-8. 在 README 的“项目状态”里把 Phase 0 标为进行中/完成（按实际）。
+8. 在[版本记录](release-notes.md)里把 Phase 0 标为进行中/完成（按实际）。
 
 ### 验收
 
@@ -358,7 +358,7 @@ pytest tests/test_build.py -q
    - 请求体超限拒绝；
    - 同一用户两门课互不影响；
    - 数据库文件在 `data/`，不进入 Git。
-10. 更新 `.env.example`、README、架构文档的 DB 状态。
+10. 更新 `.env.example`、[版本记录](release-notes.md)和架构文档的 DB 状态。
 
 ### 验收
 
@@ -736,7 +736,7 @@ pytest tests/e2e -q
    - 课程单独回滚（静态目录）；
    - 数据库迁移只做向前兼容；破坏性迁移先备份，必要时恢复。
 8. 监控/日志：启动日志、错误日志、健康检查、DB schema version。
-9. 写 `docs/operations.md`（或 README 的一节）：部署、迁移、备份、恢复、回滚、课程更新、缓存刷新。
+9. 写[部署与发布](deployment.md)：部署、迁移、备份、恢复、回滚、课程更新、缓存刷新。
 
 ### 验收
 
@@ -931,7 +931,7 @@ pytest tests/e2e -q
 
 ## 18. 验证命令速查
 
-命令以实现后的脚本名为准；改名时同步更新本节和 README。
+命令以实现后的脚本名为准；改名时同步更新本节和相关文档（导航见 [docs/README.md](README.md)）。
 
 | 目的 | 命令 |
 | --- | --- |
@@ -961,6 +961,6 @@ pytest tests/e2e -q
 
 - 实现改变字段、路径、命令时，同步更新[课程契约](course-contract.md)和本计划。
 - 架构决策改变时，先更新[架构设计](architecture.md)的决策表，再改代码。
-- README 只保留产品理念、体验和高层架构；不要把它变成实现手册。
+- README 只保留产品入口、快速开始和文档索引；操作细节放 `docs/`（导航见 [docs/README.md](README.md)），不要把它变成实现手册。
 - 每完成一个阶段，把该阶段的验收项标为完成，并记录遗留问题。
 - 不把“以后可能有用”的内容堆进文档；放进 backlog，保持当前文档可执行。

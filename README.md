@@ -4,215 +4,49 @@
 
 页间课堂是一个交互式视频课平台：课程像视频一样连续播放，翻开来是一页一页的动态幻灯片，每一页都能停。当前第一个系列是 AI Learning，讲 AI；每屏只讲一个概念，短课点一下进入下一屏，长视频课程会随旁白自动接续。一门课是一串可以直接在浏览器里播放的动画。
 
-当前状态：**v0.13，平台骨架可用，播放页撑满视口，播放器可打开目录直接跳屏，课程水印和片头片尾可配置且不进 Git，片头片尾可在真实课堂页里预览，课程模板独立交付，外部课程可以直接导入**。站点、课程契约、构建流水线、课程外壳（全视口播放、逐屏进度可拖动、跳到最后、目录跳屏）、匿名进度、后台设置页、课程水印配置（水印存站点数据库，构建时写进课程 composition，网页播放和导出的 MP4 都带）、片头片尾（共享模板选进课程，构建时作为一屏插入，播放与 MP4 都带）、独立课程模板包、课程导入和课程 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 都已经跑通。这门课 28 屏 / 29:54，整门课浅色纸面，旁白驱动动画、字幕在画面底部，播放时像视频一样连续，也可以随时暂停、关字幕、关配音；同一份 composition 可以在服务器上按需导出 MP4，视频不进 Git。CI 与部署还没做。
+当前版本 **v0.14**：站点可以导出成静态目录并发布到 GitHub Pages。完整版本记录见[版本记录](docs/release-notes.md)。
 
-## 为什么要做
+![首页](docs/screenshots/site-home.jpg)
 
-AI 教学常见两种形态：长视频和图文。
+## 为什么值得做
 
-长视频有过程感，但信息密度低，不能检索，也很难按自己的节奏停下来。图文可以扫读，却很难把“一步推一步”的过程讲清楚。PPT 式的动画更接近我们想要的东西，但大多数实现最终又导出成视频，绕回同一个问题。
+AI 教学常见两种形态：长视频和图文。长视频有过程感，但信息密度低，不能检索，也很难按自己的节奏停下来；图文可以扫读，却很难把“一步推一步”的过程讲清楚。网页可以提供第三种形态：文字是真正的文字，动画是真正的网页元素，讲解可以暂停、回看、搜索，也可以被辅助技术读到。
 
-网页可以提供第三种形态：文字是真正的文字，动画是真正的网页元素，讲解可以暂停、回看、搜索，也可以被辅助技术读到。它不必变成 MP4。
+代价也要说清楚：网页动画更依赖浏览器性能，自动播放有策略限制，16:9 的画面在手机竖屏上会变小，离线分发也不如一个 MP4 文件简单。这些是真实的工程约束，架构设计会正面处理，而不是假装不存在。
 
-## 学习体验
+完整的产品说明（学习体验、六条设计原则、为什么不是 MP4）见[产品说明](docs/product.md)。
+
+## 它是什么样的
 
 一门课从封面开始：
 
 1. **封面**：这门课讲什么、学完能做什么、大概要多久。
-2. **一屏**：一个概念、一个动画、一句结论。动画随旁白自动播放，也可以随时暂停；可以拖动当前屏进度，或点「跳到最后」直接看这一屏的最终画面；长视频课程会像视频一样自动进入下一屏。
+2. **一屏**：一个概念、一个动画、一句结论。动画随旁白自动播放，也可以随时暂停；可以拖动当前屏进度，或点「跳到最后」直接看这一屏的最终画面。
 3. **下一页**：由学习者控制节奏。可以重播本屏，也可以打开目录直接跳到任意一屏，或打开讲义读文字版。
-4. **随时退出**：课程页顶部有一条吸顶的「返回课程库」，封面阶段不用滚动就能离开；进入播放后改用控制条第一个按钮「退出课程（返回课程库）」，完成页和错误页也各有自己的返回按钮。学到一半不想看了，不用点完所有屏；离开时会停掉并销毁播放器。
+4. **随时退出**：课程页顶部有一条吸顶的「返回课程库」；进入播放后改用控制条第一个按钮「退出课程（返回课程库）」。
 5. **结束**：用几条要点回顾这门课，然后回到课程库。
-
-![课程封面](docs/screenshots/course-cover.jpg)
 
 ![课程播放中](docs/screenshots/course-playing.jpg)
 
-![课程目录](docs/screenshots/course-toc.png)
-
-一屏的结构大致是这样：
-
-```text
-┌──────────────────────────────────────┐
-│ 03 / 08    token 是什么              │  ← 课程外壳：进度、章节
-├──────────────────────────────────────┤
-│                                      │
-│          HyperFrames composition     │  ← 一屏动画（16:9）
-│          一个 scene，一个概念         │
-│                                      │
-├──────────────────────────────────────┤
-│ ← 上一屏      ▶ 暂停      下一屏 →    │  ← 播放控制
-└──────────────────────────────────────┘
-```
-
 课程页可以脱离网站单独打开：`/courses/<slug>/` 是一个完整的静态页面，自带播放器、素材和课程清单。网站只负责封面、目录和引导。
 
-这里的“独立打开”指独立 HTTP 静态部署，不是双击 HTML 文件。播放器需要在同源 iframe 里注入 runtime，`file://` 的浏览器安全策略不支持这种做法；用任意静态服务器打开即可。
+## 设计原则
 
-## 六条设计原则
+课程形态遵循六条原则：一屏只讲一件事；动画要承担论证；先直觉，后术语；每一屏都能停下来读；课程是独立作品；网站退后，课程向前。展开见[产品说明](docs/product.md#六条设计原则)。
 
-**1. 一屏只讲一件事。**
-一屏里出现两个中心概念，就拆成两屏。屏幕不是容器，是节拍。
-
-**2. 动画要承担论证。**
-动画用来展示关系、过程、因果和变化。能静下来讲清楚的，就不要让它动。动效不是装饰，不能删掉之后论证还完整。
-
-**3. 先直觉，后术语。**
-先让学习者看见一个具体的例子，再给它名字。不要用定义解释定义。
-
-**4. 每一屏都能停下来读。**
-关键信息不能只存在于运动里。暂停后要看得懂，讲义里要读得到，屏幕阅读器要读得出。
-
-**5. 课程是独立作品。**
-每门课有自己的封面、素材、播放器和 URL。它不依赖网站存在，也不因为网站改版而失效。
-
-**6. 网站退后，课程向前。**
-网站是封面和索引，不是套在每门课外面的框架。进入课程之后，界面应该安静下来。
-
-## 设计系统
-
-视觉规则不靠口头约定：完整的前端设计契约写在 **[DESIGN.md](DESIGN.md)**，包括色板与令牌、字阶、版式纪律、组件规范、动效理由、文案标点、课程 composition 的 1920×1080 安全区，以及交付前自检清单。
-
-实现上只有一个来源：`design/tokens.css`。它由 `scripts/sync_runtime.py` 同步到站点和课程外壳；页面 CSS 不允许写死新的颜色、圆角或层级。`tests/test_design_contract.py` 会守住其中可机械检查的部分（令牌同步、界面文案零 em-dash、AGENTS.md 必须引用 DESIGN.md）。
-
-当前设计取向：暖纸色 + 墨色 + 单一锈红强调色的亮色系统，不做深色模式；像一叠印刷品，不像 SaaS 面板。
-
-## 为什么不是 MP4
-| | MP4 | 网页动画 |
-| --- | --- | --- |
-| 文字 | 被编码成像素，缩放会糊 | 真实文字，任意分辨率都清晰 |
-| 体积 | 几分钟动辄几十到几百 MB | 通常几 MB，按需加载 |
-| 检索 | 只能靠字幕文件 | 标题、正文、讲义都可索引 |
-| 交互 | 只能播放、暂停、拖进度 | 可以暂停、重播、跳屏、做练习 |
-| 更新 | 改一句话要重新编码 | 改 HTML、重新构建，不必重新编码 |
-| 无障碍 | 依赖字幕和音轨 | 语义结构、讲义、键盘操作可以一起做 |
-
-代价也要说清楚：网页动画更依赖浏览器性能，自动播放有策略限制，16:9 的画面在手机竖屏上会变小，离线分发也不如一个 MP4 文件简单。这些是真实的工程约束，架构设计会正面处理，而不是假装不存在。
-
-长视频课程是这条原则的延伸，不是例外：旁白、字幕和每屏时长都写在 composition 里，所以同一份源可以用 `npx hyperframes render` 导出 MP4，声音和烧录字幕都在画面里（见 [`courses/ai-first-sees/narration/README.md`](courses/ai-first-sees/narration/README.md)）。网页仍然是主形态；MP4 是同一份 composition 的附属导出，不是另一套需要重新配音、对轨的素材。
+视觉规则不靠口头约定：完整的前端设计契约写在 **[DESIGN.md](DESIGN.md)**，实现上只有一个来源 `design/tokens.css`。它由 `scripts/sync_runtime.py` 同步到站点和课程外壳；页面 CSS 不允许写死新的颜色、圆角或层级。`tests/test_design_contract.py` 会守住其中可机械检查的部分。
 
 ## 技术骨架
 
 - **站点**：FastAPI + Jinja2，服务端渲染。负责封面、课程库、课程入口、只读目录 API 和进度 API。没有 SPA，没有前端路由。
-- **课程**：独立的静态包。自带课程外壳、播放器运行时、composition、字体和封面。可以部署到任何静态服务器。
-- **课程模板与导入**：`course-template/` 是独立的课程模板包，可交给外部作者或 AI；外部生成的课程文件夹通过 `scripts/import_course.py`（或开发环境 `/import` 页面）校验、复制到 `courses/<slug>/`、构建到 `dist/`，并在 SQLite 记一条来源。课程内容仍然是文件，数据库不存课程内容。
+- **课程**：独立的静态包，自带课程外壳、播放器运行时、composition、字体和封面，可以部署到任何静态服务器。
+- **课程模板与导入**：`course-template/` 是独立的课程模板包，可交给外部作者或 AI；外部生成的课程通过 `scripts/import_course.py`（或开发环境 `/import` 页面）校验、复制到 `courses/<slug>/`、构建，课程内容仍然是文件。
 - **动画**：HyperFrames composition。一门课一个工程，一屏一个 scene，浏览器里由 `<hyperframes-player>` 播放。
 - **构建**：Python 构建脚本。校验课程契约，解析每屏的时间范围，生成课程页面，打包运行时，输出到 `dist/`。
-- **数据**：课程内容仍然放在文件里，用 Git 管理；用户、会话和学习进度放在 SQLite，迁移用 Alembic。课程包不依赖数据库也能完整播放，数据库是站点侧的能力。
-- **视频**：不是运行时输出，也不进仓库。后台设置页可以在服务器上按需调用 HyperFrames CLI，把同一份 composition 渲染成带旁白和烧录字幕的 MP4，产物留在 `data/videos/`，可删除、可重建。
-- **Node**：生产站点页面不依赖 Node；只有后台生成视频时才调用服务器上的 HyperFrames CLI。
+- **数据**：课程内容放在文件里，用 Git 管理；用户、会话和学习进度放在 SQLite。课程包不依赖数据库也能完整播放。
+- **视频**：不是运行时输出，也不进仓库。后台设置页可以按需把同一份 composition 渲染成 MP4，产物留在 `data/videos/`；生产站点页面本身不依赖 Node。
 
-站点和课程的关系：
-
-```text
-作者                                     学习者
- │                                        │
- ▼                                        ▼
-courses/<slug>/  ── build ──▶  dist/courses/<slug>/  ── HTTP ──▶ 浏览器
- course.json                     index.html                       │
- composition/                    course.json                      ├─ 课程封面 / 目录
-   index.html                    composition/                     ├─ <hyperframes-player>
-   compositions/*.html           runtime/                         │    └─ iframe: composition
-   assets/                       cover.webp                       │         └─ runtime 驱动 GSAP
-                                                                  └─ 目录 / 讲义 / 进度 / 控制
-
-FastAPI + Jinja
-  /                封面与课程索引
-  /courses         课程库
-  /courses/<slug>/ 静态课程包（也可以单独部署）
-  /api/courses     只读目录 API
-  /api/progress    学习进度 API（SQLite）
-```
-
-关键边界只有一句话：**站点不需要知道课程内部怎么画，它只读课程契约；课程也不需要知道站点是否存在。** 数据库属于站点，不属于课程包：没有数据库、没有登录态，课程仍然能完整播放。
-
-课程内容用文件，用户状态用 SQLite。这样课程可以随 Git 版本化、独立部署；登录、跨设备进度、收藏这类会变化的数据，才进入数据库。
-
-## 目录结构
-
-```text
-ai-learning/
-├─ README.md
-├─ AGENTS.md                     # 给后续 Agent 的入口
-├─ DESIGN.md                     # 前端设计契约（视觉/文案/动效/课程画面）
-├─ pyproject.toml                # 依赖、ruff、pytest 配置
-├─ alembic.ini                   # 数据库迁移配置
-├─ start.cmd                      # Windows 双击启动站点
-├─ restart.cmd                   # Windows 双击重启
-├─ stop.cmd                      # Windows 双击停止
-├─ app/                          # FastAPI 应用
-│  ├─ main.py                    # create_app、健康检查、错误模型、静态挂载
-│  ├─ config.py                  # 路径、环境变量、站点信息
-│  ├─ db.py                      # SQLite / SQLAlchemy engine + pragmas
-│  ├─ models.py                  # users / sessions / progress / course_imports / course_watermarks / course_clips
-│  ├─ schemas.py                 # 进度 API 的请求/响应
-│  ├─ deps.py                    # settings / catalog / db 依赖
-│  ├─ auth/sessions.py           # 匿名会话、HttpOnly Cookie
-│  ├─ repositories/progress.py   # 进度读写
-│  ├─ catalog/                   # 课程契约模型、解析器、资产扫描、目录加载、导入、水印、片头片尾
-│  ├─ videos/                    # 后台视频渲染：工具链发现、进程渲染、任务与产物
-│  ├─ api/                       # /api/courses、/api/progress、/api/health
-│  ├─ web/routes.py              # 首页、课程库、关于、sitemap
-│  ├─ web/admin.py               # 后台设置、视频生成/下载、状态轮询、水印与片头片尾配置
-│  ├─ web/import_routes.py       # /import 课程导入页（仅开发环境）
-│  ├─ templates/                 # Jinja2 模板（含课程卡片、后台页、水印/片头片尾配置页、导入页与登录页）
-│  └─ static/                    # 站点 CSS、字体、favicon、后台与导入样式
-├─ migrations/                   # Alembic 迁移（0001_initial … 0004_course_clips）
-├─ data/                         # SQLite 文件与后台生成的视频，不提交
-│  ├─ videos/                    # 在线生成的 MP4 与元数据
-│  └─ clip-previews/             # 片头片尾的临时预览课程包（可删，不进 Git）
-├─ runtime/                      # 课程外壳运行时（所有课程共用）
-│  ├─ shell.html.j2              # 课程页面模板
-│  ├─ course-deck.js             # 播放器适配层 + 状态机
-│  ├─ course-deck.css
-│  ├─ vendor/                    # HyperFrames player / runtime（不进 Git）
-│  └─ VERSION.json               # 固定版本 + 每个文件的 SHA-256
-├─ design/                       # 设计令牌与字体源文件
-├─ course-template/              # 独立课程模板包：交给外部作者或 AI 用
-│  ├─ AGENTS.md                  # 给 AI 的课程生成指引
-│  ├─ COURSE-CONTRACT.md         # 作者版规范
-│  ├─ STYLE.md                   # 课程画面视觉规范
-│  ├─ course.json                # 合法占位清单
-│  ├─ STORYBOARD.md              # 分镜脚手架
-│  └─ composition/               # 两屏骨架 + 本地字体 / GSAP
-├─ course-inbox/                 # 外部课程收件箱，供导入使用（不进 Git）
-├─ clips/                        # 全站共享的片头/片尾模板（后台按课选择）
-│  ├─ intro-title-page/          # 片头：通用开源说明 + GitHub / Gitee 地址
-│  └─ outro-colophon/            # 片尾：开源落款 + 一句收束
-├─ courses/
-│  ├─ ai-first-sees/             # 第一门课：AI 第一次看懂世界
-│  └─ <slug>/                    # 每门课一个目录
-│     ├─ course.json
-│     ├─ cover.webp              # 可选
-│     ├─ STORYBOARD.md           # 课程脚本，不进入构建产物
-│     └─ composition/            # HyperFrames 工程
-│        ├─ index.html
-│        ├─ compositions/
-│        └─ assets/              # course.css、fonts/、vendor/gsap.min.js
-├─ scripts/
-│  ├─ sync_runtime.py            # 拉取 player/runtime/GSAP、子集化字体、同步令牌
-│  ├─ build_courses.py           # 校验 + 构建课程包
-│  ├─ new_course.py              # 从课程模板生成新课程脚手架
-│  ├─ import_course.py           # 导入外部课程文件夹
-│  ├─ bootstrap.py               # 双击启动器的环境准备：.venv、依赖、资源、构建、迁移
-│  ├─ build.py                   # build.cmd 的一键重建：后端检查、运行时/字体、迁移、课程
-│  ├─ env.cmd                    # start.cmd / restart.cmd / build.cmd 调用的环境检查（GBK）
-│  ├─ serve.py                   # 用正确 MIME 类型静态服务课程包
-│  ├─ launcher.py                # star / restart / stop 的实现
-│  └─ worktree.py                # 并行开发：git 工作树 + 复用依赖
-├─ tests/
-│  ├─ fixtures/courses/          # 合法与非法课程夹具
-│  └─ e2e/                       # 独立静态服务器上的浏览器验收
-├─ tools/package.json            # 固定的 HyperFrames / GSAP 版本（只在创作期用）
-├─ .worktree/                    # 任务工作树（git worktree，不进 Git）
-├─ docs/
-│  ├─ architecture.md
-│  ├─ course-contract.md
-│  └─ agent-development-plan.md
-└─ dist/                         # 构建产物，不提交
-   ├─ build.json                 # 构建时间、课程数、内容哈希
-   └─ courses/<slug>/
-```
+关键边界只有一句话：**站点不需要知道课程内部怎么画，它只读课程契约；课程也不需要知道站点是否存在。** 系统边界、关键决策和完整目录树见[架构设计](docs/architecture.md)和[开发指南](docs/development.md#仓库结构)。
 
 ## 快速开始
 
@@ -220,291 +54,28 @@ ai-learning/
 python -m venv .venv
 .venv\Scripts\activate                 # macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
-
-cd tools && npm install && cd ..       # 只在创作期需要：固定版本 HyperFrames + GSAP
-python scripts/sync_runtime.py         # 把 player/runtime/GSAP/字体布置到 runtime 和课程
-
-python scripts/build_courses.py --all  # 生成 dist/courses/<slug>/
-alembic upgrade head                   # 建 SQLite 表
+cd tools && npm install && cd ..       # 固定版本的 HyperFrames + GSAP，sync_runtime 从这里取播放器
+python scripts/sync_runtime.py
+python scripts/build_courses.py --all
+alembic upgrade head
 python -m uvicorn app.main:app --reload          # http://127.0.0.1:8000
 ```
 
-Windows 上不想敲这些命令也没关系：直接双击 `start.cmd`，它会把上面的准备自动做完再启动；改完项目后双击 `build.cmd` 重新构建，再双击 `start.cmd` 就是最新版本（见下面「Windows 双击启动」）。
-
-### Windows 双击启动
-
-仓库根目录下的四个脚本面向双击使用（文件以 GBK 保存，匹配中文 Windows 控制台；编辑时请保持 GBK/ANSI 编码，不要另存为 UTF-8）：
-
-| 脚本 | 作用 |
-| --- | --- |
-| `start.cmd` | 启动站点，默认监听 `0.0.0.0:8081`；第一次双击会自动准备环境 |
-| `build.cmd` | 重新构建整个项目：后端导入检查、运行时/字体/令牌同步、数据库迁移、全部课程包 |
-| `restart.cmd` | 先停掉正在运行的实例，再按 `start.cmd` 的配置重启 |
-| `stop.cmd` | 停止服务 |
-
-**第一次使用只需要双击 `start.cmd`。** 它会先调用 `scripts\env.cmd` 检查环境，缺什么补什么，再交给 `scripts\launcher.py` 启动：
-
-1. 找到本机的 Python 3.11+（找不到时打印下载地址）；
-2. 创建 `.venv` 虚拟环境；
-3. 安装项目依赖（`pip install -e ".[dev]"`）；
-4. 下载固定版本的播放器资源并同步（`npm install` + `python scripts/sync_runtime.py --skip-fonts`）；
-5. 构建课程包到 `dist/`；
-6. 建好或升级 SQLite 表结构（`alembic upgrade head`）。
-
-这一步要联网，第一次通常几分钟；之后每次双击只做几秒钟的检查，已经就绪的步骤会跳过。开始之前需要 Python 3.11+，第 4 步还需要 Node.js 22+（只在第一次下载播放器资源时用到，之后就绪后启动不再需要 Node）。任何一步失败都会用中文说明原因和下一步怎么做，窗口不会立刻关掉，可以照着提示处理后重新双击。
-
-**改完项目后只需要双击 `build.cmd`。** 它和 `start.cmd` 共用同一套环境检查，然后每次都完整重建，不会因为上次的产物还在就跳过：
-
-1. 检查后端依赖与代码（`import app.main`，缺依赖或模块坏了会先报出来）；
-2. 运行完整的 `python scripts/sync_runtime.py`（播放器/运行时/GSAP、设计令牌、按最新课程文案重新生成字体子集）；
-3. 执行 `alembic upgrade head` 更新 SQLite 表结构（课程构建要读水印与片头片尾配置）；
-4. 运行 `python scripts/build_courses.py --all`，重建全部已发布课程到 `dist/`；课程页里的站点地址自动对齐 `start.cmd` 的 `APP_PORT`，所以本地进度同步仍然有效。
-
-看到「构建完成」后，双击 `start.cmd` 启动最新版本；站点正在运行就双击 `restart.cmd`。构建只写 `dist/`、SQLite 和字体子集这些生成物，不会把产物提交进 Git。
-
-端口和绑定地址写在 `start.cmd` 开头，改这两行后保存即可：
-
-```text
-set "APP_PORT=8081"
-set "APP_HOST=0.0.0.0"
-```
-
-`0.0.0.0` 表示本机和局域网都能访问；只想本机访问就改成 `127.0.0.1`。启动后直接访问 <http://127.0.0.1:8081>。重启会先读取 `.run/service.json` 里记录的当前实例，再按 `start.cmd` 的配置启动新实例；日志直接输出在脚本窗口里。也可以单独运行 `python scripts\bootstrap.py` 只做环境准备（或加 `--quiet` 检查一遍），准备完再双击 `start.cmd` 启动。
-
-验收命令：
-
-```bash
-pytest -q                              # 单元 + 集成 + 浏览器验收
-ruff check .                           # 代码检查
-python scripts/serve.py dist/courses/ai-first-sees --port 8081   # 独立部署验收
-```
-
-> 在 Windows 上用 `python -m http.server` 打开课程包时，`.js` 可能被注册表映射成 `text/plain`，浏览器会拒绝执行 ES module。用 `scripts/serve.py` 验收，它固定了课程包需要的 MIME 类型。
-
-### 并行开发（git 工作树）
-
-本仓库的开发任务都在独立的 git 工作树里进行，主工作树只负责集成（给 AI Agent 的完整规则见 [AGENTS.md](AGENTS.md)「分支与工作树」）：
-
-```powershell
-python scripts/worktree.py add feat/course-xyz              # 新建 .worktree\feat-course-xyz
-python scripts/worktree.py list                             # 查看工作树、分支与共享状态
-python scripts/worktree.py merge feat/course-xyz --remove   # 验证 + 合并回 main + 清理
-```
-
-创建工作树时会共享主工作树的 `.venv`、`tools/node_modules`、`tools/ffmpeg`（Windows 目录联接 / POSIX 软链接），并复制 `runtime/vendor` 与 `.env`，所以不需要重新联网安装依赖，新工作树几秒内就能跑测试、构建课程、双击 `start.cmd` 起站点。旁白 TTS 缓存也直接共享，重做旁白不用重新合成已有片段。
-
-共享的代价是依赖目录属于主工作树：**不要在 worktree 里 `pip install` / `npm install`**（启动器检测到共享环境会拒绝重装）；重做旁白也是串行步骤，不要多个工作树同时重建同一门课的旁白。依赖或本地配置变化后，`python scripts/worktree.py link` 会补齐缺失项并刷新 `runtime/vendor`、`.env` 副本。删除工作树请用 `remove`，不要手工删目录；工作树有未提交改动时 `remove` 会拒绝，确认丢弃才加 `--force`。`merge` 默认要求分支有工作树才能跑合并前验证，冲突时会自动回滚主工作树。
-
-## 在线生成课程视频
-
-视频不提交进 Git：项目部署到服务器后，打开 `/admin`（首页右上角有「后台管理」按钮，页脚也有「后台设置」入口），即可看到课程列表、每门课的屏数和视频状态。点「生成视频」，服务器会用构建产物里同一份 composition 渲染 MP4；完成后再点「下载视频」。页面不需要额外的前端构建。课程配置了水印时，水印在构建时已写进 composition，导出的 MP4 里也有，和网页播放画面一致；配了片头/片尾时，它们也是 composition 的一屏，导出的视频同样带。
-
-生成发生在服务器上，工作方式如下：
-
-1. 后台把 `dist/courses/<slug>/composition/` 复制到临时工作目录，不污染 `dist/`。
-2. 调用固定版本的 HyperFrames CLI 渲染，质量档默认 `looks`。
-3. 视频和元数据写到 `data/videos/`（`<slug>.mp4` 和 `<slug>.json`），失败时保留 `<slug>.render.log`。
-4. 同一时间只跑一个任务；服务重启后不会续跑，遗留任务标记为中断。
-
-### 服务器前提
-
-站点页面本身仍然只依赖 Python。只有在线生成视频需要下面这些，装在跑站点的机器上：
-
-| 依赖 | 用途 | 安装方式 |
-| --- | --- | --- |
-| Node.js 22+ | 运行 HyperFrames CLI | 发行版包管理器或 [nodejs.org](https://nodejs.org) |
-| HyperFrames 0.9.19 | 浏览器帧捕捉与 MP4 编码 | 在 `tools/` 里 `npm install`（后台会自动发现），或 `npx --yes hyperframes@0.9.19`（首次需要网络），或用 `VIDEO_HYPERFRAMES_CLI` 指向 `hyperframes.mjs` |
-| Chromium | 渲染 composition | `npx hyperframes browser ensure` |
-| FFmpeg / FFprobe | 编码与探测 | 加入 `PATH`，或设置 `VIDEO_FFMPEG_DIR`；仓库本地的 `tools/ffmpeg/bin` 会被自动发现 |
-
-后台页面顶部的「生成环境」会逐项列出 Node.js、HyperFrames、FFmpeg、FFprobe 是否找到；缺什么就按提示补什么。
-
-### 配置
-
-| 变量 | 默认 | 说明 |
-| --- | --- | --- |
-| `ADMIN_TOKEN` | 空 | 后台管理密码。**部署到公网前必须设置**；留空时后台不设防 |
-| `VIDEO_OUTPUT_DIR` | `data/videos` | 视频与元数据目录，不进 Git |
-| `VIDEO_WORK_DIR` | `data/videos/.work` | 渲染临时目录 |
-| `VIDEO_QUALITY` | `looks` | `draft` / `looks` / `delivery` |
-| `VIDEO_RENDER_TIMEOUT_SECONDS` | `7200` | 单次渲染超时 |
-| `VIDEO_HYPERFRAMES_CLI` | 空 | 自定义 HyperFrames CLI 路径 |
-| `VIDEO_HYPERFRAMES_VERSION` | `0.9.19` | npx 兜底时使用的版本 |
-| `VIDEO_NODE_BIN` / `VIDEO_NPX_BIN` | `node` / `npx` | Node 与 npx 路径 |
-| `VIDEO_FFMPEG_DIR` | 空 | 存放 `ffmpeg` / `ffprobe` 的目录 |
-
-### 安全与容量
-
-- 后台默认没有密码，只适合本机或内网。公网部署请设置 `ADMIN_TOKEN`，并最好再套一层反向代理的访问控制。
-- 渲染是重活：一次 20 分钟课程在本机可能跑几十分钟，并占用 Chrome 和 FFmpeg 的 CPU。同一时间只跑一个任务。
-- `data/videos/` 会随视频数量增长。视频可随时删除，删掉后重新生成即可；它不参与构建，也不影响网页播放。
-
-## 配置课程水印
-
-每门课可以单独配置两种水印，打开 `/admin`（首页右上角「后台管理」，或页脚「后台设置」），在课程行点「水印配置」：
-
-- **角标水印**：四个角各最多一条，放作者、公司、版权信息。可调文字、字号、颜色、透明度；文字留空表示这个角不显示。
-- **满屏平铺水印**：同一句话从上到下、从左到右重复铺满播放画面，用来降低截图外传的可读性。可调文字、字号、颜色、透明度、横纵步长和倾斜角。
-
-页面带 16:9 预览，保存后会写入站点数据库的 `course_watermarks` 表，并自动重新构建这门课的课程包。水印文字**不进 Git、不写课程源文件**：它只存在于数据库（`data/app.db`，已被 gitignore）和构建产物 `dist/` 里。构建把水印层写进课程 composition（网页播放器和 MP4 渲染器消费的同一份画面），所以网页播放和后台导出的视频带同一层水印；水印只覆盖 16:9 播放画布，不挡控制条、不拦截点击，进入全屏仍然保留；独立部署的课程包也自带水印，不依赖站点、数据库或 API。
-
-前提与边界：
-
-- 新克隆的仓库、刚导入的课程默认没有水印，需要在这台部署的机器上配置一次并重建；`course.json` 里写 `watermark` 字段会被当作未知字段报错。
-- 保存水印需要 `courses/<slug>/course.json` 源文件和构建工具。只部署 `app/` 与 `dist/` 的机器上页面为只读，请在持有课程源的机器上配置。
-- 构建（包括 `python scripts/build_courses.py`）会从数据库读水印；库或表不存在时按「未配置水印」继续，所以不迁移数据库也能构建，只是没有水印。`--no-watermarks` 可做完全不读库的干净构建。
-- 后台写接口和其他 `/admin` 操作一样受 `ADMIN_TOKEN`、同源检查和 `no-store` 保护。
-- 水印是署名和截图威慑，**不是访问控制**：它不能阻止截图、下载或查看页面源码。需要权限控制时用登录和访问策略。
-- 站点给课程包发 `Cache-Control: no-cache`：保存并重建后，普通刷新或从课程库重新进入就会拿到新版本，只有固定版本的 player 文件是长缓存。
-- 改水印会让内容哈希变化，已生成的旧视频会被标记为过期，需要重新生成。
-
-## 配置片头片尾
-
-每门课可以在最前面插一个片头、在最后插一个片尾。片头/片尾不是课程字段，而是**全站共享的模板**：构建时渲染成课程 composition 里的一屏，网页播放和导出的 MP4 都会带上。打开 `/admin`，在课程行点「片头片尾」，各选一个模板（或选「不插入」），保存后会写入站点数据库的 `course_clips` 表并自动重新构建这门课。
-
-仓库自带两个模板，默认都不插入：
-
-- `clips/intro-title-page/`：通用开源片头，7 秒；说明本视频由 DeepSeek harness + DeepSeek-V4.1 flash 生成，固定列出本仓库的 GitHub 与 Gitee 地址，不印课程标题、屏数或时长。
-- `clips/outro-colophon/`：通用开源片尾，9 秒；重复制作方式和两个地址，并用一句「这是一个人人都能动手的时代」收束。
-
-![开源片头](docs/screenshots/clip-intro.jpg)
-
-![开源片尾](docs/screenshots/clip-outro.jpg)
-
-每个模板旁边有「预览」按钮：点开会临时构建一份只含该模板的课程包，在真实课堂页面里从这一屏开始播放。预览页顶部有「片头预览/片尾预览」条和「返回设置」，播到这一屏结束就停，不会进入正课或完成页，也不会写学习进度、不会改数据库里的选择。临时包放在 `data/clip-previews/`，可以随时删掉，下一次预览会重建。
-
-模板目录结构、`clip.json` 字段、`{{course.title}}` 等占位符见 [clips/README.md](clips/README.md)。自带的通用片头、片尾都不使用课程占位符，所以同一条片头/片尾可以贴到任何视频前。片头/片尾的画面就是课程的一屏：1920×1080、亮色纸面，静默无旁白，目录里标成「片头」「片尾」，正课编号不变。
-
-前提与边界：
-
-- 片头和片尾的两个地址都写在各自的 `scene.html` 里，不随课程或 `.env` 变化；换 fork 时改模板并重新保存一次。`PROJECT_URL` 仍供使用 `{{project.url}}` 的自定义模板。
-- 选择存数据库（`data/app.db`，已 gitignore），不写 `course.json`；构建产物自带渲染后的 scene，独立部署的课程包不依赖数据库。
-- 没有选择时构建输出与旧版一致。`--no-clips` 可做完全不读库的干净构建。
-- 保存需要在持有 `courses/<slug>/` 源文件的机器上做；只部署 `app/` 与 `dist/` 时页面只读。
-- 片头/片尾是静默的一屏（不配旁白/音乐）；插入后正课时间整体后移，内容哈希会变，已生成的旧视频会被标记为过期。
-
-## 添加一门课程
-
-目标：只动 `courses/<slug>/`，不改站点代码。
-
-1. 先生成脚手架：`python scripts/new_course.py <slug> --title "课程标题"`（从 `course-template/` 复制 `course.json`、`STORYBOARD.md`、`composition/`）。外部作者也可以拿 `course-template/` 按它的 `AGENTS.md` 生成，再用下一节的导入流程带进来。
-2. 写 `STORYBOARD.md`：每屏一句话，说明这一屏让学习者看见什么、动画如何论证。
-3. 改 `course.json`：标题、承诺、目标、每一屏的文案；交付前把 `status` 改成 `published`。
-4. 在 `composition/` 里用 HyperFrames 做每一屏的 scene，并在根 composition 里挂好时间。
-5. 运行 `python scripts/build_courses.py --course <slug>`，打开两个地址验收：站点里的 `/courses/<slug>/`，以及 `python scripts/serve.py` 打开的同一个目录。
-
-构建完成后，课程清单、封面、目录和 API 会自动更新。具体字段和校验规则见[课程契约](docs/course-contract.md)。
-
-## 课程模板与导入
-
-`course-template/` 是独立的课程模板包：两屏可构建骨架 + 给作者和 AI 的文档。它不放在 `courses/` 下参与构建，可以整个文件夹交给外部作者或其他 AI，放进 AI 的工作目录后由其中的 `AGENTS.md` 指引生成课程。
-
-```text
-course-template/
-├─ AGENTS.md            # 给 AI 的操作指引：输入、流程、硬规则、自检、交付
-├─ COURSE-CONTRACT.md   # 作者版规范：目录、字段、时间、资源、错误码
-├─ STYLE.md             # 课程画面视觉规范（纸色、字阶、安全区、动效）
-├─ course.json          # 合法占位清单（slug 仍是 your-course-slug）
-├─ STORYBOARD.md        # 分镜脚手架
-└─ composition/         # 根 composition + 两屏 scene + 本地字体 / GSAP
-```
-
-外部作者产出的课程文件夹有两种方式进入站点：
-
-1. **导入（推荐）**：把整个课程文件夹放进仓库根的 `course-inbox/`（该目录不进 Git），然后：
-
-   ```bash
-   python scripts/import_course.py --inbox            # 批量导入收件箱
-   python scripts/import_course.py <课程文件夹>       # 只导入一个
-   python scripts/import_course.py --dry-run <文件夹>  # 只校验，不落盘
-   ```
-
-   开发环境也可以打开 `/import` 页面：列出收件箱里的课程、校验状态和「导入」按钮，并显示最近导入记录；生产环境（`ENV=prod`）不开放这个页面。导入会先校验、再在隐藏临时目录里构建，全部通过才原子替换 `courses/<slug>/` 和 `dist/courses/<slug>/`，失败会回滚。成功后站点下一次请求就能看到新课，不用重启。
-
-2. **直接放进课程目录**：复制成 `courses/<slug>/`（目录名必须等于 `course.json` 的 `slug`），运行 `python scripts/build_courses.py --course <slug>`；也可以用 `python scripts/import_course.py courses/<slug>` 校验并原地重建。
-
-导入成功后会在 SQLite 的 `course_imports` 表更新一条来源记录（slug、标题、来源路径、内容哈希、屏数、时长、导入时间）。课程内容仍然在文件里，数据库只记来源；表没迁移或数据库不可用时导入照常完成，只打印警告。
-
-模板自带的字体是预生成的字符子集；导入的课程如果用了子集外的新字，跑一次 `python scripts/sync_runtime.py` 会按课程文案重新生成子集。
-
-导入相关配置（完整说明见 `.env.example`）：
-
-| 变量 | 默认 | 说明 |
-| --- | --- | --- |
-| `COURSES_INBOX_DIR` | `course-inbox` | 导入收件箱目录 |
-| `COURSE_IMPORT_ENABLED` | `dev` 为 1，`prod` 为 0 | 是否开放 `/import` 页面 |
-
-模板包的完整用法见 [course-template/README.md](course-template/README.md)；导入的字段和错误码规则见[课程契约](docs/course-contract.md) 7.7。
-
-## 站点
-
-![首页](docs/screenshots/site-home.jpg)
-
-![课程库](docs/screenshots/site-library.jpg)
-
-## 发布到 GitHub Pages
-
-站点主体是 FastAPI 应用，而 GitHub Pages 只能托管静态文件，所以可以发布，但发布的是**静态导出版**：首页、课程库、关于、404，加上每门课的静态包。`scripts/export_site.py` 用真实应用把这几页渲染一次，再逐条检查站内引用；`.github/workflows/pages.yml` 在每次推送 `main` 时构建并发布。
-
-这份产物**没有**：后台 `/admin`、`/api/progress` 进度同步、视频生成、片头预览。课程页的进度存在浏览器 `localStorage`；课程水印是部署方身份信息，不会出现在公开产物里。需要这些能力时用单机部署（见[架构设计](docs/architecture.md) 12.1）。
-
-一次性准备：
-
-1. 在 GitHub 建一个仓库（免费计划的 Pages 要求仓库公开），把 `main` 推上去。
-2. 仓库 Settings → Pages → Source 选 **GitHub Actions**。
-3. 推送 `main`，或在 Actions 里手动运行「发布到 GitHub Pages」。
-
-地址按仓库名自动推导：仓库不是 `<owner>.github.io` 时，站点在 `https://<owner>.github.io/<repo>/`，脚本自动加 `/<repo>` 前缀；用户页仓库（`<owner>.github.io`）不加前缀。需要覆盖时，在 Settings → Variables 里设 `SITE_URL`、`SITE_BASE_PATH`；自定义片头/片尾模板的项目地址用 `PROJECT_URL`，自带的通用片头和片尾直接写死 GitHub 与 Gitee 两个地址。自定义域名写成 `SITE_URL=https://learn.example.com` + `SITE_BASE_PATH=/`（`/` 表示根路径）。
-
-本地先看效果：
-
-```bash
-python scripts/sync_runtime.py
-python scripts/export_site.py --site-url https://example.github.io --base-path ""
-python scripts/serve.py dist/site --port 8081
-```
-
-带子路径的产物（`--base-path /interactive-class`）里，链接以 `/interactive-class/...` 开头，导出脚本会验证每条引用都落在 `dist/site` 里；直接用 `http.server` 服务根目录时这些链接打不开，属于预期。
-
-片头/片尾：后台选择存在 SQLite 的 `course_clips` 表，CI 读不到，所以公开站用提交在 `deploy/publish.json` 里的选择：
-
-```json
-{
-  "clips": {
-    "ai-first-sees": { "intro": "intro-title-page" }
-  }
-}
-```
-
-本地点一次后台预览确认效果，再提交这份配置；不想要片头就删掉对应条目。
-
-## 项目状态
-
-- **v0.1**：README、架构设计、课程契约、Agent 开发方案。
-- **v0.2**：FastAPI 站点、课程契约与解析器、构建流水线、SQLite + Alembic 匿名进度、课程外壳（封面/切屏/控制条/讲义/完成页/错误页）、第一门课「AI 第一次看懂世界」、Playwright 独立部署验收。
-- **v0.3**：CI（契约/外部资源/独立部署）、Docker 与部署、课程脚手架脚本、更多系列课程。
-- **v0.4**：长视频课程按新版导演脚本重做，22 屏 / 21:42，旁白驱动、连续播放。
-- **v0.5**：后台设置页 `/admin`，可在服务器上按需生成并下载课程视频；视频不进 Git，网页仍是主形态。
-- **v0.6**：课程模板抽成独立包 `course-template/`，外部作者可以拿它交给 AI 生成课程；`scripts/new_course.py` 脚手架、`scripts/import_course.py` 和开发环境 `/import` 页面支持把外部课程校验、构建并登记来源后直接加入课程库。
-- **v0.7**：播放页撑满视口，16:9 画布按可用区域等比最大化、控制条通栏；当前屏进度可拖动，新增「跳到最后」（`End`），课程总进度按全课时间连续增长。
-- **v0.8**：课程水印可配置，后台按课配置角标与满屏平铺水印，写进课程 composition，网页播放和 MP4 导出一致。
-- **v0.9**：课程扩到 28 屏 / 29:54，新增 AGENTS.md 写法、上下文组装、Skill 取舍、选模型、斜杠命令、任务粒度、密钥安全七个使用场景；删除独立的安全场景（并入 S27），收尾顺延为 S28。
-- **v0.10**：课程水印改为站点部署配置，存 SQLite 的 `course_watermarks` 表，不再写 `course.json`、不进 Git；构建从数据库读配置并注入课程 composition，播放与 MP4 导出一致。
-- **v0.11**：站点品牌改为「页间课堂」，名字只描述课程形态；首页收成两段，先讲清交互视频课，再开 AI Learning 系列。
-- **v0.12**：新增片头/片尾。共享模板库 `clips/`（自带课程扉页片头和项目落款片尾），后台按课选择并存入 `course_clips` 表；构建时作为 composition 的一屏插入（正课时间整体后移），网页播放、目录和导出的 MP4 都带；片头用 `{{course.title}}` 等占位符带入每门课的信息和 `PROJECT_URL`。
-- **v0.13**：片头片尾可以在后台点「预览」进入真实课堂页播放：按模板临时构建只含该屏的课程包，从这一屏开始、只播这一屏，顶部有预览条和返回设置，不写学习进度、不改选择。缩略图仍是静态末帧。
-- **v0.14（当前）**：站点可以导出成静态目录并发布到 GitHub Pages：推送 `main` 自动构建、检查、发布；站点子路径、片头片尾的发布选择和站内链接检查都由 `scripts/export_site.py` 统一处理。
-- **v1.0**：课程库规模化、质量门、账号与跨设备进度。
-
-没有日期承诺。先把结构做对，再往上加课程。
+Windows 上直接双击 `start.cmd`（首次自动准备环境）；改完项目后双击 `build.cmd` 重建，再双击 `start.cmd` 或 `restart.cmd` 看最新版本。环境要求、分步说明、端口配置和常见故障见[快速开始](docs/getting-started.md)。
 
 ## 文档
 
-- [前端设计契约](DESIGN.md)：视觉、文案、动效与课程 composition 的唯一准则。
-- [架构设计](docs/architecture.md)：系统边界、关键决策、运行时、构建、部署和风险。
-- [课程契约](docs/course-contract.md)：一门课需要长什么样，字段、目录、时间规则和验收清单。
-- [课程模板包](course-template/README.md)：可以整个交付给外部作者的课程骨架、AI 操作指引和作者规范。
-- [Agent 开发方案](docs/agent-development-plan.md)：按阶段执行的任务、验收标准和每门新课的生产模板。
+完整索引见[文档导航](docs/README.md)。常用入口：
+
+- **上手**：[快速开始](docs/getting-started.md)、[开发指南](docs/development.md)
+- **写课程**：[添加与导入课程](docs/course-authoring.md)、[课程契约](docs/course-contract.md)、[课程模板包](course-template/README.md)
+- **运行与发布**：[后台与运维](docs/admin.md)、[部署与发布](docs/deployment.md)、[架构设计](docs/architecture.md)
+- **产品与设计**：[产品说明](docs/product.md)、[前端设计契约](DESIGN.md)、[Agent 开发方案](docs/agent-development-plan.md)
+- **记录**：[版本记录](docs/release-notes.md)、[完整文档导航](docs/README.md)
+
+## 项目状态
+
+v0.14，平台骨架可用，站点可以静态发布。第一门课 [从会聊天到会干活：AI Agent 入门](courses/ai-first-sees/) 共 28 屏 / 29:54。还没有 Docker 打包和正式的生产部署流程；登录、搜索也没有做。下一步是 v1.0：课程库规模化、质量门、账号与跨设备进度。
 
 ## 致谢
 

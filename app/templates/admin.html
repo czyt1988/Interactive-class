@@ -49,7 +49,7 @@
   </dl>
   <p class="admin-env__meta{% if not environment.output_writable %} is-missing{% endif %}">视频目录：{{ environment.output_label }}{% if environment.output_writable %}（可写）{% else %}（不可写，检查 VIDEO_OUTPUT_DIR 的权限）{% endif %}</p>
   {% if not environment.ready %}
-    <p class="admin-env__hint">补齐缺的依赖后刷新本页。安装步骤见 README 的「在线生成课程视频」一节。</p>
+    <p class="admin-env__hint">补齐缺的依赖后刷新本页。安装步骤见仓库 docs/admin.md 的「在线生成课程视频」一节。</p>
   {% endif %}
 </section>
 
